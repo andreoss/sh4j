@@ -109,4 +109,121 @@ class ExecutorTest {
         int exitCode = executor.execute(list);
         assertEquals(0, exitCode);
     }
+
+    @Test
+    void executeAssignmentOnly() {
+        ListNode list = parser("FOO=bar").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+        assertEquals("bar", executor.getVariable("FOO"));
+    }
+
+    @Test
+    void executeAssignmentWithCommand() {
+        ListNode list = parser("FOO=hello echo $FOO").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeMultipleAssignments() {
+        ListNode list = parser("A=1 B=2").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+        assertEquals("1", executor.getVariable("A"));
+        assertEquals("2", executor.getVariable("B"));
+    }
+
+    @Test
+    void executeVariableExpansion() {
+        ListNode list = parser("echo $HOME").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeOutputRedirection() throws Exception {
+        ListNode list = parser("echo test > /tmp/sh4j_test_output").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeInputRedirection() throws Exception {
+        ListNode list = parser("cat < /dev/null").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executePipeline() {
+        ListNode list = parser("echo hello | cat").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeBackground() {
+        ListNode list = parser("sleep 1 &").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeClobberRedirection() throws Exception {
+        ListNode list = parser("echo test >| /tmp/sh4j_clobber_test").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeMultiplePipelines() {
+        ListNode list = parser("echo a; echo b; echo c").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeBangPipeline() {
+        ListNode list = parser("! false").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeVariableWithEmptyValue() {
+        ListNode list = parser("echo $EMPTY_VAR").parse();
+        Map<String, String> env = new HashMap<>();
+        env.put("EMPTY_VAR", "");
+        Executor executor = new Executor(env);
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeCommandNotFound() {
+        ListNode list = parser("nonexistent_command_xyz").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(1, exitCode);
+    }
+
+    @Test
+    void executeBangWithTrue() {
+        ListNode list = parser("! true").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(1, exitCode);
+    }
 }

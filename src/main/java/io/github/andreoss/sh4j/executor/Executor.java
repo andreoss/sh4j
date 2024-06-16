@@ -7,8 +7,11 @@ package io.github.andreoss.sh4j.executor;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Pipeline;
@@ -18,13 +21,18 @@ import io.github.andreoss.sh4j.parser.SimpleCommand;
 
 public class Executor {
     private final Map<String, String> environment;
+    private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
-        this.environment = System.getenv();
+        this.environment = new HashMap<>(System.getenv());
     }
 
     public Executor(Map<String, String> environment) {
-        this.environment = environment;
+        this.environment = new HashMap<>(environment);
+    }
+
+    public String getVariable(String name) {
+        return environment.get(name);
     }
 
     public int execute(ListNode list) {
@@ -72,11 +80,17 @@ public class Executor {
             return 0;
         }
 
+        int exitCode;
         if (commands.size() == 1) {
-            return executeCommand(commands.get(0));
+            exitCode = executeCommand(commands.get(0));
+        } else {
+            exitCode = executePipelineInternal(pipeline);
         }
 
-        return executePipelineInternal(pipeline);
+        if (pipeline.isBang()) {
+            return exitCode == 0 ? 1 : 0;
+        }
+        return exitCode;
     }
 
     private int executePipelineInternal(Pipeline pipeline) {
@@ -117,6 +131,13 @@ public class Executor {
     }
 
     private int executeCommand(SimpleCommand cmd) {
+        processAssignments(cmd.getAssignments());
+
+        String name = cmd.getName();
+        if (name == null || name.isEmpty()) {
+            return 0;
+        }
+
         ProcessBuilder pb = createProcessBuilder(cmd);
         setupRedirections(pb, cmd.getRedirections());
 
@@ -129,10 +150,36 @@ public class Executor {
         }
     }
 
+    private void processAssignments(List<String> assignments) {
+        for (String assignment : assignments) {
+            int eqIndex = assignment.indexOf('=');
+            if (eqIndex > 0) {
+                String varName = assignment.substring(0, eqIndex);
+                String varValue = assignment.substring(eqIndex + 1);
+                environment.put(varName, varValue);
+            }
+        }
+    }
+
+    private String expandVariables(String arg) {
+        Matcher matcher = VAR_PATTERN.matcher(arg);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String replacement = environment.getOrDefault(varName, "");
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
     private ProcessBuilder createProcessBuilder(SimpleCommand cmd) {
         List<String> command = new ArrayList<>();
         command.add(cmd.getName());
-        command.addAll(cmd.getArguments());
+
+        for (String arg : cmd.getArguments()) {
+            command.add(expandVariables(arg));
+        }
 
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.environment().putAll(environment);

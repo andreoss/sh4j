@@ -132,7 +132,37 @@ public class Lexer {
             sb.append((char) reader.consume());
         }
         String text = sb.toString();
-        return new Token(TokenType.WORD, text, line, col);
+        TokenType type = isAssignmentWord(text) ? TokenType.ASSIGNMENT_WORD : TokenType.WORD;
+        return new Token(type, text, line, col);
+    }
+
+    private boolean isAssignmentWord(String text) {
+        if (text.isEmpty() || text.equals("=")) {
+            return false;
+        }
+        int eqIndex = text.indexOf('=');
+        if (eqIndex <= 0) {
+            return false;
+        }
+        String name = text.substring(0, eqIndex);
+        return isValidVarName(name);
+    }
+
+    private boolean isValidVarName(String name) {
+        if (name.isEmpty()) {
+            return false;
+        }
+        char first = name.charAt(0);
+        if (!Character.isLetter(first) && first != '_') {
+            return false;
+        }
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!Character.isLetterOrDigit(c) && c != '_') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isOperatorChar(int c) {
