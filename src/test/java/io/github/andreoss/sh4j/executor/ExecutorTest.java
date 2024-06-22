@@ -226,4 +226,28 @@ class ExecutorTest {
         int exitCode = executor.execute(list);
         assertEquals(1, exitCode);
     }
+
+    @Test
+    void executeExitZero() {
+        ListNode list = parser("exit 0").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeExitOne() {
+        ListNode list = parser("exit 1").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(1, exitCode);
+    }
+
+    @Test
+    void executeEchoAbc() {
+        ListNode list = parser("echo abc").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
 }

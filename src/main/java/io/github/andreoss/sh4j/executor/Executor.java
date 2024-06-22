@@ -138,6 +138,11 @@ public class Executor {
             return 0;
         }
 
+        Integer builtinResult = executeBuiltin(name, cmd.getArguments());
+        if (builtinResult != null) {
+            return builtinResult;
+        }
+
         ProcessBuilder pb = createProcessBuilder(cmd);
         setupRedirections(pb, cmd.getRedirections());
 
@@ -148,6 +153,20 @@ public class Executor {
         } catch (InterruptedException | IOException e) {
             return 1;
         }
+    }
+
+    private Integer executeBuiltin(String name, List<String> arguments) {
+        if ("exit".equals(name)) {
+            if (arguments.isEmpty()) {
+                return 0;
+            }
+            try {
+                return Integer.parseInt(expandVariables(arguments.get(0)));
+            } catch (NumberFormatException e) {
+                return 1;
+            }
+        }
+        return null;
     }
 
     private void processAssignments(List<String> assignments) {
