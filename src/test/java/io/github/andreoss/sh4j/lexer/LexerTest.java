@@ -148,4 +148,54 @@ class LexerTest {
         assertEquals("a", l.nextToken().text());
         assertEquals("b", l.nextToken().text());
     }
+
+    @Test
+    void tabIsWhitespace() {
+        Lexer l = lexer("\tword");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("word", t.text());
+    }
+
+    @Test
+    void equalsAloneIsWordNotAssignment() {
+        Lexer l = lexer("=");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("=", t.text());
+    }
+
+    @Test
+    void numberPrefixedNameIsNotAssignment() {
+        Lexer l = lexer("1a=b");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+    }
+
+    @Test
+    void invalidVarNameCharIsNotAssignment() {
+        Lexer l = lexer("a@b=c");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+    }
+
+    @Test
+    void wordBreaksAtLeftParen() {
+        Lexer l = lexer("echo(");
+        Token t1 = l.nextToken();
+        assertEquals(TokenType.WORD, t1.type());
+        assertEquals("echo", t1.text());
+        Token t2 = l.nextToken();
+        assertEquals(TokenType.LPAREN, t2.type());
+    }
+
+    @Test
+    void wordBreaksAtRightParen() {
+        Lexer l = lexer("echo)");
+        Token t1 = l.nextToken();
+        assertEquals(TokenType.WORD, t1.type());
+        assertEquals("echo", t1.text());
+        Token t2 = l.nextToken();
+        assertEquals(TokenType.RPAREN, t2.type());
+    }
 }
