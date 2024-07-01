@@ -146,4 +146,49 @@ class ParserTest {
         ListNode list = parser("").parse();
         assertEquals(1, list.getPipelines().size());
     }
+
+    @Test
+    void parseExpectThrowsOnMissingWord() {
+        assertThrows(RuntimeException.class, () -> parser("echo <").parse());
+    }
+
+    @Test
+    void parseCommandStartingWithInputRedirect() {
+        ListNode list = parser("< input.txt cat").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("<", cmd.getName());
+        assertEquals(2, cmd.getArguments().size());
+    }
+
+    @Test
+    void parseCommandStartingWithOutputRedirect() {
+        ListNode list = parser("> out.txt echo").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(">", cmd.getName());
+        assertEquals(2, cmd.getArguments().size());
+    }
+
+    @Test
+    void parseCommandStartingWithClobberRedirect() {
+        ListNode list = parser(">| file.txt echo").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(">|", cmd.getName());
+        assertEquals(2, cmd.getArguments().size());
+    }
+
+    @Test
+    void parseCommandStartingWithAppendRedirect() {
+        ListNode list = parser(">> file.txt echo").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(">>", cmd.getName());
+        assertEquals(2, cmd.getArguments().size());
+    }
+
+    @Test
+    void parseAssignmentWordAfterCommandName() {
+        ListNode list = parser("echo FOO=bar").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("echo", cmd.getName());
+        assertTrue(cmd.getAssignments().contains("FOO=bar"));
+    }
 }
