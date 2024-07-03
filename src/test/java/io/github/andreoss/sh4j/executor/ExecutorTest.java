@@ -16,6 +16,8 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
+import io.github.andreoss.sh4j.parser.Pipeline;
+import io.github.andreoss.sh4j.parser.SimpleCommand;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -249,5 +251,82 @@ class ExecutorTest {
         Executor executor = new Executor();
         int exitCode = executor.execute(list);
         assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeEmptyListNode() {
+        ListNode list = new ListNode();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executePipelineWithNoCommands() {
+        ListNode list = new ListNode();
+        list.addPipeline(new Pipeline(false), ListNode.Separator.NONE);
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeAppendRedirection() throws Exception {
+        ListNode list = parser("echo test >> /tmp/sh4j_append_test").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeExitNoArgs() {
+        ListNode list = parser("exit").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeExitWithNonNumericArg() {
+        ListNode list = parser("exit xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void executePipelineWithNullCommand() {
+        Pipeline pipeline = new Pipeline(false);
+        pipeline.getCommands().add(null);
+        ListNode list = new ListNode();
+        list.addPipeline(pipeline, ListNode.Separator.NONE);
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCommandWithNullName() {
+        SimpleCommand cmd = new SimpleCommand(null);
+        Pipeline pipeline = new Pipeline(false);
+        pipeline.addCommand(cmd);
+        ListNode list = new ListNode();
+        list.addPipeline(pipeline, ListNode.Separator.NONE);
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeAssignmentWithNoEquals() {
+        SimpleCommand cmd = new SimpleCommand("echo");
+        cmd.getAssignments().add("INVALID");
+        Pipeline pipeline = new Pipeline(false);
+        pipeline.addCommand(cmd);
+        ListNode list = new ListNode();
+        list.addPipeline(pipeline, ListNode.Separator.NONE);
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executePipelineWithFailingCommand() {
+        ListNode list = parser("echo hello | nonexistent_cmd_xyz_fail | echo done").parse();
+        Executor executor = new Executor();
+        assertEquals(1, executor.execute(list));
     }
 }

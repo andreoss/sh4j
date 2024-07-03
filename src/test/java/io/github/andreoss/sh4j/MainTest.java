@@ -5,11 +5,90 @@
 package io.github.andreoss.sh4j;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class MainTest {
+    @TempDir
+    File tempDir;
+
+    private InputStream origIn;
+
+    @BeforeEach
+    void saveSystemIn() {
+        origIn = System.in;
+    }
+
+    @AfterEach
+    void restoreSystemIn() {
+        System.setIn(origIn);
+    }
+
     @Test
-    void exitCodeForScriptFileReturnsZero() {
-        assertEquals(0, Main.exitCode(new String[] {"test.sh"}));
+    void runScriptWithEcho() throws IOException {
+        File script = new File(tempDir, "echo.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("echo hello\n");
+        }
+        assertEquals(0, Main.runScript(script.getAbsolutePath()));
+    }
+
+    @Test
+    void runScriptWithExitZero() throws IOException {
+        File script = new File(tempDir, "exit0.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("exit 0\n");
+        }
+        assertEquals(0, Main.runScript(script.getAbsolutePath()));
+    }
+
+    @Test
+    void runScriptWithExitOne() throws IOException {
+        File script = new File(tempDir, "exit1.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("exit 1\n");
+        }
+        assertEquals(1, Main.runScript(script.getAbsolutePath()));
+    }
+
+    @Test
+    void runScriptFileNotFound() {
+        assertEquals(1, Main.runScript("/nonexistent/path/to/script.sh"));
+    }
+
+    @Test
+    void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
+        File script = new File(tempDir, "test_exit.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("exit 42\n");
+        }
+        assertEquals(42, Main.exitCode(new String[] {script.getAbsolutePath()}));
+    }
+
+    @Test
+    void exitCodeNoArgsInteractiveEof() {
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        assertEquals(0, Main.exitCode(new String[0]));
+    }
+
+    @Test
+    void exitCodeNoArgsInteractiveEmptyLine() {
+        System.setIn(new ByteArrayInputStream("\n".getBytes()));
+        assertEquals(0, Main.exitCode(new String[0]));
+    }
+
+    @Test
+    void exitCodeNoArgsInteractiveWithCommand() {
+        System.setIn(new ByteArrayInputStream("echo hello\n".getBytes()));
+        assertEquals(0, Main.exitCode(new String[0]));
     }
 }
