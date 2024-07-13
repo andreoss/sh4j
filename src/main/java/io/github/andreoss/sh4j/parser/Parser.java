@@ -86,30 +86,31 @@ public class Parser {
 
     private SimpleCommand parseSimpleCommand() {
         SimpleCommand cmd = null;
-        if (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD)) {
-            if (check(TokenType.ASSIGNMENT_WORD)) {
-                cmd = new SimpleCommand("");
-                while (check(TokenType.ASSIGNMENT_WORD)) {
-                    cmd.addAssignment(current.text());
-                    consume();
-                }
-                if (check(TokenType.WORD)) {
-                    cmd.setName(current.text());
-                    consume();
-                }
-            } else {
-                String name = current.text();
-                consume();
-                cmd = new SimpleCommand(name);
-            }
+        if (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) 
+                || check(TokenType.LESS) || check(TokenType.GREAT) 
+                || check(TokenType.CLOBBER) || check(TokenType.DGREATER)) {
+             if (check(TokenType.ASSIGNMENT_WORD)) {
+                 cmd = new SimpleCommand("");
+                 while (check(TokenType.ASSIGNMENT_WORD)) {
+                     cmd.addAssignment(current.text());
+                     consume();
+                 }
+                 if (check(TokenType.WORD)) {
+                     SimpleCommand namedCmd = new SimpleCommand(current.text());
+                     namedCmd.getAssignments().addAll(cmd.getAssignments());
+                     cmd = namedCmd;
+                     consume();
+                 }
+             } else {
+                 String name = current.text();
+                 consume();
+                 cmd = new SimpleCommand(name);
+             }
 
             while (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) || check(TokenType.LESS) 
-                    || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
-                    || check(TokenType.IO_NUMBER)) {
+                    || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)) {
                 if (check(TokenType.ASSIGNMENT_WORD)) {
                     cmd.addAssignment(current.text());
-                    consume();
-                } else if (check(TokenType.IO_NUMBER)) {
                     consume();
                 } else if (check(TokenType.LESS)) {
                     consume();
@@ -132,7 +133,9 @@ public class Parser {
                     consume();
                 }
             }
+            return cmd;
+        } else {
+            return new SimpleCommand("");
         }
-        return cmd;
     }
 }

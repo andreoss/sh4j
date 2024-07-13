@@ -198,4 +198,98 @@ class LexerTest {
         Token t2 = l.nextToken();
         assertEquals(TokenType.RPAREN, t2.type());
     }
+
+    @Test
+    void singleQuotedWord() {
+        Lexer l = lexer("'hello'");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("'hello'", t.text());
+    }
+
+    @Test
+    void doubleQuotedWord() {
+        Lexer l = lexer("\"hello\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"hello\"", t.text());
+    }
+
+    @Test
+    void backslashEscapesInsideWord() {
+        Lexer l = lexer("a\\ b");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("a\\ b", t.text());
+    }
+
+    @Test
+    void backslashContinuation() {
+        Lexer l = lexer("a\\\nb");
+        Token t = l.nextToken();
+        assertEquals("ab", t.text());
+    }
+
+    @Test
+    void mixedQuoting() {
+        Lexer l = lexer("a'b'c");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("a'b'c", t.text());
+    }
+
+    @Test
+    void doubleQuotedBackslashDollar() {
+        Lexer l = lexer("\"\\$\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"\\$\"", t.text());
+    }
+
+    @Test
+    void doubleQuotedBackslashBacktick() {
+        Lexer l = lexer("\"\\`\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"\\`\"", t.text());
+    }
+
+    @Test
+    void doubleQuotedBackslashNewline() {
+        Lexer l = lexer("\"a\\\nb\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"ab\"", t.text());
+    }
+
+    @Test
+    void doubleQuotedBackslashBackslash() {
+        Lexer l = lexer("\"a\\\\b\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"a\\\\b\"", t.text());
+    }
+
+    @Test
+    void wordBreakAtAllOperators() {
+        for (String op : new String[]{"&", "|", ";", "<", ">", "(", ")"}) {
+            Lexer l = lexer("a" + op);
+            assertEquals("a", l.nextToken().text());
+            assertEquals(op, l.nextToken().text());
+        }
+    }
+
+    @Test
+    void assignmentWordEdgeCases() {
+        Lexer l = lexer("=value");
+        assertEquals(TokenType.WORD, l.nextToken().type());
+        Lexer l2 = lexer("_=value");
+        assertEquals(TokenType.ASSIGNMENT_WORD, l2.nextToken().type());
+    }
+
+    @Test
+    void backslashAtEof() {
+        Lexer l = lexer("a\\");
+        assertEquals("a\\", l.nextToken().text());
+    }
 }

@@ -124,11 +124,73 @@ public class Lexer {
         int line = reader.getLine();
         int col = reader.getColumn();
         StringBuilder sb = new StringBuilder();
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+
         while (!reader.isEOF()) {
             int c = reader.peek();
+
+            if (c == '\\' && !inSingleQuote && !inDoubleQuote) {
+                reader.consume();
+                if (reader.peek() == '\n') {
+                    reader.consume();
+                    continue;
+                }
+                sb.append('\\');
+                if (!reader.isEOF()) {
+                    sb.append((char) reader.consume());
+                }
+                continue;
+            }
+
+            if (c == '\'' && !inDoubleQuote) {
+                reader.consume();
+                sb.append('\'');
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (c == '"' && !inSingleQuote) {
+                reader.consume();
+                sb.append('"');
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (inSingleQuote) {
+                sb.append((char) reader.consume());
+                continue;
+            }
+
+            if (inDoubleQuote) {
+                if (c == '\\') {
+                    reader.consume();
+                    sb.append('\\');
+                    if (reader.peek() == '\n') {
+                        reader.consume();
+                        sb.deleteCharAt(sb.length() - 1);
+                        continue;
+                    }
+                    if (reader.peek() == '$' || reader.peek() == '`'
+                            || reader.peek() == '"' || reader.peek() == '\\') {
+                        sb.append((char) reader.consume());
+                    }
+                    continue;
+                }
+                if (c == '"') {
+                    reader.consume();
+                    sb.append('"');
+                    inDoubleQuote = false;
+                    continue;
+                }
+                sb.append((char) reader.consume());
+                continue;
+            }
+
             if (c == '\n' || c == ' ' || c == '\t' || isOperatorChar(c)) {
                 break;
             }
+
             sb.append((char) reader.consume());
         }
         String text = sb.toString();

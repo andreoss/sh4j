@@ -191,4 +191,12 @@ class ParserTest {
         assertEquals("echo", cmd.getName());
         assertTrue(cmd.getAssignments().contains("FOO=bar"));
     }
+
+    @Test
+    void parseIoNumberRedirect() {
+        ListNode list = parser("2>file").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals("file", cmd.getRedirections().get(0).getTarget());
+    }
 }
