@@ -48,12 +48,10 @@ public class Executor {
             Pipeline pipeline = pipelines.get(i);
             int exitCode = executePipeline(pipeline);
 
-            if (i < separators.size()) {
-                ListNode.Separator sep = separators.get(i);
-                boolean shouldContinue = shouldContinue(sep, exitCode);
-                if (!shouldContinue) {
-                    return exitCode;
-                }
+            ListNode.Separator sep = separators.get(i);
+            boolean shouldContinue = shouldContinue(sep, exitCode);
+            if (!shouldContinue) {
+                return exitCode;
             }
             lastExitCode = exitCode;
         }
@@ -99,7 +97,7 @@ public class Executor {
         List<ProcessBuilder> builders = new ArrayList<>();
 
         for (SimpleCommand cmd : commands) {
-            ProcessBuilder pb = createProcessBuilder(cmd);
+            ProcessBuilder pb = createProcessBuilder(cmd, new HashMap<>(environment));
             builders.add(pb);
         }
 
@@ -131,19 +129,22 @@ public class Executor {
     }
 
     private int executeCommand(SimpleCommand cmd) {
-        processAssignments(cmd.getAssignments());
+        Map<String, String> cmdEnv = new HashMap<>(environment);
+        processAssignments(cmd.getAssignments(), cmdEnv);
 
         String name = cmd.getName();
         if (name == null || name.isEmpty()) {
+            // For assignment-only commands, apply assignments to the executor's environment
+            environment.putAll(cmdEnv);
             return 0;
         }
 
-        Integer builtinResult = executeBuiltin(name, cmd.getArguments());
+        Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv);
         if (builtinResult != null) {
             return builtinResult;
         }
 
-        ProcessBuilder pb = createProcessBuilder(cmd);
+        ProcessBuilder pb = createProcessBuilder(cmd, cmdEnv);
         setupRedirections(pb, cmd.getRedirections());
 
         try {
@@ -155,13 +156,13 @@ public class Executor {
         }
     }
 
-    private Integer executeBuiltin(String name, List<String> arguments) {
+    private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env) {
         if ("exit".equals(name)) {
             if (arguments.isEmpty()) {
                 return 0;
             }
             try {
-                return Integer.parseInt(expandVariables(arguments.get(0)));
+                return Integer.parseInt(expandVariables(arguments.get(0), env));
             } catch (NumberFormatException e) {
                 return 1;
             }
@@ -169,39 +170,39 @@ public class Executor {
         return null;
     }
 
-    private void processAssignments(List<String> assignments) {
+    private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {
         for (String assignment : assignments) {
             int eqIndex = assignment.indexOf('=');
             if (eqIndex > 0) {
                 String varName = assignment.substring(0, eqIndex);
                 String varValue = assignment.substring(eqIndex + 1);
-                environment.put(varName, varValue);
+                targetEnv.put(varName, varValue);
             }
         }
     }
 
-    private String expandVariables(String arg) {
+    private String expandVariables(String arg, Map<String, String> env) {
         Matcher matcher = VAR_PATTERN.matcher(arg);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
             String varName = matcher.group(1);
-            String replacement = environment.getOrDefault(varName, "");
+            String replacement = env.getOrDefault(varName, "");
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(sb);
         return sb.toString();
     }
 
-    private ProcessBuilder createProcessBuilder(SimpleCommand cmd) {
+    private ProcessBuilder createProcessBuilder(SimpleCommand cmd, Map<String, String> env) {
         List<String> command = new ArrayList<>();
         command.add(cmd.getName());
 
         for (String arg : cmd.getArguments()) {
-            command.add(expandVariables(arg));
+            command.add(expandVariables(arg, env));
         }
 
         ProcessBuilder pb = new ProcessBuilder(command);
-        pb.environment().putAll(environment);
+        pb.environment().putAll(env);
         pb.directory(new File(System.getProperty("user.dir")));
         return pb;
     }

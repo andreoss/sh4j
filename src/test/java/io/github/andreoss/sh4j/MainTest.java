@@ -91,4 +91,14 @@ class MainTest {
         System.setIn(new ByteArrayInputStream("echo hello\n".getBytes()));
         assertEquals(0, Main.exitCode(new String[0]));
     }
+
+    @Test
+    void exitCodeNoArgsInteractiveIoException() {
+        System.setIn(new InputStream() {
+            public int read() throws IOException {
+                throw new IOException();
+            }
+        });
+        assertEquals(0, Main.exitCode(new String[0]));
+    }
 }

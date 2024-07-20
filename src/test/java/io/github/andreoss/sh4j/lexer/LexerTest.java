@@ -271,6 +271,14 @@ class LexerTest {
     }
 
     @Test
+    void doubleQuotedBackslashDoublequote() {
+        Lexer l = lexer("\"a\\\"b\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"a\\\"b\"", t.text());
+    }
+
+    @Test
     void wordBreakAtAllOperators() {
         for (String op : new String[]{"&", "|", ";", "<", ">", "(", ")"}) {
             Lexer l = lexer("a" + op);

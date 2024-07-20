@@ -149,7 +149,7 @@ class ParserTest {
 
     @Test
     void parseExpectThrowsOnMissingWord() {
-        assertThrows(RuntimeException.class, () -> parser("echo <").parse());
+        assertThrows(ParseException.class, () -> parser("echo <").parse());
     }
 
     @Test

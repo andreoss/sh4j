@@ -27,7 +27,8 @@ public class Parser {
         if (current.type() == type) {
             return consume();
         }
-        throw new RuntimeException("Expected " + type + " but got " + current.type());
+        throw new ParseException("Expected " + type + " but got " + current.type()
+                + " at line " + current.line() + " column " + current.column());
     }
 
     private boolean check(TokenType type) {
@@ -46,13 +47,16 @@ public class Parser {
 
         while (check(TokenType.SEMI) || check(TokenType.AMP) 
                 || check(TokenType.AND_IF) || check(TokenType.OR_IF)) {
-            ListNode.Separator sep = switch (current.type()) {
-                case SEMI -> ListNode.Separator.SEMI;
-                case AMP -> ListNode.Separator.AMP;
-                case AND_IF -> ListNode.Separator.AND_IF;
-                case OR_IF -> ListNode.Separator.OR_IF;
-                default -> ListNode.Separator.NONE;
-            };
+            ListNode.Separator sep;
+            if (check(TokenType.SEMI)) {
+                sep = ListNode.Separator.SEMI;
+            } else if (check(TokenType.AMP)) {
+                sep = ListNode.Separator.AMP;
+            } else if (check(TokenType.AND_IF)) {
+                sep = ListNode.Separator.AND_IF;
+            } else {
+                sep = ListNode.Separator.OR_IF;
+            }
             consume();
             
             int lastIdx = list.getPipelines().size() - 1;
