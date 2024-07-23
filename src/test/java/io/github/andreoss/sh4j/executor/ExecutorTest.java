@@ -218,7 +218,14 @@ class ExecutorTest {
         ListNode list = parser("nonexistent_command_xyz").parse();
         Executor executor = new Executor();
         int exitCode = executor.execute(list);
-        assertEquals(1, exitCode);
+        assertEquals(127, exitCode);
+    }
+
+    @Test
+    void executeCommandNotFoundReturns127() {
+        ListNode list = parser("nonexistent_cmd_xyz_127").parse();
+        Executor executor = new Executor();
+        assertEquals(127, executor.execute(list));
     }
 
     @Test
@@ -327,6 +334,6 @@ class ExecutorTest {
     void executePipelineWithFailingCommand() {
         ListNode list = parser("echo hello | nonexistent_cmd_xyz_fail | echo done").parse();
         Executor executor = new Executor();
-        assertEquals(1, executor.execute(list));
+        assertEquals(127, executor.execute(list));
     }
 }

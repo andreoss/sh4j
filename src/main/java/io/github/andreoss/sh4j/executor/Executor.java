@@ -120,7 +120,12 @@ public class Executor {
             }
 
             return lastExitCode;
-        } catch (InterruptedException | IOException e) {
+        } catch (IOException e) {
+            for (Process p : processes) {
+                p.destroyForcibly();
+            }
+            return exitCodeForIoException(e);
+        } catch (InterruptedException e) {
             for (Process p : processes) {
                 p.destroyForcibly();
             }
@@ -151,7 +156,9 @@ public class Executor {
             Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode;
-        } catch (InterruptedException | IOException e) {
+        } catch (IOException e) {
+            return exitCodeForIoException(e);
+        } catch (InterruptedException e) {
             return 1;
         }
     }
@@ -191,6 +198,14 @@ public class Executor {
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    private int exitCodeForIoException(IOException e) {
+        String msg = e.getMessage();
+        if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
+            return 127;
+        }
+        return 126;
     }
 
     private ProcessBuilder createProcessBuilder(SimpleCommand cmd, Map<String, String> env) {

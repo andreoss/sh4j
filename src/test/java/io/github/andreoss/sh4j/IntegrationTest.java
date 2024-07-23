@@ -200,6 +200,6 @@ class IntegrationTest {
     @Test
     void commandNotFound() throws IOException {
         File s = writeScript("notfound.sh", "nonexistent_cmd_xyz\n");
-        assertEquals(1, Main.runScript(s.getAbsolutePath()));
+        assertEquals(127, Main.runScript(s.getAbsolutePath()));
     }
 }

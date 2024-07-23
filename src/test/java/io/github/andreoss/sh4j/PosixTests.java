@@ -45,6 +45,6 @@ class PosixTests {
     @Test void assignOnly() throws IOException { assertEquals(0, run("MSG=hello\necho $MSG\n")); }
     @Test void multiAssign() throws IOException { assertEquals(0, run("A=1 B=2\n")); }
     @Test void varExpand() throws IOException { assertEquals(0, run("echo $HOME\n")); }
-    @Test void cmdNotFound() throws IOException { assertEquals(1, run("nonexistent_cmd_xyz\n")); }
+    @Test void cmdNotFound() throws IOException { assertEquals(127, run("nonexistent_cmd_xyz\n")); }
     @Test void pwd() throws IOException { assertEquals(0, run("pwd\n")); }
 }
