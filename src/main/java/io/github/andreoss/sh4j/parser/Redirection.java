@@ -8,11 +8,17 @@ public class Redirection {
     private final int fd;
     private final RedirectionType type;
     private final String target;
+    private final String hereDocContent;
 
     public Redirection(int fd, RedirectionType type, String target) {
+        this(fd, type, target, null);
+    }
+
+    public Redirection(int fd, RedirectionType type, String target, String hereDocContent) {
         this.fd = fd;
         this.type = type;
         this.target = target;
+        this.hereDocContent = hereDocContent;
     }
 
     public int getFd() {
@@ -25,6 +31,10 @@ public class Redirection {
 
     public String getTarget() {
         return target;
+    }
+
+    public String getHereDocContent() {
+        return hereDocContent;
     }
 
     public static Redirection input(int fd, String target) {

@@ -202,6 +202,38 @@ public class Lexer {
         return new Token(type, text, line, col);
     }
 
+    public String readHereDocContent(String delimiter, boolean stripTabs) {
+        StringBuilder content = new StringBuilder();
+        if (reader.peek() == '\n') {
+            reader.consume();
+        }
+        while (!reader.isEOF()) {
+            StringBuilder line = new StringBuilder();
+            while (!reader.isEOF()) {
+                int c = reader.peek();
+                if (c == '\n') break;
+                if (stripTabs && line.length() == 0 && c == '\t') {
+                    reader.consume();
+                    continue;
+                }
+                line.append((char) reader.consume());
+            }
+            if (!reader.isEOF()) reader.consume();
+            String lineStr = line.toString();
+            String check = stripTabs ? stripLeadingTabs(lineStr) : lineStr;
+            if (check.equals(delimiter)) break;
+            if (content.length() > 0) content.append('\n');
+            content.append(lineStr);
+        }
+        return content.toString();
+    }
+
+    private static String stripLeadingTabs(String s) {
+        int i = 0;
+        while (i < s.length() && s.charAt(i) == '\t') i++;
+        return s.substring(i);
+    }
+
     private boolean isAssignmentWord(String text) {
         if (text.isEmpty() || text.equals("=")) {
             return false;

@@ -94,6 +94,7 @@ public class Parser {
         if (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) 
                 || check(TokenType.LESS) || check(TokenType.GREAT) 
                 || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
+                || check(TokenType.DLESS) || check(TokenType.DLESSDASH)
                 || check(TokenType.IO_NUMBER)) {
              if (check(TokenType.ASSIGNMENT_WORD)) {
                  cmd = new SimpleCommand("");
@@ -119,6 +120,7 @@ public class Parser {
 
             while (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) || check(TokenType.LESS) 
                     || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
+                    || check(TokenType.DLESS) || check(TokenType.DLESSDASH)
                     || check(TokenType.IO_NUMBER)) {
                 if (check(TokenType.ASSIGNMENT_WORD)) {
                     cmd.addAssignment(current.text());
@@ -126,6 +128,14 @@ public class Parser {
                 } else if (check(TokenType.IO_NUMBER)) {
                     pendingFd = Integer.parseInt(current.text());
                     consume();
+                } else if (check(TokenType.DLESS) || check(TokenType.DLESSDASH)) {
+                    boolean stripTabs = current.type() == TokenType.DLESSDASH;
+                    consume();
+                    String delimiter = expect(TokenType.WORD).text();
+                    String content = lexer.readHereDocContent(delimiter, stripTabs);
+                    int fd = pendingFd >= 0 ? pendingFd : 0;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.HERE_DOC, delimiter, content));
+                    pendingFd = -1;
                 } else if (check(TokenType.LESS)) {
                     consume();
                     String target = expect(TokenType.WORD).text();

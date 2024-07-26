@@ -5,6 +5,7 @@
 package io.github.andreoss.sh4j.executor;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -228,6 +229,22 @@ public class Executor {
             RedirectionType type = redir.getType();
             if (type == RedirectionType.INPUT) {
                 pb.redirectInput(file);
+            } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
+                String content = redir.getHereDocContent();
+                if (content != null) {
+                    try {
+                        File temp = File.createTempFile("sh4j_heredoc", ".tmp");
+                        temp.deleteOnExit();
+                        try (FileWriter w = new FileWriter(temp)) {
+                            w.write(content);
+                        }
+                        pb.redirectInput(temp);
+                    } catch (IOException e) {
+                        pb.redirectInput(new File("/dev/null"));
+                    }
+                } else {
+                    pb.redirectInput(new File("/dev/null"));
+                }
             } else if (type == RedirectionType.OUTPUT) {
                 pb.redirectOutput(ProcessBuilder.Redirect.to(file));
             } else if (type == RedirectionType.APPEND) {
