@@ -194,6 +194,10 @@ public class Lexer {
             sb.append((char) reader.consume());
         }
         String text = sb.toString();
+        if (isAllDigits(text) && !reader.isEOF()
+                && (reader.peek() == '<' || reader.peek() == '>')) {
+            return new Token(TokenType.IO_NUMBER, text, line, col);
+        }
         TokenType type = isAssignmentWord(text) ? TokenType.ASSIGNMENT_WORD : TokenType.WORD;
         return new Token(type, text, line, col);
     }
@@ -223,6 +227,14 @@ public class Lexer {
             if (!Character.isLetterOrDigit(c) && c != '_') {
                 return false;
             }
+        }
+        return true;
+    }
+
+    private static boolean isAllDigits(String s) {
+        if (s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) return false;
         }
         return true;
     }

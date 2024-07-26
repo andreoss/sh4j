@@ -90,9 +90,11 @@ public class Parser {
 
     private SimpleCommand parseSimpleCommand() {
         SimpleCommand cmd = null;
+        int pendingFd = -1;
         if (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) 
                 || check(TokenType.LESS) || check(TokenType.GREAT) 
-                || check(TokenType.CLOBBER) || check(TokenType.DGREATER)) {
+                || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
+                || check(TokenType.IO_NUMBER)) {
              if (check(TokenType.ASSIGNMENT_WORD)) {
                  cmd = new SimpleCommand("");
                  while (check(TokenType.ASSIGNMENT_WORD)) {
@@ -105,6 +107,10 @@ public class Parser {
                      cmd = namedCmd;
                      consume();
                  }
+             } else if (check(TokenType.IO_NUMBER)) {
+                 pendingFd = Integer.parseInt(current.text());
+                 consume();
+                 cmd = new SimpleCommand("");
              } else {
                  String name = current.text();
                  consume();
@@ -112,26 +118,38 @@ public class Parser {
              }
 
             while (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) || check(TokenType.LESS) 
-                    || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)) {
+                    || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
+                    || check(TokenType.IO_NUMBER)) {
                 if (check(TokenType.ASSIGNMENT_WORD)) {
                     cmd.addAssignment(current.text());
+                    consume();
+                } else if (check(TokenType.IO_NUMBER)) {
+                    pendingFd = Integer.parseInt(current.text());
                     consume();
                 } else if (check(TokenType.LESS)) {
                     consume();
                     String target = expect(TokenType.WORD).text();
-                    cmd.addRedirection(Redirection.input(0, target));
+                    int fd = pendingFd >= 0 ? pendingFd : 0;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.INPUT, target));
+                    pendingFd = -1;
                 } else if (check(TokenType.GREAT)) {
                     consume();
                     String target = expect(TokenType.WORD).text();
-                    cmd.addRedirection(Redirection.output(1, target));
+                    int fd = pendingFd >= 0 ? pendingFd : 1;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.OUTPUT, target));
+                    pendingFd = -1;
                 } else if (check(TokenType.CLOBBER)) {
                     consume();
                     String target = expect(TokenType.WORD).text();
-                    cmd.addRedirection(new Redirection(1, RedirectionType.CLOBBER, target));
+                    int fd = pendingFd >= 0 ? pendingFd : 1;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.CLOBBER, target));
+                    pendingFd = -1;
                 } else if (check(TokenType.DGREATER)) {
                     consume();
                     String target = expect(TokenType.WORD).text();
-                    cmd.addRedirection(Redirection.append(1, target));
+                    int fd = pendingFd >= 0 ? pendingFd : 1;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.APPEND, target));
+                    pendingFd = -1;
                 } else if (check(TokenType.WORD)) {
                     cmd.addArgument(current.text());
                     consume();
