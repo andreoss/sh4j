@@ -284,6 +284,14 @@ class ExecutorTest {
     }
 
     @Test
+    void executeStderrRedirect() throws Exception {
+        ListNode list = parser("echo test 2>/tmp/sh4j_test_stderr").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
     void executeExitNoArgs() {
         ListNode list = parser("exit").parse();
         Executor executor = new Executor();

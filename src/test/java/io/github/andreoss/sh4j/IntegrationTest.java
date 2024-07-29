@@ -174,6 +174,13 @@ class IntegrationTest {
     }
 
     @Test
+    void stderrRedirect() throws IOException {
+        File errFile = tempDir.resolve("stderr.txt").toFile();
+        File s = writeScript("stderr_redir.sh", "echo test 2>" + errFile.getAbsolutePath() + "\n");
+        assertEquals(0, Main.runScript(s.getAbsolutePath()));
+    }
+
+    @Test
     void variableExpansionWithRedirect() throws IOException {
         File outFile = tempDir.resolve("out2.txt").toFile();
         File s = writeScript("varexp_redir.sh", "echo $HOME > " + outFile.getAbsolutePath() + "\n");

@@ -225,33 +225,38 @@ public class Executor {
 
     private void setupRedirections(ProcessBuilder pb, List<Redirection> redirections) {
         for (Redirection redir : redirections) {
+            int fd = redir.getFd();
             File file = new File(redir.getTarget());
             RedirectionType type = redir.getType();
             if (type == RedirectionType.INPUT) {
-                pb.redirectInput(file);
+                if (fd == 0) pb.redirectInput(file);
             } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
                 String content = redir.getHereDocContent();
-                if (content != null) {
-                    try {
-                        File temp = File.createTempFile("sh4j_heredoc", ".tmp");
-                        temp.deleteOnExit();
-                        try (FileWriter w = new FileWriter(temp)) {
-                            w.write(content);
-                        }
-                        pb.redirectInput(temp);
-                    } catch (IOException e) {
-                        pb.redirectInput(new File("/dev/null"));
-                    }
-                } else {
-                    pb.redirectInput(new File("/dev/null"));
+                File src = heredocFile(content);
+                if (src != null) {
+                    if (fd == 0) pb.redirectInput(src);
                 }
-            } else if (type == RedirectionType.OUTPUT) {
-                pb.redirectOutput(ProcessBuilder.Redirect.to(file));
+            } else if (type == RedirectionType.OUTPUT || type == RedirectionType.CLOBBER) {
+                if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.to(file));
+                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.to(file));
             } else if (type == RedirectionType.APPEND) {
-                pb.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
-            } else if (type == RedirectionType.CLOBBER) {
-                pb.redirectOutput(ProcessBuilder.Redirect.to(file));
+                if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
+                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.appendTo(file));
             }
+        }
+    }
+
+    private static File heredocFile(String content) {
+        if (content == null) return null;
+        try {
+            File temp = File.createTempFile("sh4j_heredoc", ".tmp");
+            temp.deleteOnExit();
+            try (FileWriter w = new FileWriter(temp)) {
+                w.write(content);
+            }
+            return temp;
+        } catch (IOException e) {
+            return null;
         }
     }
 }
