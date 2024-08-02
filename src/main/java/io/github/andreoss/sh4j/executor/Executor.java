@@ -228,7 +228,24 @@ public class Executor {
             int fd = redir.getFd();
             File file = new File(redir.getTarget());
             RedirectionType type = redir.getType();
-            if (type == RedirectionType.INPUT) {
+            if (type == RedirectionType.DUP_INPUT) {
+                if ("-".equals(redir.getTarget()) && fd == 0) {
+                    pb.redirectInput(new File("/dev/null"));
+                }
+            } else if (type == RedirectionType.DUP_OUTPUT) {
+                if ("-".equals(redir.getTarget())) {
+                    if (fd == 1) pb.redirectOutput(new File("/dev/null"));
+                    else if (fd == 2) pb.redirectError(new File("/dev/null"));
+                } else if ("1".equals(redir.getTarget()) && fd == 2) {
+                    pb.redirectErrorStream(true);
+                } else if ("2".equals(redir.getTarget()) && fd == 1) {
+                    pb.redirectOutput(ProcessBuilder.Redirect.to(new File("/dev/stderr")));
+                }
+            } else if (type == RedirectionType.READWRITE) {
+                if (fd == 0) pb.redirectInput(file);
+                else if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.to(file));
+                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.to(file));
+            } else if (type == RedirectionType.INPUT) {
                 if (fd == 0) pb.redirectInput(file);
             } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
                 String content = redir.getHereDocContent();

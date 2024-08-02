@@ -292,6 +292,38 @@ class ExecutorTest {
     }
 
     @Test
+    void executeStderrToStdout() throws Exception {
+        ListNode list = parser("echo test 2>&1").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeCloseStdin() throws Exception {
+        ListNode list = parser("cat <&-").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeCloseStdout() throws Exception {
+        ListNode list = parser("echo test >&-").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeReadWriteRedirect() throws Exception {
+        ListNode list = parser("cat <> /dev/null").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
     void executeExitNoArgs() {
         ListNode list = parser("exit").parse();
         Executor executor = new Executor();
