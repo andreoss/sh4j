@@ -199,4 +199,41 @@ class ParserTest {
         assertEquals(1, cmd.getRedirections().size());
         assertEquals("file", cmd.getRedirections().get(0).getTarget());
     }
+
+    @Test
+    void parseDupInputRedirect() {
+        ListNode list = parser("cmd <&3").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("cmd", cmd.getName());
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
+        assertEquals("3", cmd.getRedirections().get(0).getTarget());
+    }
+
+    @Test
+    void parseCloseInputRedirect() {
+        ListNode list = parser("cmd <&-").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
+        assertEquals("-", cmd.getRedirections().get(0).getTarget());
+    }
+
+    @Test
+    void parseDupOutputRedirect() {
+        ListNode list = parser("cmd >&2").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.DUP_OUTPUT, cmd.getRedirections().get(0).getType());
+        assertEquals("2", cmd.getRedirections().get(0).getTarget());
+    }
+
+    @Test
+    void parseReadWriteRedirect() {
+        ListNode list = parser("cmd <>file").parse();
+        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
+        assertEquals("file", cmd.getRedirections().get(0).getTarget());
+    }
 }

@@ -95,6 +95,8 @@ public class Parser {
                 || check(TokenType.LESS) || check(TokenType.GREAT) 
                 || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
                 || check(TokenType.DLESS) || check(TokenType.DLESSDASH)
+                || check(TokenType.LESSAND) || check(TokenType.GREATAND)
+                || check(TokenType.LESSGREATER)
                 || check(TokenType.IO_NUMBER)) {
              if (check(TokenType.ASSIGNMENT_WORD)) {
                  cmd = new SimpleCommand("");
@@ -121,6 +123,8 @@ public class Parser {
             while (check(TokenType.WORD) || check(TokenType.ASSIGNMENT_WORD) || check(TokenType.LESS) 
                     || check(TokenType.GREAT) || check(TokenType.CLOBBER) || check(TokenType.DGREATER)
                     || check(TokenType.DLESS) || check(TokenType.DLESSDASH)
+                    || check(TokenType.LESSAND) || check(TokenType.GREATAND)
+                    || check(TokenType.LESSGREATER)
                     || check(TokenType.IO_NUMBER)) {
                 if (check(TokenType.ASSIGNMENT_WORD)) {
                     cmd.addAssignment(current.text());
@@ -136,11 +140,29 @@ public class Parser {
                     int fd = pendingFd >= 0 ? pendingFd : 0;
                     cmd.addRedirection(new Redirection(fd, RedirectionType.HERE_DOC, delimiter, content));
                     pendingFd = -1;
+                } else if (check(TokenType.LESSAND)) {
+                    consume();
+                    String target = expect(TokenType.WORD).text();
+                    int fd = pendingFd >= 0 ? pendingFd : 0;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.DUP_INPUT, target));
+                    pendingFd = -1;
+                } else if (check(TokenType.LESSGREATER)) {
+                    consume();
+                    String target = expect(TokenType.WORD).text();
+                    int fd = pendingFd >= 0 ? pendingFd : 0;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.READWRITE, target));
+                    pendingFd = -1;
                 } else if (check(TokenType.LESS)) {
                     consume();
                     String target = expect(TokenType.WORD).text();
                     int fd = pendingFd >= 0 ? pendingFd : 0;
                     cmd.addRedirection(new Redirection(fd, RedirectionType.INPUT, target));
+                    pendingFd = -1;
+                } else if (check(TokenType.GREATAND)) {
+                    consume();
+                    String target = expect(TokenType.WORD).text();
+                    int fd = pendingFd >= 0 ? pendingFd : 1;
+                    cmd.addRedirection(new Redirection(fd, RedirectionType.DUP_OUTPUT, target));
                     pendingFd = -1;
                 } else if (check(TokenType.GREAT)) {
                     consume();

@@ -11,5 +11,7 @@ public enum RedirectionType {
     CLOBBER,
     READWRITE,
     HERE_DOC,
-    HERE_DOC_DASH
+    HERE_DOC_DASH,
+    DUP_INPUT,
+    DUP_OUTPUT
 }
