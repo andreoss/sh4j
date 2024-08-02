@@ -76,13 +76,28 @@ public class Parser {
             consume();
         }
         Pipeline pipeline = new Pipeline(bang);
-        SimpleCommand cmd = parseSimpleCommand();
-        pipeline.addCommand(cmd);
+
+        if (check(TokenType.LPAREN)) {
+            consume();
+            ListNode inner = parseList();
+            expect(TokenType.RPAREN);
+            pipeline.addCommand(new Subshell(inner));
+        } else {
+            SimpleCommand cmd = parseSimpleCommand();
+            pipeline.addCommand(cmd);
+        }
 
         while (check(TokenType.PIPE)) {
             consume();
-            cmd = parseSimpleCommand();
-            pipeline.addCommand(cmd);
+            if (check(TokenType.LPAREN)) {
+                consume();
+                ListNode inner = parseList();
+                expect(TokenType.RPAREN);
+                pipeline.addCommand(new Subshell(inner));
+            } else {
+                SimpleCommand cmd = parseSimpleCommand();
+                pipeline.addCommand(cmd);
+            }
         }
 
         return pipeline;

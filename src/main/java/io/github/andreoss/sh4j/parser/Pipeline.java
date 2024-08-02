@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Pipeline extends Node {
-    private final List<SimpleCommand> commands = new ArrayList<>();
+    private final List<Node> commands = new ArrayList<>();
     private final boolean bang;
 
     public Pipeline(boolean bang) {
         this.bang = bang;
     }
 
-    public List<SimpleCommand> getCommands() {
+    public List<Node> getCommands() {
         return commands;
     }
 
@@ -23,7 +23,7 @@ public class Pipeline extends Node {
         return bang;
     }
 
-    public void addCommand(SimpleCommand cmd) {
+    public void addCommand(Node cmd) {
         commands.add(cmd);
     }
 }

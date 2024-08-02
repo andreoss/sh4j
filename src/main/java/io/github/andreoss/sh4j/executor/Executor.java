@@ -15,10 +15,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.andreoss.sh4j.parser.ListNode;
+import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
+import io.github.andreoss.sh4j.parser.Subshell;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -74,14 +76,14 @@ public class Executor {
     }
 
     private int executePipeline(Pipeline pipeline) {
-        List<SimpleCommand> commands = pipeline.getCommands();
+        List<Node> commands = pipeline.getCommands();
         if (commands.isEmpty() || commands.get(0) == null) {
             return 0;
         }
 
         int exitCode;
         if (commands.size() == 1) {
-            exitCode = executeCommand(commands.get(0));
+            exitCode = executeNode(commands.get(0));
         } else {
             exitCode = executePipelineInternal(pipeline);
         }
@@ -92,14 +94,26 @@ public class Executor {
         return exitCode;
     }
 
+    private int executeNode(Node node) {
+        if (node instanceof SimpleCommand cmd) {
+            return executeCommand(cmd);
+        } else if (node instanceof Subshell sub) {
+            Executor subExecutor = new Executor(new HashMap<>(environment));
+            return subExecutor.execute(sub.getList());
+        }
+        return 0;
+    }
+
     private int executePipelineInternal(Pipeline pipeline) {
-        List<SimpleCommand> commands = pipeline.getCommands();
+        List<Node> commands = pipeline.getCommands();
         List<Process> processes = new ArrayList<>();
         List<ProcessBuilder> builders = new ArrayList<>();
 
-        for (SimpleCommand cmd : commands) {
-            ProcessBuilder pb = createProcessBuilder(cmd, new HashMap<>(environment));
-            builders.add(pb);
+        for (Node node : commands) {
+            if (node instanceof SimpleCommand cmd) {
+                ProcessBuilder pb = createProcessBuilder(cmd, new HashMap<>(environment));
+                builders.add(pb);
+            }
         }
 
         try {

@@ -24,7 +24,7 @@ class ParserTest {
         Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(1, pipeline.getCommands().size());
         
-        SimpleCommand cmd = pipeline.getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
         assertEquals("echo", cmd.getName());
         assertEquals(1, cmd.getArguments().size());
         assertEquals("hello", cmd.getArguments().get(0));
@@ -37,8 +37,8 @@ class ParserTest {
         
         Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
-        assertEquals("echo", pipeline.getCommands().get(0).getName());
-        assertEquals("grep", pipeline.getCommands().get(1).getName());
+        assertEquals("echo", ((SimpleCommand) pipeline.getCommands().get(0)).getName());
+        assertEquals("grep", ((SimpleCommand) pipeline.getCommands().get(1)).getName());
     }
 
     @Test
@@ -79,7 +79,7 @@ class ParserTest {
     @Test
     void parseCommandWithNoArguments() {
         ListNode list = parser("ls").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("ls", cmd.getName());
         assertTrue(cmd.getArguments().isEmpty());
     }
@@ -87,7 +87,7 @@ class ParserTest {
     @Test
     void parseInputRedirection() {
         ListNode list = parser("cat < file.txt").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(0, cmd.getRedirections().get(0).getFd());
         assertEquals(RedirectionType.INPUT, cmd.getRedirections().get(0).getType());
@@ -97,7 +97,7 @@ class ParserTest {
     @Test
     void parseOutputRedirection() {
         ListNode list = parser("echo hello > out.txt").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(1, cmd.getRedirections().get(0).getFd());
         assertEquals(RedirectionType.OUTPUT, cmd.getRedirections().get(0).getType());
@@ -107,7 +107,7 @@ class ParserTest {
     @Test
     void parseAppendRedirection() {
         ListNode list = parser("echo hello >> out.txt").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.APPEND, cmd.getRedirections().get(0).getType());
         assertEquals("out.txt", cmd.getRedirections().get(0).getTarget());
@@ -116,7 +116,7 @@ class ParserTest {
     @Test
     void parseClobberRedirection() {
         ListNode list = parser("echo test >| file.txt").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertTrue(cmd.getRedirections().size() >= 1);
         boolean hasClobber = cmd.getRedirections().stream()
             .anyMatch(r -> r.getType() == RedirectionType.CLOBBER);
@@ -126,7 +126,7 @@ class ParserTest {
     @Test
     void parseCommandWithDollar() {
         ListNode list = parser("echo $VAR").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("echo", cmd.getName());
         assertEquals("$VAR", cmd.getArguments().get(0));
     }
@@ -148,6 +148,37 @@ class ParserTest {
     }
 
     @Test
+    void parseSubshell() {
+        ListNode list = parser("(echo hello)").parse();
+        assertEquals(1, list.getPipelines().size());
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(1, pipeline.getCommands().size());
+        assertInstanceOf(Subshell.class, pipeline.getCommands().get(0));
+        Subshell sub = (Subshell) pipeline.getCommands().get(0);
+        assertEquals(1, sub.getList().getPipelines().size());
+        SimpleCommand inner = (SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0);
+        assertEquals("echo", inner.getName());
+    }
+
+    @Test
+    void parseSubshellWithMultiplePipelines() {
+        ListNode list = parser("(echo a; echo b)").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        Subshell sub = (Subshell) pipeline.getCommands().get(0);
+        assertEquals(2, sub.getList().getPipelines().size());
+    }
+
+    @Test
+    void parseSubshellInPipeline() {
+        ListNode list = parser("echo foo | (cat) | wc").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(3, pipeline.getCommands().size());
+        assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
+        assertInstanceOf(Subshell.class, pipeline.getCommands().get(1));
+        assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(2));
+    }
+
+    @Test
     void parseExpectThrowsOnMissingWord() {
         assertThrows(ParseException.class, () -> parser("echo <").parse());
     }
@@ -155,7 +186,7 @@ class ParserTest {
     @Test
     void parseCommandStartingWithInputRedirect() {
         ListNode list = parser("< input.txt cat").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("<", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
     }
@@ -163,7 +194,7 @@ class ParserTest {
     @Test
     void parseCommandStartingWithOutputRedirect() {
         ListNode list = parser("> out.txt echo").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
     }
@@ -171,7 +202,7 @@ class ParserTest {
     @Test
     void parseCommandStartingWithClobberRedirect() {
         ListNode list = parser(">| file.txt echo").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">|", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
     }
@@ -179,7 +210,7 @@ class ParserTest {
     @Test
     void parseCommandStartingWithAppendRedirect() {
         ListNode list = parser(">> file.txt echo").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">>", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
     }
@@ -187,7 +218,7 @@ class ParserTest {
     @Test
     void parseAssignmentWordAfterCommandName() {
         ListNode list = parser("echo FOO=bar").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("echo", cmd.getName());
         assertTrue(cmd.getAssignments().contains("FOO=bar"));
     }
@@ -195,7 +226,7 @@ class ParserTest {
     @Test
     void parseIoNumberRedirect() {
         ListNode list = parser("2>file").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals("file", cmd.getRedirections().get(0).getTarget());
     }
@@ -203,7 +234,7 @@ class ParserTest {
     @Test
     void parseDupInputRedirect() {
         ListNode list = parser("cmd <&3").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("cmd", cmd.getName());
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
@@ -213,7 +244,7 @@ class ParserTest {
     @Test
     void parseCloseInputRedirect() {
         ListNode list = parser("cmd <&-").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
         assertEquals("-", cmd.getRedirections().get(0).getTarget());
@@ -222,7 +253,7 @@ class ParserTest {
     @Test
     void parseDupOutputRedirect() {
         ListNode list = parser("cmd >&2").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.DUP_OUTPUT, cmd.getRedirections().get(0).getType());
         assertEquals("2", cmd.getRedirections().get(0).getTarget());
@@ -231,7 +262,7 @@ class ParserTest {
     @Test
     void parseReadWriteRedirect() {
         ListNode list = parser("cmd <>file").parse();
-        SimpleCommand cmd = list.getPipelines().get(0).getCommands().get(0);
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
         assertEquals("file", cmd.getRedirections().get(0).getTarget());

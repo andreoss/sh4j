@@ -18,6 +18,7 @@ import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
+import io.github.andreoss.sh4j.parser.Subshell;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -375,5 +376,33 @@ class ExecutorTest {
         ListNode list = parser("echo hello | nonexistent_cmd_xyz_fail | echo done").parse();
         Executor executor = new Executor();
         assertEquals(127, executor.execute(list));
+    }
+
+    @Test
+    void executeSubshell() {
+        ListNode list = parser("(echo hello)").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeSubshellWithMultiplePipelines() {
+        ListNode list = parser("(echo a; echo b)").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeSubshellInPipeline() {
+        ListNode list = parser("echo foo | (cat) | wc").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeSubshellWithExit() {
+        ListNode list = parser("(exit 42)").parse();
+        Executor executor = new Executor();
+        assertEquals(42, executor.execute(list));
     }
 }
