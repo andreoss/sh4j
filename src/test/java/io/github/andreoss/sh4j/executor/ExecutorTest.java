@@ -405,4 +405,25 @@ class ExecutorTest {
         Executor executor = new Executor();
         assertEquals(42, executor.execute(list));
     }
+
+    @Test
+    void executeGrouping() {
+        ListNode list = parser("{ echo hello; }").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeGroupingInPipeline() {
+        ListNode list = parser("echo foo | { cat; } | wc").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeGroupingSharesEnvironment() {
+        ListNode list = parser("FOO=bar; { echo $FOO; }").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
 }

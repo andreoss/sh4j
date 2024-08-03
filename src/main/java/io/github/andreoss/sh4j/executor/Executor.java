@@ -21,6 +21,7 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
+import io.github.andreoss.sh4j.parser.Grouping;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -100,6 +101,8 @@ public class Executor {
         } else if (node instanceof Subshell sub) {
             Executor subExecutor = new Executor(new HashMap<>(environment));
             return subExecutor.execute(sub.getList());
+        } else if (node instanceof Grouping g) {
+            return execute(g.getList());
         }
         return 0;
     }

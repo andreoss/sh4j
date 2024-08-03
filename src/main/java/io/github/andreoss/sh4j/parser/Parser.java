@@ -36,10 +36,10 @@ public class Parser {
     }
 
     public ListNode parse() {
-        return parseList();
+        return parseList(TokenType.END_OF_FILE);
     }
 
-    private ListNode parseList() {
+    private ListNode parseList(TokenType... terminators) {
         ListNode list = new ListNode();
         
         Pipeline pipeline = parsePipeline();
@@ -61,12 +61,23 @@ public class Parser {
             
             int lastIdx = list.getPipelines().size() - 1;
             list.getSeparators().set(lastIdx, sep);
-            
+
+            if (isTerminator(terminators)) {
+                break;
+            }
+
             pipeline = parsePipeline();
             list.addPipeline(pipeline, ListNode.Separator.NONE);
         }
 
         return list;
+    }
+
+    private boolean isTerminator(TokenType... terminators) {
+        for (TokenType t : terminators) {
+            if (check(t)) return true;
+        }
+        return false;
     }
 
     private Pipeline parsePipeline() {
@@ -79,9 +90,14 @@ public class Parser {
 
         if (check(TokenType.LPAREN)) {
             consume();
-            ListNode inner = parseList();
+            ListNode inner = parseList(TokenType.RPAREN);
             expect(TokenType.RPAREN);
             pipeline.addCommand(new Subshell(inner));
+        } else if (check(TokenType.LBRACE)) {
+            consume();
+            ListNode inner = parseList(TokenType.RBRACE);
+            expect(TokenType.RBRACE);
+            pipeline.addCommand(new Grouping(inner));
         } else {
             SimpleCommand cmd = parseSimpleCommand();
             pipeline.addCommand(cmd);
@@ -91,9 +107,14 @@ public class Parser {
             consume();
             if (check(TokenType.LPAREN)) {
                 consume();
-                ListNode inner = parseList();
+                ListNode inner = parseList(TokenType.RPAREN);
                 expect(TokenType.RPAREN);
                 pipeline.addCommand(new Subshell(inner));
+            } else if (check(TokenType.LBRACE)) {
+                consume();
+                ListNode inner = parseList(TokenType.RBRACE);
+                expect(TokenType.RBRACE);
+                pipeline.addCommand(new Grouping(inner));
             } else {
                 SimpleCommand cmd = parseSimpleCommand();
                 pipeline.addCommand(cmd);

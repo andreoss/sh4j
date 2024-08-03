@@ -46,6 +46,8 @@ public class Lexer {
             case '>' -> tryGreater(line, col);
             case '(' -> singleCharOp(TokenType.LPAREN, line, col);
             case ')' -> singleCharOp(TokenType.RPAREN, line, col);
+            case '{' -> singleCharOp(TokenType.LBRACE, line, col);
+            case '}' -> singleCharOp(TokenType.RBRACE, line, col);
             default -> null;
         };
     }
@@ -272,6 +274,6 @@ public class Lexer {
     }
 
     private static boolean isOperatorChar(int c) {
-        return c == '&' || c == '|' || c == ';' || c == '<' || c == '>' || c == '(' || c == ')';
+        return c == '&' || c == '|' || c == ';' || c == '<' || c == '>' || c == '(' || c == ')' || c == '{' || c == '}';
     }
 }

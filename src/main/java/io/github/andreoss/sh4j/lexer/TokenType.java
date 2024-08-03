@@ -27,5 +27,7 @@ public enum TokenType {
     GREAT,
     LPAREN,
     RPAREN,
+    LBRACE,
+    RBRACE,
     END_OF_FILE
 }

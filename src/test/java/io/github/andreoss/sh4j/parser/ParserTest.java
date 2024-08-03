@@ -179,6 +179,29 @@ class ParserTest {
     }
 
     @Test
+    void parseGrouping() {
+        ListNode list = parser("{ echo hello; }").parse();
+        assertEquals(1, list.getPipelines().size());
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(1, pipeline.getCommands().size());
+        assertInstanceOf(Grouping.class, pipeline.getCommands().get(0));
+        Grouping g = (Grouping) pipeline.getCommands().get(0);
+        assertEquals(1, g.getList().getPipelines().size());
+        SimpleCommand inner = (SimpleCommand) g.getList().getPipelines().get(0).getCommands().get(0);
+        assertEquals("echo", inner.getName());
+    }
+
+    @Test
+    void parseGroupingInPipeline() {
+        ListNode list = parser("echo foo | { cat; } | wc").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(3, pipeline.getCommands().size());
+        assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
+        assertInstanceOf(Grouping.class, pipeline.getCommands().get(1));
+        assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(2));
+    }
+
+    @Test
     void parseExpectThrowsOnMissingWord() {
         assertThrows(ParseException.class, () -> parser("echo <").parse());
     }
