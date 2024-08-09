@@ -19,6 +19,7 @@ import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
+import io.github.andreoss.sh4j.parser.IfNode;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -423,6 +424,27 @@ class ExecutorTest {
     @Test
     void executeGroupingSharesEnvironment() {
         ListNode list = parser("FOO=bar; { echo $FOO; }").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeIfTrueThen() {
+        ListNode list = parser("if true; then echo hi; fi").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeIfFalseElse() {
+        ListNode list = parser("if false; then echo a; else echo b; fi").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeIfTrueThenElseNotExecuted() {
+        ListNode list = parser("if true; then echo hi; else false; fi").parse();
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }

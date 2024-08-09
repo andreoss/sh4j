@@ -22,6 +22,7 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.Grouping;
+import io.github.andreoss.sh4j.parser.IfNode;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -103,6 +104,14 @@ public class Executor {
             return subExecutor.execute(sub.getList());
         } else if (node instanceof Grouping g) {
             return execute(g.getList());
+        } else if (node instanceof IfNode n) {
+            int condExit = execute(n.getCondition());
+            if (condExit == 0) {
+                return execute(n.getThenBody());
+            } else if (n.getElseBody() != null) {
+                return execute(n.getElseBody());
+            }
+            return condExit;
         }
         return 0;
     }

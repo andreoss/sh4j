@@ -290,4 +290,22 @@ class ParserTest {
         assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
         assertEquals("file", cmd.getRedirections().get(0).getTarget());
     }
+
+    @Test
+    void parseIfThenFi() {
+        ListNode list = parser("if true; then echo hi; fi").parse();
+        assertEquals(1, list.getPipelines().size());
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(1, pipeline.getCommands().size());
+        assertInstanceOf(IfNode.class, pipeline.getCommands().get(0));
+    }
+
+    @Test
+    void parseIfThenElseFi() {
+        ListNode list = parser("if false; then echo a; else echo b; fi").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(IfNode.class, pipeline.getCommands().get(0));
+        IfNode n = (IfNode) pipeline.getCommands().get(0);
+        assertNotNull(n.getElseBody());
+    }
 }

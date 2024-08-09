@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import java.util.Set;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.lexer.Token;
 import io.github.andreoss.sh4j.lexer.TokenType;
@@ -80,7 +81,27 @@ public class Parser {
         return false;
     }
 
+    private boolean isReservedWord(String... words) {
+        if (!check(TokenType.WORD)) return false;
+        for (String w : words) {
+            if (current.text().equals(w)) return true;
+        }
+        return false;
+    }
+
+    private Token expectWord(String text) {
+        if (check(TokenType.WORD) && current.text().equals(text)) {
+            return consume();
+        }
+        throw new ParseException("Expected '" + text + "' but got " + current.text()
+                + " at line " + current.line() + " column " + current.column());
+    }
+
     private Pipeline parsePipeline() {
+        return parsePipeline(Set.of());
+    }
+
+    private Pipeline parsePipeline(Set<String> reservedTerminators) {
         boolean bang = false;
         if (check(TokenType.WORD) && "!".equals(current.text())) {
             bang = true;
@@ -98,6 +119,10 @@ public class Parser {
             ListNode inner = parseList(TokenType.RBRACE);
             expect(TokenType.RBRACE);
             pipeline.addCommand(new Grouping(inner));
+        } else if (check(TokenType.WORD) && "if".equals(current.text())) {
+            parseIfCommand(pipeline);
+        } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
+            return pipeline;
         } else {
             SimpleCommand cmd = parseSimpleCommand();
             pipeline.addCommand(cmd);
@@ -115,6 +140,10 @@ public class Parser {
                 ListNode inner = parseList(TokenType.RBRACE);
                 expect(TokenType.RBRACE);
                 pipeline.addCommand(new Grouping(inner));
+            } else if (check(TokenType.WORD) && "if".equals(current.text())) {
+                parseIfCommand(pipeline);
+            } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
+                break;
             } else {
                 SimpleCommand cmd = parseSimpleCommand();
                 pipeline.addCommand(cmd);
@@ -122,6 +151,61 @@ public class Parser {
         }
 
         return pipeline;
+    }
+
+    private void parseIfCommand(Pipeline pipeline) {
+        consume(); // "if"
+        ListNode condition = parseListUntilReserved("then");
+        expectWord("then");
+        ListNode thenBody = parseListUntilReserved("else", "elif", "fi");
+        ListNode elseBody = null;
+        if (isReservedWord("else")) {
+            consume();
+            elseBody = parseListUntilReserved("fi");
+        } else if (isReservedWord("elif")) {
+            // TODO: elif support in future sub-step
+        }
+        expectWord("fi");
+        pipeline.addCommand(new IfNode(condition, thenBody, elseBody));
+    }
+
+    private ListNode parseListUntilReserved(String... reservedWordTerminators) {
+        ListNode list = new ListNode();
+        Set<String> reserved = Set.of(reservedWordTerminators);
+
+        if (isReservedWord(reservedWordTerminators)) {
+            return list;
+        }
+
+        while (true) {
+            Pipeline p = parsePipeline(reserved);
+            list.addPipeline(p, ListNode.Separator.NONE);
+
+            if (check(TokenType.SEMI) || check(TokenType.AMP)
+                    || check(TokenType.AND_IF) || check(TokenType.OR_IF)) {
+                ListNode.Separator sep;
+                if (check(TokenType.SEMI)) {
+                    sep = ListNode.Separator.SEMI;
+                } else if (check(TokenType.AMP)) {
+                    sep = ListNode.Separator.AMP;
+                } else if (check(TokenType.AND_IF)) {
+                    sep = ListNode.Separator.AND_IF;
+                } else {
+                    sep = ListNode.Separator.OR_IF;
+                }
+                consume();
+                int lastIdx = list.getPipelines().size() - 1;
+                list.getSeparators().set(lastIdx, sep);
+
+                if (isReservedWord(reservedWordTerminators)) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        return list;
     }
 
     private SimpleCommand parseSimpleCommand() {
