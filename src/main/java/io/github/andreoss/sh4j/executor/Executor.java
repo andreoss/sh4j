@@ -23,6 +23,7 @@ import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.IfNode;
+import io.github.andreoss.sh4j.parser.ForNode;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -112,6 +113,13 @@ public class Executor {
                 return execute(n.getElseBody());
             }
             return condExit;
+        } else if (node instanceof ForNode n) {
+            int lastExit = 0;
+            for (String word : n.getWords()) {
+                environment.put(n.getVariable(), word);
+                lastExit = execute(n.getBody());
+            }
+            return lastExit;
         }
         return 0;
     }

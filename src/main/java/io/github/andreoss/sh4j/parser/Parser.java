@@ -4,6 +4,8 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.lexer.Token;
@@ -121,6 +123,8 @@ public class Parser {
             pipeline.addCommand(new Grouping(inner));
         } else if (check(TokenType.WORD) && "if".equals(current.text())) {
             parseIfCommand(pipeline);
+        } else if (check(TokenType.WORD) && "for".equals(current.text())) {
+            parseForCommand(pipeline);
         } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
             return pipeline;
         } else {
@@ -142,6 +146,8 @@ public class Parser {
                 pipeline.addCommand(new Grouping(inner));
             } else if (check(TokenType.WORD) && "if".equals(current.text())) {
                 parseIfCommand(pipeline);
+            } else if (check(TokenType.WORD) && "for".equals(current.text())) {
+                parseForCommand(pipeline);
             } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
                 break;
             } else {
@@ -151,6 +157,24 @@ public class Parser {
         }
 
         return pipeline;
+    }
+
+    private void parseForCommand(Pipeline pipeline) {
+        consume(); // "for"
+        String varName = expect(TokenType.WORD).text();
+        List<String> words = new ArrayList<>();
+        expectWord("in");
+        while (check(TokenType.WORD) && !isReservedWord("do")) {
+            words.add(current.text());
+            consume();
+        }
+        if (check(TokenType.SEMI)) {
+            consume();
+        }
+        expectWord("do");
+        ListNode body = parseListUntilReserved("done");
+        expectWord("done");
+        pipeline.addCommand(new ForNode(varName, words, body));
     }
 
     private void parseIfCommand(Pipeline pipeline) {

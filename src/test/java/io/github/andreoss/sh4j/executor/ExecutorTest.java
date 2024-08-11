@@ -20,6 +20,7 @@ import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.IfNode;
+import io.github.andreoss.sh4j.parser.ForNode;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -445,6 +446,13 @@ class ExecutorTest {
     @Test
     void executeIfTrueThenElseNotExecuted() {
         ListNode list = parser("if true; then echo hi; else false; fi").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeForDoDone() {
+        ListNode list = parser("for var in a b c; do echo $var; done").parse();
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }

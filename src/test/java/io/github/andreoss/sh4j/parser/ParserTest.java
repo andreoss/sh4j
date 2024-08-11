@@ -308,4 +308,17 @@ class ParserTest {
         IfNode n = (IfNode) pipeline.getCommands().get(0);
         assertNotNull(n.getElseBody());
     }
+
+    @Test
+    void parseForDoDone() {
+        ListNode list = parser("for var in a b c; do echo $var; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(1, pipeline.getCommands().size());
+        assertInstanceOf(ForNode.class, pipeline.getCommands().get(0));
+        ForNode n = (ForNode) pipeline.getCommands().get(0);
+        assertEquals("var", n.getVariable());
+        assertEquals(3, n.getWords().size());
+        assertEquals("a", n.getWords().get(0));
+        assertEquals("c", n.getWords().get(2));
+    }
 }
