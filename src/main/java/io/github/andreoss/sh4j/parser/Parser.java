@@ -125,6 +125,8 @@ public class Parser {
             parseIfCommand(pipeline);
         } else if (check(TokenType.WORD) && "for".equals(current.text())) {
             parseForCommand(pipeline);
+        } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
+            parseWhileCommand(pipeline);
         } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
             return pipeline;
         } else {
@@ -148,6 +150,8 @@ public class Parser {
                 parseIfCommand(pipeline);
             } else if (check(TokenType.WORD) && "for".equals(current.text())) {
                 parseForCommand(pipeline);
+            } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
+                parseWhileCommand(pipeline);
             } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
                 break;
             } else {
@@ -157,6 +161,19 @@ public class Parser {
         }
 
         return pipeline;
+    }
+
+    private void parseWhileCommand(Pipeline pipeline) {
+        boolean until = "until".equals(current.text());
+        consume();
+        ListNode condition = parseListUntilReserved("do");
+        if (check(TokenType.SEMI)) {
+            consume();
+        }
+        expectWord("do");
+        ListNode body = parseListUntilReserved("done");
+        expectWord("done");
+        pipeline.addCommand(new WhileNode(condition, body, until));
     }
 
     private void parseForCommand(Pipeline pipeline) {

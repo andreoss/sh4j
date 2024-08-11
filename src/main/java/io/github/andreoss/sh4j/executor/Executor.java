@@ -24,6 +24,7 @@ import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ForNode;
+import io.github.andreoss.sh4j.parser.WhileNode;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -117,6 +118,15 @@ public class Executor {
             int lastExit = 0;
             for (String word : n.getWords()) {
                 environment.put(n.getVariable(), word);
+                lastExit = execute(n.getBody());
+            }
+            return lastExit;
+        } else if (node instanceof WhileNode n) {
+            int lastExit = 0;
+            while (true) {
+                int condExit = execute(n.getCondition());
+                boolean runBody = n.isUntil() ? condExit != 0 : condExit == 0;
+                if (!runBody) break;
                 lastExit = execute(n.getBody());
             }
             return lastExit;

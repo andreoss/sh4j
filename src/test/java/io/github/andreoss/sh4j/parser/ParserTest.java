@@ -321,4 +321,22 @@ class ParserTest {
         assertEquals("a", n.getWords().get(0));
         assertEquals("c", n.getWords().get(2));
     }
+
+    @Test
+    void parseWhileDoDone() {
+        ListNode list = parser("while true; do echo hi; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(WhileNode.class, pipeline.getCommands().get(0));
+        WhileNode n = (WhileNode) pipeline.getCommands().get(0);
+        assertFalse(n.isUntil());
+    }
+
+    @Test
+    void parseUntilDoDone() {
+        ListNode list = parser("until false; do echo hi; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(WhileNode.class, pipeline.getCommands().get(0));
+        WhileNode n = (WhileNode) pipeline.getCommands().get(0);
+        assertTrue(n.isUntil());
+    }
 }
