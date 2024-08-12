@@ -339,4 +339,49 @@ class ParserTest {
         WhileNode n = (WhileNode) pipeline.getCommands().get(0);
         assertTrue(n.isUntil());
     }
+
+    @Test
+    void parseCaseSimple() {
+        ListNode list = parser("case foo in pat) echo match;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(CaseNode.class, pipeline.getCommands().get(0));
+        CaseNode n = (CaseNode) pipeline.getCommands().get(0);
+        assertEquals("foo", n.getWord());
+        assertEquals(1, n.getItems().size());
+        assertEquals("pat", n.getItems().get(0).getPatterns().get(0));
+    }
+
+    @Test
+    void parseCasePipePattern() {
+        ListNode list = parser("case foo in a|b) echo match;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        CaseNode n = (CaseNode) pipeline.getCommands().get(0);
+        assertEquals(2, n.getItems().get(0).getPatterns().size());
+        assertEquals("a", n.getItems().get(0).getPatterns().get(0));
+        assertEquals("b", n.getItems().get(0).getPatterns().get(1));
+    }
+
+    @Test
+    void parseCaseMultipleItems() {
+        ListNode list = parser("case foo in a) echo a;; b) echo b;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        CaseNode n = (CaseNode) pipeline.getCommands().get(0);
+        assertEquals(2, n.getItems().size());
+    }
+
+    @Test
+    void parseCaseEmptyBody() {
+        ListNode list = parser("case foo in a);; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        CaseNode n = (CaseNode) pipeline.getCommands().get(0);
+        assertEquals(1, n.getItems().size());
+    }
+
+    @Test
+    void parseCaseParenPattern() {
+        ListNode list = parser("case foo in (pat) echo match;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        CaseNode n = (CaseNode) pipeline.getCommands().get(0);
+        assertEquals("pat", n.getItems().get(0).getPatterns().get(0));
+    }
 }

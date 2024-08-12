@@ -44,11 +44,11 @@ public class Parser {
 
     private ListNode parseList(TokenType... terminators) {
         ListNode list = new ListNode();
-        
+
         Pipeline pipeline = parsePipeline();
         list.addPipeline(pipeline, ListNode.Separator.NONE);
 
-        while (check(TokenType.SEMI) || check(TokenType.AMP) 
+        while (check(TokenType.SEMI) || check(TokenType.AMP)
                 || check(TokenType.AND_IF) || check(TokenType.OR_IF)) {
             ListNode.Separator sep;
             if (check(TokenType.SEMI)) {
@@ -127,6 +127,8 @@ public class Parser {
             parseForCommand(pipeline);
         } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
             parseWhileCommand(pipeline);
+        } else if (check(TokenType.WORD) && "case".equals(current.text())) {
+            parseCaseCommand(pipeline);
         } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
             return pipeline;
         } else {
@@ -152,6 +154,8 @@ public class Parser {
                 parseForCommand(pipeline);
             } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
                 parseWhileCommand(pipeline);
+            } else if (check(TokenType.WORD) && "case".equals(current.text())) {
+                parseCaseCommand(pipeline);
             } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
                 break;
             } else {
@@ -192,6 +196,35 @@ public class Parser {
         ListNode body = parseListUntilReserved("done");
         expectWord("done");
         pipeline.addCommand(new ForNode(varName, words, body));
+    }
+
+    private void parseCaseCommand(Pipeline pipeline) {
+        consume(); // "case"
+        String word = expect(TokenType.WORD).text();
+        expectWord("in");
+        List<CaseNode.CaseItem> items = new ArrayList<>();
+        while (!isReservedWord("esac")) {
+            if (check(TokenType.LPAREN)) {
+                consume();
+            }
+            List<String> patterns = new ArrayList<>();
+            patterns.add(expect(TokenType.WORD).text());
+            while (check(TokenType.PIPE)) {
+                consume();
+                patterns.add(expect(TokenType.WORD).text());
+            }
+            expect(TokenType.RPAREN);
+            ListNode body;
+            if (check(TokenType.DSEMI)) {
+                body = new ListNode();
+            } else {
+                body = parseList(TokenType.DSEMI);
+            }
+            expect(TokenType.DSEMI);
+            items.add(new CaseNode.CaseItem(patterns, body));
+        }
+        expectWord("esac");
+        pipeline.addCommand(new CaseNode(word, items));
     }
 
     private void parseIfCommand(Pipeline pipeline) {

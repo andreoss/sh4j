@@ -25,6 +25,7 @@ import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.WhileNode;
+import io.github.andreoss.sh4j.parser.CaseNode;
 
 public class Executor {
     private final Map<String, String> environment;
@@ -130,6 +131,16 @@ public class Executor {
                 lastExit = execute(n.getBody());
             }
             return lastExit;
+        } else if (node instanceof CaseNode n) {
+            String word = expandVariables(n.getWord(), environment);
+            for (CaseNode.CaseItem item : n.getItems()) {
+                for (String pattern : item.getPatterns()) {
+                    if (matchGlob(pattern, word)) {
+                        return execute(item.getBody());
+                    }
+                }
+            }
+            return 0;
         }
         return 0;
     }
@@ -305,6 +316,32 @@ public class Executor {
                 else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.appendTo(file));
             }
         }
+    }
+
+    private boolean matchGlob(String pattern, String word) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '*') {
+                sb.append(".*");
+            } else if (c == '?') {
+                sb.append('.');
+            } else if (c == '.' || c == '(' || c == ')' || c == '+' || c == '^'
+                    || c == '$' || c == '{' || c == '}' || c == '|' || c == '\\') {
+                sb.append('\\').append(c);
+            } else if (c == '[') {
+                int end = pattern.indexOf(']', i);
+                if (end > i) {
+                    sb.append(pattern, i, end + 1);
+                    i = end;
+                } else {
+                    sb.append("\\[");
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+        return word.matches(sb.toString());
     }
 
     private static File heredocFile(String content) {

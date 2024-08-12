@@ -22,6 +22,7 @@ import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.WhileNode;
+import io.github.andreoss.sh4j.parser.CaseNode;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -468,6 +469,41 @@ class ExecutorTest {
     @Test
     void executeUntilTrue() {
         ListNode list = parser("until true; do echo hi; done").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCaseMatch() {
+        ListNode list = parser("case a in a) echo match;; esac").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCaseNoMatch() {
+        ListNode list = parser("case a in b) echo nomatch;; esac").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCaseDefaultStar() {
+        ListNode list = parser("case a in *) echo default;; esac").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCasePipePattern() {
+        ListNode list = parser("case a in b|c|a) echo match;; esac").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeCaseFirstMatchOnly() {
+        ListNode list = parser("case a in a) echo first;; b) echo second;; esac").parse();
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }
