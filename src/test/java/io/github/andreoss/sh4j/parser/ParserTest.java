@@ -384,4 +384,22 @@ class ParserTest {
         CaseNode n = (CaseNode) pipeline.getCommands().get(0);
         assertEquals("pat", n.getItems().get(0).getPatterns().get(0));
     }
+
+    @Test
+    void parseFunctionDefinition() {
+        ListNode list = parser("foo() { echo bar; }").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+        FunctionNode n = (FunctionNode) pipeline.getCommands().get(0);
+        assertEquals("foo", n.getName());
+    }
+
+    @Test
+    void parseFunctionSubshellBody() {
+        ListNode list = parser("foo() (echo bar)").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        FunctionNode n = (FunctionNode) pipeline.getCommands().get(0);
+        assertEquals("foo", n.getName());
+        assertInstanceOf(Subshell.class, n.getBody());
+    }
 }

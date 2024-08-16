@@ -23,6 +23,7 @@ import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.WhileNode;
 import io.github.andreoss.sh4j.parser.CaseNode;
+import io.github.andreoss.sh4j.parser.FunctionNode;
 
 class ExecutorTest {
     private Parser parser(String input) {
@@ -504,6 +505,27 @@ class ExecutorTest {
     @Test
     void executeCaseFirstMatchOnly() {
         ListNode list = parser("case a in a) echo first;; b) echo second;; esac").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeFunctionDefinitionStored() {
+        ListNode list = parser("foo() { echo hello; }").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeFunctionCall() {
+        ListNode list = parser("foo() { echo hello; }; foo").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeFunctionSubshellBody() {
+        ListNode list = parser("foo() (echo hello); foo").parse();
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }

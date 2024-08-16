@@ -26,17 +26,21 @@ import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.WhileNode;
 import io.github.andreoss.sh4j.parser.CaseNode;
+import io.github.andreoss.sh4j.parser.FunctionNode;
 
 public class Executor {
     private final Map<String, String> environment;
+    private final Map<String, FunctionNode> functions;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
         this.environment = new HashMap<>(System.getenv());
+        this.functions = new HashMap<>();
     }
 
     public Executor(Map<String, String> environment) {
         this.environment = new HashMap<>(environment);
+        this.functions = new HashMap<>();
     }
 
     public String getVariable(String name) {
@@ -141,6 +145,9 @@ public class Executor {
                 }
             }
             return 0;
+        } else if (node instanceof FunctionNode n) {
+            functions.put(n.getName(), n);
+            return 0;
         }
         return 0;
     }
@@ -203,6 +210,11 @@ public class Executor {
         Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv);
         if (builtinResult != null) {
             return builtinResult;
+        }
+
+        FunctionNode fn = functions.get(name);
+        if (fn != null) {
+            return executeNode(fn.getBody());
         }
 
         ProcessBuilder pb = createProcessBuilder(cmd, cmdEnv);

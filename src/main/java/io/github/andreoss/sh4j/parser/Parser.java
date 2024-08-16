@@ -14,16 +14,45 @@ import io.github.andreoss.sh4j.lexer.TokenType;
 public class Parser {
     private final Lexer lexer;
     private Token current;
+    private Token lookahead;
+    private Token lookahead2;
+    private boolean hasLookahead2;
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
         this.current = lexer.nextToken();
+        this.lookahead = null;
+        this.lookahead2 = null;
+        this.hasLookahead2 = false;
     }
 
     private Token consume() {
         Token t = current;
-        current = lexer.nextToken();
+        if (lookahead != null) {
+            current = lookahead;
+            lookahead = hasLookahead2 ? lookahead2 : null;
+            hasLookahead2 = false;
+        } else {
+            current = lexer.nextToken();
+        }
         return t;
+    }
+
+    private Token peek() {
+        if (lookahead == null) {
+            lookahead = lexer.nextToken();
+            hasLookahead2 = false;
+        }
+        return lookahead;
+    }
+
+    private Token peek2() {
+        peek();
+        if (!hasLookahead2) {
+            lookahead2 = lexer.nextToken();
+            hasLookahead2 = true;
+        }
+        return lookahead2;
     }
 
     private Token expect(TokenType type) {
@@ -122,15 +151,18 @@ public class Parser {
             expect(TokenType.RBRACE);
             pipeline.addCommand(new Grouping(inner));
         } else if (check(TokenType.WORD) && "if".equals(current.text())) {
-            parseIfCommand(pipeline);
+            pipeline.addCommand(parseIfCommand());
         } else if (check(TokenType.WORD) && "for".equals(current.text())) {
-            parseForCommand(pipeline);
+            pipeline.addCommand(parseForCommand());
         } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
-            parseWhileCommand(pipeline);
+            pipeline.addCommand(parseWhileCommand());
         } else if (check(TokenType.WORD) && "case".equals(current.text())) {
-            parseCaseCommand(pipeline);
+            pipeline.addCommand(parseCaseCommand());
         } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
             return pipeline;
+        } else if (check(TokenType.WORD) && peek().type() == TokenType.LPAREN
+                && peek2().type() == TokenType.RPAREN) {
+            pipeline.addCommand(parseFunctionDefinition());
         } else {
             SimpleCommand cmd = parseSimpleCommand();
             pipeline.addCommand(cmd);
@@ -149,15 +181,18 @@ public class Parser {
                 expect(TokenType.RBRACE);
                 pipeline.addCommand(new Grouping(inner));
             } else if (check(TokenType.WORD) && "if".equals(current.text())) {
-                parseIfCommand(pipeline);
+                pipeline.addCommand(parseIfCommand());
             } else if (check(TokenType.WORD) && "for".equals(current.text())) {
-                parseForCommand(pipeline);
+                pipeline.addCommand(parseForCommand());
             } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
-                parseWhileCommand(pipeline);
+                pipeline.addCommand(parseWhileCommand());
             } else if (check(TokenType.WORD) && "case".equals(current.text())) {
-                parseCaseCommand(pipeline);
+                pipeline.addCommand(parseCaseCommand());
             } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
                 break;
+            } else if (check(TokenType.WORD) && peek().type() == TokenType.LPAREN
+                    && peek2().type() == TokenType.RPAREN) {
+                pipeline.addCommand(parseFunctionDefinition());
             } else {
                 SimpleCommand cmd = parseSimpleCommand();
                 pipeline.addCommand(cmd);
@@ -167,7 +202,7 @@ public class Parser {
         return pipeline;
     }
 
-    private void parseWhileCommand(Pipeline pipeline) {
+    private WhileNode parseWhileCommand() {
         boolean until = "until".equals(current.text());
         consume();
         ListNode condition = parseListUntilReserved("do");
@@ -177,10 +212,10 @@ public class Parser {
         expectWord("do");
         ListNode body = parseListUntilReserved("done");
         expectWord("done");
-        pipeline.addCommand(new WhileNode(condition, body, until));
+        return new WhileNode(condition, body, until);
     }
 
-    private void parseForCommand(Pipeline pipeline) {
+    private ForNode parseForCommand() {
         consume(); // "for"
         String varName = expect(TokenType.WORD).text();
         List<String> words = new ArrayList<>();
@@ -195,10 +230,42 @@ public class Parser {
         expectWord("do");
         ListNode body = parseListUntilReserved("done");
         expectWord("done");
-        pipeline.addCommand(new ForNode(varName, words, body));
+        return new ForNode(varName, words, body);
     }
 
-    private void parseCaseCommand(Pipeline pipeline) {
+    private FunctionNode parseFunctionDefinition() {
+        String name = consume().text();
+        consume(); // LPAREN
+        consume(); // RPAREN
+        Node body = parseCompoundCommandBody();
+        return new FunctionNode(name, body);
+    }
+
+    private Node parseCompoundCommandBody() {
+        if (check(TokenType.LPAREN)) {
+            consume();
+            ListNode inner = parseList(TokenType.RPAREN);
+            expect(TokenType.RPAREN);
+            return new Subshell(inner);
+        } else if (check(TokenType.LBRACE)) {
+            consume();
+            ListNode inner = parseList(TokenType.RBRACE);
+            expect(TokenType.RBRACE);
+            return new Grouping(inner);
+        } else if (isReservedWord("if")) {
+            return parseIfCommand();
+        } else if (isReservedWord("for")) {
+            return parseForCommand();
+        } else if (isReservedWord("while", "until")) {
+            return parseWhileCommand();
+        } else if (isReservedWord("case")) {
+            return parseCaseCommand();
+        }
+        throw new ParseException("Expected compound command after function definition"
+                + " at line " + current.line() + " column " + current.column());
+    }
+
+    private CaseNode parseCaseCommand() {
         consume(); // "case"
         String word = expect(TokenType.WORD).text();
         expectWord("in");
@@ -224,10 +291,10 @@ public class Parser {
             items.add(new CaseNode.CaseItem(patterns, body));
         }
         expectWord("esac");
-        pipeline.addCommand(new CaseNode(word, items));
+        return new CaseNode(word, items);
     }
 
-    private void parseIfCommand(Pipeline pipeline) {
+    private IfNode parseIfCommand() {
         consume(); // "if"
         ListNode condition = parseListUntilReserved("then");
         expectWord("then");
@@ -240,7 +307,7 @@ public class Parser {
             // TODO: elif support in future sub-step
         }
         expectWord("fi");
-        pipeline.addCommand(new IfNode(condition, thenBody, elseBody));
+        return new IfNode(condition, thenBody, elseBody);
     }
 
     private ListNode parseListUntilReserved(String... reservedWordTerminators) {
