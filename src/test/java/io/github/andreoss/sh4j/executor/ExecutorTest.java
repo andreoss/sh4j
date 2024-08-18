@@ -529,4 +529,28 @@ class ExecutorTest {
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }
+
+    @Test
+    void executeWhileLoop() {
+        ListNode list = parser("while false; do echo body; done").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeUntilLoop() {
+        ListNode list = parser("until true; do echo body; done").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeNonExecutableCommand() throws Exception {
+        java.io.File f = new java.io.File("/tmp/sh4j_nonexec_test.sh");
+        f.createNewFile();
+        f.setExecutable(false);
+        ListNode list = parser(f.getAbsolutePath()).parse();
+        Executor executor = new Executor();
+        assertEquals(126, executor.execute(list));
+    }
 }
