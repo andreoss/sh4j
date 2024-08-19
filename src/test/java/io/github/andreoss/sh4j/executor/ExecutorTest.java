@@ -545,6 +545,27 @@ class ExecutorTest {
     }
 
     @Test
+    void executeIfFalseNoElse() {
+        ListNode list = parser("if false; then echo yes; fi").parse();
+        Executor executor = new Executor();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void executeRedirectStdoutToStderr() {
+        ListNode list = parser("echo test 1>&2").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeHereDoc() {
+        ListNode list = parser("cat << EOF\nhello\nEOF\n").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void executeNonExecutableCommand() throws Exception {
         java.io.File f = new java.io.File("/tmp/sh4j_nonexec_test.sh");
         f.createNewFile();
