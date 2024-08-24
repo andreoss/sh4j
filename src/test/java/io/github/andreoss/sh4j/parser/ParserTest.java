@@ -402,4 +402,116 @@ class ParserTest {
         assertEquals("foo", n.getName());
         assertInstanceOf(Subshell.class, n.getBody());
     }
+
+    @Test
+    void parseIfInPipeline() {
+        ListNode list = parser("true | if true; then echo hi; fi").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(2, pipeline.getCommands().size());
+        assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
+        assertInstanceOf(IfNode.class, pipeline.getCommands().get(1));
+    }
+
+    @Test
+    void parseForInPipeline() {
+        ListNode list = parser("true | for var in a; do echo $var; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(2, pipeline.getCommands().size());
+        assertInstanceOf(ForNode.class, pipeline.getCommands().get(1));
+    }
+
+    @Test
+    void parseWhileInPipeline() {
+        ListNode list = parser("true | while false; do echo hi; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(2, pipeline.getCommands().size());
+        assertInstanceOf(WhileNode.class, pipeline.getCommands().get(1));
+    }
+
+    @Test
+    void parseCaseInPipeline() {
+        ListNode list = parser("true | case foo in pat) echo hi;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(2, pipeline.getCommands().size());
+        assertInstanceOf(CaseNode.class, pipeline.getCommands().get(1));
+    }
+
+    @Test
+    void parseFunctionInPipeline() {
+        ListNode list = parser("true | foo() { echo bar; }").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertEquals(2, pipeline.getCommands().size());
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(1));
+    }
+
+    @Test
+    void parseExpectWordThrows() {
+        assertThrows(ParseException.class, () -> parser("if true; then echo hi").parse());
+    }
+
+    @Test
+    void parseFunctionBodyWithIf() {
+        ListNode list = parser("foo() if true; then echo hi; fi").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+    }
+
+    @Test
+    void parseFunctionBodyWithFor() {
+        ListNode list = parser("foo() for var in a; do echo $var; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+    }
+
+    @Test
+    void parseFunctionBodyWithWhile() {
+        ListNode list = parser("foo() while false; do echo hi; done").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+    }
+
+    @Test
+    void parseFunctionBodyWithCase() {
+        ListNode list = parser("foo() case foo in pat) echo hi;; esac").parse();
+        Pipeline pipeline = list.getPipelines().get(0);
+        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+    }
+
+    @Test
+    void parseFunctionBodyException() {
+        assertThrows(ParseException.class, () -> parser("foo() bar").parse());
+    }
+
+    @Test
+    void parseEmptyWhileCondition() {
+        ListNode list = parser("while do; echo hi; done").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseSeparatorsInList() {
+        ListNode list = parser("cmd1 & cmd2 && cmd3 || cmd4").parse();
+        assertEquals(4, list.getPipelines().size());
+        assertEquals(ListNode.Separator.AMP, list.getSeparators().get(0));
+        assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(1));
+        assertEquals(ListNode.Separator.OR_IF, list.getSeparators().get(2));
+    }
+
+    @Test
+    void parseWhileWithAmpInCondition() {
+        ListNode list = parser("while true & false; do echo hi; done").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseWhileWithAndIfInCondition() {
+        ListNode list = parser("while true && false; do echo hi; done").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseWhileWithOrIfInCondition() {
+        ListNode list = parser("while true || false; do echo hi; done").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
 }
