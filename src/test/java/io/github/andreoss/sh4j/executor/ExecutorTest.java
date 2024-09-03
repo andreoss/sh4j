@@ -574,4 +574,42 @@ class ExecutorTest {
         Executor executor = new Executor();
         assertEquals(126, executor.execute(list));
     }
+
+    @Test
+    void expandDollarQuestion() {
+        Executor executor = new Executor();
+        ListNode list = parser("false").parse();
+        executor.execute(list);
+        assertEquals("1", executor.expandVariables("$?", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarQuestionAfterSuccess() {
+        Executor executor = new Executor();
+        ListNode list = parser("true").parse();
+        executor.execute(list);
+        assertEquals("0", executor.expandVariables("$?", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarHyphen() {
+        Executor executor = new Executor();
+        assertEquals("", executor.expandVariables("$-", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarQuestionBraced() {
+        Executor executor = new Executor();
+        ListNode list = parser("false").parse();
+        executor.execute(list);
+        assertEquals("1", executor.expandVariables("${?}", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarQuestionInString() {
+        Executor executor = new Executor();
+        ListNode list = parser("false").parse();
+        executor.execute(list);
+        assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
+    }
 }

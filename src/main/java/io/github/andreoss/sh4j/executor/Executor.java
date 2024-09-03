@@ -31,6 +31,8 @@ import io.github.andreoss.sh4j.parser.FunctionNode;
 public class Executor {
     private final Map<String, String> environment;
     private final Map<String, FunctionNode> functions;
+    private int lastExitCode = 0;
+    private String shellFlags = "";
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
@@ -52,7 +54,6 @@ public class Executor {
             return 0;
         }
 
-        int lastExitCode = 0;
         List<Pipeline> pipelines = list.getPipelines();
         List<ListNode.Separator> separators = list.getSeparators();
 
@@ -62,10 +63,10 @@ public class Executor {
 
             ListNode.Separator sep = separators.get(i);
             boolean shouldContinue = shouldContinue(sep, exitCode);
+            lastExitCode = exitCode;
             if (!shouldContinue) {
                 return exitCode;
             }
-            lastExitCode = exitCode;
         }
 
         return lastExitCode;
@@ -256,7 +257,36 @@ public class Executor {
         }
     }
 
-    private String expandVariables(String arg, Map<String, String> env) {
+    String expandVariables(String arg, Map<String, String> env) {
+        StringBuilder expanded = new StringBuilder();
+        int i = 0;
+        while (i < arg.length()) {
+            char c = arg.charAt(i);
+            if (c == '$' && i + 1 < arg.length()) {
+                char next = arg.charAt(i + 1);
+                String special = getSpecialParam(next);
+                if (special != null) {
+                    expanded.append(special);
+                    i += 2;
+                    continue;
+                }
+                if (next == '{' && i + 2 < arg.length()) {
+                    int close = arg.indexOf('}', i + 2);
+                    if (close == i + 3) {
+                        special = getSpecialParam(arg.charAt(i + 2));
+                        if (special != null) {
+                            expanded.append(special);
+                            i = close + 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+            expanded.append(c);
+            i++;
+        }
+        arg = expanded.toString();
+
         Matcher matcher = VAR_PATTERN.matcher(arg);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
@@ -266,6 +296,14 @@ public class Executor {
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    private String getSpecialParam(char c) {
+        return switch (c) {
+            case '?' -> String.valueOf(lastExitCode);
+            case '-' -> shellFlags;
+            default -> null;
+        };
     }
 
     private int exitCodeForIoException(IOException e) {
