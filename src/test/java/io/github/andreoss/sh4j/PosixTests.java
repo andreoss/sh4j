@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,7 +22,7 @@ class PosixTests {
     private int run(String script) throws IOException {
         File f = tempDir.resolve("t.sh").toFile();
         Files.writeString(f.toPath(), script);
-        return Main.runScript(f.getAbsolutePath());
+        return Main.runScript(f.getAbsolutePath(), List.of(f.getAbsolutePath()));
     }
 
     @Test void trueExitZero() throws IOException { assertEquals(0, run("true\n")); }

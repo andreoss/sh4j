@@ -33,16 +33,25 @@ public class Executor {
     private final Map<String, FunctionNode> functions;
     private int lastExitCode = 0;
     private String shellFlags = "";
+    private final List<String> positionalParams;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
         this.environment = new HashMap<>(System.getenv());
         this.functions = new HashMap<>();
+        this.positionalParams = new ArrayList<>(List.of("sh"));
     }
 
     public Executor(Map<String, String> environment) {
         this.environment = new HashMap<>(environment);
         this.functions = new HashMap<>();
+        this.positionalParams = new ArrayList<>(List.of("sh"));
+    }
+
+    public Executor(Map<String, String> environment, List<String> positionalParams) {
+        this.environment = new HashMap<>(environment);
+        this.functions = new HashMap<>();
+        this.positionalParams = new ArrayList<>(positionalParams);
     }
 
     public String getVariable(String name) {
@@ -272,10 +281,21 @@ public class Executor {
                 }
                 if (next == '{' && i + 2 < arg.length()) {
                     int close = arg.indexOf('}', i + 2);
-                    if (close == i + 3) {
-                        special = getSpecialParam(arg.charAt(i + 2));
-                        if (special != null) {
-                            expanded.append(special);
+                    if (close > i + 2) {
+                        String inner = arg.substring(i + 2, close);
+                        if (inner.length() == 1) {
+                            special = getSpecialParam(inner.charAt(0));
+                            if (special != null) {
+                                expanded.append(special);
+                                i = close + 1;
+                                continue;
+                            }
+                        }
+                        if (inner.chars().allMatch(Character::isDigit)) {
+                            int idx = Integer.parseInt(inner);
+                            if (idx < positionalParams.size()) {
+                                expanded.append(positionalParams.get(idx));
+                            }
                             i = close + 1;
                             continue;
                         }
@@ -302,7 +322,19 @@ public class Executor {
         return switch (c) {
             case '?' -> String.valueOf(lastExitCode);
             case '-' -> shellFlags;
-            default -> null;
+            case '#' -> String.valueOf(positionalParams.size() - 1);
+            case '@', '*' -> {
+                if (positionalParams.size() <= 1) yield "";
+                yield String.join(" ", positionalParams.subList(1, positionalParams.size()));
+            }
+            default -> {
+                if (c >= '0' && c <= '9') {
+                    int idx = c - '0';
+                    if (idx < positionalParams.size()) yield positionalParams.get(idx);
+                    yield "";
+                }
+                yield null;
+            }
         };
     }
 

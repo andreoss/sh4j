@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -611,5 +612,59 @@ class ExecutorTest {
         ListNode list = parser("false").parse();
         executor.execute(list);
         assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarHash() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "a", "b", "c"));
+        assertEquals("3", executor.expandVariables("$#", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarAt() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "a", "b", "c"));
+        assertEquals("a b c", executor.expandVariables("$@", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarStar() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "a", "b", "c"));
+        assertEquals("a b c", executor.expandVariables("$*", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarZero() {
+        Executor executor = new Executor(new HashMap<>(), List.of("my_script"));
+        assertEquals("my_script", executor.expandVariables("$0", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarOne() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "first", "second"));
+        assertEquals("first", executor.expandVariables("$1", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarNine() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i"));
+        assertEquals("i", executor.expandVariables("$9", new HashMap<>()));
+    }
+
+    @Test
+    void expandBracedMultiDigit() {
+        Executor executor = new Executor(new HashMap<>(), List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"));
+        assertEquals("j", executor.expandVariables("${10}", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarHashNone() {
+        Executor executor = new Executor();
+        assertEquals("0", executor.expandVariables("$#", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarAtEmpty() {
+        Executor executor = new Executor();
+        assertEquals("", executor.expandVariables("$@", new HashMap<>()));
     }
 }

@@ -5,11 +5,14 @@
 package io.github.andreoss.sh4j;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import io.github.andreoss.sh4j.executor.Executor;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
+import java.util.ArrayList;
+import java.util.List;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 
@@ -20,13 +23,32 @@ public class Main {
 
     static int exitCode(String[] args) {
         if (args.length > 0) {
-            return runScript(args[0]);
+            List<String> scriptArgs = new ArrayList<>();
+            scriptArgs.add(args[0]);
+            for (int i = 1; i < args.length; i++) {
+                scriptArgs.add(args[i]);
+            }
+            return runScript(args[0], scriptArgs);
         }
         return interactive();
     }
 
-    static int runScript(String filename) {
-        return 0;
+    static int runScript(String filename, List<String> scriptArgs) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append('\n');
+            }
+        } catch (IOException e) {
+            return 1;
+        }
+        CharReader charReader = new CharReader(content.toString());
+        Lexer lexer = new Lexer(charReader);
+        Parser parser = new Parser(lexer);
+        ListNode ast = parser.parse();
+        Executor executor = new Executor(System.getenv(), scriptArgs);
+        return executor.execute(ast);
     }
 
     static int interactive() {
