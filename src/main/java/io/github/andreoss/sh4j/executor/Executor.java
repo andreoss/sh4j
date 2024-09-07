@@ -33,6 +33,7 @@ public class Executor {
     private final Map<String, FunctionNode> functions;
     private int lastExitCode = 0;
     private String shellFlags = "";
+    private int lastBgPid = 0;
     private final List<String> positionalParams;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
@@ -322,6 +323,8 @@ public class Executor {
         return switch (c) {
             case '?' -> String.valueOf(lastExitCode);
             case '-' -> shellFlags;
+            case '$' -> String.valueOf(ProcessHandle.current().pid());
+            case '!' -> String.valueOf(lastBgPid);
             case '#' -> String.valueOf(positionalParams.size() - 1);
             case '@', '*' -> {
                 if (positionalParams.size() <= 1) yield "";

@@ -667,4 +667,25 @@ class ExecutorTest {
         Executor executor = new Executor();
         assertEquals("", executor.expandVariables("$@", new HashMap<>()));
     }
+
+    @Test
+    void expandDollarDollar() {
+        Executor executor = new Executor();
+        String pid = executor.expandVariables("$$", new HashMap<>());
+        assertNotNull(pid);
+        assertFalse(pid.isEmpty());
+        assertEquals(String.valueOf(ProcessHandle.current().pid()), pid);
+    }
+
+    @Test
+    void expandDollarBang() {
+        Executor executor = new Executor();
+        assertEquals("0", executor.expandVariables("$!", new HashMap<>()));
+    }
+
+    @Test
+    void expandDollarBangBraced() {
+        Executor executor = new Executor();
+        assertEquals("0", executor.expandVariables("${!}", new HashMap<>()));
+    }
 }
