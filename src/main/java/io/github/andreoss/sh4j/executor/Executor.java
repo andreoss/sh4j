@@ -61,7 +61,10 @@ public class Executor {
     private void setDefaults() {
         environment.putIfAbsent("IFS", " \t\n");
         environment.putIfAbsent("HOME", System.getProperty("user.home", "/root"));
-        environment.putIfAbsent("PATH", "/usr/local/bin:/usr/bin:/bin");
+        environment.putIfAbsent("PATH", System.getenv("PATH"));
+        if (environment.get("PATH") == null || environment.get("PATH").isEmpty()) {
+            environment.put("PATH", "/usr/local/bin:/usr/bin:/bin");
+        }
     }
 
     public String getVariable(String name) {
@@ -179,7 +182,9 @@ public class Executor {
 
         for (Node node : commands) {
             if (node instanceof SimpleCommand cmd) {
-                ProcessBuilder pb = createProcessBuilder(cmd, new HashMap<>(environment));
+                String resolved = resolveCommand(cmd.getName());
+                if (resolved == null) resolved = cmd.getName();
+                ProcessBuilder pb = createProcessBuilder(resolved, cmd, new HashMap<>(environment));
                 builders.add(pb);
             }
         }
@@ -222,7 +227,6 @@ public class Executor {
 
         String name = cmd.getName();
         if (name == null || name.isEmpty()) {
-            // For assignment-only commands, apply assignments to the executor's environment
             environment.putAll(cmdEnv);
             return 0;
         }
@@ -237,7 +241,12 @@ public class Executor {
             return executeNode(fn.getBody());
         }
 
-        ProcessBuilder pb = createProcessBuilder(cmd, cmdEnv);
+        String resolved = resolveCommand(name);
+        if (resolved == null) {
+            return 127;
+        }
+
+        ProcessBuilder pb = createProcessBuilder(resolved, cmd, cmdEnv);
         setupRedirections(pb, cmd.getRedirections());
 
         try {
@@ -358,9 +367,32 @@ public class Executor {
         return 126;
     }
 
-    private ProcessBuilder createProcessBuilder(SimpleCommand cmd, Map<String, String> env) {
+    private String resolveCommand(String name) {
+        if (name.contains("/")) {
+            return new File(name).isFile() ? name : null;
+        }
+        String path = environment.get("PATH");
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        String[] dirs = path.split(":", -1);
+        for (String dir : dirs) {
+            File f;
+            if (dir.isEmpty()) {
+                f = new File(name);
+            } else {
+                f = new File(dir, name);
+            }
+            if (f.isFile()) {
+                return f.getAbsolutePath();
+            }
+        }
+        return null;
+    }
+
+    private ProcessBuilder createProcessBuilder(String resolved, SimpleCommand cmd, Map<String, String> env) {
         List<String> command = new ArrayList<>();
-        command.add(cmd.getName());
+        command.add(resolved);
 
         for (String arg : cmd.getArguments()) {
             command.add(expandVariables(arg, env));

@@ -6,6 +6,9 @@ package io.github.andreoss.sh4j.executor;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -704,6 +707,7 @@ class ExecutorTest {
     @Test
     void defaultPathSet() {
         Map<String, String> env = new HashMap<>();
+        env.put("PATH", "");
         Executor executor = new Executor(env);
         assertEquals("/usr/local/bin:/usr/bin:/bin", executor.getVariable("PATH"));
     }
@@ -717,5 +721,46 @@ class ExecutorTest {
         assertEquals("/custom/home", executor.getVariable("HOME"));
         assertEquals("/custom/path", executor.getVariable("PATH"));
         assertEquals(" \t\n", executor.getVariable("IFS"));
+    }
+
+    @Test
+    void commandFoundInPath() {
+        Executor executor = new Executor();
+        ListNode list = parser("true").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void commandNotFoundReturns127() {
+        Executor executor = new Executor();
+        ListNode list = parser("nonexistent_cmd_xyz_127").parse();
+        assertEquals(127, executor.execute(list));
+    }
+
+    @Test
+    void commandWithSlashFound() {
+        Map<String, String> env = new HashMap<>();
+        Executor executor = new Executor(env);
+        ListNode list = parser("/user/.nix-profile/bin/ls").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void commandFoundInCustomPath() throws IOException {
+        File dir = new File("/tmp/sh4j_path_test_" + System.nanoTime());
+        dir.mkdirs();
+        dir.deleteOnExit();
+        File script = new File(dir, "mycmd");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("#!/bin/sh\nexit 42\n");
+        }
+        script.setExecutable(true);
+        Map<String, String> env = new HashMap<>();
+        env.put("PATH", dir.getAbsolutePath());
+        Executor executor = new Executor(env);
+        ListNode list = parser("mycmd").parse();
+        int exitCode = executor.execute(list);
+        dir.delete();
+        assertEquals(42, exitCode);
     }
 }
