@@ -41,18 +41,27 @@ public class Executor {
         this.environment = new HashMap<>(System.getenv());
         this.functions = new HashMap<>();
         this.positionalParams = new ArrayList<>(List.of("sh"));
+        setDefaults();
     }
 
     public Executor(Map<String, String> environment) {
         this.environment = new HashMap<>(environment);
         this.functions = new HashMap<>();
         this.positionalParams = new ArrayList<>(List.of("sh"));
+        setDefaults();
     }
 
     public Executor(Map<String, String> environment, List<String> positionalParams) {
         this.environment = new HashMap<>(environment);
         this.functions = new HashMap<>();
         this.positionalParams = new ArrayList<>(positionalParams);
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        environment.putIfAbsent("IFS", " \t\n");
+        environment.putIfAbsent("HOME", System.getProperty("user.home", "/root"));
+        environment.putIfAbsent("PATH", "/usr/local/bin:/usr/bin:/bin");
     }
 
     public String getVariable(String name) {

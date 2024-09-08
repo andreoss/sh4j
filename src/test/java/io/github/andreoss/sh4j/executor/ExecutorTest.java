@@ -688,4 +688,34 @@ class ExecutorTest {
         Executor executor = new Executor();
         assertEquals("0", executor.expandVariables("${!}", new HashMap<>()));
     }
+
+    @Test
+    void defaultIfsSet() {
+        Executor executor = new Executor();
+        assertEquals(" \t\n", executor.getVariable("IFS"));
+    }
+
+    @Test
+    void defaultHomeSet() {
+        Executor executor = new Executor();
+        assertEquals(System.getProperty("user.home"), executor.getVariable("HOME"));
+    }
+
+    @Test
+    void defaultPathSet() {
+        Map<String, String> env = new HashMap<>();
+        Executor executor = new Executor(env);
+        assertEquals("/usr/local/bin:/usr/bin:/bin", executor.getVariable("PATH"));
+    }
+
+    @Test
+    void defaultsDoNotOverrideExistingEnv() {
+        Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/custom/home");
+        env.put("PATH", "/custom/path");
+        Executor executor = new Executor(env);
+        assertEquals("/custom/home", executor.getVariable("HOME"));
+        assertEquals("/custom/path", executor.getVariable("PATH"));
+        assertEquals(" \t\n", executor.getVariable("IFS"));
+    }
 }

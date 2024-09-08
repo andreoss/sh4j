@@ -33,6 +33,10 @@ public class Main {
         return interactive();
     }
 
+    static int runScript(String filename) {
+        return runScript(filename, List.of(filename));
+    }
+
     static int runScript(String filename, List<String> scriptArgs) {
         StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
