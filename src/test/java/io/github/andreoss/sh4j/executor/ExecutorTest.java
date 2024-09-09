@@ -763,4 +763,39 @@ class ExecutorTest {
         dir.delete();
         assertEquals(42, exitCode);
     }
+
+    @Test
+    void commandNotFoundEmptyPath() {
+        Map<String, String> env = new HashMap<>();
+        env.put("PATH", "");
+        Executor executor = new Executor(env);
+        ListNode list = parser("somecmd").parse();
+        assertEquals(127, executor.execute(list));
+    }
+
+    @Test
+    void commandFoundInSecondPathDir() throws IOException {
+        File dir = new File("/tmp/sh4j_path_test2_" + System.nanoTime());
+        dir.mkdirs();
+        dir.deleteOnExit();
+        File script = new File(dir, "mycmd2");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("#!/bin/sh\nexit 7\n");
+        }
+        script.setExecutable(true);
+        Map<String, String> env = new HashMap<>();
+        env.put("PATH", "/nonexistent_test_dir_xyz:" + dir.getAbsolutePath());
+        Executor executor = new Executor(env);
+        ListNode list = parser("mycmd2").parse();
+        int exitCode = executor.execute(list);
+        dir.delete();
+        assertEquals(7, exitCode);
+    }
+
+    @Test
+    void commandWithSlashNotFound() {
+        Executor executor = new Executor();
+        ListNode list = parser("/nonexistent_path_xyz_abc/cmd").parse();
+        assertEquals(127, executor.execute(list));
+    }
 }
