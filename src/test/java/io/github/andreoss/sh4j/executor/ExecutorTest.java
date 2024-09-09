@@ -798,4 +798,27 @@ class ExecutorTest {
         ListNode list = parser("/nonexistent_path_xyz_abc/cmd").parse();
         assertEquals(127, executor.execute(list));
     }
+
+    @Test
+    void exportWithValue() {
+        ListNode list = parser("export FOO=bar").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+        assertEquals("bar", executor.getVariable("FOO"));
+    }
+
+    @Test
+    void exportExistingVariable() {
+        Executor executor = new Executor();
+        ListNode list = parser("export FOO").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void exportThenVariableExpands() {
+        Executor executor = new Executor();
+        ListNode list = parser("export MSG=hello; echo $MSG").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello", executor.getVariable("MSG"));
+    }
 }

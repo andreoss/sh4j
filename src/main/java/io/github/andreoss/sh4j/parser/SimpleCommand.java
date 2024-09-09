@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleCommand extends Node {
-    private String name;
+    private final String name;
     private final List<String> arguments = new ArrayList<>();
     private final List<Redirection> redirections = new ArrayList<>();
     private final List<String> assignments = new ArrayList<>();
@@ -19,10 +19,6 @@ public class SimpleCommand extends Node {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public List<String> getArguments() {

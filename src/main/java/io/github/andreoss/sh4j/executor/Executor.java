@@ -231,7 +231,7 @@ public class Executor {
             return 0;
         }
 
-        Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv);
+        Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv, cmd.getAssignments());
         if (builtinResult != null) {
             return builtinResult;
         }
@@ -260,7 +260,7 @@ public class Executor {
         }
     }
 
-    private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env) {
+    private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         if ("exit".equals(name)) {
             if (arguments.isEmpty()) {
                 return 0;
@@ -270,6 +270,25 @@ public class Executor {
             } catch (NumberFormatException e) {
                 return 1;
             }
+        }
+        if ("export".equals(name)) {
+            if (!assignments.isEmpty()) {
+                environment.putAll(env);
+            }
+            for (String arg : arguments) {
+                int eqIdx = arg.indexOf('=');
+                if (eqIdx >= 0) {
+                    environment.put(arg.substring(0, eqIdx), arg.substring(eqIdx + 1));
+                } else {
+                    environment.putIfAbsent(arg, "");
+                }
+            }
+            if (assignments.isEmpty() && arguments.isEmpty()) {
+                for (Map.Entry<String, String> e : environment.entrySet()) {
+                    System.out.println("export " + e.getKey() + "=" + e.getValue());
+                }
+            }
+            return 0;
         }
         return null;
     }

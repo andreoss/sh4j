@@ -300,4 +300,10 @@ class LexerTest {
         Lexer l = lexer("a\\");
         assertEquals("a\\", l.nextToken().text());
     }
+
+    @Test
+    void equalsAloneIsWord() {
+        Lexer l = lexer("=value");
+        assertEquals(TokenType.WORD, l.nextToken().type());
+    }
 }
