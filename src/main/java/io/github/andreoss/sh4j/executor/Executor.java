@@ -304,7 +304,25 @@ public class Executor {
         }
     }
 
+    static String expandTilde(String arg, Map<String, String> env) {
+        if (arg.isEmpty() || arg.charAt(0) != '~') {
+            return arg;
+        }
+        int slash = arg.indexOf('/');
+        String tildePart = slash >= 0 ? arg.substring(0, slash) : arg;
+        String rest = slash >= 0 ? arg.substring(slash) : "";
+
+        if ("~".equals(tildePart)) {
+            return env.getOrDefault("HOME", "/root") + rest;
+        }
+        if ("~+".equals(tildePart)) {
+            return env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
+        }
+        return arg;
+    }
+
     String expandVariables(String arg, Map<String, String> env) {
+        arg = expandTilde(arg, env);
         StringBuilder expanded = new StringBuilder();
         int i = 0;
         while (i < arg.length()) {

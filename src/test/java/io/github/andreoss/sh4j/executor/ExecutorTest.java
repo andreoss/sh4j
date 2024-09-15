@@ -693,6 +693,34 @@ class ExecutorTest {
     }
 
     @Test
+    void expandTildeToHome() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/home/testuser");
+        assertEquals("/home/testuser", Executor.expandTilde("~", env));
+    }
+
+    @Test
+    void expandTildeWithPath() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/home/testuser");
+        assertEquals("/home/testuser/file.txt", Executor.expandTilde("~/file.txt", env));
+    }
+
+    @Test
+    void expandTildePlus() {
+        Map<String, String> env = new HashMap<>();
+        env.put("PWD", "/current/dir");
+        assertEquals("/current/dir", Executor.expandTilde("~+", env));
+    }
+
+    @Test
+    void expandTildeNone() {
+        assertEquals("/foo/bar", Executor.expandTilde("/foo/bar", new HashMap<>()));
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));
