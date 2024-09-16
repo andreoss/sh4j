@@ -339,19 +339,9 @@ public class Executor {
                     int close = arg.indexOf('}', i + 2);
                     if (close > i + 2) {
                         String inner = arg.substring(i + 2, close);
-                        if (inner.length() == 1) {
-                            special = getSpecialParam(inner.charAt(0));
-                            if (special != null) {
-                                expanded.append(special);
-                                i = close + 1;
-                                continue;
-                            }
-                        }
-                        if (inner.chars().allMatch(Character::isDigit)) {
-                            int idx = Integer.parseInt(inner);
-                            if (idx < positionalParams.size()) {
-                                expanded.append(positionalParams.get(idx));
-                            }
+                        String replacement = expandBraced(inner, env);
+                        if (replacement != null) {
+                            expanded.append(replacement);
                             i = close + 1;
                             continue;
                         }
@@ -372,6 +362,110 @@ public class Executor {
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    private String lookupVar(String name, Map<String, String> env) {
+        if (name.length() == 1) {
+            String special = getSpecialParam(name.charAt(0));
+            if (special != null) return special;
+        }
+        if (name.chars().allMatch(Character::isDigit)) {
+            int idx = Integer.parseInt(name);
+            if (idx < positionalParams.size()) return positionalParams.get(idx);
+            return "";
+        }
+        return env.get(name);
+    }
+
+    private String expandBraced(String inner, Map<String, String> env) {
+        if (inner.isEmpty()) return null;
+        if (inner.charAt(0) == '#') {
+            String val = lookupVar(inner.substring(1), env);
+            return val != null ? String.valueOf(val.length()) : "0";
+        }
+        int nameEnd = 0;
+        char fc = inner.charAt(0);
+        if (isSpecialParamChar(fc) || fc == '_' || Character.isLetter(fc)) {
+            nameEnd = 1;
+            if (!isSpecialParamChar(fc)) {
+                while (nameEnd < inner.length() && (Character.isLetterOrDigit(inner.charAt(nameEnd)) || inner.charAt(nameEnd) == '_')) {
+                    nameEnd++;
+                }
+            }
+        } else if (Character.isDigit(fc)) {
+            while (nameEnd < inner.length() && Character.isDigit(inner.charAt(nameEnd))) {
+                nameEnd++;
+            }
+        }
+        if (nameEnd == 0) return null;
+        String varName = inner.substring(0, nameEnd);
+        String rest = inner.substring(nameEnd);
+        String varValue = lookupVar(varName, env);
+
+        if (rest.isEmpty()) {
+            return varValue != null ? varValue : "";
+        }
+        if (rest.startsWith(":-")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) return expandVariables(word, env);
+            return varValue;
+        }
+        if (rest.startsWith("-")) {
+            String word = rest.substring(1);
+            if (varValue == null) return expandVariables(word, env);
+            return varValue;
+        }
+        if (rest.startsWith(":=")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) {
+                String expanded = expandVariables(word, env);
+                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
+                    env.put(varName, expanded);
+                }
+                return expanded;
+            }
+            return varValue;
+        }
+        if (rest.startsWith("=")) {
+            String word = rest.substring(1);
+            if (varValue == null) {
+                String expanded = expandVariables(word, env);
+                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
+                    env.put(varName, expanded);
+                }
+                return expanded;
+            }
+            return varValue;
+        }
+        if (rest.startsWith(":+")) {
+            String word = rest.substring(2);
+            if (varValue != null && !varValue.isEmpty()) return expandVariables(word, env);
+            return "";
+        }
+        if (rest.startsWith("+")) {
+            String word = rest.substring(1);
+            if (varValue != null) return expandVariables(word, env);
+            return "";
+        }
+        if (rest.startsWith(":?")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) {
+                throw new RuntimeException("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
+            }
+            return varValue;
+        }
+        if (rest.startsWith("?")) {
+            String word = rest.substring(1);
+            if (varValue == null) {
+                throw new RuntimeException("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
+            }
+            return varValue;
+        }
+        return null;
+    }
+
+    private static boolean isSpecialParamChar(char c) {
+        return c == '?' || c == '-' || c == '$' || c == '!' || c == '@' || c == '*';
     }
 
     private String getSpecialParam(char c) {

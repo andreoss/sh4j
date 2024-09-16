@@ -721,6 +721,67 @@ class ExecutorTest {
     }
 
     @Test
+    void expandVarDefault() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("default", executor.expandVariables("${var:-default}", env));
+    }
+
+    @Test
+    void expandVarDefaultSet() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "actual");
+        assertEquals("actual", executor.expandVariables("${var:-default}", env));
+    }
+
+    @Test
+    void expandVarDefaultEmpty() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "");
+        assertEquals("default", executor.expandVariables("${var:-default}", env));
+    }
+
+    @Test
+    void expandVarAssignDefault() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("assigned", executor.expandVariables("${var:=assigned}", env));
+        assertEquals("assigned", env.get("var"));
+    }
+
+    @Test
+    void expandVarAlternate() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "x");
+        assertEquals("alt", executor.expandVariables("${var:+alt}", env));
+    }
+
+    @Test
+    void expandVarAlternateUnset() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("${var:+alt}", env));
+    }
+
+    @Test
+    void expandVarLength() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "hello");
+        assertEquals("5", executor.expandVariables("${#var}", env));
+    }
+
+    @Test
+    void expandVarLengthUnset() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("0", executor.expandVariables("${#var}", env));
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));
