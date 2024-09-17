@@ -782,6 +782,46 @@ class ExecutorTest {
     }
 
     @Test
+    void expandVarSuffixShort() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "file.txt");
+        assertEquals("file", executor.expandVariables("${var%.*}", env));
+    }
+
+    @Test
+    void expandVarSuffixLong() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "a.b.c.txt");
+        assertEquals("a", executor.expandVariables("${var%%.*}", env));
+    }
+
+    @Test
+    void expandVarPrefixShort() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "foo/bar/baz");
+        assertEquals("bar/baz", executor.expandVariables("${var#*/}", env));
+    }
+
+    @Test
+    void expandVarPrefixLong() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "foo/bar/baz");
+        assertEquals("baz", executor.expandVariables("${var##*/}", env));
+    }
+
+    @Test
+    void expandVarPatternNoMatch() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "hello");
+        assertEquals("hello", executor.expandVariables("${var%x}", env));
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));

@@ -461,6 +461,41 @@ public class Executor {
             }
             return varValue;
         }
+        if (varValue == null) return "";
+        if (rest.startsWith("##")) {
+            String pattern = rest.substring(2);
+            int longest = -1;
+            for (int i = 0; i <= varValue.length(); i++) {
+                String prefix = varValue.substring(0, i);
+                if (globMatches(pattern, prefix)) longest = i;
+            }
+            return longest >= 0 ? varValue.substring(longest) : varValue;
+        }
+        if (rest.startsWith("#")) {
+            String pattern = rest.substring(1);
+            for (int i = 0; i <= varValue.length(); i++) {
+                String prefix = varValue.substring(0, i);
+                if (globMatches(pattern, prefix)) return varValue.substring(i);
+            }
+            return varValue;
+        }
+        if (rest.startsWith("%%")) {
+            String pattern = rest.substring(2);
+            int longest = -1;
+            for (int i = 0; i <= varValue.length(); i++) {
+                String suffix = varValue.substring(varValue.length() - i);
+                if (globMatches(pattern, suffix)) longest = i;
+            }
+            return longest >= 0 ? varValue.substring(0, varValue.length() - longest) : varValue;
+        }
+        if (rest.startsWith("%")) {
+            String pattern = rest.substring(1);
+            for (int i = 0; i <= varValue.length(); i++) {
+                String suffix = varValue.substring(varValue.length() - i);
+                if (globMatches(pattern, suffix)) return varValue.substring(0, varValue.length() - i);
+            }
+            return varValue;
+        }
         return null;
     }
 
@@ -576,6 +611,10 @@ public class Executor {
     }
 
     private boolean matchGlob(String pattern, String word) {
+        return globMatches(pattern, word);
+    }
+
+    private boolean globMatches(String pattern, String s) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < pattern.length(); i++) {
             char c = pattern.charAt(i);
@@ -598,7 +637,7 @@ public class Executor {
                 sb.append(c);
             }
         }
-        return word.matches(sb.toString());
+        return s.matches(sb.toString());
     }
 
     private static File heredocFile(String content) {
