@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -14,8 +15,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.github.andreoss.sh4j.lexer.CharReader;
+import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
+import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
@@ -35,6 +39,7 @@ public class Executor {
     private String shellFlags = "";
     private int lastBgPid = 0;
     private final List<String> positionalParams;
+    private ByteArrayOutputStream captureStream;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
@@ -69,6 +74,24 @@ public class Executor {
 
     public String getVariable(String name) {
         return environment.get(name);
+    }
+
+    public void setCaptureStream(ByteArrayOutputStream stream) {
+        this.captureStream = stream;
+    }
+
+    private String executeCommandSubstitution(String cmdText) {
+        CharReader reader = new CharReader(cmdText);
+        Lexer lexer = new Lexer(reader);
+        Parser parser = new Parser(lexer);
+        ListNode ast = parser.parse();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Executor sub = new Executor(new HashMap<>(environment), new ArrayList<>(positionalParams));
+        sub.setCaptureStream(baos);
+        sub.execute(ast);
+        String out = baos.toString();
+        if (out.endsWith("\n")) out = out.substring(0, out.length() - 1);
+        return out;
     }
 
     public int execute(ListNode list) {
@@ -248,9 +271,17 @@ public class Executor {
 
         ProcessBuilder pb = createProcessBuilder(resolved, cmd, cmdEnv);
         setupRedirections(pb, cmd.getRedirections());
+        if (captureStream != null) {
+            pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        }
 
         try {
             Process process = pb.start();
+            if (captureStream != null) {
+                try (var is = process.getInputStream()) {
+                    is.transferTo(captureStream);
+                }
+            }
             int exitCode = process.waitFor();
             return exitCode;
         } catch (IOException e) {
@@ -334,6 +365,22 @@ public class Executor {
                     expanded.append(special);
                     i += 2;
                     continue;
+                }
+                if (next == '(') {
+                    int depth = 1;
+                    int j = i + 2;
+                    while (j < arg.length() && depth > 0) {
+                        char nc = arg.charAt(j);
+                        if (nc == '(') depth++;
+                        else if (nc == ')') depth--;
+                        j++;
+                    }
+                    if (depth == 0) {
+                        String cmdText = arg.substring(i + 2, j - 1);
+                        expanded.append(executeCommandSubstitution(cmdText));
+                        i = j;
+                        continue;
+                    }
                 }
                 if (next == '{' && i + 2 < arg.length()) {
                     int close = arg.indexOf('}', i + 2);

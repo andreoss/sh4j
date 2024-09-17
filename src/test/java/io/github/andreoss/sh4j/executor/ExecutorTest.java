@@ -822,6 +822,22 @@ class ExecutorTest {
     }
 
     @Test
+    void commandSubstitutionEcho() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        String result = executor.expandVariables("$(echo hello)", env);
+        assertEquals("hello", result);
+    }
+
+    @Test
+    void commandSubstitutionInString() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        String result = executor.expandVariables("msg=$(echo hi)", env);
+        assertEquals("msg=hi", result);
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));
