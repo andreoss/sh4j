@@ -838,6 +838,35 @@ class ExecutorTest {
     }
 
     @Test
+    void arithmeticSimple() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("7", executor.expandVariables("$((3 + 4))", env));
+    }
+
+    @Test
+    void arithmeticMul() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("15", executor.expandVariables("$((3 * 5))", env));
+    }
+
+    @Test
+    void arithmeticVar() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("15", executor.expandVariables("$((x + 5))", env));
+    }
+
+    @Test
+    void arithmeticNested() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("14", executor.expandVariables("$((2 * (3 + 4)))", env));
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));

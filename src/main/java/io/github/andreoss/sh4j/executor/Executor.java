@@ -94,6 +94,80 @@ public class Executor {
         return out;
     }
 
+    private String evalArithmetic(String expr, Map<String, String> env) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < expr.length()) {
+            char c = expr.charAt(i);
+            if (Character.isLetter(c) || c == '_') {
+                int j = i;
+                while (j < expr.length() && (Character.isLetterOrDigit(expr.charAt(j)) || expr.charAt(j) == '_')) j++;
+                String name = expr.substring(i, j);
+                String val = env.getOrDefault(name, "0");
+                sb.append(val);
+                i = j;
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        String expanded = sb.toString().trim();
+        return String.valueOf(parseArithmetic(expanded, new int[]{0}));
+    }
+
+    private int parseArithmetic(String s, int[] pos) {
+        int value = parseTerm(s, pos);
+        while (pos[0] < s.length()) {
+            skipWs(s, pos);
+            if (pos[0] >= s.length()) break;
+            char c = s.charAt(pos[0]);
+            if (c == '+') { pos[0]++; value += parseTerm(s, pos); }
+            else if (c == '-') { pos[0]++; value -= parseTerm(s, pos); }
+            else break;
+        }
+        return value;
+    }
+
+    private int parseTerm(String s, int[] pos) {
+        int value = parseFactor(s, pos);
+        while (pos[0] < s.length()) {
+            skipWs(s, pos);
+            if (pos[0] >= s.length()) break;
+            char c = s.charAt(pos[0]);
+            if (c == '*') { pos[0]++; value *= parseFactor(s, pos); }
+            else if (c == '/') { pos[0]++; int d = parseFactor(s, pos); value = d != 0 ? value / d : 0; }
+            else if (c == '%') { pos[0]++; int d = parseFactor(s, pos); value = d != 0 ? value % d : 0; }
+            else break;
+        }
+        return value;
+    }
+
+    private int parseFactor(String s, int[] pos) {
+        skipWs(s, pos);
+        if (pos[0] >= s.length()) return 0;
+        char c = s.charAt(pos[0]);
+        if (c == '(') {
+            pos[0]++;
+            int v = parseArithmetic(s, pos);
+            skipWs(s, pos);
+            if (pos[0] < s.length() && s.charAt(pos[0]) == ')') pos[0]++;
+            return v;
+        }
+        if (c == '+') { pos[0]++; return parseFactor(s, pos); }
+        if (c == '-') { pos[0]++; return -parseFactor(s, pos); }
+        int sign = 1;
+        int num = 0;
+        while (pos[0] < s.length() && Character.isDigit(s.charAt(pos[0]))) {
+            num = num * 10 + (s.charAt(pos[0]) - '0');
+            pos[0]++;
+        }
+        return sign * num;
+    }
+
+    private void skipWs(String s, int[] pos) {
+        while (pos[0] < s.length() && Character.isWhitespace(s.charAt(pos[0]))) pos[0]++;
+    }
+
     public int execute(ListNode list) {
         if (list.getPipelines().isEmpty()) {
             return 0;
@@ -367,19 +441,36 @@ public class Executor {
                     continue;
                 }
                 if (next == '(') {
-                    int depth = 1;
-                    int j = i + 2;
-                    while (j < arg.length() && depth > 0) {
-                        char nc = arg.charAt(j);
-                        if (nc == '(') depth++;
-                        else if (nc == ')') depth--;
-                        j++;
-                    }
-                    if (depth == 0) {
-                        String cmdText = arg.substring(i + 2, j - 1);
-                        expanded.append(executeCommandSubstitution(cmdText));
-                        i = j;
-                        continue;
+                    if (i + 2 < arg.length() && arg.charAt(i + 2) == '(') {
+                        int depth = 2;
+                        int j = i + 3;
+                        while (j < arg.length() && depth > 0) {
+                            char nc = arg.charAt(j);
+                            if (nc == '(') depth++;
+                            else if (nc == ')') depth--;
+                            j++;
+                        }
+                        if (depth == 0) {
+                            String expr = arg.substring(i + 3, j - 2);
+                            expanded.append(evalArithmetic(expr, env));
+                            i = j;
+                            continue;
+                        }
+                    } else {
+                        int depth = 1;
+                        int j = i + 2;
+                        while (j < arg.length() && depth > 0) {
+                            char nc = arg.charAt(j);
+                            if (nc == '(') depth++;
+                            else if (nc == ')') depth--;
+                            j++;
+                        }
+                        if (depth == 0) {
+                            String cmdText = arg.substring(i + 2, j - 1);
+                            expanded.append(executeCommandSubstitution(cmdText));
+                            i = j;
+                            continue;
+                        }
                     }
                 }
                 if (next == '{' && i + 2 < arg.length()) {
