@@ -6,8 +6,10 @@ package io.github.andreoss.sh4j.executor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +42,7 @@ public class Executor {
     private int lastBgPid = 0;
     private final List<String> positionalParams;
     private ByteArrayOutputStream captureStream;
+    private PrintStream out = System.out;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
@@ -78,6 +81,11 @@ public class Executor {
 
     public void setCaptureStream(ByteArrayOutputStream stream) {
         this.captureStream = stream;
+        this.out = new PrintStream(stream, true);
+    }
+
+    public void setOutputStream(PrintStream out) {
+        this.out = out;
     }
 
     private String executeCommandSubstitution(String cmdText) {
@@ -328,7 +336,12 @@ public class Executor {
             return 0;
         }
 
+        PrintStream savedOut = redirectOutputForBuiltin(cmd.getRedirections());
         Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv, cmd.getAssignments());
+        if (savedOut != null) {
+            out.close();
+            out = savedOut;
+        }
         if (builtinResult != null) {
             return builtinResult;
         }
@@ -365,6 +378,37 @@ public class Executor {
         }
     }
 
+    private PrintStream redirectOutputForBuiltin(List<Redirection> redirs) {
+        for (Redirection r : redirs) {
+            RedirectionType t = r.getType();
+            int fd = r.getFd();
+            if (t == RedirectionType.OUTPUT || t == RedirectionType.CLOBBER) {
+                if (fd == 1) {
+                    try {
+                        PrintStream fileOut = new PrintStream(new File(r.getTarget()));
+                        PrintStream saved = out;
+                        out = fileOut;
+                        return saved;
+                    } catch (IOException e) {
+                        return null;
+                    }
+                }
+            } else if (t == RedirectionType.APPEND) {
+                if (fd == 1) {
+                    try {
+                        PrintStream fileOut = new PrintStream(new FileOutputStream(r.getTarget(), true));
+                        PrintStream saved = out;
+                        out = fileOut;
+                        return saved;
+                    } catch (IOException e) {
+                        return null;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         if ("exit".equals(name)) {
             if (arguments.isEmpty()) {
@@ -390,9 +434,23 @@ public class Executor {
             }
             if (assignments.isEmpty() && arguments.isEmpty()) {
                 for (Map.Entry<String, String> e : environment.entrySet()) {
-                    System.out.println("export " + e.getKey() + "=" + e.getValue());
+                    out.println("export " + e.getKey() + "=" + e.getValue());
                 }
             }
+            return 0;
+        }
+        if ("echo".equals(name)) {
+            boolean newline = true;
+            int start = 0;
+            if (!arguments.isEmpty() && "-n".equals(arguments.get(0))) {
+                newline = false;
+                start = 1;
+            }
+            for (int i = start; i < arguments.size(); i++) {
+                if (i > start) out.print(" ");
+                out.print(expandVariables(arguments.get(i), env));
+            }
+            if (newline) out.println();
             return 0;
         }
         return null;

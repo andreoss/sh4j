@@ -838,6 +838,34 @@ class ExecutorTest {
     }
 
     @Test
+    void echoBuiltin() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo hello").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoBuiltinArgs() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo hello world").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoBuiltinNoNewline() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo -n hello").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoBuiltinEmpty() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void arithmeticSimple() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
