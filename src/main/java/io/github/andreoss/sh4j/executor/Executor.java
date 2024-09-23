@@ -484,8 +484,78 @@ public class Executor {
         return arg;
     }
 
+    static String normaliseBackticks(String arg) {
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+        while (i < arg.length()) {
+            char c = arg.charAt(i);
+            if (c == '$' && i + 1 < arg.length()) {
+                char next = arg.charAt(i + 1);
+                if (next == '(') {
+                    int depth = 1;
+                    int j = i + 2;
+                    while (j < arg.length() && depth > 0) {
+                        char nc = arg.charAt(j);
+                        if (nc == '(') depth++;
+                        else if (nc == ')') depth--;
+                        j++;
+                    }
+                    result.append(arg, i, j);
+                    i = j;
+                    continue;
+                } else if (next == '{') {
+                    int j = arg.indexOf('}', i + 2);
+                    if (j > i + 2) {
+                        result.append(arg, i, j + 1);
+                        i = j + 1;
+                        continue;
+                    }
+                }
+            }
+            if (c == '`') {
+                int j = i + 1;
+                StringBuilder content = new StringBuilder();
+                boolean found = false;
+                while (j < arg.length()) {
+                    char nc = arg.charAt(j);
+                    if (nc == '\\' && j + 1 < arg.length()) {
+                        char nextc = arg.charAt(j + 1);
+                        if (nextc == '`' || nextc == '$' || nextc == '\\') {
+                            content.append(nextc);
+                            j += 2;
+                        } else {
+                            content.append(nc);
+                            content.append(nextc);
+                            j += 2;
+                        }
+                    } else if (nc == '`') {
+                        result.append("$(");
+                        result.append(content);
+                        result.append(')');
+                        j++;
+                        found = true;
+                        break;
+                    } else {
+                        content.append(nc);
+                        j++;
+                    }
+                }
+                if (!found) {
+                    result.append('`');
+                    result.append(content);
+                }
+                i = j;
+                continue;
+            }
+            result.append(c);
+            i++;
+        }
+        return result.toString();
+    }
+
     String expandVariables(String arg, Map<String, String> env) {
         arg = expandTilde(arg, env);
+        arg = normaliseBackticks(arg);
         StringBuilder expanded = new StringBuilder();
         int i = 0;
         while (i < arg.length()) {
@@ -834,6 +904,46 @@ public class Executor {
             }
         }
         return s.matches(sb.toString());
+    }
+
+    static List<String> splitFields(String value, String ifs) {
+        if (ifs == null || ifs.isEmpty()) {
+            return List.of(value);
+        }
+        String wsChars = "";
+        String nwsChars = "";
+        for (int i = 0; i < ifs.length(); i++) {
+            char c = ifs.charAt(i);
+            if (c == ' ' || c == '\t' || c == '\n') wsChars += c;
+            else nwsChars += c;
+        }
+        List<String> result = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean inField = false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (nwsChars.indexOf(c) >= 0) {
+                result.add(field.toString());
+                field = new StringBuilder();
+                inField = false;
+            } else if (wsChars.indexOf(c) >= 0) {
+                if (inField) {
+                    result.add(field.toString());
+                    field = new StringBuilder();
+                    inField = false;
+                }
+            } else {
+                field.append(c);
+                inField = true;
+            }
+        }
+        if (inField) {
+            result.add(field.toString());
+        } else if (!nwsChars.isEmpty() && value.length() > 0
+                && nwsChars.indexOf(value.charAt(value.length() - 1)) >= 0) {
+            result.add(field.toString());
+        }
+        return result;
     }
 
     private static File heredocFile(String content) {

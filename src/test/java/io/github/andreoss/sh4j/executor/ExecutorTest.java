@@ -838,6 +838,73 @@ class ExecutorTest {
     }
 
     @Test
+    void backtickSubstitution() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        String result = executor.expandVariables("`echo hello`", env);
+        assertEquals("hello", result);
+    }
+
+    @Test
+    void backtickSubstitutionInString() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        String result = executor.expandVariables("msg=`echo hi`", env);
+        assertEquals("msg=hi", result);
+    }
+
+    @Test
+    void normaliseBackticksSimple() {
+        assertEquals("$(echo hello)", Executor.normaliseBackticks("`echo hello`"));
+    }
+
+    @Test
+    void normaliseBackticksNoChange() {
+        assertEquals("hello world", Executor.normaliseBackticks("hello world"));
+    }
+
+    @Test
+    void normaliseBackticksSkipsDollarParen() {
+        assertEquals("$(echo hi)", Executor.normaliseBackticks("$(echo hi)"));
+    }
+
+    @Test
+    void normaliseBackticksEscaped() {
+        assertEquals("$(echo `hi`)", Executor.normaliseBackticks("`echo \\`hi\\``"));
+    }
+
+    @Test
+    void normaliseBackticksDollarEscape() {
+        assertEquals("$(echo $PATH)", Executor.normaliseBackticks("`echo \\$PATH`"));
+    }
+
+    @Test
+    void normaliseBackticksBackslashEscape() {
+        assertEquals("$(echo a\\b)", Executor.normaliseBackticks("`echo a\\\\b`"));
+    }
+
+    @Test
+    void normaliseBackticksNonSpecialEscape() {
+        assertEquals("$(echo \\n)", Executor.normaliseBackticks("`echo \\\\n`"));
+    }
+
+    @Test
+    void normaliseBackticksUnclosed() {
+        assertEquals("`echo hello", Executor.normaliseBackticks("`echo hello"));
+    }
+
+    @Test
+    void normaliseBackticksSkipsDollarBrace() {
+        assertEquals("${var:-default}", Executor.normaliseBackticks("${var:-default}"));
+    }
+
+    @Test
+    void backtickNestedNormalise() {
+        String result = Executor.normaliseBackticks("`echo \\`echo hi\\``");
+        assertEquals("$(echo `echo hi`)", result);
+    }
+
+    @Test
     void echoBuiltin() {
         Executor executor = new Executor();
         ListNode list = parser("echo hello").parse();
@@ -1022,5 +1089,80 @@ class ExecutorTest {
         ListNode list = parser("export MSG=hello; echo $MSG").parse();
         assertEquals(0, executor.execute(list));
         assertEquals("hello", executor.getVariable("MSG"));
+    }
+
+    @Test
+    void splitFieldsDefaultIfs() {
+        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a b c", " \t\n"));
+    }
+
+    @Test
+    void splitFieldsMultipleWs() {
+        assertEquals(List.of("a", "b"), Executor.splitFields("a   b", " \t\n"));
+    }
+
+    @Test
+    void splitFieldsLeadingWs() {
+        assertEquals(List.of("a", "b"), Executor.splitFields("  a b", " \t\n"));
+    }
+
+    @Test
+    void splitFieldsTrailingWs() {
+        assertEquals(List.of("a", "b"), Executor.splitFields("a b  ", " \t\n"));
+    }
+
+    @Test
+    void splitFieldsColon() {
+        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a:b:c", ":"));
+    }
+
+    @Test
+    void splitFieldsEmptyBetweenColons() {
+        assertEquals(List.of("a", "", "b"), Executor.splitFields("a::b", ":"));
+    }
+
+    @Test
+    void splitFieldsOnlyColons() {
+        assertEquals(List.of("", ""), Executor.splitFields(":", ":"));
+    }
+
+    @Test
+    void splitFieldsDoubleColon() {
+        assertEquals(List.of("", "", ""), Executor.splitFields("::", ":"));
+    }
+
+    @Test
+    void splitFieldsNoDelim() {
+        assertEquals(List.of("hello"), Executor.splitFields("hello", ":"));
+    }
+
+    @Test
+    void splitFieldsEmptyIfs() {
+        assertEquals(List.of("hello world"), Executor.splitFields("hello world", ""));
+    }
+
+    @Test
+    void splitFieldsNullIfs() {
+        assertEquals(List.of("hello"), Executor.splitFields("hello", null));
+    }
+
+    @Test
+    void splitFieldsEmptyValue() {
+        assertEquals(List.of(), Executor.splitFields("", " \t\n"));
+    }
+
+    @Test
+    void splitFieldsMixedWsNws() {
+        assertEquals(List.of("a", "", "b"), Executor.splitFields("a :b", " :"));
+    }
+
+    @Test
+    void splitFieldsTrailingColon() {
+        assertEquals(List.of("a", ""), Executor.splitFields("a:", ":"));
+    }
+
+    @Test
+    void splitFieldsCustomNws() {
+        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a,b,c", ","));
     }
 }
