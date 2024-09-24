@@ -446,9 +446,16 @@ public class Executor {
                 newline = false;
                 start = 1;
             }
+            boolean firstField = true;
             for (int i = start; i < arguments.size(); i++) {
-                if (i > start) out.print(" ");
-                out.print(expandVariables(arguments.get(i), env));
+                String expanded = expandVariables(arguments.get(i), env);
+                String ifsVal = env.getOrDefault("IFS", " \t\n");
+                List<String> fields = splitFields(expanded, ifsVal);
+                for (String field : fields) {
+                    if (!firstField) out.print(" ");
+                    out.print(field);
+                    firstField = false;
+                }
             }
             if (newline) out.println();
             return 0;
@@ -827,7 +834,9 @@ public class Executor {
         command.add(resolved);
 
         for (String arg : cmd.getArguments()) {
-            command.add(expandVariables(arg, env));
+            String expanded = expandVariables(arg, env);
+            String ifsVal = env.getOrDefault("IFS", " \t\n");
+            command.addAll(splitFields(expanded, ifsVal));
         }
 
         ProcessBuilder pb = new ProcessBuilder(command);
