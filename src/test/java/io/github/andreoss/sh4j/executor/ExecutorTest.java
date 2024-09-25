@@ -1165,4 +1165,60 @@ class ExecutorTest {
     void splitFieldsCustomNws() {
         assertEquals(List.of("a", "b", "c"), Executor.splitFields("a,b,c", ","));
     }
+
+    @Test
+    void isQuotedDoubleQuotes() {
+        assertTrue(Executor.isQuoted("\"hello\""));
+    }
+
+    @Test
+    void isQuotedSingleQuotes() {
+        assertTrue(Executor.isQuoted("'hello'"));
+    }
+
+    @Test
+    void isQuotedNoQuotes() {
+        assertFalse(Executor.isQuoted("hello"));
+    }
+
+    @Test
+    void isQuotedPartial() {
+        assertFalse(Executor.isQuoted("a\"b\"c"));
+    }
+
+    @Test
+    void stripQuotesDouble() {
+        assertEquals("hello", Executor.stripQuotes("\"hello\""));
+    }
+
+    @Test
+    void stripQuotesSingle() {
+        assertEquals("hello", Executor.stripQuotes("'hello'"));
+    }
+
+    @Test
+    void stripQuotesNone() {
+        assertEquals("hello", Executor.stripQuotes("hello"));
+    }
+
+    @Test
+    void echoQuotedVarNoSplit() {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("MSG=\"hello  world\"; echo \"$MSG\"").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoUnquotedVarSplit() {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("MSG=\"hello  world\"; echo $MSG").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoQuotedLiteralNoSplit() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo \"hello   world\"").parse();
+        assertEquals(0, executor.execute(list));
+    }
 }

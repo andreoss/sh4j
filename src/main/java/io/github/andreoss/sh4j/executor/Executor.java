@@ -448,13 +448,20 @@ public class Executor {
             }
             boolean firstField = true;
             for (int i = start; i < arguments.size(); i++) {
-                String expanded = expandVariables(arguments.get(i), env);
-                String ifsVal = env.getOrDefault("IFS", " \t\n");
-                List<String> fields = splitFields(expanded, ifsVal);
-                for (String field : fields) {
+                String arg = arguments.get(i);
+                String expanded = expandVariables(arg, env);
+                if (isQuoted(arg)) {
                     if (!firstField) out.print(" ");
-                    out.print(field);
+                    out.print(stripQuotes(expanded));
                     firstField = false;
+                } else {
+                    String ifsVal = env.getOrDefault("IFS", " \t\n");
+                    List<String> fields = splitFields(expanded, ifsVal);
+                    for (String field : fields) {
+                        if (!firstField) out.print(" ");
+                        out.print(field);
+                        firstField = false;
+                    }
                 }
             }
             if (newline) out.println();
@@ -835,8 +842,12 @@ public class Executor {
 
         for (String arg : cmd.getArguments()) {
             String expanded = expandVariables(arg, env);
-            String ifsVal = env.getOrDefault("IFS", " \t\n");
-            command.addAll(splitFields(expanded, ifsVal));
+            if (isQuoted(arg)) {
+                command.add(stripQuotes(expanded));
+            } else {
+                String ifsVal = env.getOrDefault("IFS", " \t\n");
+                command.addAll(splitFields(expanded, ifsVal));
+            }
         }
 
         ProcessBuilder pb = new ProcessBuilder(command);
@@ -953,6 +964,18 @@ public class Executor {
             result.add(field.toString());
         }
         return result;
+    }
+
+    static boolean isQuoted(String arg) {
+        if (arg == null || arg.length() < 2) return false;
+        char first = arg.charAt(0);
+        char last = arg.charAt(arg.length() - 1);
+        return (first == '"' && last == '"') || (first == '\'' && last == '\'');
+    }
+
+    static String stripQuotes(String arg) {
+        if (isQuoted(arg)) return arg.substring(1, arg.length() - 1);
+        return arg;
     }
 
     private static File heredocFile(String content) {
