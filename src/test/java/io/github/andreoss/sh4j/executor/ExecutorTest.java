@@ -1221,4 +1221,32 @@ class ExecutorTest {
         ListNode list = parser("echo \"hello   world\"").parse();
         assertEquals(0, executor.execute(list));
     }
+
+    @Test
+    void echoCustomIfsColon() {
+        Map<String, String> env = new HashMap<>();
+        env.put("IFS", ":");
+        Executor executor = new Executor(env);
+        ListNode list = parser("echo a:b:c").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void echoEmptyIfsNoSplit() {
+        Map<String, String> env = new HashMap<>();
+        env.put("IFS", "");
+        Executor executor = new Executor(env);
+        ListNode list = parser("echo hello   world").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void splitFieldsTabIfs() {
+        assertEquals(List.of("a", "b"), Executor.splitFields("a\tb", "\t"));
+    }
+
+    @Test
+    void splitFieldsMixedIfs() {
+        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a:b c", ": "));
+    }
 }
