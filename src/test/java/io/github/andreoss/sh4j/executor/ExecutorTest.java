@@ -1202,6 +1202,57 @@ class ExecutorTest {
     }
 
     @Test
+    void removeQuotesNoop() {
+        assertEquals("hello", Executor.removeQuotes("hello"));
+    }
+
+    @Test
+    void removeQuotesDouble() {
+        assertEquals("hello world", Executor.removeQuotes("\"hello world\""));
+    }
+
+    @Test
+    void removeQuotesSingle() {
+        assertEquals("hello", Executor.removeQuotes("'hello'"));
+    }
+
+    @Test
+    void removeQuotesPartialDouble() {
+        assertEquals("foovaluebar", Executor.removeQuotes("foo\"value\"bar"));
+    }
+
+    @Test
+    void removeQuotesPartialSingle() {
+        assertEquals("helloworld", Executor.removeQuotes("hello'world'"));
+    }
+
+    @Test
+    void removeQuotesApostropheInsideDouble() {
+        assertEquals("it's", Executor.removeQuotes("\"it's\""));
+    }
+
+    @Test
+    void removeQuotesNestedQuotes() {
+        assertEquals("hello \"there\" world", Executor.removeQuotes("\"hello \\\"there\\\" world\""));
+    }
+
+    @Test
+    void removeQuotesBackslashOutside() {
+        assertEquals("hello world", Executor.removeQuotes("hello\\ world"));
+    }
+
+    @Test
+    void removeQuotesBackslashInDouble() {
+        assertEquals("hello\"world", Executor.removeQuotes("\"hello\\\"world\""));
+    }
+
+    @Test
+    void removeQuotesEmptyQuotes() {
+        assertEquals("", Executor.removeQuotes("\"\""));
+        assertEquals("", Executor.removeQuotes("''"));
+    }
+
+    @Test
     void echoQuotedVarNoSplit() {
         Executor executor = new Executor(new HashMap<>());
         ListNode list = parser("MSG=\"hello  world\"; echo \"$MSG\"").parse();

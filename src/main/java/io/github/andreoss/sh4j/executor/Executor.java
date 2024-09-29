@@ -456,7 +456,7 @@ public class Executor {
                 String expanded = expandVariables(arg, env);
                 if (isQuoted(arg)) {
                     if (!firstField) out.print(" ");
-                    out.print(stripQuotes(expanded));
+                    out.print(removeQuotes(expanded));
                     firstField = false;
                 } else {
                     String ifsVal = env.getOrDefault("IFS", " \t\n");
@@ -464,7 +464,7 @@ public class Executor {
                     fields = pathnameExpand(fields);
                     for (String field : fields) {
                         if (!firstField) out.print(" ");
-                        out.print(field);
+                        out.print(removeQuotes(field));
                         firstField = false;
                     }
                 }
@@ -848,10 +848,14 @@ public class Executor {
         for (String arg : cmd.getArguments()) {
             String expanded = expandVariables(arg, env);
             if (isQuoted(arg)) {
-                command.add(stripQuotes(expanded));
+                command.add(removeQuotes(expanded));
             } else {
                 String ifsVal = env.getOrDefault("IFS", " \t\n");
-                command.addAll(pathnameExpand(splitFields(expanded, ifsVal)));
+                List<String> fields = pathnameExpand(splitFields(expanded, ifsVal));
+                for (int i = 0; i < fields.size(); i++) {
+                    fields.set(i, removeQuotes(fields.get(i)));
+                }
+                command.addAll(fields);
             }
         }
 
@@ -981,6 +985,45 @@ public class Executor {
     static String stripQuotes(String arg) {
         if (isQuoted(arg)) return arg.substring(1, arg.length() - 1);
         return arg;
+    }
+
+    static String removeQuotes(String word) {
+        StringBuilder result = new StringBuilder();
+        boolean inSingle = false;
+        boolean inDouble = false;
+        for (int i = 0; i < word.length(); i++) {
+            char c = word.charAt(i);
+            if (inSingle) {
+                if (c == '\'') {
+                    inSingle = false;
+                } else {
+                    result.append(c);
+                }
+            } else if (inDouble) {
+                if (c == '"') {
+                    inDouble = false;
+                } else if (c == '\\' && i + 1 < word.length()
+                        && (word.charAt(i + 1) == '$' || word.charAt(i + 1) == '`'
+                        || word.charAt(i + 1) == '"' || word.charAt(i + 1) == '\\')) {
+                    result.append(word.charAt(i + 1));
+                    i++;
+                } else {
+                    result.append(c);
+                }
+            } else {
+                if (c == '\'') {
+                    inSingle = true;
+                } else if (c == '"') {
+                    inDouble = true;
+                } else if (c == '\\' && i + 1 < word.length()) {
+                    result.append(word.charAt(i + 1));
+                    i++;
+                } else {
+                    result.append(c);
+                }
+            }
+        }
+        return result.toString();
     }
 
     static List<String> pathnameExpand(List<String> fields) {
