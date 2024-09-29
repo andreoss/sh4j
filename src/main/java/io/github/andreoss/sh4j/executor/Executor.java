@@ -11,11 +11,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -457,6 +461,7 @@ public class Executor {
                 } else {
                     String ifsVal = env.getOrDefault("IFS", " \t\n");
                     List<String> fields = splitFields(expanded, ifsVal);
+                    fields = pathnameExpand(fields);
                     for (String field : fields) {
                         if (!firstField) out.print(" ");
                         out.print(field);
@@ -846,7 +851,7 @@ public class Executor {
                 command.add(stripQuotes(expanded));
             } else {
                 String ifsVal = env.getOrDefault("IFS", " \t\n");
-                command.addAll(splitFields(expanded, ifsVal));
+                command.addAll(pathnameExpand(splitFields(expanded, ifsVal)));
             }
         }
 
@@ -976,6 +981,42 @@ public class Executor {
     static String stripQuotes(String arg) {
         if (isQuoted(arg)) return arg.substring(1, arg.length() - 1);
         return arg;
+    }
+
+    static List<String> pathnameExpand(List<String> fields) {
+        List<String> result = new ArrayList<>();
+        for (String field : fields) {
+            if (containsGlobChars(field)) {
+                List<String> matches = globFiles(field);
+                if (matches.isEmpty()) {
+                    result.add(field);
+                } else {
+                    Collections.sort(matches);
+                    result.addAll(matches);
+                }
+            } else {
+                result.add(field);
+            }
+        }
+        return result;
+    }
+
+    static boolean containsGlobChars(String s) {
+        return s.indexOf('*') >= 0 || s.indexOf('?') >= 0 || s.indexOf('[') >= 0;
+    }
+
+    private static List<String> globFiles(String pattern) {
+        File cwd = new File(System.getProperty("user.dir"));
+        String[] files = cwd.list();
+        if (files == null) return List.of();
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+        List<String> matches = new ArrayList<>();
+        for (String f : files) {
+            if (matcher.matches(Paths.get(f))) {
+                matches.add(f);
+            }
+        }
+        return matches;
     }
 
     private static File heredocFile(String content) {

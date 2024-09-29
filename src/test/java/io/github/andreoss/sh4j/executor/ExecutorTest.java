@@ -1249,4 +1249,61 @@ class ExecutorTest {
     void splitFieldsMixedIfs() {
         assertEquals(List.of("a", "b", "c"), Executor.splitFields("a:b c", ": "));
     }
+
+    @Test
+    void containsGlobCharsStar() {
+        assertTrue(Executor.containsGlobChars("*.txt"));
+    }
+
+    @Test
+    void containsGlobCharsQuestion() {
+        assertTrue(Executor.containsGlobChars("file?"));
+    }
+
+    @Test
+    void containsGlobCharsBracket() {
+        assertTrue(Executor.containsGlobChars("[ab]"));
+    }
+
+    @Test
+    void containsGlobCharsNone() {
+        assertFalse(Executor.containsGlobChars("hello.txt"));
+    }
+
+    @Test
+    void pathnameExpandNoGlob() {
+        assertEquals(List.of("hello"), Executor.pathnameExpand(List.of("hello")));
+    }
+
+    @Test
+    void pathnameExpandGlobNoMatchKeepsPattern() {
+        List<String> result = Executor.pathnameExpand(List.of("__no_match__xyz__"));
+        assertEquals(List.of("__no_match__xyz__"), result);
+    }
+
+    @Test
+    void pathnameExpandGlobWithMatch() {
+        List<String> result = Executor.pathnameExpand(List.of("pom.xml"));
+        assertEquals(List.of("pom.xml"), result);
+    }
+
+    @Test
+    void pathnameExpandWildcardMatch() {
+        List<String> result = Executor.pathnameExpand(List.of("*.xml"));
+        assertTrue(result.contains("pom.xml"));
+    }
+
+    @Test
+    void pathnameExpandGlobQuoted() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo \"*.java\"").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void pathnameExpandGlobUnquoted() {
+        Executor executor = new Executor();
+        ListNode list = parser("echo *.java").parse();
+        assertEquals(0, executor.execute(list));
+    }
 }
