@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j.executor;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -1356,5 +1357,30 @@ class ExecutorTest {
         Executor executor = new Executor();
         ListNode list = parser("echo *.java").parse();
         assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void expandBracedColonQuestionUnset() {
+        Executor executor = new Executor(new HashMap<>());
+        assertEquals("", executor.expandVariables("${x:?my error}", new HashMap<>()));
+    }
+
+    @Test
+    void expandBracedQuestionUnset() {
+        Executor executor = new Executor(new HashMap<>());
+        assertEquals("", executor.expandVariables("${x?my error}", new HashMap<>()));
+    }
+
+    @Test
+    void expandBracedColonQuestionSet() {
+        Executor executor = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>(Map.of("x", "value"));
+        assertEquals("value", executor.expandVariables("${x:?not used}", env));
+    }
+
+    @Test
+    void expandBracedColonQuestionDefaultMsg() {
+        Executor executor = new Executor(new HashMap<>());
+        executor.expandVariables("${x:?}", new HashMap<>());
     }
 }

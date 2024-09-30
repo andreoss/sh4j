@@ -47,6 +47,7 @@ public class Executor {
     private final List<String> positionalParams;
     private ByteArrayOutputStream captureStream;
     private PrintStream out = System.out;
+    private boolean wordExpansionError = false;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public Executor() {
@@ -361,6 +362,10 @@ public class Executor {
         }
 
         ProcessBuilder pb = createProcessBuilder(resolved, cmd, cmdEnv);
+        if (wordExpansionError) {
+            wordExpansionError = false;
+            return 1;
+        }
         setupRedirections(pb, cmd.getRedirections());
         if (captureStream != null) {
             pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
@@ -419,7 +424,12 @@ public class Executor {
                 return 0;
             }
             try {
-                return Integer.parseInt(expandVariables(arguments.get(0), env));
+                int code = Integer.parseInt(expandVariables(arguments.get(0), env));
+                if (wordExpansionError) {
+                    wordExpansionError = false;
+                    return 1;
+                }
+                return code;
             } catch (NumberFormatException e) {
                 return 1;
             }
@@ -470,6 +480,10 @@ public class Executor {
                 }
             }
             if (newline) out.println();
+            if (wordExpansionError) {
+                wordExpansionError = false;
+                return 1;
+            }
             return 0;
         }
         return null;
@@ -735,14 +749,18 @@ public class Executor {
         if (rest.startsWith(":?")) {
             String word = rest.substring(2);
             if (varValue == null || varValue.isEmpty()) {
-                throw new RuntimeException("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
+                System.err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
+                wordExpansionError = true;
+                return "";
             }
             return varValue;
         }
         if (rest.startsWith("?")) {
             String word = rest.substring(1);
             if (varValue == null) {
-                throw new RuntimeException("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
+                System.err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
+                wordExpansionError = true;
+                return "";
             }
             return varValue;
         }
