@@ -514,4 +514,28 @@ class ParserTest {
         ListNode list = parser("while true || false; do echo hi; done").parse();
         assertEquals(1, list.getPipelines().size());
     }
+
+    @Test
+    void redirectionInputFactory() {
+        Redirection r = Redirection.input(0, "/dev/null");
+        assertEquals(0, r.getFd());
+        assertEquals(RedirectionType.INPUT, r.getType());
+        assertEquals("/dev/null", r.getTarget());
+    }
+
+    @Test
+    void redirectionOutputFactory() {
+        Redirection r = Redirection.output(1, "/tmp/out");
+        assertEquals(1, r.getFd());
+        assertEquals(RedirectionType.OUTPUT, r.getType());
+        assertEquals("/tmp/out", r.getTarget());
+    }
+
+    @Test
+    void redirectionAppendFactory() {
+        Redirection r = Redirection.append(2, "/tmp/log");
+        assertEquals(2, r.getFd());
+        assertEquals(RedirectionType.APPEND, r.getType());
+        assertEquals("/tmp/log", r.getTarget());
+    }
 }
