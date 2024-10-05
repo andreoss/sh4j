@@ -768,6 +768,38 @@ class ExecutorTest {
     }
 
     @Test
+    void expandVarAssignNullOnly() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("assigned", executor.expandVariables("${var=assigned}", env));
+        assertEquals("assigned", env.get("var"));
+    }
+
+    @Test
+    void expandVarAssignNullOnlySetSkips() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "existing");
+        assertEquals("existing", executor.expandVariables("${var=assigned}", env));
+        assertEquals("existing", env.get("var"));
+    }
+
+    @Test
+    void expandVarAlternateNullOnly() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "x");
+        assertEquals("alt", executor.expandVariables("${var+alt}", env));
+    }
+
+    @Test
+    void expandVarAlternateNullOnlyUnset() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("${var+alt}", env));
+    }
+
+    @Test
     void expandVarLength() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
