@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -547,6 +548,33 @@ class ExecutorTest {
         ListNode list = parser("until true; do echo body; done").parse();
         Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeWhileBodyRunsOnce() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ListNode list = parser("while exit $?; do echo ran; exit 1; done").parse();
+        Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true));
+        assertEquals(1, executor.execute(list));
+        assertEquals("ran\n", bos.toString());
+    }
+
+    @Test
+    void executeUntilBodyRunsOnce() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ListNode list = parser("exit 1; until exit $?; do echo ran; exit 0; done").parse();
+        Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true));
+        assertEquals(0, executor.execute(list));
+        assertEquals("ran\n", bos.toString());
+    }
+
+    @Test
+    void executeWhileBodyExitCodePropagated() {
+        ListNode list = parser("while exit $?; do exit 42; done").parse();
+        Executor executor = new Executor();
+        assertEquals(42, executor.execute(list));
     }
 
     @Test
