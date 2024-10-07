@@ -578,6 +578,24 @@ class ExecutorTest {
     }
 
     @Test
+    void testCommandInterruptedException() {
+        ListNode list = parser("pwd").parse();
+        Executor executor = new Executor();
+        Thread.currentThread().interrupt();
+        int result = executor.execute(list);
+        assertEquals(1, result);
+    }
+
+    @Test
+    void testPipelineInterruptedException() {
+        ListNode list = parser("pwd | cat").parse();
+        Executor executor = new Executor();
+        Thread.currentThread().interrupt();
+        int result = executor.execute(list);
+        assertEquals(1, result);
+    }
+
+    @Test
     void executeIfFalseNoElse() {
         ListNode list = parser("if false; then echo yes; fi").parse();
         Executor executor = new Executor();
