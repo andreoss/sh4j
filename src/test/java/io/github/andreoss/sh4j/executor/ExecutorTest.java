@@ -596,6 +596,20 @@ class ExecutorTest {
     }
 
     @Test
+    void testExportNoArgs() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Map<String, String> env = new HashMap<>();
+        env.put("TEST_EXPORT_VAR", "hello");
+        Executor executor = new Executor(env);
+        executor.setOutputStream(new PrintStream(bos, true));
+        ListNode list = parser("export").parse();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+        String output = bos.toString();
+        assertTrue(output.contains("export TEST_EXPORT_VAR=hello"));
+    }
+
+    @Test
     void executeIfFalseNoElse() {
         ListNode list = parser("if false; then echo yes; fi").parse();
         Executor executor = new Executor();
