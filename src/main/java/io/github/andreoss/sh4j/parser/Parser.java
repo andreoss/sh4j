@@ -304,10 +304,30 @@ public class Parser {
             consume();
             elseBody = parseListUntilReserved("fi");
         } else if (isReservedWord("elif")) {
-            // TODO: elif support in future sub-step
+            elseBody = parseElifChain();
         }
         expectWord("fi");
         return new IfNode(condition, thenBody, elseBody);
+    }
+
+    private ListNode parseElifChain() {
+        consume(); // "elif"
+        ListNode cond = parseListUntilReserved("then");
+        expectWord("then");
+        ListNode body = parseListUntilReserved("else", "elif", "fi");
+        ListNode trailing = null;
+        if (isReservedWord("elif")) {
+            trailing = parseElifChain();
+        } else if (isReservedWord("else")) {
+            consume();
+            trailing = parseListUntilReserved("fi");
+        }
+        IfNode elifNode = new IfNode(cond, body, trailing);
+        Pipeline p = new Pipeline(false);
+        p.addCommand(elifNode);
+        ListNode wrapper = new ListNode();
+        wrapper.addPipeline(p, ListNode.Separator.NONE);
+        return wrapper;
     }
 
     private ListNode parseListUntilReserved(String... reservedWordTerminators) {

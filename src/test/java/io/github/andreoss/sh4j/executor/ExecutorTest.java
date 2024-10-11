@@ -617,6 +617,36 @@ class ExecutorTest {
     }
 
     @Test
+    void executeElifWhenIfFalse() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ListNode list = parser("if false; then echo no; elif true; then echo yes; fi").parse();
+        Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true));
+        assertEquals(0, executor.execute(list));
+        assertEquals("yes\n", bos.toString());
+    }
+
+    @Test
+    void executeElifChainFalseFalse() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ListNode list = parser("if false; then echo a; elif false; then echo b; else echo c; fi").parse();
+        Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true));
+        assertEquals(0, executor.execute(list));
+        assertEquals("c\n", bos.toString());
+    }
+
+    @Test
+    void executeElifChainSecondElifTrue() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ListNode list = parser("if false; then echo a; elif false; then echo b; elif true; then echo c; fi").parse();
+        Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true));
+        assertEquals(0, executor.execute(list));
+        assertEquals("c\n", bos.toString());
+    }
+
+    @Test
     void executeRedirectStdoutToStderr() {
         ListNode list = parser("echo test 1>&2").parse();
         Executor executor = new Executor();
