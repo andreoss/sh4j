@@ -661,6 +661,18 @@ class ExecutorTest {
     }
 
     @Test
+    void testHeredocExpansion() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Map<String, String> env = new HashMap<>();
+        env.put("TEST_HVAR", "expanded");
+        Executor executor = new Executor(env);
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat << EOF\nhello $TEST_HVAR\nEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello expanded", bos.toString().trim());
+    }
+
+    @Test
     void executeNonExecutableCommand() throws Exception {
         java.io.File f = new java.io.File("/tmp/sh4j_nonexec_test.sh");
         f.createNewFile();

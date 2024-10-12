@@ -909,6 +909,9 @@ public class Executor {
                 if (fd == 0) pb.redirectInput(file);
             } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
                 String content = redir.getHereDocContent();
+                if (content != null) {
+                    content = expandVariables(content, environment);
+                }
                 File src = heredocFile(content);
                 if (src != null) {
                     if (fd == 0) pb.redirectInput(src);
