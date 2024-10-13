@@ -673,6 +673,52 @@ class ExecutorTest {
     }
 
     @Test
+    void testRedirectTargetExpansionOutput() throws Exception {
+        java.io.File f = new java.io.File("/tmp/sh4j_redir_expand_test.txt");
+        f.delete();
+        Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
+        Executor executor = new Executor(env);
+        ListNode list = parser("echo hello > $TEST_FILE").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(f.exists());
+        assertEquals("hello\n", new String(java.nio.file.Files.readAllBytes(f.toPath())));
+        f.delete();
+    }
+
+    @Test
+    void testRedirectTargetExpansionAppend() throws Exception {
+        java.io.File f = new java.io.File("/tmp/sh4j_redir_append_expand.txt");
+        f.delete();
+        Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
+        Executor executor = new Executor(env);
+        ListNode list = parser("echo hello >> $TEST_FILE").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(f.exists());
+        assertEquals("hello\n", new String(java.nio.file.Files.readAllBytes(f.toPath())));
+        f.delete();
+    }
+
+    @Test
+    void testRedirectTargetExpansionInput() throws Exception {
+        java.io.File f = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
+        f.delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(f)) {
+            w.write("hello from file");
+        }
+        Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_input_expand.txt");
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor(env);
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat < $TEST_FILE").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello from file", bos.toString().trim());
+        f.delete();
+    }
+
+    @Test
     void executeNonExecutableCommand() throws Exception {
         java.io.File f = new java.io.File("/tmp/sh4j_nonexec_test.sh");
         f.createNewFile();

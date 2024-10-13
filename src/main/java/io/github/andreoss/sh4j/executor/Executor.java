@@ -394,7 +394,7 @@ public class Executor {
             if (t == RedirectionType.OUTPUT || t == RedirectionType.CLOBBER) {
                 if (fd == 1) {
                     try {
-                        PrintStream fileOut = new PrintStream(new File(r.getTarget()));
+                        PrintStream fileOut = new PrintStream(new File(expandVariables(r.getTarget(), environment)));
                         PrintStream saved = out;
                         out = fileOut;
                         return saved;
@@ -405,7 +405,7 @@ public class Executor {
             } else if (t == RedirectionType.APPEND) {
                 if (fd == 1) {
                     try {
-                        PrintStream fileOut = new PrintStream(new FileOutputStream(r.getTarget(), true));
+                        PrintStream fileOut = new PrintStream(new FileOutputStream(expandVariables(r.getTarget(), environment), true));
                         PrintStream saved = out;
                         out = fileOut;
                         return saved;
@@ -886,7 +886,7 @@ public class Executor {
     private void setupRedirections(ProcessBuilder pb, List<Redirection> redirections) {
         for (Redirection redir : redirections) {
             int fd = redir.getFd();
-            File file = new File(redir.getTarget());
+            File file = new File(expandVariables(redir.getTarget(), environment));
             RedirectionType type = redir.getType();
             if (type == RedirectionType.DUP_INPUT) {
                 if ("-".equals(redir.getTarget()) && fd == 0) {
