@@ -419,6 +419,25 @@ public class Executor {
     }
 
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
+        if ("type".equals(name)) {
+            int ret = 0;
+            for (String arg : arguments) {
+                String expanded = expandVariables(arg, env);
+                if (isBuiltin(expanded)) {
+                    out.println(expanded + " is a shell built-in");
+                } else if (functions.containsKey(expanded)) {
+                    out.println(expanded + " is a function");
+                } else {
+                    String resolved = resolveCommand(expanded);
+                    if (resolved != null) {
+                        out.println(expanded + " is " + resolved);
+                    } else {
+                        ret = 1;
+                    }
+                }
+            }
+            return ret;
+        }
         if ("exit".equals(name)) {
             if (arguments.isEmpty()) {
                 return 0;
@@ -512,6 +531,11 @@ public class Executor {
             return 0;
         }
         return null;
+    }
+
+    private static boolean isBuiltin(String name) {
+        return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
+                || "cd".equals(name) || "type".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {

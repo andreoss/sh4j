@@ -1633,4 +1633,36 @@ class ExecutorTest {
             System.setProperty("user.dir", saved);
         }
     }
+
+    @Test
+    void typeBuiltin() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("type echo cd exit export type").parse();
+        assertEquals(0, executor.execute(list));
+        String out = bos.toString();
+        assertTrue(out.contains("echo is a shell built-in"));
+        assertTrue(out.contains("cd is a shell built-in"));
+        assertTrue(out.contains("exit is a shell built-in"));
+        assertTrue(out.contains("export is a shell built-in"));
+        assertTrue(out.contains("type is a shell built-in"));
+    }
+
+    @Test
+    void typeExternal() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("type true").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().contains("true is "));
+    }
+
+    @Test
+    void typeNotFound() {
+        Executor executor = new Executor();
+        ListNode list = parser("type nonexistent_cmd_xyz").parse();
+        assertEquals(1, executor.execute(list));
+    }
 }
