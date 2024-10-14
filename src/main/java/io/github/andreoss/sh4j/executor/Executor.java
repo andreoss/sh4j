@@ -453,6 +453,31 @@ public class Executor {
             }
             return 0;
         }
+        if ("cd".equals(name)) {
+            String target;
+            if (arguments.isEmpty()) {
+                target = environment.get("HOME");
+                if (target == null) return 1;
+            } else {
+                target = expandVariables(arguments.get(0), env);
+                if ("-".equals(target)) {
+                    String old = environment.get("OLDPWD");
+                    if (old == null) return 1;
+                    out.println(old);
+                    target = old;
+                }
+            }
+            File dir = new File(target);
+            if (!dir.isDirectory()) return 1;
+            String absPath;
+            try { absPath = dir.getCanonicalPath(); }
+            catch (IOException e) { absPath = dir.getAbsolutePath(); }
+            String oldPwd = environment.get("PWD");
+            if (oldPwd != null) environment.put("OLDPWD", oldPwd);
+            environment.put("PWD", absPath);
+            System.setProperty("user.dir", absPath);
+            return 0;
+        }
         if ("echo".equals(name)) {
             boolean newline = true;
             int start = 0;

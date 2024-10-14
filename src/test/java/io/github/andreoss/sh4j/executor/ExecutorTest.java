@@ -1563,4 +1563,74 @@ class ExecutorTest {
         Executor executor = new Executor(new HashMap<>());
         executor.expandVariables("${x:?}", new HashMap<>());
     }
+
+    @Test
+    void cdToDirectory() throws Exception {
+        String saved = System.getProperty("user.dir");
+        try {
+            ListNode list = parser("cd /tmp").parse();
+            Executor executor = new Executor();
+            assertEquals(0, executor.execute(list));
+            assertEquals("/tmp", executor.getVariable("PWD"));
+        } finally {
+            System.setProperty("user.dir", saved);
+        }
+    }
+
+    @Test
+    void cdToHome() throws Exception {
+        String saved = System.getProperty("user.dir");
+        try {
+            Map<String, String> env = new HashMap<>();
+            env.put("HOME", "/tmp");
+            Executor executor = new Executor(env);
+            ListNode list = parser("cd").parse();
+            assertEquals(0, executor.execute(list));
+            assertEquals("/tmp", executor.getVariable("PWD"));
+        } finally {
+            System.setProperty("user.dir", saved);
+        }
+    }
+
+    @Test
+    void cdToNonexistentReturns1() {
+        ListNode list = parser("cd /sh4j_nonexistent_dir_xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void cdMinus() throws Exception {
+        String saved = System.getProperty("user.dir");
+        try {
+            Map<String, String> env = new HashMap<>();
+            env.put("PWD", "/tmp");
+            env.put("OLDPWD", "/");
+            Executor executor = new Executor(env);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            executor.setCaptureStream(bos);
+            ListNode list = parser("cd -").parse();
+            assertEquals(0, executor.execute(list));
+            assertEquals("/", executor.getVariable("PWD"));
+            assertEquals("/tmp", executor.getVariable("OLDPWD"));
+            assertEquals("/", bos.toString().trim());
+        } finally {
+            System.setProperty("user.dir", saved);
+        }
+    }
+
+    @Test
+    void cdWithExpandedVar() throws Exception {
+        String saved = System.getProperty("user.dir");
+        try {
+            Map<String, String> env = new HashMap<>();
+            env.put("MYDIR", "/tmp");
+            Executor executor = new Executor(env);
+            ListNode list = parser("cd $MYDIR").parse();
+            assertEquals(0, executor.execute(list));
+            assertEquals("/tmp", executor.getVariable("PWD"));
+        } finally {
+            System.setProperty("user.dir", saved);
+        }
+    }
 }
