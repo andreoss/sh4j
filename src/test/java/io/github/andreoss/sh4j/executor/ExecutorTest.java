@@ -1665,4 +1665,25 @@ class ExecutorTest {
         ListNode list = parser("type nonexistent_cmd_xyz").parse();
         assertEquals(1, executor.execute(list));
     }
+
+    @Test
+    void execBuiltinRunsCommand() {
+        Executor executor = new Executor();
+        ListNode list = parser("exec true").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void execBuiltinNotFoundReturns127() {
+        Executor executor = new Executor();
+        ListNode list = parser("exec nonexistent_cmd_xyz").parse();
+        assertEquals(127, executor.execute(list));
+    }
+
+    @Test
+    void execBuiltinNoArgsIsNoop() {
+        Executor executor = new Executor();
+        ListNode list = parser("exec").parse();
+        assertEquals(0, executor.execute(list));
+    }
 }

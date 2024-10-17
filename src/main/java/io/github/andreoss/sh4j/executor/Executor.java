@@ -530,12 +530,35 @@ public class Executor {
             }
             return 0;
         }
+        if ("exec".equals(name)) {
+            if (arguments.isEmpty()) return 0;
+            String cmdName = expandVariables(arguments.get(0), env);
+            String resolved = resolveCommand(cmdName);
+            if (resolved == null) return 127;
+            List<String> cmdArgs = new ArrayList<>();
+            cmdArgs.add(resolved);
+            for (int i = 1; i < arguments.size(); i++) {
+                String expanded = expandVariables(arguments.get(i), env);
+                cmdArgs.add(removeQuotes(expanded));
+            }
+            ProcessBuilder pb = new ProcessBuilder(cmdArgs);
+            pb.environment().putAll(env);
+            pb.directory(new File(System.getProperty("user.dir")));
+            try {
+                Process process = pb.start();
+                return process.waitFor();
+            } catch (IOException e) {
+                return exitCodeForIoException(e);
+            } catch (InterruptedException e) {
+                return 1;
+            }
+        }
         return null;
     }
 
     private static boolean isBuiltin(String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
-                || "cd".equals(name) || "type".equals(name);
+                || "cd".equals(name) || "type".equals(name) || "exec".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {
