@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1639,7 +1640,7 @@ class ExecutorTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        ListNode list = parser("type echo cd exit export type true false").parse();
+        ListNode list = parser("type echo cd exit export type true false shift unset").parse();
         assertEquals(0, executor.execute(list));
         String out = bos.toString();
         assertTrue(out.contains("echo is a shell built-in"));
@@ -1701,5 +1702,37 @@ class ExecutorTest {
         Executor executor = new Executor();
         ListNode list = parser("false").parse();
         assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void unsetRemovesVariable() {
+        Map<String, String> env = new HashMap<>();
+        env.put("MYVAR", "value");
+        Executor executor = new Executor(env);
+        ListNode list = parser("unset MYVAR").parse();
+        assertEquals(0, executor.execute(list));
+        assertNull(executor.getVariable("MYVAR"));
+    }
+
+    @Test
+    void shiftRemovesPositionalParam() {
+        List<String> params = new ArrayList<>(List.of("sh", "a", "b", "c"));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor(new HashMap<>(), params);
+        executor.setCaptureStream(bos);
+        ListNode list = parser("shift; echo $#").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("2", bos.toString().trim());
+    }
+
+    @Test
+    void shiftWithCount() {
+        List<String> params = new ArrayList<>(List.of("sh", "a", "b", "c"));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor(new HashMap<>(), params);
+        executor.setCaptureStream(bos);
+        ListNode list = parser("shift 2; echo $#").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("1", bos.toString().trim());
     }
 }

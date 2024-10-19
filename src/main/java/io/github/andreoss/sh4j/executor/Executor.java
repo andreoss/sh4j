@@ -536,6 +536,28 @@ public class Executor {
         if ("true".equals(name)) {
             return 0;
         }
+        if ("shift".equals(name)) {
+            int n = 1;
+            if (!arguments.isEmpty()) {
+                try { n = Integer.parseInt(expandVariables(arguments.get(0), env)); }
+                catch (NumberFormatException e) { return 1; }
+            }
+            if (n < 0) return 1;
+            int maxShift = positionalParams.size() - 1;
+            if (n == 0) return 0;
+            if (n >= maxShift) {
+                positionalParams.subList(1, positionalParams.size()).clear();
+            } else {
+                positionalParams.subList(1, 1 + n).clear();
+            }
+            return 0;
+        }
+        if ("unset".equals(name)) {
+            for (String arg : arguments) {
+                environment.remove(arg);
+            }
+            return 0;
+        }
         if ("exec".equals(name)) {
             if (arguments.isEmpty()) return 0;
             String cmdName = expandVariables(arguments.get(0), env);
@@ -565,7 +587,8 @@ public class Executor {
     private static boolean isBuiltin(String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
                 || "cd".equals(name) || "type".equals(name) || "exec".equals(name)
-                || "true".equals(name) || "false".equals(name);
+                || "true".equals(name) || "false".equals(name)
+                || "shift".equals(name) || "unset".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {
