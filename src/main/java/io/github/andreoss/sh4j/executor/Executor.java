@@ -256,7 +256,13 @@ public class Executor {
             int lastExit = 0;
             for (String word : n.getWords()) {
                 environment.put(n.getVariable(), word);
-                lastExit = execute(n.getBody());
+                try {
+                    lastExit = execute(n.getBody());
+                } catch (BreakSignal e) {
+                    break;
+                } catch (ContinueSignal e) {
+                    continue;
+                }
             }
             return lastExit;
         } else if (node instanceof WhileNode n) {
@@ -265,7 +271,13 @@ public class Executor {
                 int condExit = execute(n.getCondition());
                 boolean runBody = n.isUntil() ? condExit != 0 : condExit == 0;
                 if (!runBody) break;
-                lastExit = execute(n.getBody());
+                try {
+                    lastExit = execute(n.getBody());
+                } catch (BreakSignal e) {
+                    break;
+                } catch (ContinueSignal e) {
+                    continue;
+                }
             }
             return lastExit;
         } else if (node instanceof CaseNode n) {
@@ -558,6 +570,12 @@ public class Executor {
             }
             return 0;
         }
+        if ("break".equals(name)) {
+            throw new BreakSignal();
+        }
+        if ("continue".equals(name)) {
+            throw new ContinueSignal();
+        }
         if ("exec".equals(name)) {
             if (arguments.isEmpty()) return 0;
             String cmdName = expandVariables(arguments.get(0), env);
@@ -588,7 +606,8 @@ public class Executor {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
                 || "cd".equals(name) || "type".equals(name) || "exec".equals(name)
                 || "true".equals(name) || "false".equals(name)
-                || "shift".equals(name) || "unset".equals(name);
+                || "shift".equals(name) || "unset".equals(name)
+                || "break".equals(name) || "continue".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {
@@ -1198,4 +1217,7 @@ public class Executor {
             return null;
         }
     }
+
+    private static class BreakSignal extends RuntimeException {}
+    private static class ContinueSignal extends RuntimeException {}
 }

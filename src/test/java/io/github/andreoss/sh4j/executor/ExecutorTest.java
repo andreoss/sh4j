@@ -1735,4 +1735,35 @@ class ExecutorTest {
         assertEquals(0, executor.execute(list));
         assertEquals("1", bos.toString().trim());
     }
+
+    @Test
+    void breakStopsWhileLoop() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("while exit $?; do echo ran; break; exit 1; done").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("ran", bos.toString().trim());
+    }
+
+    @Test
+    void breakStopsForLoop() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("for i in a b c; do echo $i; break; done").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("a", bos.toString().trim());
+    }
+
+    @Test
+    void continueInForLoop() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("for i in a b; do echo $i; continue; echo after; done").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("a\nb", bos.toString().trim());
+        assertFalse(bos.toString().contains("after"));
+    }
 }
