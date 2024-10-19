@@ -530,6 +530,12 @@ public class Executor {
             }
             return 0;
         }
+        if ("false".equals(name)) {
+            return 1;
+        }
+        if ("true".equals(name)) {
+            return 0;
+        }
         if ("exec".equals(name)) {
             if (arguments.isEmpty()) return 0;
             String cmdName = expandVariables(arguments.get(0), env);
@@ -558,7 +564,8 @@ public class Executor {
 
     private static boolean isBuiltin(String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
-                || "cd".equals(name) || "type".equals(name) || "exec".equals(name);
+                || "cd".equals(name) || "type".equals(name) || "exec".equals(name)
+                || "true".equals(name) || "false".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {

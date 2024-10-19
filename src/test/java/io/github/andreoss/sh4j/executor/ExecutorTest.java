@@ -1639,7 +1639,7 @@ class ExecutorTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        ListNode list = parser("type echo cd exit export type").parse();
+        ListNode list = parser("type echo cd exit export type true false").parse();
         assertEquals(0, executor.execute(list));
         String out = bos.toString();
         assertTrue(out.contains("echo is a shell built-in"));
@@ -1647,6 +1647,8 @@ class ExecutorTest {
         assertTrue(out.contains("exit is a shell built-in"));
         assertTrue(out.contains("export is a shell built-in"));
         assertTrue(out.contains("type is a shell built-in"));
+        assertTrue(out.contains("true is a shell built-in"));
+        assertTrue(out.contains("false is a shell built-in"));
     }
 
     @Test
@@ -1685,5 +1687,19 @@ class ExecutorTest {
         Executor executor = new Executor();
         ListNode list = parser("exec").parse();
         assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void trueBuiltinReturns0() {
+        Executor executor = new Executor();
+        ListNode list = parser("true").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void falseBuiltinReturns1() {
+        Executor executor = new Executor();
+        ListNode list = parser("false").parse();
+        assertEquals(1, executor.execute(list));
     }
 }
