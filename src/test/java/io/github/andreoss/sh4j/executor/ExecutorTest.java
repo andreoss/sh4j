@@ -1766,4 +1766,28 @@ class ExecutorTest {
         assertEquals("a\nb", bos.toString().trim());
         assertFalse(bos.toString().contains("after"));
     }
+
+    @Test
+    void colonBuiltinReturns0() {
+        Executor executor = new Executor();
+        ListNode list = parser(":").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void evalBuiltinRunsCommand() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("eval echo hello world").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello world", bos.toString().trim());
+    }
+
+    @Test
+    void evalBuiltinNoArgsReturns0() {
+        Executor executor = new Executor();
+        ListNode list = parser("eval").parse();
+        assertEquals(0, executor.execute(list));
+    }
 }

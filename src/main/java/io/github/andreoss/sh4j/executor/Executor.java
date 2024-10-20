@@ -576,6 +576,18 @@ public class Executor {
         if ("continue".equals(name)) {
             throw new ContinueSignal();
         }
+        if (":".equals(name)) {
+            return 0;
+        }
+        if ("eval".equals(name)) {
+            String input = String.join(" ", arguments);
+            if (input.isEmpty()) return 0;
+            CharReader r = new CharReader(input);
+            Lexer l = new Lexer(r);
+            Parser p = new Parser(l);
+            ListNode ast = p.parse();
+            return execute(ast);
+        }
         if ("exec".equals(name)) {
             if (arguments.isEmpty()) return 0;
             String cmdName = expandVariables(arguments.get(0), env);
@@ -607,7 +619,8 @@ public class Executor {
                 || "cd".equals(name) || "type".equals(name) || "exec".equals(name)
                 || "true".equals(name) || "false".equals(name)
                 || "shift".equals(name) || "unset".equals(name)
-                || "break".equals(name) || "continue".equals(name);
+                || "break".equals(name) || "continue".equals(name)
+                || ":".equals(name) || "eval".equals(name);
     }
 
     private void processAssignments(List<String> assignments, Map<String, String> targetEnv) {
