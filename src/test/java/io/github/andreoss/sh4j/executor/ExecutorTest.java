@@ -1566,6 +1566,16 @@ class ExecutorTest {
     }
 
     @Test
+    void expandBracedColonQuestionErrorStream() {
+        Executor executor = new Executor(new HashMap<>());
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setErrorStream(new PrintStream(bos, true));
+        executor.expandVariables("${x:?my error}", new HashMap<>());
+        String output = bos.toString().trim();
+        assertTrue(output.contains("my error"), "error message should go to injected stream");
+    }
+
+    @Test
     void cdToDirectory() throws Exception {
         String saved = System.getProperty("user.dir");
         try {

@@ -47,6 +47,7 @@ public class Executor {
     private final List<String> positionalParams;
     private ByteArrayOutputStream captureStream;
     private PrintStream out = System.out;
+    private PrintStream err = System.err;
     private boolean wordExpansionError = false;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
@@ -91,6 +92,10 @@ public class Executor {
 
     public void setOutputStream(PrintStream out) {
         this.out = out;
+    }
+
+    public void setErrorStream(PrintStream err) {
+        this.err = err;
     }
 
     private String executeCommandSubstitution(String cmdText) {
@@ -883,7 +888,7 @@ public class Executor {
         if (rest.startsWith(":?")) {
             String word = rest.substring(2);
             if (varValue == null || varValue.isEmpty()) {
-                System.err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
+                err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
                 wordExpansionError = true;
                 return "";
             }
@@ -892,7 +897,7 @@ public class Executor {
         if (rest.startsWith("?")) {
             String word = rest.substring(1);
             if (varValue == null) {
-                System.err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
+                err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
                 wordExpansionError = true;
                 return "";
             }
