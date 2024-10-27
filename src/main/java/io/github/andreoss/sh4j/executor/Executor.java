@@ -45,6 +45,7 @@ public class Executor {
     private String shellFlags = "";
     private int lastBgPid = 0;
     private final List<String> positionalParams;
+    private final List<Thread> backgroundThreads = new ArrayList<>();
     private ByteArrayOutputStream captureStream;
     private PrintStream out = System.out;
     private PrintStream err = System.err;
@@ -205,11 +206,13 @@ public class Executor {
                 int exitCode = executePipeline(pipeline);
                 lastExitCode = exitCode;
                 if (!shouldContinue(sep, exitCode)) {
+                    waitForBackgroundJobs();
                     return exitCode;
                 }
             }
         }
 
+        waitForBackgroundJobs();
         return lastExitCode;
     }
 
@@ -220,9 +223,21 @@ public class Executor {
             bgExecutor.err = err;
             bgExecutor.executePipeline(pipeline);
         });
-        bgThread.setDaemon(true);
         bgThread.start();
+        backgroundThreads.add(bgThread);
         lastBgPid = (int) bgThread.getId();
+    }
+
+    private void waitForBackgroundJobs() {
+        for (Thread t : backgroundThreads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        backgroundThreads.clear();
     }
 
     private boolean shouldContinue(ListNode.Separator sep, int exitCode) {
