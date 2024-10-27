@@ -196,17 +196,33 @@ public class Executor {
 
         for (int i = 0; i < pipelines.size(); i++) {
             Pipeline pipeline = pipelines.get(i);
-            int exitCode = executePipeline(pipeline);
-
             ListNode.Separator sep = separators.get(i);
-            boolean shouldContinue = shouldContinue(sep, exitCode);
-            lastExitCode = exitCode;
-            if (!shouldContinue) {
-                return exitCode;
+
+            if (sep == ListNode.Separator.AMP) {
+                executeAsync(pipeline);
+                lastExitCode = 0;
+            } else {
+                int exitCode = executePipeline(pipeline);
+                lastExitCode = exitCode;
+                if (!shouldContinue(sep, exitCode)) {
+                    return exitCode;
+                }
             }
         }
 
         return lastExitCode;
+    }
+
+    private void executeAsync(Pipeline pipeline) {
+        Thread bgThread = new Thread(() -> {
+            Executor bgExecutor = new Executor(new HashMap<>(environment));
+            bgExecutor.out = out;
+            bgExecutor.err = err;
+            bgExecutor.executePipeline(pipeline);
+        });
+        bgThread.setDaemon(true);
+        bgThread.start();
+        lastBgPid = (int) bgThread.getId();
     }
 
     private boolean shouldContinue(ListNode.Separator sep, int exitCode) {
@@ -1234,6 +1250,10 @@ public class Executor {
         } catch (IOException e) {
             return null;
         }
+    }
+
+    int getLastBgPid() {
+        return lastBgPid;
     }
 
     private static class BreakSignal extends RuntimeException {}

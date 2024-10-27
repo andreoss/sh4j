@@ -186,7 +186,23 @@ class ExecutorTest {
 
     @Test
     void executeBackground() {
-        ListNode list = parser("sleep 1 &").parse();
+        ListNode list = parser("echo hello &").parse();
+        Executor executor = new Executor();
+        int exitCode = executor.execute(list);
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void executeBackgroundSetsLastBgPid() {
+        ListNode list = parser("echo hello &").parse();
+        Executor executor = new Executor();
+        executor.execute(list);
+        assertTrue(executor.getLastBgPid() > 0, "lastBgPid should be > 0 after & command");
+    }
+
+    @Test
+    void executeBackgroundAndSequential() {
+        ListNode list = parser("echo bg1 & echo seq1").parse();
         Executor executor = new Executor();
         int exitCode = executor.execute(list);
         assertEquals(0, exitCode);
