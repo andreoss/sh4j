@@ -707,10 +707,17 @@ public class Executor {
                     i = j;
                     continue;
                 } else if (next == '{') {
-                    int j = arg.indexOf('}', i + 2);
-                    if (j > i + 2) {
-                        result.append(arg, i, j + 1);
-                        i = j + 1;
+                    int depth = 1;
+                    int j = i + 2;
+                    while (j < arg.length() && depth > 0) {
+                        char nc = arg.charAt(j);
+                        if (nc == '{') depth++;
+                        else if (nc == '}') depth--;
+                        j++;
+                    }
+                    if (depth == 0) {
+                        result.append(arg, i, j);
+                        i = j;
                         continue;
                     }
                 }

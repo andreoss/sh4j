@@ -1097,6 +1097,16 @@ class ExecutorTest {
     }
 
     @Test
+    void normaliseBackticksSkipsNestedDollarBrace() {
+        assertEquals("${var:-${other}}", Executor.normaliseBackticks("${var:-${other}}"));
+    }
+
+    @Test
+    void normaliseBackticksSkipsTripleNestedDollarBrace() {
+        assertEquals("${a:-${b:-${c}}}", Executor.normaliseBackticks("${a:-${b:-${c}}}"));
+    }
+
+    @Test
     void backtickNestedNormalise() {
         String result = Executor.normaliseBackticks("`echo \\`echo hi\\``");
         assertEquals("$(echo `echo hi`)", result);
