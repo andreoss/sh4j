@@ -217,6 +217,28 @@ class ExecutorTest {
     }
 
     @Test
+    void executeBuiltinStderrRedirect() throws Exception {
+        ListNode list = parser("echo hello 2>/dev/null").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinStderrToStdout() throws Exception {
+        ListNode list = parser("echo hello 2>&1").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinStderrRedirectToFile() throws Exception {
+        String file = "/tmp/sh4j_stderr_test";
+        ListNode list = parser("echo hello 2>" + file).parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void executeMultiplePipelines() {
         ListNode list = parser("echo a; echo b; echo c").parse();
         Executor executor = new Executor();

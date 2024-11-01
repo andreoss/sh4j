@@ -389,11 +389,17 @@ public class Executor {
             return 0;
         }
 
-        PrintStream savedOut = redirectOutputForBuiltin(cmd.getRedirections());
+        PrintStream[] saved = redirectOutputForBuiltin(cmd.getRedirections());
+        PrintStream savedOut = saved[0];
+        PrintStream savedErr = saved[1];
         Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv, cmd.getAssignments());
         if (savedOut != null) {
             out.close();
             out = savedOut;
+        }
+        if (savedErr != null) {
+            err.close();
+            err = savedErr;
         }
         if (builtinResult != null) {
             return builtinResult;
@@ -435,35 +441,39 @@ public class Executor {
         }
     }
 
-    private PrintStream redirectOutputForBuiltin(List<Redirection> redirs) {
+    private PrintStream[] redirectOutputForBuiltin(List<Redirection> redirs) {
+        PrintStream savedOut = null;
+        PrintStream savedErr = null;
         for (Redirection r : redirs) {
             RedirectionType t = r.getType();
             int fd = r.getFd();
+            String target = expandVariables(r.getTarget(), environment);
             if (t == RedirectionType.OUTPUT || t == RedirectionType.CLOBBER) {
-                if (fd == 1) {
-                    try {
-                        PrintStream fileOut = new PrintStream(new File(expandVariables(r.getTarget(), environment)));
-                        PrintStream saved = out;
-                        out = fileOut;
-                        return saved;
-                    } catch (IOException e) {
-                        return null;
-                    }
-                }
+                try {
+                    PrintStream fileOut = new PrintStream(new File(target));
+                    if (fd == 1) { savedOut = out; out = fileOut; }
+                    else if (fd == 2) { savedErr = err; err = fileOut; }
+                } catch (IOException e) { /* ignore */ }
             } else if (t == RedirectionType.APPEND) {
-                if (fd == 1) {
+                try {
+                    PrintStream fileOut = new PrintStream(new FileOutputStream(target, true));
+                    if (fd == 1) { savedOut = out; out = fileOut; }
+                    else if (fd == 2) { savedErr = err; err = fileOut; }
+                } catch (IOException e) { /* ignore */ }
+            } else if (t == RedirectionType.DUP_OUTPUT) {
+                if ("-".equals(target)) {
                     try {
-                        PrintStream fileOut = new PrintStream(new FileOutputStream(expandVariables(r.getTarget(), environment), true));
-                        PrintStream saved = out;
-                        out = fileOut;
-                        return saved;
-                    } catch (IOException e) {
-                        return null;
-                    }
+                        PrintStream nullPs = new PrintStream(new FileOutputStream("/dev/null"));
+                        if (fd == 1) { savedOut = out; out = nullPs; }
+                        else if (fd == 2) { savedErr = err; err = nullPs; }
+                    } catch (IOException e) { /* ignore */ }
+                } else if ("1".equals(target) && fd == 2) {
+                    savedErr = err;
+                    err = out;
                 }
             }
         }
-        return null;
+        return new PrintStream[]{savedOut, savedErr};
     }
 
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
