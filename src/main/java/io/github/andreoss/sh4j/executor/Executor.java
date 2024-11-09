@@ -247,8 +247,6 @@ public class Executor {
             return exitCode == 0;
         } else if (sep == ListNode.Separator.OR_IF) {
             return exitCode != 0;
-        } else if (sep == ListNode.Separator.AMP) {
-            return true;
         }
         return true;
     }
@@ -470,6 +468,9 @@ public class Executor {
                 } else if ("1".equals(target) && fd == 2) {
                     savedErr = err;
                     err = out;
+                } else if ("2".equals(target) && fd == 1) {
+                    savedOut = out;
+                    out = err;
                 }
             }
         }
