@@ -1963,4 +1963,44 @@ class ExecutorTest {
         assertEquals(0, executor.execute(list));
         new java.io.File(path).delete();
     }
+
+    @Test
+    void heredocStripTabsBasic() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat <<- EOF\n\thello\nEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello", bos.toString().trim());
+    }
+
+    @Test
+    void heredocStripTabsMultiple() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat <<- EOF\n\t\thello\nEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello", bos.toString().trim());
+    }
+
+    @Test
+    void heredocStripTabsDelimiterWithTabs() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat <<- EOF\n\thello\n\tEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello", bos.toString().trim());
+    }
+
+    @Test
+    void heredocStripTabsMixed() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("cat <<- MARKER\n\tfirst\nsecond\n\tthird\nMARKER\n").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("first\nsecond\nthird", bos.toString().trim());
+    }
 }
