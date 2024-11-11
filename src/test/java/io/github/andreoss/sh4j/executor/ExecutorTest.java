@@ -1848,4 +1848,119 @@ class ExecutorTest {
         ListNode list = parser("eval").parse();
         assertEquals(0, executor.execute(list));
     }
+
+    @Test
+    void externalOutputRedirect() throws Exception {
+        String inputPath = "/tmp/sh4j_ext_in.txt";
+        String outputPath = "/tmp/sh4j_ext_out.txt";
+        new java.io.File(outputPath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello world"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat < " + inputPath + " > " + outputPath).parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(new java.io.File(outputPath).exists());
+        assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
+        new java.io.File(inputPath).delete();
+        new java.io.File(outputPath).delete();
+    }
+
+    @Test
+    void externalAppendRedirect() throws Exception {
+        String inputPath = "/tmp/sh4j_ext_append_in.txt";
+        String outputPath = "/tmp/sh4j_ext_append_out.txt";
+        new java.io.File(outputPath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("second"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(outputPath)) { w.write("first\n"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat < " + inputPath + " >> " + outputPath).parse();
+        assertEquals(0, executor.execute(list));
+        String content = java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim();
+        assertTrue(content.startsWith("first"));
+        assertTrue(content.contains("second"));
+        new java.io.File(inputPath).delete();
+        new java.io.File(outputPath).delete();
+    }
+
+    @Test
+    void externalClobberRedirect() throws Exception {
+        String inputPath = "/tmp/sh4j_ext_clobber_in.txt";
+        String outputPath = "/tmp/sh4j_ext_clobber_out.txt";
+        new java.io.File(outputPath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello clobber"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat < " + inputPath + " >| " + outputPath).parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(new java.io.File(outputPath).exists());
+        assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
+        new java.io.File(inputPath).delete();
+        new java.io.File(outputPath).delete();
+    }
+
+    @Test
+    void externalRedirectStdoutToStderr() throws Exception {
+        String inputPath = "/tmp/sh4j_ext_12_in.txt";
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat < " + inputPath + " 1>&2").parse();
+        assertEquals(0, executor.execute(list));
+        new java.io.File(inputPath).delete();
+    }
+
+    @Test
+    void externalRedirectStderrToStdout() throws Exception {
+        String inputPath = "/tmp/sh4j_ext_21_in.txt";
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat < " + inputPath + " 2>&1").parse();
+        assertEquals(0, executor.execute(list));
+        new java.io.File(inputPath).delete();
+    }
+
+    @Test
+    void externalCloseStdout() {
+        ListNode list = parser("true 1>&-").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void externalCloseStderr() {
+        ListNode list = parser("true 2>&-").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void externalStderrOutputRedirect() throws Exception {
+        String path = "/tmp/sh4j_ext_err_out.txt";
+        new java.io.File(path).delete();
+        Executor executor = new Executor();
+        ListNode list = parser("cat /nonexistent_path_xyz_123 2> " + path).parse();
+        executor.execute(list);
+        assertTrue(new java.io.File(path).exists());
+        new java.io.File(path).delete();
+    }
+
+    @Test
+    void externalStderrAppendRedirect() throws Exception {
+        String path = "/tmp/sh4j_ext_err_append.txt";
+        new java.io.File(path).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("initial\n"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat /nonexistent_path_xyz_456 2>> " + path).parse();
+        executor.execute(list);
+        String content = java.nio.file.Files.readString(java.nio.file.Path.of(path));
+        assertTrue(content.contains("initial"));
+        new java.io.File(path).delete();
+    }
+
+    @Test
+    void externalReadWriteRedirect() throws Exception {
+        String path = "/tmp/sh4j_ext_rw.txt";
+        try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("hello"); }
+        Executor executor = new Executor();
+        ListNode list = parser("cat <> " + path).parse();
+        assertEquals(0, executor.execute(list));
+        new java.io.File(path).delete();
+    }
 }
