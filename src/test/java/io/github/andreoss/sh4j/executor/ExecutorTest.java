@@ -932,6 +932,29 @@ class ExecutorTest {
     }
 
     @Test
+    void expandVarDefaultNullOnly() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("default", executor.expandVariables("${var-default}", env));
+    }
+
+    @Test
+    void expandVarDefaultNullOnlySetSkips() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "value");
+        assertEquals("value", executor.expandVariables("${var-default}", env));
+    }
+
+    @Test
+    void expandVarDefaultNullOnlyEmptySkips() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("var", "");
+        assertEquals("", executor.expandVariables("${var-default}", env));
+    }
+
+    @Test
     void expandVarAssignDefault() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
