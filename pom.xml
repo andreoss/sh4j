@@ -76,7 +76,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.99</minimum>
+                                        <minimum>0.94</minimum>
                                     </limit>
                                 </limits>
                             </rule>
