@@ -2026,4 +2026,28 @@ class ExecutorTest {
         assertEquals(0, executor.execute(list));
         assertEquals("first\nsecond\nthird", bos.toString().trim());
     }
+
+    @Test
+    void typeFunction() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("myfunc() { true; }; type myfunc").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().contains("myfunc is a function"));
+    }
+
+    @Test
+    void shiftNonNumericReturns1() {
+        Executor executor = new Executor();
+        ListNode list = parser("shift abc").parse();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void shiftNegativeReturns1() {
+        Executor executor = new Executor();
+        ListNode list = parser("shift -1").parse();
+        assertEquals(1, executor.execute(list));
+    }
 }
