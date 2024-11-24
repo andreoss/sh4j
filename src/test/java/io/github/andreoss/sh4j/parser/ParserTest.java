@@ -70,6 +70,23 @@ class ParserTest {
     }
 
     @Test
+    void parseListWithNewlineSeparator() {
+        ListNode list = parser("cmd1\ncmd2").parse();
+        assertEquals(2, list.getPipelines().size());
+        assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
+        assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
+        assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
+    }
+
+    @Test
+    void parseListWithBlankLinesAndLeadingTrailingNewlines() {
+        ListNode list = parser("\n\ncmd1\n\n\ncmd2\n\n").parse();
+        assertEquals(2, list.getPipelines().size());
+        assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
+        assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
+    }
+
+    @Test
     void parseBang() {
         ListNode list = parser("! echo hello").parse();
         Pipeline pipeline = list.getPipelines().get(0);

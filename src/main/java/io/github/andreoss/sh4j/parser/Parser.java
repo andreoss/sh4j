@@ -68,7 +68,14 @@ public class Parser {
     }
 
     public ListNode parse() {
+        skipNewlines();
         return parseList(TokenType.END_OF_FILE);
+    }
+
+    private void skipNewlines() {
+        while (check(TokenType.NEWLINE)) {
+            consume();
+        }
     }
 
     private ListNode parseList(TokenType... terminators) {
@@ -78,9 +85,10 @@ public class Parser {
         list.addPipeline(pipeline, ListNode.Separator.NONE);
 
         while (check(TokenType.SEMI) || check(TokenType.AMP)
-                || check(TokenType.AND_IF) || check(TokenType.OR_IF)) {
+                || check(TokenType.AND_IF) || check(TokenType.OR_IF)
+                || check(TokenType.NEWLINE)) {
             ListNode.Separator sep;
-            if (check(TokenType.SEMI)) {
+            if (check(TokenType.SEMI) || check(TokenType.NEWLINE)) {
                 sep = ListNode.Separator.SEMI;
             } else if (check(TokenType.AMP)) {
                 sep = ListNode.Separator.AMP;
@@ -90,11 +98,12 @@ public class Parser {
                 sep = ListNode.Separator.OR_IF;
             }
             consume();
-            
+            skipNewlines();
+
             int lastIdx = list.getPipelines().size() - 1;
             list.getSeparators().set(lastIdx, sep);
 
-            if (isTerminator(terminators)) {
+            if (isTerminator(terminators) || check(TokenType.END_OF_FILE)) {
                 break;
             }
 
