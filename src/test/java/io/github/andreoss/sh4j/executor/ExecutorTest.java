@@ -635,6 +635,16 @@ class ExecutorTest {
     }
 
     @Test
+    void waitForBackgroundJobsInterrupted() {
+        ListNode list = parser("sleep 1 &").parse();
+        Executor executor = new Executor();
+        Thread.currentThread().interrupt();
+        executor.execute(list);
+        boolean reInterrupted = Thread.interrupted();
+        assertTrue(reInterrupted, "InterruptedException catch should re-set interrupt flag");
+    }
+
+    @Test
     void testExportNoArgs() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Map<String, String> env = new HashMap<>();
