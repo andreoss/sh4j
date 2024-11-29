@@ -239,6 +239,59 @@ class ExecutorTest {
     }
 
     @Test
+    void executeBuiltinStderrAppendToFile() throws Exception {
+        String file = "/tmp/sh4j_stderr_append_" + System.nanoTime();
+        ListNode list = parser("echo hello 2>>" + file).parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+        new java.io.File(file).delete();
+    }
+
+    @Test
+    void executeBuiltinStdoutAppendToFile() throws Exception {
+        String file = "/tmp/sh4j_stdout_append_" + System.nanoTime();
+        ListNode list = parser("echo hello >>" + file).parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+        new java.io.File(file).delete();
+    }
+
+    @Test
+    void executeBuiltinStdoutRedirectIOException() throws Exception {
+        ListNode list = parser("echo hello >/dev/null/no_such_path_xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinStderrRedirectIOException() throws Exception {
+        ListNode list = parser("echo hello 2>/dev/null/no_such_stderr_xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinStdoutAppendIOException() throws Exception {
+        ListNode list = parser("echo hello >>/dev/null/no_such_append_xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinStderrAppendIOException() throws Exception {
+        ListNode list = parser("echo hello 2>>/dev/null/no_such_eappend_xyz").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void executeBuiltinCloseStdout() {
+        ListNode list = parser("echo hello >&-").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void executeMultiplePipelines() {
         ListNode list = parser("echo a; echo b; echo c").parse();
         Executor executor = new Executor();
