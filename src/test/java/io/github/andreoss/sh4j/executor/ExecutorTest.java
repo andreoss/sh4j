@@ -1215,6 +1215,26 @@ class ExecutorTest {
     }
 
     @Test
+    void normaliseBackticksDollarAtEnd() {
+        assertEquals("foo$", Executor.normaliseBackticks("foo$"));
+    }
+
+    @Test
+    void normaliseBackticksUnmatchedDollarBrace() {
+        assertEquals("${unclosed", Executor.normaliseBackticks("${unclosed"));
+    }
+
+    @Test
+    void normaliseBackticksDollarFollowedByLetter() {
+        assertEquals("$VAR", Executor.normaliseBackticks("$VAR"));
+    }
+
+    @Test
+    void normaliseBackticksBackslashAtEndOfInput() {
+        assertEquals("`abc\\", Executor.normaliseBackticks("`abc\\"));
+    }
+
+    @Test
     void backtickNestedNormalise() {
         String result = Executor.normaliseBackticks("`echo \\`echo hi\\``");
         assertEquals("$(echo `echo hi`)", result);
