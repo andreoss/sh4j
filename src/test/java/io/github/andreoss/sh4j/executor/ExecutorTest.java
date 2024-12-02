@@ -1235,6 +1235,66 @@ class ExecutorTest {
     }
 
     @Test
+    void globMatchesQuestionMarkInCase() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case ab in a?) echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("MATCHED"));
+    }
+
+    @Test
+    void globMatchesQuestionMarkNoMatch() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case abc in a?) echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("NO"));
+    }
+
+    @Test
+    void globMatchesCharClassInCase() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case b in [abc]) echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("MATCHED"));
+    }
+
+    @Test
+    void globMatchesCharClassNoMatch() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case z in [abc]) echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("NO"));
+    }
+
+    @Test
+    void globMatchesCharClassRangeInCase() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case m in [a-z]) echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("MATCHED"));
+    }
+
+    @Test
+    void globMatchesUnclosedBracketInCase() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("case '[abc' in '[abc') echo MATCHED;; *) echo NO;; esac").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().trim().equals("MATCHED"));
+    }
+
+    @Test
     void backtickNestedNormalise() {
         String result = Executor.normaliseBackticks("`echo \\`echo hi\\``");
         assertEquals("$(echo `echo hi`)", result);
