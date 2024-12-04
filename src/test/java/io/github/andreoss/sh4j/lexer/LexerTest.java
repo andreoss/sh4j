@@ -306,4 +306,46 @@ class LexerTest {
         Lexer l = lexer("=value");
         assertEquals(TokenType.WORD, l.nextToken().type());
     }
+
+    @Test
+    void doubleQuotedBackslashNonSpecialKeptLiteral() {
+        Lexer l = lexer("\"\\a\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"\\a\"", t.text());
+    }
+
+    @Test
+    void ioNumberBeforeInputRedirect() {
+        Lexer l = lexer("2<file");
+        Token t1 = l.nextToken();
+        assertEquals(TokenType.IO_NUMBER, t1.type());
+        assertEquals("2", t1.text());
+        Token t2 = l.nextToken();
+        assertEquals(TokenType.LESS, t2.type());
+    }
+
+    @Test
+    void digitsThenSpaceIsWordNotIoNumber() {
+        Lexer l = lexer("42 ");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("42", t.text());
+    }
+
+    @Test
+    void singleQuoteLiteralInsideDoubleQuote() {
+        Lexer l = lexer("\"a'b\"");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("\"a'b\"", t.text());
+    }
+
+    @Test
+    void backslashNewlineLineContinuation() {
+        Lexer l = lexer("ab\\\ncd");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("abcd", t.text());
+    }
 }
