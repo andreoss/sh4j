@@ -93,6 +93,24 @@ class MainTest {
     }
 
     @Test
+    void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
+        File script = new File(tempDir, "args.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("exit $#\n");
+        }
+        assertEquals(3, Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"}));
+    }
+
+    @Test
+    void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
+        File script = new File(tempDir, "first.sh");
+        try (FileWriter w = new FileWriter(script)) {
+            w.write("exit $1\n");
+        }
+        assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));
+    }
+
+    @Test
     void exitCodeNoArgsInteractiveIoException() {
         System.setIn(new InputStream() {
             public int read() throws IOException {
