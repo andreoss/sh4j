@@ -506,6 +506,63 @@ class ParserTest {
     }
 
     @Test
+    void parseAssignmentWithoutCommand() {
+        ListNode list = parser("FOO=bar").parse();
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("", cmd.getName());
+        assertEquals(1, cmd.getAssignments().size());
+        assertEquals("FOO=bar", cmd.getAssignments().get(0));
+    }
+
+    @Test
+    void parseMultipleAssignmentsThenCommand() {
+        ListNode list = parser("FOO=1 BAR=2 cmd arg").parse();
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("cmd", cmd.getName());
+        assertEquals(2, cmd.getAssignments().size());
+        assertEquals("arg", cmd.getArguments().get(0));
+    }
+
+    @Test
+    void parseInlineAssignmentMidCommand() {
+        ListNode list = parser("cmd FOO=1 arg").parse();
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals("cmd", cmd.getName());
+        assertEquals(1, cmd.getAssignments().size());
+        assertEquals("FOO=1", cmd.getAssignments().get(0));
+    }
+
+    @Test
+    void parseElifChainNestedElif() {
+        ListNode list = parser("if false; then a; elif false; then b; elif true; then c; fi").parse();
+        assertEquals(1, list.getPipelines().size());
+        Pipeline p = list.getPipelines().get(0);
+        assertInstanceOf(IfNode.class, p.getCommands().get(0));
+    }
+
+    @Test
+    void parseElifChainWithElse() {
+        ListNode list = parser("if false; then a; elif false; then b; else c; fi").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseHereDocRedirect() {
+        ListNode list = parser("cat <<EOF\nhello\nEOF\n").parse();
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
+    }
+
+    @Test
+    void parseHereDocStripTabs() {
+        ListNode list = parser("cat <<-EOF\n\thello\nEOF\n").parse();
+        SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(1, cmd.getRedirections().size());
+        assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
+    }
+
+    @Test
     void parseSeparatorsInList() {
         ListNode list = parser("cmd1 & cmd2 && cmd3 || cmd4").parse();
         assertEquals(4, list.getPipelines().size());
