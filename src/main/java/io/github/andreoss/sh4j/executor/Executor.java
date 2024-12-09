@@ -135,6 +135,87 @@ public class Executor {
     }
 
     private int parseArithmetic(String s, int[] pos) {
+        return parseLogicalOr(s, pos);
+    }
+
+    private int parseLogicalOr(String s, int[] pos) {
+        int v = parseLogicalAnd(s, pos);
+        while (matchOp(s, pos, "||")) {
+            int r = parseLogicalAnd(s, pos);
+            v = (v != 0 || r != 0) ? 1 : 0;
+        }
+        return v;
+    }
+
+    private int parseLogicalAnd(String s, int[] pos) {
+        int v = parseBitOr(s, pos);
+        while (matchOp(s, pos, "&&")) {
+            int r = parseBitOr(s, pos);
+            v = (v != 0 && r != 0) ? 1 : 0;
+        }
+        return v;
+    }
+
+    private int parseBitOr(String s, int[] pos) {
+        int v = parseBitXor(s, pos);
+        while (peekIsSingle(s, pos, '|', "||")) {
+            pos[0]++;
+            v |= parseBitXor(s, pos);
+        }
+        return v;
+    }
+
+    private int parseBitXor(String s, int[] pos) {
+        int v = parseBitAnd(s, pos);
+        while (peekIs(s, pos, '^')) {
+            pos[0]++;
+            v ^= parseBitAnd(s, pos);
+        }
+        return v;
+    }
+
+    private int parseBitAnd(String s, int[] pos) {
+        int v = parseEquality(s, pos);
+        while (peekIsSingle(s, pos, '&', "&&")) {
+            pos[0]++;
+            v &= parseEquality(s, pos);
+        }
+        return v;
+    }
+
+    private int parseEquality(String s, int[] pos) {
+        int v = parseRelational(s, pos);
+        while (true) {
+            if (matchOp(s, pos, "==")) { v = (v == parseRelational(s, pos)) ? 1 : 0; }
+            else if (matchOp(s, pos, "!=")) { v = (v != parseRelational(s, pos)) ? 1 : 0; }
+            else break;
+        }
+        return v;
+    }
+
+    private int parseRelational(String s, int[] pos) {
+        int v = parseShift(s, pos);
+        while (true) {
+            if (matchOp(s, pos, "<=")) { v = (v <= parseShift(s, pos)) ? 1 : 0; }
+            else if (matchOp(s, pos, ">=")) { v = (v >= parseShift(s, pos)) ? 1 : 0; }
+            else if (peekIsSingleNotFollowedBy(s, pos, '<', '<', '=')) { pos[0]++; v = (v < parseShift(s, pos)) ? 1 : 0; }
+            else if (peekIsSingleNotFollowedBy(s, pos, '>', '>', '=')) { pos[0]++; v = (v > parseShift(s, pos)) ? 1 : 0; }
+            else break;
+        }
+        return v;
+    }
+
+    private int parseShift(String s, int[] pos) {
+        int v = parseAdditive(s, pos);
+        while (true) {
+            if (matchOp(s, pos, "<<")) { v <<= parseAdditive(s, pos); }
+            else if (matchOp(s, pos, ">>")) { v >>= parseAdditive(s, pos); }
+            else break;
+        }
+        return v;
+    }
+
+    private int parseAdditive(String s, int[] pos) {
         int value = parseTerm(s, pos);
         while (pos[0] < s.length()) {
             skipWs(s, pos);
@@ -174,13 +255,51 @@ public class Executor {
         }
         if (c == '+') { pos[0]++; return parseFactor(s, pos); }
         if (c == '-') { pos[0]++; return -parseFactor(s, pos); }
-        int sign = 1;
+        if (c == '!') { pos[0]++; return parseFactor(s, pos) == 0 ? 1 : 0; }
+        if (c == '~') { pos[0]++; return ~parseFactor(s, pos); }
         int num = 0;
         while (pos[0] < s.length() && Character.isDigit(s.charAt(pos[0]))) {
             num = num * 10 + (s.charAt(pos[0]) - '0');
             pos[0]++;
         }
-        return sign * num;
+        return num;
+    }
+
+    private boolean matchOp(String s, int[] pos, String op) {
+        skipWs(s, pos);
+        if (pos[0] + op.length() > s.length()) return false;
+        for (int k = 0; k < op.length(); k++) {
+            if (s.charAt(pos[0] + k) != op.charAt(k)) return false;
+        }
+        pos[0] += op.length();
+        return true;
+    }
+
+    private boolean peekIs(String s, int[] pos, char c) {
+        skipWs(s, pos);
+        return pos[0] < s.length() && s.charAt(pos[0]) == c;
+    }
+
+    private boolean peekIsSingle(String s, int[] pos, char c, String avoidDouble) {
+        skipWs(s, pos);
+        if (pos[0] >= s.length() || s.charAt(pos[0]) != c) return false;
+        if (pos[0] + 1 < s.length()) {
+            char next = s.charAt(pos[0] + 1);
+            for (int k = 1; k < avoidDouble.length(); k++) {
+                if (next == avoidDouble.charAt(k) && avoidDouble.charAt(0) == c) return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean peekIsSingleNotFollowedBy(String s, int[] pos, char c, char nf1, char nf2) {
+        skipWs(s, pos);
+        if (pos[0] >= s.length() || s.charAt(pos[0]) != c) return false;
+        if (pos[0] + 1 < s.length()) {
+            char next = s.charAt(pos[0] + 1);
+            if (next == nf1 || next == nf2) return false;
+        }
+        return true;
     }
 
     private void skipWs(String s, int[] pos) {

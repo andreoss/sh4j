@@ -1358,6 +1358,130 @@ class ExecutorTest {
     }
 
     @Test
+    void arithmeticShiftLeft() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("32", executor.expandVariables("$((4 << 3))", env));
+    }
+
+    @Test
+    void arithmeticShiftRight() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("4", executor.expandVariables("$((32 >> 3))", env));
+    }
+
+    @Test
+    void arithmeticLessThan() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((3 < 5))", env));
+        assertEquals("0", executor.expandVariables("$((5 < 3))", env));
+    }
+
+    @Test
+    void arithmeticLessEqual() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((5 <= 5))", env));
+        assertEquals("0", executor.expandVariables("$((6 <= 5))", env));
+    }
+
+    @Test
+    void arithmeticGreaterThan() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((5 > 3))", env));
+        assertEquals("0", executor.expandVariables("$((3 > 5))", env));
+    }
+
+    @Test
+    void arithmeticGreaterEqual() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((5 >= 5))", env));
+        assertEquals("0", executor.expandVariables("$((4 >= 5))", env));
+    }
+
+    @Test
+    void arithmeticEqualEqual() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((7 == 7))", env));
+        assertEquals("0", executor.expandVariables("$((7 == 8))", env));
+    }
+
+    @Test
+    void arithmeticNotEqual() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((7 != 8))", env));
+        assertEquals("0", executor.expandVariables("$((7 != 7))", env));
+    }
+
+    @Test
+    void arithmeticBitAnd() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("4", executor.expandVariables("$((12 & 6))", env));
+    }
+
+    @Test
+    void arithmeticBitXor() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("10", executor.expandVariables("$((12 ^ 6))", env));
+    }
+
+    @Test
+    void arithmeticBitOr() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("14", executor.expandVariables("$((12 | 6))", env));
+    }
+
+    @Test
+    void arithmeticLogicalAnd() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((1 && 2))", env));
+        assertEquals("0", executor.expandVariables("$((0 && 2))", env));
+    }
+
+    @Test
+    void arithmeticLogicalOr() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((0 || 5))", env));
+        assertEquals("0", executor.expandVariables("$((0 || 0))", env));
+    }
+
+    @Test
+    void arithmeticUnaryNot() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((!0))", env));
+        assertEquals("0", executor.expandVariables("$((!5))", env));
+    }
+
+    @Test
+    void arithmeticUnaryBitNot() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("-1", executor.expandVariables("$((~0))", env));
+        assertEquals("-6", executor.expandVariables("$((~5))", env));
+    }
+
+    @Test
+    void arithmeticPrecedenceMixed() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("1", executor.expandVariables("$((1 + 2 == 3))", env));
+        assertEquals("1", executor.expandVariables("$((1 < 2 && 3 < 4))", env));
+        assertEquals("7", executor.expandVariables("$((1 | 2 | 4 & 6))", env));
+    }
+
+    @Test
     void defaultIfsSet() {
         Executor executor = new Executor();
         assertEquals(" \t\n", executor.getVariable("IFS"));
