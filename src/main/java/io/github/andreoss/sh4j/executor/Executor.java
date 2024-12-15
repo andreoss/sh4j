@@ -135,7 +135,21 @@ public class Executor {
     }
 
     private int parseArithmetic(String s, int[] pos) {
-        return parseLogicalOr(s, pos);
+        return parseTernary(s, pos);
+    }
+
+    private int parseTernary(String s, int[] pos) {
+        int cond = parseLogicalOr(s, pos);
+        skipWs(s, pos);
+        if (pos[0] < s.length() && s.charAt(pos[0]) == '?') {
+            pos[0]++;
+            int thenVal = parseTernary(s, pos);
+            skipWs(s, pos);
+            if (pos[0] < s.length() && s.charAt(pos[0]) == ':') pos[0]++;
+            int elseVal = parseTernary(s, pos);
+            return cond != 0 ? thenVal : elseVal;
+        }
+        return cond;
     }
 
     private int parseLogicalOr(String s, int[] pos) {

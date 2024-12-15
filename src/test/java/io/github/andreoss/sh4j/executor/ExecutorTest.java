@@ -1473,6 +1473,46 @@ class ExecutorTest {
     }
 
     @Test
+    void arithmeticTernaryTrue() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("10", executor.expandVariables("$((1 ? 10 : 20))", env));
+    }
+
+    @Test
+    void arithmeticTernaryFalse() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("20", executor.expandVariables("$((0 ? 10 : 20))", env));
+    }
+
+    @Test
+    void arithmeticTernaryNested() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("30", executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env));
+        assertEquals("40", executor.expandVariables("$((1 ? 0 ? 30 : 40 : 50))", env));
+        assertEquals("50", executor.expandVariables("$((0 ? 30 : 40 ? 50 : 60))", env));
+    }
+
+    @Test
+    void arithmeticTernaryWithComparison() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "5");
+        assertEquals("1", executor.expandVariables("$((x > 3 ? 1 : 0))", env));
+        assertEquals("0", executor.expandVariables("$((x > 10 ? 1 : 0))", env));
+    }
+
+    @Test
+    void arithmeticTernaryArithmeticBranches() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("7", executor.expandVariables("$((1 ? 3 + 4 : 99))", env));
+        assertEquals("99", executor.expandVariables("$((0 ? 3 + 4 : 99))", env));
+    }
+
+    @Test
     void arithmeticPrecedenceMixed() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
