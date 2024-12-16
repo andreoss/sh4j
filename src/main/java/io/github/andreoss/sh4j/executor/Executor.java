@@ -113,25 +113,16 @@ public class Executor {
         return out;
     }
 
+    private Map<String, String> arithEnv;
+
     private String evalArithmetic(String expr, Map<String, String> env) {
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        while (i < expr.length()) {
-            char c = expr.charAt(i);
-            if (Character.isLetter(c) || c == '_') {
-                int j = i;
-                while (j < expr.length() && (Character.isLetterOrDigit(expr.charAt(j)) || expr.charAt(j) == '_')) j++;
-                String name = expr.substring(i, j);
-                String val = env.getOrDefault(name, "0");
-                sb.append(val);
-                i = j;
-            } else {
-                sb.append(c);
-                i++;
-            }
+        Map<String, String> prev = this.arithEnv;
+        this.arithEnv = env;
+        try {
+            return String.valueOf(parseArithmetic(expr.trim(), new int[]{0}));
+        } finally {
+            this.arithEnv = prev;
         }
-        String expanded = sb.toString().trim();
-        return String.valueOf(parseArithmetic(expanded, new int[]{0}));
     }
 
     private int parseArithmetic(String s, int[] pos) {
@@ -271,6 +262,14 @@ public class Executor {
         if (c == '-') { pos[0]++; return -parseFactor(s, pos); }
         if (c == '!') { pos[0]++; return parseFactor(s, pos) == 0 ? 1 : 0; }
         if (c == '~') { pos[0]++; return ~parseFactor(s, pos); }
+        if (Character.isLetter(c) || c == '_') {
+            int j = pos[0];
+            while (j < s.length() && (Character.isLetterOrDigit(s.charAt(j)) || s.charAt(j) == '_')) j++;
+            String name = s.substring(pos[0], j);
+            pos[0] = j;
+            String val = arithEnv != null ? arithEnv.getOrDefault(name, "0") : "0";
+            try { return Integer.parseInt(val.trim()); } catch (NumberFormatException e) { return 0; }
+        }
         int num = 0;
         while (pos[0] < s.length() && Character.isDigit(s.charAt(pos[0]))) {
             num = num * 10 + (s.charAt(pos[0]) - '0');
