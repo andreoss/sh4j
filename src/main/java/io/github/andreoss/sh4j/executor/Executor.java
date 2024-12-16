@@ -114,6 +114,7 @@ public class Executor {
     }
 
     private Map<String, String> arithEnv;
+    private boolean arithMute = false;
 
     private String evalArithmetic(String expr, Map<String, String> env) {
         Map<String, String> prev = this.arithEnv;
@@ -126,6 +127,62 @@ public class Executor {
     }
 
     private int parseArithmetic(String s, int[] pos) {
+        return parseAssignment(s, pos);
+    }
+
+    private int parseAssignment(String s, int[] pos) {
+        int save = pos[0];
+        skipWs(s, pos);
+        if (pos[0] < s.length() && (Character.isLetter(s.charAt(pos[0])) || s.charAt(pos[0]) == '_')) {
+            int j = pos[0];
+            while (j < s.length() && (Character.isLetterOrDigit(s.charAt(j)) || s.charAt(j) == '_')) j++;
+            String name = s.substring(pos[0], j);
+            int k = j;
+            while (k < s.length() && Character.isWhitespace(s.charAt(k))) k++;
+            if (k < s.length()) {
+                char c0 = s.charAt(k);
+                char c1 = k + 1 < s.length() ? s.charAt(k + 1) : 0;
+                char c2 = k + 2 < s.length() ? s.charAt(k + 2) : 0;
+                String op = null;
+                int opLen = 0;
+                if ((c0 == '<' && c1 == '<' && c2 == '=') || (c0 == '>' && c1 == '>' && c2 == '=')) {
+                    op = "" + c0 + c1; opLen = 3;
+                } else if (c1 == '=' && (c0 == '*' || c0 == '/' || c0 == '%' || c0 == '+'
+                        || c0 == '-' || c0 == '&' || c0 == '^' || c0 == '|')) {
+                    op = "" + c0; opLen = 2;
+                } else if (c0 == '=' && c1 != '=') {
+                    op = ""; opLen = 1;
+                }
+                if (op != null) {
+                    pos[0] = k + opLen;
+                    int rhs = parseAssignment(s, pos);
+                    int cur = 0;
+                    if (arithEnv != null) {
+                        try { cur = Integer.parseInt(arithEnv.getOrDefault(name, "0").trim()); }
+                        catch (NumberFormatException ignored) {}
+                    }
+                    int newVal = switch (op) {
+                        case "" -> rhs;
+                        case "+" -> cur + rhs;
+                        case "-" -> cur - rhs;
+                        case "*" -> cur * rhs;
+                        case "/" -> rhs != 0 ? cur / rhs : 0;
+                        case "%" -> rhs != 0 ? cur % rhs : 0;
+                        case "<<" -> cur << rhs;
+                        case ">>" -> cur >> rhs;
+                        case "&" -> cur & rhs;
+                        case "^" -> cur ^ rhs;
+                        case "|" -> cur | rhs;
+                        default -> rhs;
+                    };
+                    if (!arithMute && arithEnv != null) {
+                        arithEnv.put(name, String.valueOf(newVal));
+                    }
+                    return newVal;
+                }
+            }
+        }
+        pos[0] = save;
         return parseTernary(s, pos);
     }
 
@@ -134,10 +191,15 @@ public class Executor {
         skipWs(s, pos);
         if (pos[0] < s.length() && s.charAt(pos[0]) == '?') {
             pos[0]++;
-            int thenVal = parseTernary(s, pos);
+            boolean prevMute = arithMute;
+            if (cond == 0) arithMute = true;
+            int thenVal = parseAssignment(s, pos);
+            arithMute = prevMute;
             skipWs(s, pos);
             if (pos[0] < s.length() && s.charAt(pos[0]) == ':') pos[0]++;
-            int elseVal = parseTernary(s, pos);
+            if (cond != 0) arithMute = true;
+            int elseVal = parseAssignment(s, pos);
+            arithMute = prevMute;
             return cond != 0 ? thenVal : elseVal;
         }
         return cond;
@@ -146,7 +208,10 @@ public class Executor {
     private int parseLogicalOr(String s, int[] pos) {
         int v = parseLogicalAnd(s, pos);
         while (matchOp(s, pos, "||")) {
+            boolean prevMute = arithMute;
+            if (v != 0) arithMute = true;
             int r = parseLogicalAnd(s, pos);
+            arithMute = prevMute;
             v = (v != 0 || r != 0) ? 1 : 0;
         }
         return v;
@@ -155,7 +220,10 @@ public class Executor {
     private int parseLogicalAnd(String s, int[] pos) {
         int v = parseBitOr(s, pos);
         while (matchOp(s, pos, "&&")) {
+            boolean prevMute = arithMute;
+            if (v == 0) arithMute = true;
             int r = parseBitOr(s, pos);
+            arithMute = prevMute;
             v = (v != 0 && r != 0) ? 1 : 0;
         }
         return v;

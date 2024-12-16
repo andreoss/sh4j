@@ -1513,6 +1513,103 @@ class ExecutorTest {
     }
 
     @Test
+    void arithmeticAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("5", executor.expandVariables("$((x = 5))", env));
+        assertEquals("5", env.get("x"));
+    }
+
+    @Test
+    void arithmeticPlusAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("13", executor.expandVariables("$((x += 3))", env));
+        assertEquals("13", env.get("x"));
+    }
+
+    @Test
+    void arithmeticMinusAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("7", executor.expandVariables("$((x -= 3))", env));
+        assertEquals("7", env.get("x"));
+    }
+
+    @Test
+    void arithmeticMulDivModAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("30", executor.expandVariables("$((x *= 3))", env));
+        env.put("y", "20");
+        assertEquals("4", executor.expandVariables("$((y /= 5))", env));
+        env.put("z", "23");
+        assertEquals("3", executor.expandVariables("$((z %= 5))", env));
+    }
+
+    @Test
+    void arithmeticShiftAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "4");
+        assertEquals("32", executor.expandVariables("$((x <<= 3))", env));
+        env.put("y", "32");
+        assertEquals("4", executor.expandVariables("$((y >>= 3))", env));
+    }
+
+    @Test
+    void arithmeticBitAssign() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "12");
+        assertEquals("4", executor.expandVariables("$((x &= 6))", env));
+        env.put("y", "12");
+        assertEquals("10", executor.expandVariables("$((y ^= 6))", env));
+        env.put("z", "12");
+        assertEquals("14", executor.expandVariables("$((z |= 6))", env));
+    }
+
+    @Test
+    void arithmeticAssignRightAssoc() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("7", executor.expandVariables("$((a = b = 7))", env));
+        assertEquals("7", env.get("a"));
+        assertEquals("7", env.get("b"));
+    }
+
+    @Test
+    void arithmeticShortCircuitAndSuppressesAssignment() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((0 && (x = 99)))", env);
+        assertEquals(null, env.get("x"));
+    }
+
+    @Test
+    void arithmeticShortCircuitOrSuppressesAssignment() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 || (x = 99)))", env);
+        assertEquals(null, env.get("x"));
+    }
+
+    @Test
+    void arithmeticTernaryShortCircuit() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
+        assertEquals("1", env.get("a"));
+        assertEquals(null, env.get("b"));
+        executor.expandVariables("$((0 ? (c = 3) : (d = 4)))", env);
+        assertEquals(null, env.get("c"));
+        assertEquals("4", env.get("d"));
+    }
+
+    @Test
     void arithmeticPrecedenceMixed() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
