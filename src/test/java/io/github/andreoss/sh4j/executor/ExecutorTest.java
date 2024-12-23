@@ -1610,6 +1610,64 @@ class ExecutorTest {
     }
 
     @Test
+    void arithmeticAssignDivByZero() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("0", executor.expandVariables("$((x /= 0))", env));
+        assertEquals("0", env.get("x"));
+    }
+
+    @Test
+    void arithmeticAssignModByZero() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        assertEquals("0", executor.expandVariables("$((x %= 0))", env));
+    }
+
+    @Test
+    void arithmeticAssignNonNumericEnvTreatedAsZero() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "abc");
+        assertEquals("5", executor.expandVariables("$((x += 5))", env));
+        assertEquals("5", env.get("x"));
+    }
+
+    @Test
+    void arithmeticAssignWithUnderscoreName() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("42", executor.expandVariables("$((_foo = 42))", env));
+        assertEquals("42", env.get("_foo"));
+    }
+
+    @Test
+    void externalReadWriteRedirectFd2() throws Exception {
+        String path = "/tmp/sh4j_rw_fd2_" + System.nanoTime();
+        new java.io.File(path).delete();
+        Executor executor = new Executor();
+        ListNode list = parser("cat /nonexistent_xyz 2<>" + path).parse();
+        executor.execute(list);
+        new java.io.File(path).delete();
+    }
+
+    @Test
+    void externalHereDocRedirect() throws Exception {
+        Executor executor = new Executor();
+        ListNode list = parser("cat <<EOF\nhello world\nEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void externalHereDocDashRedirect() throws Exception {
+        Executor executor = new Executor();
+        ListNode list = parser("cat <<-EOF\n\thello dashed\nEOF\n").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void arithmeticPrecedenceMixed() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
