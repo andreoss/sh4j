@@ -1668,6 +1668,34 @@ class ExecutorTest {
     }
 
     @Test
+    void shiftLargerThanPositionalCount() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        ListNode list = parser("shift 100").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void execWithMultipleArgs() {
+        Executor executor = new Executor();
+        ListNode list = parser("exec true arg1 arg2 arg3").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void positionalParamIndexOutOfRangeIsEmpty() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("$9", env));
+    }
+
+    @Test
+    void normaliseBackticksBackslashNonSpecialChar() {
+        assertEquals("$(echo \\n)", Executor.normaliseBackticks("`echo \\n`"));
+    }
+
+    @Test
     void arithmeticPrecedenceMixed() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
