@@ -1696,6 +1696,67 @@ class ExecutorTest {
     }
 
     @Test
+    void whileLoopWithContinue() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("c=true; while $c; do c=false; continue; echo unreached; done").parse();
+        executor.execute(list);
+        assertTrue(bos.toString().trim().isEmpty(), "continue should skip body, got: " + bos);
+    }
+
+    @Test
+    void typeForExternalNonBuiltinCommand() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("type ls").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().contains("ls is"));
+    }
+
+    @Test
+    void exitWithValidIntegerAndWordExpansionError() {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("exit 5${UNSET_FOR_EXIT_999:?msg}").parse();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void arithmeticFactorNonNumericEnvAsZero() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "abc");
+        assertEquals("1", executor.expandVariables("$((x + 1))", env));
+    }
+
+    @Test
+    void resolveCommandPathNullReturnsNull() {
+        Map<String, String> emptyEnv = new HashMap<>();
+        emptyEnv.put("PATH", "");
+        Executor executor = new Executor(emptyEnv);
+        executor.expandVariables("", emptyEnv);
+        ListNode list = parser("nonexistent_xyz_zzz_cmd_abc").parse();
+        assertEquals(127, executor.execute(list));
+    }
+
+    @Test
+    void resolveCommandWithEmptyDirInPath() {
+        Map<String, String> env = new HashMap<>();
+        env.put("PATH", ":/usr/bin");
+        Executor executor = new Executor(env);
+        ListNode list = parser("true").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void createProcessBuilderWithQuotedArg() {
+        Executor executor = new Executor();
+        ListNode list = parser("true \"quoted arg\"").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void forLoopWithContinue() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Executor executor = new Executor();
