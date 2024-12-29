@@ -1723,6 +1723,68 @@ class ExecutorTest {
     }
 
     @Test
+    void expandBracedMultiDigitPositionalOutOfRange() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("${10}", env));
+    }
+
+    @Test
+    void expandBracedMultiDigitPositionalInRange() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        Map<String, String> env = new HashMap<>();
+        assertEquals("b", executor.expandVariables("${2}", env));
+    }
+
+    @Test
+    void expandBracedLeadingHashVar() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "hello");
+        assertEquals("5", executor.expandVariables("${#x}", env));
+    }
+
+    @Test
+    void expandBracedLeadingHashUnsetVar() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("0", executor.expandVariables("${#UNSET_HASH_TEST_xyz}", env));
+    }
+
+    @Test
+    void specialParamShellFlags() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("$-", env));
+    }
+
+    @Test
+    void specialParamBackgroundPidBeforeAnyJob() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("0", executor.expandVariables("$!", env));
+    }
+
+    @Test
+    void specialParamAtStarWithPositionals() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        Map<String, String> env = new HashMap<>();
+        assertEquals("a b c", executor.expandVariables("$@", env));
+        assertEquals("a b c", executor.expandVariables("$*", env));
+    }
+
+    @Test
+    void specialParamAtStarEmpty() {
+        List<String> params = new ArrayList<>(java.util.Arrays.asList("script"));
+        Executor executor = new Executor(new HashMap<>(), params);
+        Map<String, String> env = new HashMap<>();
+        assertEquals("", executor.expandVariables("$@", env));
+    }
+
+    @Test
     void arithmeticFactorNonNumericEnvAsZero() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
