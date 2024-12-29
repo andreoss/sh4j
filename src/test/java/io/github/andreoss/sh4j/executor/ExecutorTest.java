@@ -1696,6 +1696,80 @@ class ExecutorTest {
     }
 
     @Test
+    void forLoopWithContinue() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("for i in 1 2 3; do continue; echo $i; done").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("", bos.toString().trim());
+    }
+
+    @Test
+    void typeForExternalCommand() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("type true").parse();
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().contains("true is"));
+    }
+
+    @Test
+    void exitWithWordExpansionError() {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("exit ${UNSET_FOR_EXIT_8x9:?errmsg}").parse();
+        assertEquals(1, executor.execute(list));
+    }
+
+    @Test
+    void exportArgWithEquals() {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("export FOO=hello").parse();
+        assertEquals(0, executor.execute(list));
+        assertEquals("hello", executor.getVariable("FOO"));
+    }
+
+    @Test
+    void expandBracedColonEqWhenSet() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "set");
+        assertEquals("set", executor.expandVariables("${x:=default}", env));
+    }
+
+    @Test
+    void expandBracedQuestionWhenSet() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "value");
+        assertEquals("value", executor.expandVariables("${x?msg}", env));
+    }
+
+    @Test
+    void expandBracedPrefixHashNoMatch() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "abcdef");
+        assertEquals("abcdef", executor.expandVariables("${x#zzz}", env));
+    }
+
+    @Test
+    void expandBracedUnknownOperatorFallsThrough() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        env.put("x", "value");
+        assertEquals("value@weird}", executor.expandVariables("${x@weird}", env));
+    }
+
+    @Test
+    void tildeUserNameFallthrough() {
+        Executor executor = new Executor();
+        Map<String, String> env = new HashMap<>();
+        assertEquals("~nonexistentuser123", executor.expandVariables("~nonexistentuser123", env));
+    }
+
+    @Test
     void arithmeticPrecedenceMixed() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
