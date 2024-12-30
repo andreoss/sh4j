@@ -348,4 +348,25 @@ class LexerTest {
         assertEquals(TokenType.WORD, t.type());
         assertEquals("abcd", t.text());
     }
+
+    @Test
+    void readHereDocContentSkipsLeadingNewline() {
+        Lexer l = lexer("\nhello\nEOF\n");
+        String content = l.readHereDocContent("EOF", false);
+        assertEquals("hello", content);
+    }
+
+    @Test
+    void readHereDocContentEmptyBody() {
+        Lexer l = lexer("EOF\n");
+        String content = l.readHereDocContent("EOF", false);
+        assertEquals("", content);
+    }
+
+    @Test
+    void readHereDocContentMultipleLines() {
+        Lexer l = lexer("\nfirst\nsecond\nthird\nEOF\n");
+        String content = l.readHereDocContent("EOF", false);
+        assertEquals("first\nsecond\nthird", content);
+    }
 }

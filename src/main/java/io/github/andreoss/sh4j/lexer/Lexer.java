@@ -179,12 +179,6 @@ public class Lexer {
                     }
                     continue;
                 }
-                if (c == '"') {
-                    reader.consume();
-                    sb.append('"');
-                    inDoubleQuote = false;
-                    continue;
-                }
                 sb.append((char) reader.consume());
                 continue;
             }
@@ -249,9 +243,6 @@ public class Lexer {
     }
 
     private boolean isValidVarName(String name) {
-        if (name.isEmpty()) {
-            return false;
-        }
         char first = name.charAt(0);
         if (!Character.isLetter(first) && first != '_') {
             return false;
