@@ -1610,6 +1610,30 @@ class ExecutorTest {
     }
 
     @Test
+    void execNonExecutableFileTriggersIoException() throws Exception {
+        java.io.File nonExec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
+        nonExec.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("not a script"); }
+        nonExec.setExecutable(false);
+        Executor executor = new Executor();
+        ListNode list = parser("exec " + nonExec.getAbsolutePath()).parse();
+        int code = executor.execute(list);
+        assertTrue(code != 0, "non-executable should fail; got " + code);
+    }
+
+    @Test
+    void externalNonExecutableFileTriggersIoException() throws Exception {
+        java.io.File nonExec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
+        nonExec.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("nope"); }
+        nonExec.setExecutable(false);
+        Executor executor = new Executor();
+        ListNode list = parser(nonExec.getAbsolutePath()).parse();
+        int code = executor.execute(list);
+        assertTrue(code != 0, "non-executable external should fail; got " + code);
+    }
+
+    @Test
     void arithmeticAssignDivByZero() {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
