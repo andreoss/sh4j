@@ -1622,6 +1622,16 @@ class ExecutorTest {
     }
 
     @Test
+    void execInterruptedException() {
+        Executor executor = new Executor();
+        Thread.currentThread().interrupt();
+        ListNode list = parser("exec sleep 1").parse();
+        int code = executor.execute(list);
+        Thread.interrupted();
+        assertEquals(1, code);
+    }
+
+    @Test
     void externalNonExecutableFileTriggersIoException() throws Exception {
         java.io.File nonExec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
         nonExec.deleteOnExit();
