@@ -555,6 +555,22 @@ class ParserTest {
     }
 
     @Test
+    void parseCaseMultilineBody() {
+        ListNode list = parser("case x in\n  a) echo aa;;\n  b) echo bb;;\nesac").parse();
+        assertEquals(1, list.getPipelines().size());
+        CaseNode c = (CaseNode) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(2, c.getItems().size());
+    }
+
+    @Test
+    void parseCaseMultilineWithBlankLinesBetweenArms() {
+        ListNode list = parser("case y in\n\n  a) echo aa;;\n\n  b) echo bb;;\n\nesac").parse();
+        assertEquals(1, list.getPipelines().size());
+        CaseNode c = (CaseNode) list.getPipelines().get(0).getCommands().get(0);
+        assertEquals(2, c.getItems().size());
+    }
+
+    @Test
     void parseHereDocStripTabs() {
         ListNode list = parser("cat <<-EOF\n\thello\nEOF\n").parse();
         SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);

@@ -278,6 +278,7 @@ public class Parser {
         consume(); // "case"
         String word = expect(TokenType.WORD).text();
         expectWord("in");
+        skipNewlines();
         List<CaseNode.CaseItem> items = new ArrayList<>();
         while (!isReservedWord("esac")) {
             if (check(TokenType.LPAREN)) {
@@ -297,6 +298,7 @@ public class Parser {
                 body = parseList(TokenType.DSEMI);
             }
             expect(TokenType.DSEMI);
+            skipNewlines();
             items.add(new CaseNode.CaseItem(patterns, body));
         }
         expectWord("esac");
