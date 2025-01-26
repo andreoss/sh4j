@@ -64,6 +64,25 @@ class IntegrationTest {
         assertEquals(0, Main.runScript(s.getAbsolutePath()));
     }
 
+    @org.junit.jupiter.api.Test
+    @org.junit.jupiter.api.Disabled("Problem #14/#16 — Executor.executeCommand (Executor.java:612) builds ProcessBuilder with default Redirect.PIPE; when captureStream is null nobody reads the child's stdout so it is silently dropped. Fix in Step 12.1.1 (inheritIO default + startPipeline).")
+    void childJvmCatFileProducesVisibleStdout() throws Exception {
+        File probe = tempDir.resolve("probe.txt").toFile();
+        try (FileWriter w = new FileWriter(probe)) { w.write("hello-from-cat\n"); }
+        File script = writeScript("catprobe.sh", "cat " + probe.getAbsolutePath() + "\n");
+        String javaBin = System.getProperty("java.home") + "/bin/java";
+        ProcessBuilder pb = new ProcessBuilder(javaBin, "-cp",
+                System.getProperty("java.class.path"),
+                "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        String out = new String(p.getInputStream().readAllBytes());
+        int code = p.waitFor();
+        assertEquals(0, code, "sh4j exit code; output: " + out);
+        assertTrue(out.contains("hello-from-cat"),
+                "external cat stdout must reach test; got: '" + out + "'");
+    }
+
     @Test
     void pipelineMultiple() throws IOException {
         File s = writeScript("pipe_multi.sh", "echo hello | cat | wc -c\n");
