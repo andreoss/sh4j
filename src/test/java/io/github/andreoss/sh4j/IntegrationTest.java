@@ -82,6 +82,42 @@ class IntegrationTest {
                 "external cat stdout must reach test; got: '" + out + "'");
     }
 
+    @org.junit.jupiter.api.Test
+    void nativeBinaryCatProbeSmoke() throws Exception {
+        File nativeBin = new File("target/sh4j");
+        org.junit.jupiter.api.Assumptions.assumeTrue(nativeBin.isFile() && nativeBin.canExecute(),
+                "target/sh4j native binary not built; skipping native smoke");
+        File probe = tempDir.resolve("nprobe.txt").toFile();
+        try (FileWriter w = new FileWriter(probe)) { w.write("hello-native\n"); }
+        File script = writeScript("ncatprobe.sh", "cat " + probe.getAbsolutePath() + "\n");
+        ProcessBuilder pb = new ProcessBuilder(nativeBin.getAbsolutePath(),
+                script.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        String out = new String(p.getInputStream().readAllBytes());
+        int code = p.waitFor();
+        assertEquals(0, code, "native sh4j exit code; output: " + out);
+        assertTrue(out.contains("hello-native"),
+                "native sh4j must propagate external cat stdout; got: '" + out + "'");
+    }
+
+    @org.junit.jupiter.api.Test
+    void nativeBinaryPipelineSmoke() throws Exception {
+        File nativeBin = new File("target/sh4j");
+        org.junit.jupiter.api.Assumptions.assumeTrue(nativeBin.isFile() && nativeBin.canExecute(),
+                "target/sh4j native binary not built; skipping native pipeline smoke");
+        File script = writeScript("npipe.sh", "echo native-pipe | cat\n");
+        ProcessBuilder pb = new ProcessBuilder(nativeBin.getAbsolutePath(),
+                script.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        String out = new String(p.getInputStream().readAllBytes());
+        int code = p.waitFor();
+        assertEquals(0, code, "native sh4j pipeline exit code; output: " + out);
+        assertTrue(out.contains("native-pipe"),
+                "native sh4j pipeline must propagate stdout; got: '" + out + "'");
+    }
+
     @Test
     void pipelineMultiple() throws IOException {
         File s = writeScript("pipe_multi.sh", "echo hello | cat | wc -c\n");
