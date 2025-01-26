@@ -541,26 +541,31 @@ public class Executor {
                 String resolved = resolveCommand(cmd.getName());
                 if (resolved == null) resolved = cmd.getName();
                 ProcessBuilder pb = createProcessBuilder(resolved, cmd, new HashMap<>(environment));
+                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                 builders.add(pb);
             }
         }
+        if (builders.isEmpty()) return 0;
+        builders.get(0).redirectInput(ProcessBuilder.Redirect.INHERIT);
+        ProcessBuilder last = builders.get(builders.size() - 1);
+        if (captureStream != null) {
+            last.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        } else {
+            last.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        }
 
         try {
-            for (int i = 0; i < builders.size(); i++) {
-                processes.add(builders.get(i).start());
-            }
+            processes = ProcessBuilder.startPipeline(builders);
 
-            for (Process p : processes) {
-                try {
-                    p.getOutputStream().close();
-                } catch (IOException e) {
-                    // ignore
+            if (captureStream != null) {
+                try (var is = processes.get(processes.size() - 1).getInputStream()) {
+                    is.transferTo(captureStream);
                 }
             }
 
             int lastExitCode = 0;
-            for (int i = 0; i < processes.size(); i++) {
-                lastExitCode = processes.get(i).waitFor();
+            for (Process p : processes) {
+                lastExitCode = p.waitFor();
             }
 
             return lastExitCode;
@@ -618,6 +623,7 @@ public class Executor {
             wordExpansionError = false;
             return 1;
         }
+        pb.inheritIO();
         setupRedirections(pb, cmd.getRedirections());
         if (captureStream != null) {
             pb.redirectOutput(ProcessBuilder.Redirect.PIPE);

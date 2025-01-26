@@ -65,7 +65,6 @@ class IntegrationTest {
     }
 
     @org.junit.jupiter.api.Test
-    @org.junit.jupiter.api.Disabled("Problem #14/#16 — Executor.executeCommand (Executor.java:612) builds ProcessBuilder with default Redirect.PIPE; when captureStream is null nobody reads the child's stdout so it is silently dropped. Fix in Step 12.1.1 (inheritIO default + startPipeline).")
     void childJvmCatFileProducesVisibleStdout() throws Exception {
         File probe = tempDir.resolve("probe.txt").toFile();
         try (FileWriter w = new FileWriter(probe)) { w.write("hello-from-cat\n"); }
