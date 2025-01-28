@@ -101,6 +101,43 @@ class IntegrationTest {
                 "native sh4j must propagate external cat stdout; got: '" + out + "'");
     }
 
+    private String runChildJvm(File script) throws Exception {
+        String javaBin = System.getProperty("java.home") + "/bin/java";
+        ProcessBuilder pb = new ProcessBuilder(javaBin, "-cp",
+                System.getProperty("java.class.path"),
+                "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        String out = new String(p.getInputStream().readAllBytes());
+        int code = p.waitFor();
+        assertEquals(0, code, "child sh4j exit code; output: " + out);
+        return out;
+    }
+
+    @org.junit.jupiter.api.Test
+    void childJvmEchoPipeCat() throws Exception {
+        File s = writeScript("h_pipe.sh", "echo child-pipe | cat\n");
+        String out = runChildJvm(s);
+        assertTrue(out.contains("child-pipe"), "pipeline stdout missing; got: '" + out + "'");
+    }
+
+    @org.junit.jupiter.api.Test
+    void childJvmCatProbe() throws Exception {
+        File probe = tempDir.resolve("h_probe.txt").toFile();
+        try (FileWriter w = new FileWriter(probe)) { w.write("child-probe\n"); }
+        File s = writeScript("h_cat.sh", "cat " + probe.getAbsolutePath() + "\n");
+        String out = runChildJvm(s);
+        assertTrue(out.contains("child-probe"), "cat stdout missing; got: '" + out + "'");
+    }
+
+    @org.junit.jupiter.api.Test
+    void childJvmForLoop() throws Exception {
+        File s = writeScript("h_for.sh", "for i in 1 2 3; do echo $i; done\n");
+        String out = runChildJvm(s);
+        assertTrue(out.contains("1") && out.contains("2") && out.contains("3"),
+                "for-loop body missing; got: '" + out + "'");
+    }
+
     @org.junit.jupiter.api.Test
     void nativeBinaryPipelineSmoke() throws Exception {
         File nativeBin = new File("target/sh4j");
