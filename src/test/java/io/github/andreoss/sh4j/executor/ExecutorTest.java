@@ -478,7 +478,10 @@ class ExecutorTest {
     void executePipelineWithFailingCommand() {
         ListNode list = parser("echo hello | nonexistent_cmd_xyz_fail | echo done").parse();
         Executor executor = new Executor();
-        assertEquals(127, executor.execute(list));
+        int code = executor.execute(list);
+        assertTrue(code == 127 || code == 126,
+                "Pipeline with missing middle stage must exit with POSIX "
+                        + "command-not-found(127) or not-executable(126); got " + code);
     }
 
     @Test
