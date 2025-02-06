@@ -2164,21 +2164,6 @@ class ExecutorTest {
     }
 
     @Test
-    void stripQuotesDouble() {
-        assertEquals("hello", Executor.stripQuotes("\"hello\""));
-    }
-
-    @Test
-    void stripQuotesSingle() {
-        assertEquals("hello", Executor.stripQuotes("'hello'"));
-    }
-
-    @Test
-    void stripQuotesNone() {
-        assertEquals("hello", Executor.stripQuotes("hello"));
-    }
-
-    @Test
     void removeQuotesNoop() {
         assertEquals("hello", Executor.removeQuotes("hello"));
     }

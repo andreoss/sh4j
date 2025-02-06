@@ -1397,11 +1397,6 @@ public class Executor {
         return (first == '"' && last == '"') || (first == '\'' && last == '\'');
     }
 
-    static String stripQuotes(String arg) {
-        if (isQuoted(arg)) return arg.substring(1, arg.length() - 1);
-        return arg;
-    }
-
     static String removeQuotes(String word) {
         StringBuilder result = new StringBuilder();
         boolean inSingle = false;
