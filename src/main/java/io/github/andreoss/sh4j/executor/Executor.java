@@ -132,7 +132,7 @@ public class Executor {
 
     private int parseAssignment(String s, int[] pos) {
         int save = pos[0];
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] < s.length() && (Character.isLetter(s.charAt(pos[0])) || s.charAt(pos[0]) == '_')) {
             int j = pos[0];
             while (j < s.length() && (Character.isLetterOrDigit(s.charAt(j)) || s.charAt(j) == '_')) j++;
@@ -188,14 +188,14 @@ public class Executor {
 
     private int parseTernary(String s, int[] pos) {
         int cond = parseLogicalOr(s, pos);
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] < s.length() && s.charAt(pos[0]) == '?') {
             pos[0]++;
             boolean prevMute = arithMute;
             if (cond == 0) arithMute = true;
             int thenVal = parseAssignment(s, pos);
             arithMute = prevMute;
-            skipWs(s, pos);
+            skipWhitespace(s, pos);
             if (pos[0] < s.length() && s.charAt(pos[0]) == ':') pos[0]++;
             if (cond != 0) arithMute = true;
             int elseVal = parseAssignment(s, pos);
@@ -291,7 +291,7 @@ public class Executor {
     private int parseAdditive(String s, int[] pos) {
         int value = parseTerm(s, pos);
         while (pos[0] < s.length()) {
-            skipWs(s, pos);
+            skipWhitespace(s, pos);
             if (pos[0] >= s.length()) break;
             char c = s.charAt(pos[0]);
             if (c == '+') { pos[0]++; value += parseTerm(s, pos); }
@@ -304,7 +304,7 @@ public class Executor {
     private int parseTerm(String s, int[] pos) {
         int value = parseFactor(s, pos);
         while (pos[0] < s.length()) {
-            skipWs(s, pos);
+            skipWhitespace(s, pos);
             if (pos[0] >= s.length()) break;
             char c = s.charAt(pos[0]);
             if (c == '*') { pos[0]++; value *= parseFactor(s, pos); }
@@ -316,13 +316,13 @@ public class Executor {
     }
 
     private int parseFactor(String s, int[] pos) {
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] >= s.length()) return 0;
         char c = s.charAt(pos[0]);
         if (c == '(') {
             pos[0]++;
             int v = parseArithmetic(s, pos);
-            skipWs(s, pos);
+            skipWhitespace(s, pos);
             if (pos[0] < s.length() && s.charAt(pos[0]) == ')') pos[0]++;
             return v;
         }
@@ -347,7 +347,7 @@ public class Executor {
     }
 
     private boolean matchOp(String s, int[] pos, String op) {
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] + op.length() > s.length()) return false;
         for (int k = 0; k < op.length(); k++) {
             if (s.charAt(pos[0] + k) != op.charAt(k)) return false;
@@ -357,12 +357,12 @@ public class Executor {
     }
 
     private boolean peekIs(String s, int[] pos, char c) {
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         return pos[0] < s.length() && s.charAt(pos[0]) == c;
     }
 
     private boolean peekIsSingle(String s, int[] pos, char c, String avoidDouble) {
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] >= s.length() || s.charAt(pos[0]) != c) return false;
         if (pos[0] + 1 < s.length()) {
             char next = s.charAt(pos[0] + 1);
@@ -374,7 +374,7 @@ public class Executor {
     }
 
     private boolean peekIsSingleNotFollowedBy(String s, int[] pos, char c, char nf1, char nf2) {
-        skipWs(s, pos);
+        skipWhitespace(s, pos);
         if (pos[0] >= s.length() || s.charAt(pos[0]) != c) return false;
         if (pos[0] + 1 < s.length()) {
             char next = s.charAt(pos[0] + 1);
@@ -383,7 +383,7 @@ public class Executor {
         return true;
     }
 
-    private void skipWs(String s, int[] pos) {
+    private void skipWhitespace(String s, int[] pos) {
         while (pos[0] < s.length() && Character.isWhitespace(s.charAt(pos[0]))) pos[0]++;
     }
 
@@ -573,7 +573,7 @@ public class Executor {
             for (Process p : processes) {
                 p.destroyForcibly();
             }
-            return exitCodeForIoException(e);
+            return exitCodeForIOException(e);
         } catch (InterruptedException e) {
             for (Process p : processes) {
                 p.destroyForcibly();
@@ -639,7 +639,7 @@ public class Executor {
             int exitCode = process.waitFor();
             return exitCode;
         } catch (IOException e) {
-            return exitCodeForIoException(e);
+            return exitCodeForIOException(e);
         } catch (InterruptedException e) {
             return 1;
         }
@@ -859,7 +859,7 @@ public class Executor {
                 Process process = pb.start();
                 return process.waitFor();
             } catch (IOException e) {
-                return exitCodeForIoException(e);
+                return exitCodeForIOException(e);
             } catch (InterruptedException e) {
                 return 1;
             }
@@ -1057,7 +1057,7 @@ public class Executor {
         return sb.toString();
     }
 
-    private String lookupVar(String name, Map<String, String> env) {
+    private String lookupVariable(String name, Map<String, String> env) {
         if (name.length() == 1) {
             String special = getSpecialParam(name.charAt(0));
             if (special != null) return special;
@@ -1073,7 +1073,7 @@ public class Executor {
     private String expandBraced(String inner, Map<String, String> env) {
         if (inner.isEmpty()) return null;
         if (inner.charAt(0) == '#') {
-            String val = lookupVar(inner.substring(1), env);
+            String val = lookupVariable(inner.substring(1), env);
             return val != null ? String.valueOf(val.length()) : "0";
         }
         int nameEnd = 0;
@@ -1093,7 +1093,7 @@ public class Executor {
         if (nameEnd == 0) return null;
         String varName = inner.substring(0, nameEnd);
         String rest = inner.substring(nameEnd);
-        String varValue = lookupVar(varName, env);
+        String varValue = lookupVariable(varName, env);
 
         if (rest.isEmpty()) {
             return varValue != null ? varValue : "";
@@ -1222,7 +1222,7 @@ public class Executor {
         };
     }
 
-    private int exitCodeForIoException(IOException e) {
+    private int exitCodeForIOException(IOException e) {
         String msg = e.getMessage();
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
             return 127;
