@@ -51,6 +51,8 @@ public class Executor {
     private PrintStream err = System.err;
     private boolean wordExpansionError = false;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
+    private static final int EXIT_COMMAND_NOT_FOUND = 127;
+    private static final int EXIT_COMMAND_NOT_EXECUTABLE = 126;
 
     public Executor() {
         this.environment = new HashMap<>(System.getenv());
@@ -615,7 +617,7 @@ public class Executor {
 
         String resolved = resolveCommand(name);
         if (resolved == null) {
-            return 127;
+            return EXIT_COMMAND_NOT_FOUND;
         }
 
         ProcessBuilder pb = createProcessBuilder(resolved, cmd, cmdEnv);
@@ -845,7 +847,7 @@ public class Executor {
             if (arguments.isEmpty()) return 0;
             String cmdName = expandVariables(arguments.get(0), env);
             String resolved = resolveCommand(cmdName);
-            if (resolved == null) return 127;
+            if (resolved == null) return EXIT_COMMAND_NOT_FOUND;
             List<String> cmdArgs = new ArrayList<>();
             cmdArgs.add(resolved);
             for (int i = 1; i < arguments.size(); i++) {
@@ -1225,9 +1227,9 @@ public class Executor {
     private int exitCodeForIOException(IOException e) {
         String msg = e.getMessage();
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
-            return 127;
+            return EXIT_COMMAND_NOT_FOUND;
         }
-        return 126;
+        return EXIT_COMMAND_NOT_EXECUTABLE;
     }
 
     private String resolveCommand(String name) {
