@@ -149,66 +149,58 @@ public class Parser {
         }
         Pipeline pipeline = new Pipeline(bang);
 
+        Node first = parsePipelineStage(reservedTerminators);
+        if (first == null) {
+            return pipeline;
+        }
+        pipeline.addCommand(first);
+
+        while (check(TokenType.PIPE)) {
+            consume();
+            Node next = parsePipelineStage(reservedTerminators);
+            if (next == null) {
+                break;
+            }
+            pipeline.addCommand(next);
+        }
+
+        return pipeline;
+    }
+
+    private Node parsePipelineStage(Set<String> reservedTerminators) {
         if (check(TokenType.LPAREN)) {
             consume();
             ListNode inner = parseList(TokenType.RPAREN);
             expect(TokenType.RPAREN);
-            pipeline.addCommand(new Subshell(inner));
-        } else if (check(TokenType.LBRACE)) {
+            return new Subshell(inner);
+        }
+        if (check(TokenType.LBRACE)) {
             consume();
             ListNode inner = parseList(TokenType.RBRACE);
             expect(TokenType.RBRACE);
-            pipeline.addCommand(new Grouping(inner));
-        } else if (check(TokenType.WORD) && "if".equals(current.text())) {
-            pipeline.addCommand(parseIfCommand());
-        } else if (check(TokenType.WORD) && "for".equals(current.text())) {
-            pipeline.addCommand(parseForCommand());
-        } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
-            pipeline.addCommand(parseWhileCommand());
-        } else if (check(TokenType.WORD) && "case".equals(current.text())) {
-            pipeline.addCommand(parseCaseCommand());
-        } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
-            return pipeline;
-        } else if (check(TokenType.WORD) && peek().type() == TokenType.LPAREN
+            return new Grouping(inner);
+        }
+        if (check(TokenType.WORD) && "if".equals(current.text())) {
+            return parseIfCommand();
+        }
+        if (check(TokenType.WORD) && "for".equals(current.text())) {
+            return parseForCommand();
+        }
+        if (check(TokenType.WORD)
+                && ("while".equals(current.text()) || "until".equals(current.text()))) {
+            return parseWhileCommand();
+        }
+        if (check(TokenType.WORD) && "case".equals(current.text())) {
+            return parseCaseCommand();
+        }
+        if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
+            return null;
+        }
+        if (check(TokenType.WORD) && peek().type() == TokenType.LPAREN
                 && peek2().type() == TokenType.RPAREN) {
-            pipeline.addCommand(parseFunctionDefinition());
-        } else {
-            SimpleCommand cmd = parseSimpleCommand();
-            pipeline.addCommand(cmd);
+            return parseFunctionDefinition();
         }
-
-        while (check(TokenType.PIPE)) {
-            consume();
-            if (check(TokenType.LPAREN)) {
-                consume();
-                ListNode inner = parseList(TokenType.RPAREN);
-                expect(TokenType.RPAREN);
-                pipeline.addCommand(new Subshell(inner));
-            } else if (check(TokenType.LBRACE)) {
-                consume();
-                ListNode inner = parseList(TokenType.RBRACE);
-                expect(TokenType.RBRACE);
-                pipeline.addCommand(new Grouping(inner));
-            } else if (check(TokenType.WORD) && "if".equals(current.text())) {
-                pipeline.addCommand(parseIfCommand());
-            } else if (check(TokenType.WORD) && "for".equals(current.text())) {
-                pipeline.addCommand(parseForCommand());
-            } else if (check(TokenType.WORD) && ("while".equals(current.text()) || "until".equals(current.text()))) {
-                pipeline.addCommand(parseWhileCommand());
-            } else if (check(TokenType.WORD) && "case".equals(current.text())) {
-                pipeline.addCommand(parseCaseCommand());
-            } else if (check(TokenType.WORD) && reservedTerminators.contains(current.text())) {
-                break;
-            } else if (check(TokenType.WORD) && peek().type() == TokenType.LPAREN
-                    && peek2().type() == TokenType.RPAREN) {
-                pipeline.addCommand(parseFunctionDefinition());
-            } else {
-                SimpleCommand cmd = parseSimpleCommand();
-                pipeline.addCommand(cmd);
-            }
-        }
-
-        return pipeline;
+        return parseSimpleCommand();
     }
 
     private WhileNode parseWhileCommand() {
