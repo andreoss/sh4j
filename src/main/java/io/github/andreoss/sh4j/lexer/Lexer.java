@@ -183,6 +183,52 @@ public class Lexer {
                 continue;
             }
 
+            if (c == '$') {
+                reader.consume();
+                sb.append('$');
+                if (!reader.isEOF() && reader.peek() == '(') {
+                    reader.consume();
+                    sb.append('(');
+                    boolean arith = !reader.isEOF() && reader.peek() == '(';
+                    if (arith) { reader.consume(); sb.append('('); }
+                    int depth = arith ? 2 : 1;
+                    while (!reader.isEOF() && depth > 0) {
+                        int nc = reader.consume();
+                        sb.append((char) nc);
+                        if (nc == '(') depth++;
+                        else if (nc == ')') depth--;
+                    }
+                    continue;
+                }
+                if (!reader.isEOF() && reader.peek() == '{') {
+                    reader.consume();
+                    sb.append('{');
+                    int depth = 1;
+                    while (!reader.isEOF() && depth > 0) {
+                        int nc = reader.consume();
+                        sb.append((char) nc);
+                        if (nc == '{') depth++;
+                        else if (nc == '}') depth--;
+                    }
+                    continue;
+                }
+                continue;
+            }
+
+            if (c == '`') {
+                reader.consume();
+                sb.append('`');
+                while (!reader.isEOF()) {
+                    int nc = reader.consume();
+                    sb.append((char) nc);
+                    if (nc == '`') break;
+                    if (nc == '\\' && !reader.isEOF()) {
+                        sb.append((char) reader.consume());
+                    }
+                }
+                continue;
+            }
+
             if (c == '\n' || c == ' ' || c == '\t' || isOperatorChar(c)) {
                 break;
             }

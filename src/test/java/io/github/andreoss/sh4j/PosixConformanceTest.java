@@ -50,37 +50,31 @@ class PosixConformanceTest {
         assertTrue(run("echo $1\n", "hello").trim().equals("hello"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #20: child-JVM ${VAR:-default} doesn't expand fallback in script mode — needs investigation")
     @Test
     void paramDefaultWhenUnset() throws Exception {
         assertTrue(run("echo ${UNSET_XYZ:-fallback}\n").trim().equals("fallback"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #20: same root cause as paramDefaultWhenUnset")
     @Test
     void paramLengthOfVar() throws Exception {
         assertTrue(run("V=hello; echo ${#V}\n").trim().equals("5"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #18: lexer splits $((..)) on '(' operator")
     @Test
     void arithmeticPrecedence() throws Exception {
         assertTrue(run("echo $((1 + 2 * 3))\n").trim().equals("7"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #18: lexer splits $((..)) on '(' operator")
     @Test
     void arithmeticParens() throws Exception {
         assertTrue(run("echo $(((1 + 2) * 3))\n").trim().equals("9"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #18: lexer splits $(..) on '(' operator")
     @Test
     void commandSubstitutionDollarParen() throws Exception {
         assertTrue(run("echo a$(echo b)c\n").trim().equals("abc"));
     }
 
-    @org.junit.jupiter.api.Disabled("Problem #19: backtick `..` likely also affected by word-boundary handling")
     @Test
     void backtickSubstitution() throws Exception {
         assertTrue(run("echo a`echo b`c\n").trim().equals("abc"));
