@@ -15,6 +15,29 @@ public final class BuiltinDispatcher {
         register("true", (self, args, env, assigns) -> 0);
         register("false", (self, args, env, assigns) -> 1);
         register(":", (self, args, env, assigns) -> 0);
+        register("break", (self, args, env, assigns) -> { throw new Executor.BreakSignal(); });
+        register("continue", (self, args, env, assigns) -> { throw new Executor.ContinueSignal(); });
+        register("unset", (self, args, env, assigns) -> {
+            for (String arg : args) self.environmentMap().remove(arg);
+            return 0;
+        });
+        register("shift", (self, args, env, assigns) -> {
+            int n = 1;
+            if (!args.isEmpty()) {
+                try { n = Integer.parseInt(self.expandVariables(args.get(0), env)); }
+                catch (NumberFormatException e) { return 1; }
+            }
+            if (n < 0) return 1;
+            List<String> pos = self.positionalParamsList();
+            int maxShift = pos.size() - 1;
+            if (n == 0) return 0;
+            if (n >= maxShift) {
+                pos.subList(1, pos.size()).clear();
+            } else {
+                pos.subList(1, 1 + n).clear();
+            }
+            return 0;
+        });
     }
 
     public void register(String name, Builtin builtin) {

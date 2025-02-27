@@ -492,34 +492,6 @@ public class Executor {
             }
             return 0;
         }
-        if ("shift".equals(name)) {
-            int n = 1;
-            if (!arguments.isEmpty()) {
-                try { n = Integer.parseInt(expandVariables(arguments.get(0), env)); }
-                catch (NumberFormatException e) { return 1; }
-            }
-            if (n < 0) return 1;
-            int maxShift = positionalParams.size() - 1;
-            if (n == 0) return 0;
-            if (n >= maxShift) {
-                positionalParams.subList(1, positionalParams.size()).clear();
-            } else {
-                positionalParams.subList(1, 1 + n).clear();
-            }
-            return 0;
-        }
-        if ("unset".equals(name)) {
-            for (String arg : arguments) {
-                environment.remove(arg);
-            }
-            return 0;
-        }
-        if ("break".equals(name)) {
-            throw new BreakSignal();
-        }
-        if ("continue".equals(name)) {
-            throw new ContinueSignal();
-        }
         if ("eval".equals(name)) {
             String input = String.join(" ", arguments);
             if (input.isEmpty()) return 0;
@@ -1121,6 +1093,9 @@ public class Executor {
         return lastBgPid;
     }
 
-    private static class BreakSignal extends RuntimeException {}
-    private static class ContinueSignal extends RuntimeException {}
+    static class BreakSignal extends RuntimeException {}
+    static class ContinueSignal extends RuntimeException {}
+
+    Map<String, String> environmentMap() { return environment; }
+    List<String> positionalParamsList() { return positionalParams; }
 }
