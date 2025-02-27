@@ -376,7 +376,11 @@ public class Executor {
         }
     }
 
+    private final BuiltinDispatcher dispatcher = new BuiltinDispatcher();
+
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
+        Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
+        if (dispatched != null) return dispatched;
         if ("type".equals(name)) {
             int ret = 0;
             for (String arg : arguments) {
@@ -488,12 +492,6 @@ public class Executor {
             }
             return 0;
         }
-        if ("false".equals(name)) {
-            return 1;
-        }
-        if ("true".equals(name)) {
-            return 0;
-        }
         if ("shift".equals(name)) {
             int n = 1;
             if (!arguments.isEmpty()) {
@@ -521,9 +519,6 @@ public class Executor {
         }
         if ("continue".equals(name)) {
             throw new ContinueSignal();
-        }
-        if (":".equals(name)) {
-            return 0;
         }
         if ("eval".equals(name)) {
             String input = String.join(" ", arguments);
