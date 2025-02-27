@@ -6,8 +6,6 @@ package io.github.andreoss.sh4j.executor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -27,8 +25,6 @@ import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
-import io.github.andreoss.sh4j.parser.Redirection;
-import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.Grouping;
@@ -326,17 +322,18 @@ public class Executor {
             return 0;
         }
 
-        PrintStream[] saved = redirectOutputForBuiltin(cmd.getRedirections());
-        PrintStream savedOut = saved[0];
-        PrintStream savedErr = saved[1];
+        RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
+                cmd.getRedirections(), out, err, s -> expandVariables(s, environment));
+        out = swap.out();
+        err = swap.err();
         Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv, cmd.getAssignments());
-        if (savedOut != null) {
+        if (swap.savedOut() != null) {
             out.close();
-            out = savedOut;
+            out = swap.savedOut();
         }
-        if (savedErr != null) {
+        if (swap.savedErr() != null) {
             err.close();
-            err = savedErr;
+            err = swap.savedErr();
         }
         if (builtinResult != null) {
             return builtinResult;
@@ -358,7 +355,7 @@ public class Executor {
             return 1;
         }
         pb.inheritIO();
-        setupRedirections(pb, cmd.getRedirections());
+        RedirectionHandler.setupRedirections(pb, cmd.getRedirections(), s -> expandVariables(s, environment));
         if (captureStream != null) {
             pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         }
@@ -377,44 +374,6 @@ public class Executor {
         } catch (InterruptedException e) {
             return 1;
         }
-    }
-
-    private PrintStream[] redirectOutputForBuiltin(List<Redirection> redirs) {
-        PrintStream savedOut = null;
-        PrintStream savedErr = null;
-        for (Redirection r : redirs) {
-            RedirectionType t = r.getType();
-            int fd = r.getFd();
-            String target = expandVariables(r.getTarget(), environment);
-            if (t == RedirectionType.OUTPUT || t == RedirectionType.CLOBBER) {
-                try {
-                    PrintStream fileOut = new PrintStream(new File(target));
-                    if (fd == 1) { savedOut = out; out = fileOut; }
-                    else if (fd == 2) { savedErr = err; err = fileOut; }
-                } catch (IOException e) { /* ignore */ }
-            } else if (t == RedirectionType.APPEND) {
-                try {
-                    PrintStream fileOut = new PrintStream(new FileOutputStream(target, true));
-                    if (fd == 1) { savedOut = out; out = fileOut; }
-                    else if (fd == 2) { savedErr = err; err = fileOut; }
-                } catch (IOException e) { /* ignore */ }
-            } else if (t == RedirectionType.DUP_OUTPUT) {
-                if ("-".equals(target)) {
-                    try {
-                        PrintStream nullPs = new PrintStream(new FileOutputStream("/dev/null"));
-                        if (fd == 1) { savedOut = out; out = nullPs; }
-                        else if (fd == 2) { savedErr = err; err = nullPs; }
-                    } catch (IOException e) { /* ignore */ }
-                } else if ("1".equals(target) && fd == 2) {
-                    savedErr = err;
-                    err = out;
-                } else if ("2".equals(target) && fd == 1) {
-                    savedOut = out;
-                    out = err;
-                }
-            }
-        }
-        return new PrintStream[]{savedOut, savedErr};
     }
 
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
@@ -1011,49 +970,6 @@ public class Executor {
         return pb;
     }
 
-    private void setupRedirections(ProcessBuilder pb, List<Redirection> redirections) {
-        for (Redirection redir : redirections) {
-            int fd = redir.getFd();
-            File file = new File(expandVariables(redir.getTarget(), environment));
-            RedirectionType type = redir.getType();
-            if (type == RedirectionType.DUP_INPUT) {
-                if ("-".equals(redir.getTarget()) && fd == 0) {
-                    pb.redirectInput(new File("/dev/null"));
-                }
-            } else if (type == RedirectionType.DUP_OUTPUT) {
-                if ("-".equals(redir.getTarget())) {
-                    if (fd == 1) pb.redirectOutput(new File("/dev/null"));
-                    else if (fd == 2) pb.redirectError(new File("/dev/null"));
-                } else if ("1".equals(redir.getTarget()) && fd == 2) {
-                    pb.redirectErrorStream(true);
-                } else if ("2".equals(redir.getTarget()) && fd == 1) {
-                    pb.redirectOutput(ProcessBuilder.Redirect.to(new File("/dev/stderr")));
-                }
-            } else if (type == RedirectionType.READWRITE) {
-                if (fd == 0) pb.redirectInput(file);
-                else if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.to(file));
-                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.to(file));
-            } else if (type == RedirectionType.INPUT) {
-                if (fd == 0) pb.redirectInput(file);
-            } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
-                String content = redir.getHereDocContent();
-                if (content != null) {
-                    content = expandVariables(content, environment);
-                }
-                File src = heredocFile(content);
-                if (src != null) {
-                    if (fd == 0) pb.redirectInput(src);
-                }
-            } else if (type == RedirectionType.OUTPUT || type == RedirectionType.CLOBBER) {
-                if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.to(file));
-                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.to(file));
-            } else if (type == RedirectionType.APPEND) {
-                if (fd == 1) pb.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
-                else if (fd == 2) pb.redirectError(ProcessBuilder.Redirect.appendTo(file));
-            }
-        }
-    }
-
     private boolean matchGlob(String pattern, String word) {
         return globMatches(pattern, word);
     }
@@ -1204,20 +1120,6 @@ public class Executor {
             }
         }
         return matches;
-    }
-
-    private static File heredocFile(String content) {
-        if (content == null) return null;
-        try {
-            File temp = File.createTempFile("sh4j_heredoc", ".tmp");
-            temp.deleteOnExit();
-            try (FileWriter w = new FileWriter(temp)) {
-                w.write(content);
-            }
-            return temp;
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     int getLastBgPid() {
