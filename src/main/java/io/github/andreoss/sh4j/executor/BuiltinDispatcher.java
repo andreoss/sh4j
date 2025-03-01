@@ -21,6 +21,25 @@ public final class BuiltinDispatcher {
             for (String arg : args) self.environmentMap().remove(arg);
             return 0;
         });
+        register("type", (self, args, env, assigns) -> {
+            int ret = 0;
+            for (String arg : args) {
+                String expanded = self.expandVariables(arg, env);
+                if (Executor.isBuiltin(expanded)) {
+                    self.outStream().println(expanded + " is a shell built-in");
+                } else if (self.functionsMap().containsKey(expanded)) {
+                    self.outStream().println(expanded + " is a function");
+                } else {
+                    String resolved = self.resolveCommand(expanded);
+                    if (resolved != null) {
+                        self.outStream().println(expanded + " is " + resolved);
+                    } else {
+                        ret = 1;
+                    }
+                }
+            }
+            return ret;
+        });
         register("shift", (self, args, env, assigns) -> {
             int n = 1;
             if (!args.isEmpty()) {

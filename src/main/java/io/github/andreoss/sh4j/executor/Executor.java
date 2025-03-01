@@ -381,25 +381,6 @@ public class Executor {
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
         if (dispatched != null) return dispatched;
-        if ("type".equals(name)) {
-            int ret = 0;
-            for (String arg : arguments) {
-                String expanded = expandVariables(arg, env);
-                if (isBuiltin(expanded)) {
-                    out.println(expanded + " is a shell built-in");
-                } else if (functions.containsKey(expanded)) {
-                    out.println(expanded + " is a function");
-                } else {
-                    String resolved = resolveCommand(expanded);
-                    if (resolved != null) {
-                        out.println(expanded + " is " + resolved);
-                    } else {
-                        ret = 1;
-                    }
-                }
-            }
-            return ret;
-        }
         if ("exit".equals(name)) {
             if (arguments.isEmpty()) {
                 return 0;
@@ -527,7 +508,7 @@ public class Executor {
         return null;
     }
 
-    private static boolean isBuiltin(String name) {
+    static boolean isBuiltin(String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
                 || "cd".equals(name) || "type".equals(name) || "exec".equals(name)
                 || "true".equals(name) || "false".equals(name)
@@ -890,7 +871,7 @@ public class Executor {
         return EXIT_COMMAND_NOT_EXECUTABLE;
     }
 
-    private String resolveCommand(String name) {
+    String resolveCommand(String name) {
         if (name.contains("/")) {
             return new File(name).isFile() ? name : null;
         }
@@ -1098,4 +1079,6 @@ public class Executor {
 
     Map<String, String> environmentMap() { return environment; }
     List<String> positionalParamsList() { return positionalParams; }
+    Map<String, FunctionNode> functionsMap() { return functions; }
+    PrintStream outStream() { return out; }
 }

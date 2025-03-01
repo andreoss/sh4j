@@ -32,6 +32,12 @@ class BuiltinDispatcherTest {
         assertNull(d.dispatch("nope", null, List.of(), new HashMap<>(), List.of()));
     }
 
+    @Test void registryHasType() { assertTrue(d.isBuiltin("type")); }
+    @Test void registryHasShift() { assertTrue(d.isBuiltin("shift")); }
+    @Test void registryHasUnset() { assertTrue(d.isBuiltin("unset")); }
+    @Test void registryHasBreak() { assertTrue(d.isBuiltin("break")); }
+    @Test void registryHasContinue() { assertTrue(d.isBuiltin("continue")); }
+
     @Test void registerCustomBuiltin() {
         d.register("mybuiltin", (self, args, env, assigns) -> 42);
         assertTrue(d.isBuiltin("mybuiltin"));
