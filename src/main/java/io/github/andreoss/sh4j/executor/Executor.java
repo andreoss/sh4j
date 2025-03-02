@@ -381,21 +381,6 @@ public class Executor {
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
         if (dispatched != null) return dispatched;
-        if ("exit".equals(name)) {
-            if (arguments.isEmpty()) {
-                return 0;
-            }
-            try {
-                int code = Integer.parseInt(expandVariables(arguments.get(0), env));
-                if (wordExpansionError) {
-                    wordExpansionError = false;
-                    return 1;
-                }
-                return code;
-            } catch (NumberFormatException e) {
-                return 1;
-            }
-        }
         if ("export".equals(name)) {
             if (!assignments.isEmpty()) {
                 environment.putAll(env);
@@ -1081,4 +1066,6 @@ public class Executor {
     List<String> positionalParamsList() { return positionalParams; }
     Map<String, FunctionNode> functionsMap() { return functions; }
     PrintStream outStream() { return out; }
+    boolean wordExpansionErrorOccurred() { return wordExpansionError; }
+    void clearWordExpansionError() { wordExpansionError = false; }
 }

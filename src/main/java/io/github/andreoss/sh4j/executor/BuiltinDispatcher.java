@@ -21,6 +21,19 @@ public final class BuiltinDispatcher {
             for (String arg : args) self.environmentMap().remove(arg);
             return 0;
         });
+        register("exit", (self, args, env, assigns) -> {
+            if (args.isEmpty()) return 0;
+            try {
+                int code = Integer.parseInt(self.expandVariables(args.get(0), env));
+                if (self.wordExpansionErrorOccurred()) {
+                    self.clearWordExpansionError();
+                    return 1;
+                }
+                return code;
+            } catch (NumberFormatException e) {
+                return 1;
+            }
+        });
         register("type", (self, args, env, assigns) -> {
             int ret = 0;
             for (String arg : args) {
