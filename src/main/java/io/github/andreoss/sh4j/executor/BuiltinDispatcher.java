@@ -21,6 +21,52 @@ public final class BuiltinDispatcher {
             for (String arg : args) self.environmentMap().remove(arg);
             return 0;
         });
+        register("export", (self, args, env, assigns) -> {
+            Map<String, String> environment = self.environmentMap();
+            if (!assigns.isEmpty()) {
+                environment.putAll(env);
+            }
+            for (String arg : args) {
+                int eqIdx = arg.indexOf('=');
+                if (eqIdx >= 0) {
+                    environment.put(arg.substring(0, eqIdx), arg.substring(eqIdx + 1));
+                } else {
+                    environment.putIfAbsent(arg, "");
+                }
+            }
+            if (assigns.isEmpty() && args.isEmpty()) {
+                for (Map.Entry<String, String> e : environment.entrySet()) {
+                    self.outStream().println("export " + e.getKey() + "=" + e.getValue());
+                }
+            }
+            return 0;
+        });
+        register("cd", (self, args, env, assigns) -> {
+            Map<String, String> environment = self.environmentMap();
+            String target;
+            if (args.isEmpty()) {
+                target = environment.get("HOME");
+                if (target == null) return 1;
+            } else {
+                target = self.expandVariables(args.get(0), env);
+                if ("-".equals(target)) {
+                    String old = environment.get("OLDPWD");
+                    if (old == null) return 1;
+                    self.outStream().println(old);
+                    target = old;
+                }
+            }
+            java.io.File dir = new java.io.File(target);
+            if (!dir.isDirectory()) return 1;
+            String absPath;
+            try { absPath = dir.getCanonicalPath(); }
+            catch (java.io.IOException e) { absPath = dir.getAbsolutePath(); }
+            String oldPwd = environment.get("PWD");
+            if (oldPwd != null) environment.put("OLDPWD", oldPwd);
+            environment.put("PWD", absPath);
+            System.setProperty("user.dir", absPath);
+            return 0;
+        });
         register("exit", (self, args, env, assigns) -> {
             if (args.isEmpty()) return 0;
             try {

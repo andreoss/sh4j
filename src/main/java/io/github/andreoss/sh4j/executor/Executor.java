@@ -381,50 +381,6 @@ public class Executor {
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
         if (dispatched != null) return dispatched;
-        if ("export".equals(name)) {
-            if (!assignments.isEmpty()) {
-                environment.putAll(env);
-            }
-            for (String arg : arguments) {
-                int eqIdx = arg.indexOf('=');
-                if (eqIdx >= 0) {
-                    environment.put(arg.substring(0, eqIdx), arg.substring(eqIdx + 1));
-                } else {
-                    environment.putIfAbsent(arg, "");
-                }
-            }
-            if (assignments.isEmpty() && arguments.isEmpty()) {
-                for (Map.Entry<String, String> e : environment.entrySet()) {
-                    out.println("export " + e.getKey() + "=" + e.getValue());
-                }
-            }
-            return 0;
-        }
-        if ("cd".equals(name)) {
-            String target;
-            if (arguments.isEmpty()) {
-                target = environment.get("HOME");
-                if (target == null) return 1;
-            } else {
-                target = expandVariables(arguments.get(0), env);
-                if ("-".equals(target)) {
-                    String old = environment.get("OLDPWD");
-                    if (old == null) return 1;
-                    out.println(old);
-                    target = old;
-                }
-            }
-            File dir = new File(target);
-            if (!dir.isDirectory()) return 1;
-            String absPath;
-            try { absPath = dir.getCanonicalPath(); }
-            catch (IOException e) { absPath = dir.getAbsolutePath(); }
-            String oldPwd = environment.get("PWD");
-            if (oldPwd != null) environment.put("OLDPWD", oldPwd);
-            environment.put("PWD", absPath);
-            System.setProperty("user.dir", absPath);
-            return 0;
-        }
         if ("echo".equals(name)) {
             boolean newline = true;
             int start = 0;
