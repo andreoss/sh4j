@@ -4,9 +4,17 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.github.andreoss.sh4j.lexer.CharReader;
+import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.ListNode;
+import io.github.andreoss.sh4j.parser.Parser;
 
 public final class BuiltinDispatcher {
     private final Map<String, Builtin> registry = new HashMap<>();
@@ -66,6 +74,68 @@ public final class BuiltinDispatcher {
             environment.put("PWD", absPath);
             System.setProperty("user.dir", absPath);
             return 0;
+        });
+        register("echo", (self, args, env, assigns) -> {
+            boolean newline = true;
+            int start = 0;
+            if (!args.isEmpty() && "-n".equals(args.get(0))) {
+                newline = false;
+                start = 1;
+            }
+            boolean firstField = true;
+            for (int i = start; i < args.size(); i++) {
+                String arg = args.get(i);
+                String expanded = self.expandVariables(arg, env);
+                if (WordExpander.isQuoted(arg)) {
+                    if (!firstField) self.outStream().print(" ");
+                    self.outStream().print(WordExpander.removeQuotes(expanded));
+                    firstField = false;
+                } else {
+                    String ifsVal = env.getOrDefault("IFS", " \t\n");
+                    List<String> fields = WordExpander.splitFields(expanded, ifsVal);
+                    fields = WordExpander.pathnameExpand(fields);
+                    for (String field : fields) {
+                        if (!firstField) self.outStream().print(" ");
+                        self.outStream().print(WordExpander.removeQuotes(field));
+                        firstField = false;
+                    }
+                }
+            }
+            if (newline) self.outStream().println();
+            if (self.wordExpansionErrorOccurred()) {
+                self.clearWordExpansionError();
+                return 1;
+            }
+            return 0;
+        });
+        register("eval", (self, args, env, assigns) -> {
+            String input = String.join(" ", args);
+            if (input.isEmpty()) return 0;
+            ListNode ast = new Parser(new Lexer(new CharReader(input))).parse();
+            return self.execute(ast);
+        });
+        register("exec", (self, args, env, assigns) -> {
+            if (args.isEmpty()) return 0;
+            String cmdName = self.expandVariables(args.get(0), env);
+            String resolved = self.resolveCommand(cmdName);
+            if (resolved == null) return Executor.EXIT_COMMAND_NOT_FOUND;
+            List<String> cmdArgs = new ArrayList<>();
+            cmdArgs.add(resolved);
+            for (int i = 1; i < args.size(); i++) {
+                String expanded = self.expandVariables(args.get(i), env);
+                cmdArgs.add(WordExpander.removeQuotes(expanded));
+            }
+            ProcessBuilder pb = new ProcessBuilder(cmdArgs);
+            pb.environment().putAll(env);
+            pb.directory(new File(System.getProperty("user.dir")));
+            try {
+                Process process = pb.start();
+                return process.waitFor();
+            } catch (IOException e) {
+                return self.exitCodeForIOException(e);
+            } catch (InterruptedException e) {
+                return 1;
+            }
         });
         register("exit", (self, args, env, assigns) -> {
             if (args.isEmpty()) return 0;

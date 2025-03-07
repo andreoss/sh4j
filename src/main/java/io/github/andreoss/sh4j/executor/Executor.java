@@ -47,7 +47,7 @@ public class Executor {
     private PrintStream err = System.err;
     private boolean wordExpansionError = false;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
-    private static final int EXIT_COMMAND_NOT_FOUND = 127;
+    static final int EXIT_COMMAND_NOT_FOUND = 127;
     private static final int EXIT_COMMAND_NOT_EXECUTABLE = 126;
 
     public Executor() {
@@ -381,71 +381,6 @@ public class Executor {
     private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
         Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
         if (dispatched != null) return dispatched;
-        if ("echo".equals(name)) {
-            boolean newline = true;
-            int start = 0;
-            if (!arguments.isEmpty() && "-n".equals(arguments.get(0))) {
-                newline = false;
-                start = 1;
-            }
-            boolean firstField = true;
-            for (int i = start; i < arguments.size(); i++) {
-                String arg = arguments.get(i);
-                String expanded = expandVariables(arg, env);
-                if (isQuoted(arg)) {
-                    if (!firstField) out.print(" ");
-                    out.print(removeQuotes(expanded));
-                    firstField = false;
-                } else {
-                    String ifsVal = env.getOrDefault("IFS", " \t\n");
-                    List<String> fields = splitFields(expanded, ifsVal);
-                    fields = pathnameExpand(fields);
-                    for (String field : fields) {
-                        if (!firstField) out.print(" ");
-                        out.print(removeQuotes(field));
-                        firstField = false;
-                    }
-                }
-            }
-            if (newline) out.println();
-            if (wordExpansionError) {
-                wordExpansionError = false;
-                return 1;
-            }
-            return 0;
-        }
-        if ("eval".equals(name)) {
-            String input = String.join(" ", arguments);
-            if (input.isEmpty()) return 0;
-            CharReader r = new CharReader(input);
-            Lexer l = new Lexer(r);
-            Parser p = new Parser(l);
-            ListNode ast = p.parse();
-            return execute(ast);
-        }
-        if ("exec".equals(name)) {
-            if (arguments.isEmpty()) return 0;
-            String cmdName = expandVariables(arguments.get(0), env);
-            String resolved = resolveCommand(cmdName);
-            if (resolved == null) return EXIT_COMMAND_NOT_FOUND;
-            List<String> cmdArgs = new ArrayList<>();
-            cmdArgs.add(resolved);
-            for (int i = 1; i < arguments.size(); i++) {
-                String expanded = expandVariables(arguments.get(i), env);
-                cmdArgs.add(removeQuotes(expanded));
-            }
-            ProcessBuilder pb = new ProcessBuilder(cmdArgs);
-            pb.environment().putAll(env);
-            pb.directory(new File(System.getProperty("user.dir")));
-            try {
-                Process process = pb.start();
-                return process.waitFor();
-            } catch (IOException e) {
-                return exitCodeForIOException(e);
-            } catch (InterruptedException e) {
-                return 1;
-            }
-        }
         return null;
     }
 
@@ -804,7 +739,7 @@ public class Executor {
         };
     }
 
-    private int exitCodeForIOException(IOException e) {
+    int exitCodeForIOException(IOException e) {
         String msg = e.getMessage();
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
             return EXIT_COMMAND_NOT_FOUND;
