@@ -326,7 +326,7 @@ public class Executor {
                 cmd.getRedirections(), out, err, s -> expandVariables(s, environment));
         out = swap.out();
         err = swap.err();
-        Integer builtinResult = executeBuiltin(name, cmd.getArguments(), cmdEnv, cmd.getAssignments());
+        Integer builtinResult = dispatcher.dispatch(name, this, cmd.getArguments(), cmdEnv, cmd.getAssignments());
         if (swap.savedOut() != null) {
             out.close();
             out = swap.savedOut();
@@ -377,12 +377,6 @@ public class Executor {
     }
 
     private final BuiltinDispatcher dispatcher = new BuiltinDispatcher();
-
-    private Integer executeBuiltin(String name, List<String> arguments, Map<String, String> env, List<String> assignments) {
-        Integer dispatched = dispatcher.dispatch(name, this, arguments, env, assignments);
-        if (dispatched != null) return dispatched;
-        return null;
-    }
 
     static boolean isBuiltin(String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
