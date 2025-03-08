@@ -34,7 +34,7 @@ import io.github.andreoss.sh4j.parser.WhileNode;
 import io.github.andreoss.sh4j.parser.CaseNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 
-public class Executor {
+public class Executor implements BuiltinContext {
     private final Map<String, String> environment;
     private final Map<String, FunctionNode> functions;
     private int lastExitCode = 0;
@@ -117,7 +117,7 @@ public class Executor {
         return arith.evalArithmetic(expr, env);
     }
 
-    public int execute(ListNode list) {
+    @Override public int execute(ListNode list) {
         if (list.getPipelines().isEmpty()) {
             return 0;
         }
@@ -491,7 +491,7 @@ public class Executor {
         return result.toString();
     }
 
-    String expandVariables(String arg, Map<String, String> env) {
+    @Override public String expandVariables(String arg, Map<String, String> env) {
         arg = expandTilde(arg, env);
         arg = normaliseBackticks(arg);
         StringBuilder expanded = new StringBuilder();
@@ -733,7 +733,7 @@ public class Executor {
         };
     }
 
-    int exitCodeForIOException(IOException e) {
+    @Override public int exitCodeForIOException(IOException e) {
         String msg = e.getMessage();
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
             return EXIT_COMMAND_NOT_FOUND;
@@ -741,7 +741,7 @@ public class Executor {
         return EXIT_COMMAND_NOT_EXECUTABLE;
     }
 
-    String resolveCommand(String name) {
+    @Override public String resolveCommand(String name) {
         if (name.contains("/")) {
             return new File(name).isFile() ? name : null;
         }
@@ -947,10 +947,10 @@ public class Executor {
     static class BreakSignal extends RuntimeException {}
     static class ContinueSignal extends RuntimeException {}
 
-    Map<String, String> environmentMap() { return environment; }
-    List<String> positionalParamsList() { return positionalParams; }
-    Map<String, FunctionNode> functionsMap() { return functions; }
-    PrintStream outStream() { return out; }
-    boolean wordExpansionErrorOccurred() { return wordExpansionError; }
-    void clearWordExpansionError() { wordExpansionError = false; }
+    @Override public Map<String, String> environmentMap() { return environment; }
+    @Override public List<String> positionalParamsList() { return positionalParams; }
+    @Override public Map<String, FunctionNode> functionsMap() { return functions; }
+    @Override public PrintStream outStream() { return out; }
+    @Override public boolean wordExpansionErrorOccurred() { return wordExpansionError; }
+    @Override public void clearWordExpansionError() { wordExpansionError = false; }
 }
