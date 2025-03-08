@@ -8,6 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 @FunctionalInterface
-public interface Builtin {
+interface Builtin {
     int invoke(BuiltinContext self, List<String> arguments, Map<String, String> env, List<String> assignments);
 }

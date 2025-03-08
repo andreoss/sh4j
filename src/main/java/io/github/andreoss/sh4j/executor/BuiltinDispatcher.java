@@ -16,10 +16,10 @@ import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 
-public final class BuiltinDispatcher {
+final class BuiltinDispatcher {
     private final Map<String, Builtin> registry = new HashMap<>();
 
-    public BuiltinDispatcher() {
+    BuiltinDispatcher() {
         register("true", (self, args, env, assigns) -> 0);
         register("false", (self, args, env, assigns) -> 1);
         register(":", (self, args, env, assigns) -> 0);
@@ -188,15 +188,15 @@ public final class BuiltinDispatcher {
         });
     }
 
-    public void register(String name, Builtin builtin) {
+    void register(String name, Builtin builtin) {
         registry.put(name, builtin);
     }
 
-    public boolean isBuiltin(String name) {
+    boolean isBuiltin(String name) {
         return registry.containsKey(name);
     }
 
-    public Integer dispatch(String name, BuiltinContext self, List<String> arguments,
+    Integer dispatch(String name, BuiltinContext self, List<String> arguments,
                             Map<String, String> env, List<String> assignments) {
         Builtin b = registry.get(name);
         if (b == null) return null;

@@ -12,7 +12,7 @@ import java.util.Map;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.ListNode;
 
-public interface BuiltinContext {
+interface BuiltinContext {
     String expandVariables(String arg, Map<String, String> env);
     Map<String, String> environmentMap();
     List<String> positionalParamsList();
