@@ -196,7 +196,7 @@ public final class BuiltinDispatcher {
         return registry.containsKey(name);
     }
 
-    public Integer dispatch(String name, Executor self, List<String> arguments,
+    public Integer dispatch(String name, BuiltinContext self, List<String> arguments,
                             Map<String, String> env, List<String> assignments) {
         Builtin b = registry.get(name);
         if (b == null) return null;
