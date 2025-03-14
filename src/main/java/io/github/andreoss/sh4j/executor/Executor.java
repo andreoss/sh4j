@@ -9,15 +9,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.file.FileSystems;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -248,7 +244,7 @@ public class Executor implements BuiltinContext {
             String word = expandVariables(n.getWord(), environment);
             for (CaseNode.CaseItem item : n.getItems()) {
                 for (String pattern : item.getPatterns()) {
-                    if (matchGlob(pattern, word)) {
+                    if (WordExpander.globMatches(pattern, word)) {
                         return execute(item.getBody());
                     }
                 }
@@ -398,102 +394,9 @@ public class Executor implements BuiltinContext {
         }
     }
 
-    static String expandTilde(String arg, Map<String, String> env) {
-        if (arg.isEmpty() || arg.charAt(0) != '~') {
-            return arg;
-        }
-        int slash = arg.indexOf('/');
-        String tildePart = slash >= 0 ? arg.substring(0, slash) : arg;
-        String rest = slash >= 0 ? arg.substring(slash) : "";
-
-        if ("~".equals(tildePart)) {
-            return env.getOrDefault("HOME", "/root") + rest;
-        }
-        if ("~+".equals(tildePart)) {
-            return env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
-        }
-        return arg;
-    }
-
-    static String normaliseBackticks(String arg) {
-        StringBuilder result = new StringBuilder();
-        int i = 0;
-        while (i < arg.length()) {
-            char c = arg.charAt(i);
-            if (c == '$' && i + 1 < arg.length()) {
-                char next = arg.charAt(i + 1);
-                if (next == '(') {
-                    int depth = 1;
-                    int j = i + 2;
-                    while (j < arg.length() && depth > 0) {
-                        char nc = arg.charAt(j);
-                        if (nc == '(') depth++;
-                        else if (nc == ')') depth--;
-                        j++;
-                    }
-                    result.append(arg, i, j);
-                    i = j;
-                    continue;
-                } else if (next == '{') {
-                    int depth = 1;
-                    int j = i + 2;
-                    while (j < arg.length() && depth > 0) {
-                        char nc = arg.charAt(j);
-                        if (nc == '{') depth++;
-                        else if (nc == '}') depth--;
-                        j++;
-                    }
-                    if (depth == 0) {
-                        result.append(arg, i, j);
-                        i = j;
-                        continue;
-                    }
-                }
-            }
-            if (c == '`') {
-                int j = i + 1;
-                StringBuilder content = new StringBuilder();
-                boolean found = false;
-                while (j < arg.length()) {
-                    char nc = arg.charAt(j);
-                    if (nc == '\\' && j + 1 < arg.length()) {
-                        char nextc = arg.charAt(j + 1);
-                        if (nextc == '`' || nextc == '$' || nextc == '\\') {
-                            content.append(nextc);
-                            j += 2;
-                        } else {
-                            content.append(nc);
-                            content.append(nextc);
-                            j += 2;
-                        }
-                    } else if (nc == '`') {
-                        result.append("$(");
-                        result.append(content);
-                        result.append(')');
-                        j++;
-                        found = true;
-                        break;
-                    } else {
-                        content.append(nc);
-                        j++;
-                    }
-                }
-                if (!found) {
-                    result.append('`');
-                    result.append(content);
-                }
-                i = j;
-                continue;
-            }
-            result.append(c);
-            i++;
-        }
-        return result.toString();
-    }
-
     @Override public String expandVariables(String arg, Map<String, String> env) {
-        arg = expandTilde(arg, env);
-        arg = normaliseBackticks(arg);
+        arg = WordExpander.expandTilde(arg, env);
+        arg = WordExpander.normaliseBackticks(arg);
         StringBuilder expanded = new StringBuilder();
         int i = 0;
         while (i < arg.length()) {
@@ -675,7 +578,7 @@ public class Executor implements BuiltinContext {
             int longest = -1;
             for (int i = 0; i <= varValue.length(); i++) {
                 String prefix = varValue.substring(0, i);
-                if (globMatches(pattern, prefix)) longest = i;
+                if (WordExpander.globMatches(pattern, prefix)) longest = i;
             }
             return longest >= 0 ? varValue.substring(longest) : varValue;
         }
@@ -683,7 +586,7 @@ public class Executor implements BuiltinContext {
             String pattern = rest.substring(1);
             for (int i = 0; i <= varValue.length(); i++) {
                 String prefix = varValue.substring(0, i);
-                if (globMatches(pattern, prefix)) return varValue.substring(i);
+                if (WordExpander.globMatches(pattern, prefix)) return varValue.substring(i);
             }
             return varValue;
         }
@@ -692,7 +595,7 @@ public class Executor implements BuiltinContext {
             int longest = -1;
             for (int i = 0; i <= varValue.length(); i++) {
                 String suffix = varValue.substring(varValue.length() - i);
-                if (globMatches(pattern, suffix)) longest = i;
+                if (WordExpander.globMatches(pattern, suffix)) longest = i;
             }
             return longest >= 0 ? varValue.substring(0, varValue.length() - longest) : varValue;
         }
@@ -700,7 +603,7 @@ public class Executor implements BuiltinContext {
             String pattern = rest.substring(1);
             for (int i = 0; i <= varValue.length(); i++) {
                 String suffix = varValue.substring(varValue.length() - i);
-                if (globMatches(pattern, suffix)) return varValue.substring(0, varValue.length() - i);
+                if (WordExpander.globMatches(pattern, suffix)) return varValue.substring(0, varValue.length() - i);
             }
             return varValue;
         }
@@ -770,13 +673,13 @@ public class Executor implements BuiltinContext {
 
         for (String arg : cmd.getArguments()) {
             String expanded = expandVariables(arg, env);
-            if (isQuoted(arg)) {
-                command.add(removeQuotes(expanded));
+            if (WordExpander.isQuoted(arg)) {
+                command.add(WordExpander.removeQuotes(expanded));
             } else {
                 String ifsVal = env.getOrDefault("IFS", " \t\n");
-                List<String> fields = pathnameExpand(splitFields(expanded, ifsVal));
+                List<String> fields = WordExpander.pathnameExpand(WordExpander.splitFields(expanded, ifsVal));
                 for (int i = 0; i < fields.size(); i++) {
-                    fields.set(i, removeQuotes(fields.get(i)));
+                    fields.set(i, WordExpander.removeQuotes(fields.get(i)));
                 }
                 command.addAll(fields);
             }
@@ -788,157 +691,6 @@ public class Executor implements BuiltinContext {
         return pb;
     }
 
-    private boolean matchGlob(String pattern, String word) {
-        return globMatches(pattern, word);
-    }
-
-    private boolean globMatches(String pattern, String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < pattern.length(); i++) {
-            char c = pattern.charAt(i);
-            if (c == '*') {
-                sb.append(".*");
-            } else if (c == '?') {
-                sb.append('.');
-            } else if (c == '.' || c == '(' || c == ')' || c == '+' || c == '^'
-                    || c == '$' || c == '{' || c == '}' || c == '|' || c == '\\') {
-                sb.append('\\').append(c);
-            } else if (c == '[') {
-                int end = pattern.indexOf(']', i);
-                if (end > i) {
-                    sb.append(pattern, i, end + 1);
-                    i = end;
-                } else {
-                    sb.append("\\[");
-                }
-            } else {
-                sb.append(c);
-            }
-        }
-        return s.matches(sb.toString());
-    }
-
-    static List<String> splitFields(String value, String ifs) {
-        if (ifs == null || ifs.isEmpty()) {
-            return List.of(value);
-        }
-        String wsChars = "";
-        String nwsChars = "";
-        for (int i = 0; i < ifs.length(); i++) {
-            char c = ifs.charAt(i);
-            if (c == ' ' || c == '\t' || c == '\n') wsChars += c;
-            else nwsChars += c;
-        }
-        List<String> result = new ArrayList<>();
-        StringBuilder field = new StringBuilder();
-        boolean inField = false;
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (nwsChars.indexOf(c) >= 0) {
-                result.add(field.toString());
-                field = new StringBuilder();
-                inField = false;
-            } else if (wsChars.indexOf(c) >= 0) {
-                if (inField) {
-                    result.add(field.toString());
-                    field = new StringBuilder();
-                    inField = false;
-                }
-            } else {
-                field.append(c);
-                inField = true;
-            }
-        }
-        if (inField) {
-            result.add(field.toString());
-        } else if (!nwsChars.isEmpty() && value.length() > 0
-                && nwsChars.indexOf(value.charAt(value.length() - 1)) >= 0) {
-            result.add(field.toString());
-        }
-        return result;
-    }
-
-    static boolean isQuoted(String arg) {
-        if (arg == null || arg.length() < 2) return false;
-        char first = arg.charAt(0);
-        char last = arg.charAt(arg.length() - 1);
-        return (first == '"' && last == '"') || (first == '\'' && last == '\'');
-    }
-
-    static String removeQuotes(String word) {
-        StringBuilder result = new StringBuilder();
-        boolean inSingle = false;
-        boolean inDouble = false;
-        for (int i = 0; i < word.length(); i++) {
-            char c = word.charAt(i);
-            if (inSingle) {
-                if (c == '\'') {
-                    inSingle = false;
-                } else {
-                    result.append(c);
-                }
-            } else if (inDouble) {
-                if (c == '"') {
-                    inDouble = false;
-                } else if (c == '\\' && i + 1 < word.length()
-                        && (word.charAt(i + 1) == '$' || word.charAt(i + 1) == '`'
-                        || word.charAt(i + 1) == '"' || word.charAt(i + 1) == '\\')) {
-                    result.append(word.charAt(i + 1));
-                    i++;
-                } else {
-                    result.append(c);
-                }
-            } else {
-                if (c == '\'') {
-                    inSingle = true;
-                } else if (c == '"') {
-                    inDouble = true;
-                } else if (c == '\\' && i + 1 < word.length()) {
-                    result.append(word.charAt(i + 1));
-                    i++;
-                } else {
-                    result.append(c);
-                }
-            }
-        }
-        return result.toString();
-    }
-
-    static List<String> pathnameExpand(List<String> fields) {
-        List<String> result = new ArrayList<>();
-        for (String field : fields) {
-            if (containsGlobChars(field)) {
-                List<String> matches = globFiles(field);
-                if (matches.isEmpty()) {
-                    result.add(field);
-                } else {
-                    Collections.sort(matches);
-                    result.addAll(matches);
-                }
-            } else {
-                result.add(field);
-            }
-        }
-        return result;
-    }
-
-    static boolean containsGlobChars(String s) {
-        return s.indexOf('*') >= 0 || s.indexOf('?') >= 0 || s.indexOf('[') >= 0;
-    }
-
-    private static List<String> globFiles(String pattern) {
-        File cwd = new File(System.getProperty("user.dir"));
-        String[] files = cwd.list();
-        if (files == null) return List.of();
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
-        List<String> matches = new ArrayList<>();
-        for (String f : files) {
-            if (matcher.matches(Paths.get(f))) {
-                matches.add(f);
-            }
-        }
-        return matches;
-    }
 
     int getLastBgPid() {
         return lastBgPid;

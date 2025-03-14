@@ -951,7 +951,7 @@ class ExecutorTest {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/testuser");
-        assertEquals("/home/testuser", Executor.expandTilde("~", env));
+        assertEquals("/home/testuser", WordExpander.expandTilde("~", env));
     }
 
     @Test
@@ -959,19 +959,19 @@ class ExecutorTest {
         Executor executor = new Executor();
         Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/testuser");
-        assertEquals("/home/testuser/file.txt", Executor.expandTilde("~/file.txt", env));
+        assertEquals("/home/testuser/file.txt", WordExpander.expandTilde("~/file.txt", env));
     }
 
     @Test
     void expandTildePlus() {
         Map<String, String> env = new HashMap<>();
         env.put("PWD", "/current/dir");
-        assertEquals("/current/dir", Executor.expandTilde("~+", env));
+        assertEquals("/current/dir", WordExpander.expandTilde("~+", env));
     }
 
     @Test
     void expandTildeNone() {
-        assertEquals("/foo/bar", Executor.expandTilde("/foo/bar", new HashMap<>()));
+        assertEquals("/foo/bar", WordExpander.expandTilde("/foo/bar", new HashMap<>()));
     }
 
     @Test
@@ -1164,77 +1164,77 @@ class ExecutorTest {
 
     @Test
     void normaliseBackticksSimple() {
-        assertEquals("$(echo hello)", Executor.normaliseBackticks("`echo hello`"));
+        assertEquals("$(echo hello)", WordExpander.normaliseBackticks("`echo hello`"));
     }
 
     @Test
     void normaliseBackticksNoChange() {
-        assertEquals("hello world", Executor.normaliseBackticks("hello world"));
+        assertEquals("hello world", WordExpander.normaliseBackticks("hello world"));
     }
 
     @Test
     void normaliseBackticksSkipsDollarParen() {
-        assertEquals("$(echo hi)", Executor.normaliseBackticks("$(echo hi)"));
+        assertEquals("$(echo hi)", WordExpander.normaliseBackticks("$(echo hi)"));
     }
 
     @Test
     void normaliseBackticksEscaped() {
-        assertEquals("$(echo `hi`)", Executor.normaliseBackticks("`echo \\`hi\\``"));
+        assertEquals("$(echo `hi`)", WordExpander.normaliseBackticks("`echo \\`hi\\``"));
     }
 
     @Test
     void normaliseBackticksDollarEscape() {
-        assertEquals("$(echo $PATH)", Executor.normaliseBackticks("`echo \\$PATH`"));
+        assertEquals("$(echo $PATH)", WordExpander.normaliseBackticks("`echo \\$PATH`"));
     }
 
     @Test
     void normaliseBackticksBackslashEscape() {
-        assertEquals("$(echo a\\b)", Executor.normaliseBackticks("`echo a\\\\b`"));
+        assertEquals("$(echo a\\b)", WordExpander.normaliseBackticks("`echo a\\\\b`"));
     }
 
     @Test
     void normaliseBackticksNonSpecialEscape() {
-        assertEquals("$(echo \\n)", Executor.normaliseBackticks("`echo \\\\n`"));
+        assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\\\n`"));
     }
 
     @Test
     void normaliseBackticksUnclosed() {
-        assertEquals("`echo hello", Executor.normaliseBackticks("`echo hello"));
+        assertEquals("`echo hello", WordExpander.normaliseBackticks("`echo hello"));
     }
 
     @Test
     void normaliseBackticksSkipsDollarBrace() {
-        assertEquals("${var:-default}", Executor.normaliseBackticks("${var:-default}"));
+        assertEquals("${var:-default}", WordExpander.normaliseBackticks("${var:-default}"));
     }
 
     @Test
     void normaliseBackticksSkipsNestedDollarBrace() {
-        assertEquals("${var:-${other}}", Executor.normaliseBackticks("${var:-${other}}"));
+        assertEquals("${var:-${other}}", WordExpander.normaliseBackticks("${var:-${other}}"));
     }
 
     @Test
     void normaliseBackticksSkipsTripleNestedDollarBrace() {
-        assertEquals("${a:-${b:-${c}}}", Executor.normaliseBackticks("${a:-${b:-${c}}}"));
+        assertEquals("${a:-${b:-${c}}}", WordExpander.normaliseBackticks("${a:-${b:-${c}}}"));
     }
 
     @Test
     void normaliseBackticksDollarAtEnd() {
-        assertEquals("foo$", Executor.normaliseBackticks("foo$"));
+        assertEquals("foo$", WordExpander.normaliseBackticks("foo$"));
     }
 
     @Test
     void normaliseBackticksUnmatchedDollarBrace() {
-        assertEquals("${unclosed", Executor.normaliseBackticks("${unclosed"));
+        assertEquals("${unclosed", WordExpander.normaliseBackticks("${unclosed"));
     }
 
     @Test
     void normaliseBackticksDollarFollowedByLetter() {
-        assertEquals("$VAR", Executor.normaliseBackticks("$VAR"));
+        assertEquals("$VAR", WordExpander.normaliseBackticks("$VAR"));
     }
 
     @Test
     void normaliseBackticksBackslashAtEndOfInput() {
-        assertEquals("`abc\\", Executor.normaliseBackticks("`abc\\"));
+        assertEquals("`abc\\", WordExpander.normaliseBackticks("`abc\\"));
     }
 
     @Test
@@ -1299,7 +1299,7 @@ class ExecutorTest {
 
     @Test
     void backtickNestedNormalise() {
-        String result = Executor.normaliseBackticks("`echo \\`echo hi\\``");
+        String result = WordExpander.normaliseBackticks("`echo \\`echo hi\\``");
         assertEquals("$(echo `echo hi`)", result);
     }
 
@@ -1729,7 +1729,7 @@ class ExecutorTest {
 
     @Test
     void normaliseBackticksBackslashNonSpecialChar() {
-        assertEquals("$(echo \\n)", Executor.normaliseBackticks("`echo \\n`"));
+        assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\n`"));
     }
 
     @Test
@@ -2070,148 +2070,148 @@ class ExecutorTest {
 
     @Test
     void splitFieldsDefaultIfs() {
-        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a b c", " \t\n"));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", " \t\n"));
     }
 
     @Test
     void splitFieldsMultipleWs() {
-        assertEquals(List.of("a", "b"), Executor.splitFields("a   b", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("a   b", " \t\n"));
     }
 
     @Test
     void splitFieldsLeadingWs() {
-        assertEquals(List.of("a", "b"), Executor.splitFields("  a b", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("  a b", " \t\n"));
     }
 
     @Test
     void splitFieldsTrailingWs() {
-        assertEquals(List.of("a", "b"), Executor.splitFields("a b  ", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("a b  ", " \t\n"));
     }
 
     @Test
     void splitFieldsColon() {
-        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a:b:c", ":"));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a:b:c", ":"));
     }
 
     @Test
     void splitFieldsEmptyBetweenColons() {
-        assertEquals(List.of("a", "", "b"), Executor.splitFields("a::b", ":"));
+        assertEquals(List.of("a", "", "b"), WordExpander.splitFields("a::b", ":"));
     }
 
     @Test
     void splitFieldsOnlyColons() {
-        assertEquals(List.of("", ""), Executor.splitFields(":", ":"));
+        assertEquals(List.of("", ""), WordExpander.splitFields(":", ":"));
     }
 
     @Test
     void splitFieldsDoubleColon() {
-        assertEquals(List.of("", "", ""), Executor.splitFields("::", ":"));
+        assertEquals(List.of("", "", ""), WordExpander.splitFields("::", ":"));
     }
 
     @Test
     void splitFieldsNoDelim() {
-        assertEquals(List.of("hello"), Executor.splitFields("hello", ":"));
+        assertEquals(List.of("hello"), WordExpander.splitFields("hello", ":"));
     }
 
     @Test
     void splitFieldsEmptyIfs() {
-        assertEquals(List.of("hello world"), Executor.splitFields("hello world", ""));
+        assertEquals(List.of("hello world"), WordExpander.splitFields("hello world", ""));
     }
 
     @Test
     void splitFieldsNullIfs() {
-        assertEquals(List.of("hello"), Executor.splitFields("hello", null));
+        assertEquals(List.of("hello"), WordExpander.splitFields("hello", null));
     }
 
     @Test
     void splitFieldsEmptyValue() {
-        assertEquals(List.of(), Executor.splitFields("", " \t\n"));
+        assertEquals(List.of(), WordExpander.splitFields("", " \t\n"));
     }
 
     @Test
     void splitFieldsMixedWsNws() {
-        assertEquals(List.of("a", "", "b"), Executor.splitFields("a :b", " :"));
+        assertEquals(List.of("a", "", "b"), WordExpander.splitFields("a :b", " :"));
     }
 
     @Test
     void splitFieldsTrailingColon() {
-        assertEquals(List.of("a", ""), Executor.splitFields("a:", ":"));
+        assertEquals(List.of("a", ""), WordExpander.splitFields("a:", ":"));
     }
 
     @Test
     void splitFieldsCustomNws() {
-        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a,b,c", ","));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a,b,c", ","));
     }
 
     @Test
     void isQuotedDoubleQuotes() {
-        assertTrue(Executor.isQuoted("\"hello\""));
+        assertTrue(WordExpander.isQuoted("\"hello\""));
     }
 
     @Test
     void isQuotedSingleQuotes() {
-        assertTrue(Executor.isQuoted("'hello'"));
+        assertTrue(WordExpander.isQuoted("'hello'"));
     }
 
     @Test
     void isQuotedNoQuotes() {
-        assertFalse(Executor.isQuoted("hello"));
+        assertFalse(WordExpander.isQuoted("hello"));
     }
 
     @Test
     void isQuotedPartial() {
-        assertFalse(Executor.isQuoted("a\"b\"c"));
+        assertFalse(WordExpander.isQuoted("a\"b\"c"));
     }
 
     @Test
     void removeQuotesNoop() {
-        assertEquals("hello", Executor.removeQuotes("hello"));
+        assertEquals("hello", WordExpander.removeQuotes("hello"));
     }
 
     @Test
     void removeQuotesDouble() {
-        assertEquals("hello world", Executor.removeQuotes("\"hello world\""));
+        assertEquals("hello world", WordExpander.removeQuotes("\"hello world\""));
     }
 
     @Test
     void removeQuotesSingle() {
-        assertEquals("hello", Executor.removeQuotes("'hello'"));
+        assertEquals("hello", WordExpander.removeQuotes("'hello'"));
     }
 
     @Test
     void removeQuotesPartialDouble() {
-        assertEquals("foovaluebar", Executor.removeQuotes("foo\"value\"bar"));
+        assertEquals("foovaluebar", WordExpander.removeQuotes("foo\"value\"bar"));
     }
 
     @Test
     void removeQuotesPartialSingle() {
-        assertEquals("helloworld", Executor.removeQuotes("hello'world'"));
+        assertEquals("helloworld", WordExpander.removeQuotes("hello'world'"));
     }
 
     @Test
     void removeQuotesApostropheInsideDouble() {
-        assertEquals("it's", Executor.removeQuotes("\"it's\""));
+        assertEquals("it's", WordExpander.removeQuotes("\"it's\""));
     }
 
     @Test
     void removeQuotesNestedQuotes() {
-        assertEquals("hello \"there\" world", Executor.removeQuotes("\"hello \\\"there\\\" world\""));
+        assertEquals("hello \"there\" world", WordExpander.removeQuotes("\"hello \\\"there\\\" world\""));
     }
 
     @Test
     void removeQuotesBackslashOutside() {
-        assertEquals("hello world", Executor.removeQuotes("hello\\ world"));
+        assertEquals("hello world", WordExpander.removeQuotes("hello\\ world"));
     }
 
     @Test
     void removeQuotesBackslashInDouble() {
-        assertEquals("hello\"world", Executor.removeQuotes("\"hello\\\"world\""));
+        assertEquals("hello\"world", WordExpander.removeQuotes("\"hello\\\"world\""));
     }
 
     @Test
     void removeQuotesEmptyQuotes() {
-        assertEquals("", Executor.removeQuotes("\"\""));
-        assertEquals("", Executor.removeQuotes("''"));
+        assertEquals("", WordExpander.removeQuotes("\"\""));
+        assertEquals("", WordExpander.removeQuotes("''"));
     }
 
     @Test
@@ -2255,54 +2255,54 @@ class ExecutorTest {
 
     @Test
     void splitFieldsTabIfs() {
-        assertEquals(List.of("a", "b"), Executor.splitFields("a\tb", "\t"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("a\tb", "\t"));
     }
 
     @Test
     void splitFieldsMixedIfs() {
-        assertEquals(List.of("a", "b", "c"), Executor.splitFields("a:b c", ": "));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a:b c", ": "));
     }
 
     @Test
     void containsGlobCharsStar() {
-        assertTrue(Executor.containsGlobChars("*.txt"));
+        assertTrue(WordExpander.containsGlobChars("*.txt"));
     }
 
     @Test
     void containsGlobCharsQuestion() {
-        assertTrue(Executor.containsGlobChars("file?"));
+        assertTrue(WordExpander.containsGlobChars("file?"));
     }
 
     @Test
     void containsGlobCharsBracket() {
-        assertTrue(Executor.containsGlobChars("[ab]"));
+        assertTrue(WordExpander.containsGlobChars("[ab]"));
     }
 
     @Test
     void containsGlobCharsNone() {
-        assertFalse(Executor.containsGlobChars("hello.txt"));
+        assertFalse(WordExpander.containsGlobChars("hello.txt"));
     }
 
     @Test
     void pathnameExpandNoGlob() {
-        assertEquals(List.of("hello"), Executor.pathnameExpand(List.of("hello")));
+        assertEquals(List.of("hello"), WordExpander.pathnameExpand(List.of("hello")));
     }
 
     @Test
     void pathnameExpandGlobNoMatchKeepsPattern() {
-        List<String> result = Executor.pathnameExpand(List.of("__no_match__xyz__"));
+        List<String> result = WordExpander.pathnameExpand(List.of("__no_match__xyz__"));
         assertEquals(List.of("__no_match__xyz__"), result);
     }
 
     @Test
     void pathnameExpandGlobWithMatch() {
-        List<String> result = Executor.pathnameExpand(List.of("pom.xml"));
+        List<String> result = WordExpander.pathnameExpand(List.of("pom.xml"));
         assertEquals(List.of("pom.xml"), result);
     }
 
     @Test
     void pathnameExpandWildcardMatch() {
-        List<String> result = Executor.pathnameExpand(List.of("*.xml"));
+        List<String> result = WordExpander.pathnameExpand(List.of("*.xml"));
         assertTrue(result.contains("pom.xml"));
     }
 
