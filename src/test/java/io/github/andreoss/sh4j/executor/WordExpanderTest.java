@@ -68,6 +68,47 @@ class WordExpanderTest {
         assertEquals(List.of("__no_match_xyz__"), r);
     }
 
+    @Test void expandVariablesParityPlainText() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("hello world", env, e);
+        assertEquals("hello world", r.value());
+        assertFalse(r.error());
+    }
+
+    @Test void expandVariablesParityVarSubstitution() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        env.put("MSG", "world");
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("hello $MSG", env, e);
+        assertEquals("hello world", r.value());
+        assertFalse(r.error());
+    }
+
+    @Test void expandVariablesParityArithmetic() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("$((3 + 4))", env, e);
+        assertEquals("7", r.value());
+        assertFalse(r.error());
+    }
+
+    @Test void expandVariablesParityColonQuestionUnsetSetsError() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("${UNSET_VAR_FOR_PARITY:?required}", env, e);
+        assertTrue(r.error(), "expected error flag set on :? for unset var");
+    }
+
+    @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r1 = WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, e);
+        assertTrue(r1.error());
+        WordExpander.ExpansionResult r2 = WordExpander.expandVariables("plain", env, e);
+        assertFalse(r2.error(), "flag should be consumed by previous wrapper call");
+    }
+
     @Test void globMatchesStar() { assertTrue(WordExpander.globMatches("a*", "abc")); }
     @Test void globMatchesQuestion() { assertTrue(WordExpander.globMatches("a?c", "abc")); }
     @Test void globMatchesCharClass() { assertTrue(WordExpander.globMatches("[abc]", "b")); }

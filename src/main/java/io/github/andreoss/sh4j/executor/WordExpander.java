@@ -15,6 +15,23 @@ import java.util.Map;
 
 public final class WordExpander {
 
+    public record ExpansionResult(String value, boolean error) {}
+
+    /**
+     * Performs variable / arithmetic / command substitution / brace expansion on
+     * {@code arg} using {@code ctx} for the stateful dependencies. Returns the
+     * expanded string AND the error flag as a pure record; the context's
+     * wordExpansionError flag is consumed (cleared) so callers can OR the
+     * returned {@code error} into their own accumulator without double-counting.
+     */
+    public static ExpansionResult expandVariables(String arg, Map<String, String> env, BuiltinContext ctx) {
+        String value = ctx.expandVariables(arg, env);
+        boolean error = ctx.wordExpansionErrorOccurred();
+        if (error) ctx.clearWordExpansionError();
+        return new ExpansionResult(value, error);
+    }
+
+
     public static String expandTilde(String arg, Map<String, String> env) {
         if (arg.isEmpty() || arg.charAt(0) != '~') {
             return arg;
