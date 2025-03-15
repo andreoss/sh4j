@@ -83,9 +83,12 @@ final class BuiltinDispatcher {
                 start = 1;
             }
             boolean firstField = true;
+            boolean error = false;
             for (int i = start; i < args.size(); i++) {
                 String arg = args.get(i);
-                String expanded = self.expandVariables(arg, env);
+                WordExpander.ExpansionResult r = WordExpander.expandVariables(arg, env, self);
+                error |= r.error();
+                String expanded = r.value();
                 if (WordExpander.isQuoted(arg)) {
                     if (!firstField) self.outStream().print(" ");
                     self.outStream().print(WordExpander.removeQuotes(expanded));
@@ -102,11 +105,7 @@ final class BuiltinDispatcher {
                 }
             }
             if (newline) self.outStream().println();
-            if (self.wordExpansionErrorOccurred()) {
-                self.clearWordExpansionError();
-                return 1;
-            }
-            return 0;
+            return error ? 1 : 0;
         });
         register("eval", (self, args, env, assigns) -> {
             String input = String.join(" ", args);
@@ -139,13 +138,10 @@ final class BuiltinDispatcher {
         });
         register("exit", (self, args, env, assigns) -> {
             if (args.isEmpty()) return 0;
+            WordExpander.ExpansionResult r = WordExpander.expandVariables(args.get(0), env, self);
+            if (r.error()) return 1;
             try {
-                int code = Integer.parseInt(self.expandVariables(args.get(0), env));
-                if (self.wordExpansionErrorOccurred()) {
-                    self.clearWordExpansionError();
-                    return 1;
-                }
-                return code;
+                return Integer.parseInt(r.value());
             } catch (NumberFormatException e) {
                 return 1;
             }
