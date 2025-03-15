@@ -12,10 +12,98 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class WordExpander {
 
+    static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
+
     public record ExpansionResult(String value, boolean error) {}
+
+    /**
+     * Full implementation of variable / arithmetic / command substitution / brace
+     * expansion. Migrated from Executor.expandVariables to live alongside the rest
+     * of the word-expansion subsystem. Mutates ctx.wordExpansionError when a
+     * sub-expansion fails (e.g. ${var:?msg} on an unset var) — the surrounding
+     * wrapper expandVariables(arg, env, ctx) reads + consumes that flag.
+     */
+    public static String expandVariablesImpl(String arg, Map<String, String> env, BuiltinContext ctx) {
+        arg = expandTilde(arg, env);
+        arg = normaliseBackticks(arg);
+        StringBuilder expanded = new StringBuilder();
+        int i = 0;
+        while (i < arg.length()) {
+            char c = arg.charAt(i);
+            if (c == '$' && i + 1 < arg.length()) {
+                char next = arg.charAt(i + 1);
+                String special = ctx.getSpecialParam(next);
+                if (special != null) {
+                    expanded.append(special);
+                    i += 2;
+                    continue;
+                }
+                if (next == '(') {
+                    if (i + 2 < arg.length() && arg.charAt(i + 2) == '(') {
+                        int depth = 2;
+                        int j = i + 3;
+                        while (j < arg.length() && depth > 0) {
+                            char nc = arg.charAt(j);
+                            if (nc == '(') depth++;
+                            else if (nc == ')') depth--;
+                            j++;
+                        }
+                        if (depth == 0) {
+                            String expr = arg.substring(i + 3, j - 2);
+                            expanded.append(ctx.evalArithmetic(expr, env));
+                            i = j;
+                            continue;
+                        }
+                    } else {
+                        int depth = 1;
+                        int j = i + 2;
+                        while (j < arg.length() && depth > 0) {
+                            char nc = arg.charAt(j);
+                            if (nc == '(') depth++;
+                            else if (nc == ')') depth--;
+                            j++;
+                        }
+                        if (depth == 0) {
+                            String cmdText = arg.substring(i + 2, j - 1);
+                            expanded.append(ctx.executeCommandSubstitution(cmdText));
+                            i = j;
+                            continue;
+                        }
+                    }
+                }
+                if (next == '{' && i + 2 < arg.length()) {
+                    int close = arg.indexOf('}', i + 2);
+                    if (close > i + 2) {
+                        String inner = arg.substring(i + 2, close);
+                        String replacement = ctx.expandBraced(inner, env);
+                        if (replacement != null) {
+                            expanded.append(replacement);
+                            i = close + 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+            expanded.append(c);
+            i++;
+        }
+        arg = expanded.toString();
+
+        Matcher matcher = VAR_PATTERN.matcher(arg);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String replacement = env.getOrDefault(varName, "");
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
 
     /**
      * Performs variable / arithmetic / command substitution / brace expansion on

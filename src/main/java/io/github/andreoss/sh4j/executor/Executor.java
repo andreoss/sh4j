@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -42,7 +40,6 @@ public class Executor implements BuiltinContext {
     private PrintStream out = System.out;
     private PrintStream err = System.err;
     private boolean wordExpansionError = false;
-    private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
     static final int EXIT_COMMAND_NOT_FOUND = 127;
     private static final int EXIT_COMMAND_NOT_EXECUTABLE = 126;
 
@@ -93,7 +90,7 @@ public class Executor implements BuiltinContext {
         this.err = err;
     }
 
-    private String executeCommandSubstitution(String cmdText) {
+    @Override public String executeCommandSubstitution(String cmdText) {
         CharReader reader = new CharReader(cmdText);
         Lexer lexer = new Lexer(reader);
         Parser parser = new Parser(lexer);
@@ -109,7 +106,7 @@ public class Executor implements BuiltinContext {
 
     private final ArithmeticEvaluator arith = new ArithmeticEvaluator();
 
-    private String evalArithmetic(String expr, Map<String, String> env) {
+    @Override public String evalArithmetic(String expr, Map<String, String> env) {
         return arith.evalArithmetic(expr, env);
     }
 
@@ -395,80 +392,7 @@ public class Executor implements BuiltinContext {
     }
 
     @Override public String expandVariables(String arg, Map<String, String> env) {
-        arg = WordExpander.expandTilde(arg, env);
-        arg = WordExpander.normaliseBackticks(arg);
-        StringBuilder expanded = new StringBuilder();
-        int i = 0;
-        while (i < arg.length()) {
-            char c = arg.charAt(i);
-            if (c == '$' && i + 1 < arg.length()) {
-                char next = arg.charAt(i + 1);
-                String special = getSpecialParam(next);
-                if (special != null) {
-                    expanded.append(special);
-                    i += 2;
-                    continue;
-                }
-                if (next == '(') {
-                    if (i + 2 < arg.length() && arg.charAt(i + 2) == '(') {
-                        int depth = 2;
-                        int j = i + 3;
-                        while (j < arg.length() && depth > 0) {
-                            char nc = arg.charAt(j);
-                            if (nc == '(') depth++;
-                            else if (nc == ')') depth--;
-                            j++;
-                        }
-                        if (depth == 0) {
-                            String expr = arg.substring(i + 3, j - 2);
-                            expanded.append(evalArithmetic(expr, env));
-                            i = j;
-                            continue;
-                        }
-                    } else {
-                        int depth = 1;
-                        int j = i + 2;
-                        while (j < arg.length() && depth > 0) {
-                            char nc = arg.charAt(j);
-                            if (nc == '(') depth++;
-                            else if (nc == ')') depth--;
-                            j++;
-                        }
-                        if (depth == 0) {
-                            String cmdText = arg.substring(i + 2, j - 1);
-                            expanded.append(executeCommandSubstitution(cmdText));
-                            i = j;
-                            continue;
-                        }
-                    }
-                }
-                if (next == '{' && i + 2 < arg.length()) {
-                    int close = arg.indexOf('}', i + 2);
-                    if (close > i + 2) {
-                        String inner = arg.substring(i + 2, close);
-                        String replacement = expandBraced(inner, env);
-                        if (replacement != null) {
-                            expanded.append(replacement);
-                            i = close + 1;
-                            continue;
-                        }
-                    }
-                }
-            }
-            expanded.append(c);
-            i++;
-        }
-        arg = expanded.toString();
-
-        Matcher matcher = VAR_PATTERN.matcher(arg);
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            String varName = matcher.group(1);
-            String replacement = env.getOrDefault(varName, "");
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
+        return WordExpander.expandVariablesImpl(arg, env, this);
     }
 
     private String lookupVariable(String name, Map<String, String> env) {
@@ -614,7 +538,7 @@ public class Executor implements BuiltinContext {
         return c == '?' || c == '-' || c == '$' || c == '!' || c == '@' || c == '*';
     }
 
-    private String getSpecialParam(char c) {
+    @Override public String getSpecialParam(char c) {
         return switch (c) {
             case '?' -> String.valueOf(lastExitCode);
             case '-' -> shellFlags;
