@@ -484,7 +484,7 @@ public class Executor implements BuiltinContext {
         return env.get(name);
     }
 
-    private String expandBraced(String inner, Map<String, String> env) {
+    @Override public String expandBraced(String inner, Map<String, String> env) {
         if (inner.isEmpty()) return null;
         if (inner.charAt(0) == '#') {
             String val = lookupVariable(inner.substring(1), env);

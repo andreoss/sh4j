@@ -14,6 +14,7 @@ import io.github.andreoss.sh4j.parser.ListNode;
 
 interface BuiltinContext {
     String expandVariables(String arg, Map<String, String> env);
+    String expandBraced(String inner, Map<String, String> env);
     Map<String, String> environmentMap();
     List<String> positionalParamsList();
     Map<String, FunctionNode> functionsMap();

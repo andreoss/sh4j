@@ -31,6 +31,18 @@ public final class WordExpander {
         return new ExpansionResult(value, error);
     }
 
+    /**
+     * Same wrapper shape as {@link #expandVariables} but for the ${...} brace
+     * form. Returned {@code value} may be {@code null} when the inner expression
+     * doesn't match any recognised parameter-expansion operator (caller falls back).
+     */
+    public static ExpansionResult expandBraced(String inner, Map<String, String> env, BuiltinContext ctx) {
+        String value = ctx.expandBraced(inner, env);
+        boolean error = ctx.wordExpansionErrorOccurred();
+        if (error) ctx.clearWordExpansionError();
+        return new ExpansionResult(value, error);
+    }
+
 
     public static String expandTilde(String arg, Map<String, String> env) {
         if (arg.isEmpty() || arg.charAt(0) != '~') {

@@ -109,6 +109,45 @@ class WordExpanderTest {
         assertFalse(r2.error(), "flag should be consumed by previous wrapper call");
     }
 
+    @Test void expandBracedColonDashUnsetReturnsDefault() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x:-fallback", env, e);
+        assertEquals("fallback", r.value());
+        assertFalse(r.error());
+    }
+
+    @Test void expandBracedColonEqUnsetAssigns() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x:=42", env, e);
+        assertEquals("42", r.value());
+        assertEquals("42", env.get("x"));
+    }
+
+    @Test void expandBracedColonQuestionUnsetSetsError() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x:?required", env, e);
+        assertTrue(r.error());
+    }
+
+    @Test void expandBracedHashLength() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        env.put("v", "hello");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("#v", env, e);
+        assertEquals("5", r.value());
+    }
+
+    @Test void expandBracedPercentSuffix() {
+        Executor e = new Executor(new HashMap<>());
+        Map<String, String> env = new HashMap<>();
+        env.put("f", "a.txt");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("f%.txt", env, e);
+        assertEquals("a", r.value());
+    }
+
     @Test void globMatchesStar() { assertTrue(WordExpander.globMatches("a*", "abc")); }
     @Test void globMatchesQuestion() { assertTrue(WordExpander.globMatches("a?c", "abc")); }
     @Test void globMatchesCharClass() { assertTrue(WordExpander.globMatches("[abc]", "b")); }
