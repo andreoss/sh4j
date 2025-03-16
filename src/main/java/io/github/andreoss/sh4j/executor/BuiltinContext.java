@@ -18,6 +18,9 @@ interface BuiltinContext {
     String getSpecialParam(char c);
     String executeCommandSubstitution(String cmdText);
     String evalArithmetic(String expr, Map<String, String> env);
+    String lookupVariable(String name, Map<String, String> env);
+    PrintStream errStream();
+    void setWordExpansionError();
     Map<String, String> environmentMap();
     List<String> positionalParamsList();
     Map<String, FunctionNode> functionsMap();

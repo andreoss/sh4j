@@ -395,7 +395,7 @@ public class Executor implements BuiltinContext {
         return WordExpander.expandVariablesImpl(arg, env, this);
     }
 
-    private String lookupVariable(String name, Map<String, String> env) {
+    @Override public String lookupVariable(String name, Map<String, String> env) {
         if (name.length() == 1) {
             String special = getSpecialParam(name.charAt(0));
             if (special != null) return special;
@@ -409,133 +409,7 @@ public class Executor implements BuiltinContext {
     }
 
     @Override public String expandBraced(String inner, Map<String, String> env) {
-        if (inner.isEmpty()) return null;
-        if (inner.charAt(0) == '#') {
-            String val = lookupVariable(inner.substring(1), env);
-            return val != null ? String.valueOf(val.length()) : "0";
-        }
-        int nameEnd = 0;
-        char fc = inner.charAt(0);
-        if (isSpecialParamChar(fc) || fc == '_' || Character.isLetter(fc)) {
-            nameEnd = 1;
-            if (!isSpecialParamChar(fc)) {
-                while (nameEnd < inner.length() && (Character.isLetterOrDigit(inner.charAt(nameEnd)) || inner.charAt(nameEnd) == '_')) {
-                    nameEnd++;
-                }
-            }
-        } else if (Character.isDigit(fc)) {
-            while (nameEnd < inner.length() && Character.isDigit(inner.charAt(nameEnd))) {
-                nameEnd++;
-            }
-        }
-        if (nameEnd == 0) return null;
-        String varName = inner.substring(0, nameEnd);
-        String rest = inner.substring(nameEnd);
-        String varValue = lookupVariable(varName, env);
-
-        if (rest.isEmpty()) {
-            return varValue != null ? varValue : "";
-        }
-        if (rest.startsWith(":-")) {
-            String word = rest.substring(2);
-            if (varValue == null || varValue.isEmpty()) return expandVariables(word, env);
-            return varValue;
-        }
-        if (rest.startsWith("-")) {
-            String word = rest.substring(1);
-            if (varValue == null) return expandVariables(word, env);
-            return varValue;
-        }
-        if (rest.startsWith(":=")) {
-            String word = rest.substring(2);
-            if (varValue == null || varValue.isEmpty()) {
-                String expanded = expandVariables(word, env);
-                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
-                    env.put(varName, expanded);
-                }
-                return expanded;
-            }
-            return varValue;
-        }
-        if (rest.startsWith("=")) {
-            String word = rest.substring(1);
-            if (varValue == null) {
-                String expanded = expandVariables(word, env);
-                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
-                    env.put(varName, expanded);
-                }
-                return expanded;
-            }
-            return varValue;
-        }
-        if (rest.startsWith(":+")) {
-            String word = rest.substring(2);
-            if (varValue != null && !varValue.isEmpty()) return expandVariables(word, env);
-            return "";
-        }
-        if (rest.startsWith("+")) {
-            String word = rest.substring(1);
-            if (varValue != null) return expandVariables(word, env);
-            return "";
-        }
-        if (rest.startsWith(":?")) {
-            String word = rest.substring(2);
-            if (varValue == null || varValue.isEmpty()) {
-                err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
-                wordExpansionError = true;
-                return "";
-            }
-            return varValue;
-        }
-        if (rest.startsWith("?")) {
-            String word = rest.substring(1);
-            if (varValue == null) {
-                err.println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
-                wordExpansionError = true;
-                return "";
-            }
-            return varValue;
-        }
-        if (varValue == null) return "";
-        if (rest.startsWith("##")) {
-            String pattern = rest.substring(2);
-            int longest = -1;
-            for (int i = 0; i <= varValue.length(); i++) {
-                String prefix = varValue.substring(0, i);
-                if (WordExpander.globMatches(pattern, prefix)) longest = i;
-            }
-            return longest >= 0 ? varValue.substring(longest) : varValue;
-        }
-        if (rest.startsWith("#")) {
-            String pattern = rest.substring(1);
-            for (int i = 0; i <= varValue.length(); i++) {
-                String prefix = varValue.substring(0, i);
-                if (WordExpander.globMatches(pattern, prefix)) return varValue.substring(i);
-            }
-            return varValue;
-        }
-        if (rest.startsWith("%%")) {
-            String pattern = rest.substring(2);
-            int longest = -1;
-            for (int i = 0; i <= varValue.length(); i++) {
-                String suffix = varValue.substring(varValue.length() - i);
-                if (WordExpander.globMatches(pattern, suffix)) longest = i;
-            }
-            return longest >= 0 ? varValue.substring(0, varValue.length() - longest) : varValue;
-        }
-        if (rest.startsWith("%")) {
-            String pattern = rest.substring(1);
-            for (int i = 0; i <= varValue.length(); i++) {
-                String suffix = varValue.substring(varValue.length() - i);
-                if (WordExpander.globMatches(pattern, suffix)) return varValue.substring(0, varValue.length() - i);
-            }
-            return varValue;
-        }
-        return null;
-    }
-
-    private static boolean isSpecialParamChar(char c) {
-        return c == '?' || c == '-' || c == '$' || c == '!' || c == '@' || c == '*';
+        return WordExpander.expandBracedImpl(inner, env, this);
     }
 
     @Override public String getSpecialParam(char c) {
@@ -629,4 +503,6 @@ public class Executor implements BuiltinContext {
     @Override public PrintStream outStream() { return out; }
     @Override public boolean wordExpansionErrorOccurred() { return wordExpansionError; }
     @Override public void clearWordExpansionError() { wordExpansionError = false; }
+    @Override public void setWordExpansionError() { wordExpansionError = true; }
+    @Override public PrintStream errStream() { return err; }
 }

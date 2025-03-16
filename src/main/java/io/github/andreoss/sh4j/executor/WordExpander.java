@@ -124,6 +124,142 @@ public final class WordExpander {
      * form. Returned {@code value} may be {@code null} when the inner expression
      * doesn't match any recognised parameter-expansion operator (caller falls back).
      */
+    private static boolean isSpecialParamChar(char c) {
+        return c == '?' || c == '-' || c == '$' || c == '!' || c == '@' || c == '*';
+    }
+
+    /**
+     * Full implementation of ${...} brace expansion. Migrated from
+     * Executor.expandBraced. Returns null when {@code inner} doesn't match any
+     * recognised operator (caller falls back). Sets ctx.setWordExpansionError()
+     * for the `:?` / `?` operators on unset/null variables.
+     */
+    public static String expandBracedImpl(String inner, Map<String, String> env, BuiltinContext ctx) {
+        if (inner.isEmpty()) return null;
+        if (inner.charAt(0) == '#') {
+            String val = ctx.lookupVariable(inner.substring(1), env);
+            return val != null ? String.valueOf(val.length()) : "0";
+        }
+        int nameEnd = 0;
+        char fc = inner.charAt(0);
+        if (isSpecialParamChar(fc) || fc == '_' || Character.isLetter(fc)) {
+            nameEnd = 1;
+            if (!isSpecialParamChar(fc)) {
+                while (nameEnd < inner.length() && (Character.isLetterOrDigit(inner.charAt(nameEnd)) || inner.charAt(nameEnd) == '_')) {
+                    nameEnd++;
+                }
+            }
+        } else if (Character.isDigit(fc)) {
+            while (nameEnd < inner.length() && Character.isDigit(inner.charAt(nameEnd))) {
+                nameEnd++;
+            }
+        }
+        if (nameEnd == 0) return null;
+        String varName = inner.substring(0, nameEnd);
+        String rest = inner.substring(nameEnd);
+        String varValue = ctx.lookupVariable(varName, env);
+
+        if (rest.isEmpty()) {
+            return varValue != null ? varValue : "";
+        }
+        if (rest.startsWith(":-")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) return ctx.expandVariables(word, env);
+            return varValue;
+        }
+        if (rest.startsWith("-")) {
+            String word = rest.substring(1);
+            if (varValue == null) return ctx.expandVariables(word, env);
+            return varValue;
+        }
+        if (rest.startsWith(":=")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) {
+                String expanded = ctx.expandVariables(word, env);
+                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
+                    env.put(varName, expanded);
+                }
+                return expanded;
+            }
+            return varValue;
+        }
+        if (rest.startsWith("=")) {
+            String word = rest.substring(1);
+            if (varValue == null) {
+                String expanded = ctx.expandVariables(word, env);
+                if (varName.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '_')) {
+                    env.put(varName, expanded);
+                }
+                return expanded;
+            }
+            return varValue;
+        }
+        if (rest.startsWith(":+")) {
+            String word = rest.substring(2);
+            if (varValue != null && !varValue.isEmpty()) return ctx.expandVariables(word, env);
+            return "";
+        }
+        if (rest.startsWith("+")) {
+            String word = rest.substring(1);
+            if (varValue != null) return ctx.expandVariables(word, env);
+            return "";
+        }
+        if (rest.startsWith(":?")) {
+            String word = rest.substring(2);
+            if (varValue == null || varValue.isEmpty()) {
+                ctx.errStream().println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter null or not set"));
+                ctx.setWordExpansionError();
+                return "";
+            }
+            return varValue;
+        }
+        if (rest.startsWith("?")) {
+            String word = rest.substring(1);
+            if (varValue == null) {
+                ctx.errStream().println("$" + varName + ": " + (!word.isEmpty() ? word : "parameter not set"));
+                ctx.setWordExpansionError();
+                return "";
+            }
+            return varValue;
+        }
+        if (varValue == null) return "";
+        if (rest.startsWith("##")) {
+            String pattern = rest.substring(2);
+            int longest = -1;
+            for (int i = 0; i <= varValue.length(); i++) {
+                String prefix = varValue.substring(0, i);
+                if (globMatches(pattern, prefix)) longest = i;
+            }
+            return longest >= 0 ? varValue.substring(longest) : varValue;
+        }
+        if (rest.startsWith("#")) {
+            String pattern = rest.substring(1);
+            for (int i = 0; i <= varValue.length(); i++) {
+                String prefix = varValue.substring(0, i);
+                if (globMatches(pattern, prefix)) return varValue.substring(i);
+            }
+            return varValue;
+        }
+        if (rest.startsWith("%%")) {
+            String pattern = rest.substring(2);
+            int longest = -1;
+            for (int i = 0; i <= varValue.length(); i++) {
+                String suffix = varValue.substring(varValue.length() - i);
+                if (globMatches(pattern, suffix)) longest = i;
+            }
+            return longest >= 0 ? varValue.substring(0, varValue.length() - longest) : varValue;
+        }
+        if (rest.startsWith("%")) {
+            String pattern = rest.substring(1);
+            for (int i = 0; i <= varValue.length(); i++) {
+                String suffix = varValue.substring(varValue.length() - i);
+                if (globMatches(pattern, suffix)) return varValue.substring(0, varValue.length() - i);
+            }
+            return varValue;
+        }
+        return null;
+    }
+
     public static ExpansionResult expandBraced(String inner, Map<String, String> env, BuiltinContext ctx) {
         String value = ctx.expandBraced(inner, env);
         boolean error = ctx.wordExpansionErrorOccurred();
