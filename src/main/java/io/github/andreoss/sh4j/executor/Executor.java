@@ -408,10 +408,6 @@ public class Executor implements BuiltinContext {
         return env.get(name);
     }
 
-    @Override public String expandBraced(String inner, Map<String, String> env) {
-        return WordExpander.expandBracedImpl(inner, env, this);
-    }
-
     @Override public String getSpecialParam(char c) {
         return switch (c) {
             case '?' -> String.valueOf(lastExitCode);

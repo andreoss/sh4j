@@ -80,7 +80,7 @@ public final class WordExpander {
                     int close = arg.indexOf('}', i + 2);
                     if (close > i + 2) {
                         String inner = arg.substring(i + 2, close);
-                        String replacement = ctx.expandBraced(inner, env);
+                        String replacement = expandBracedImpl(inner, env, ctx);
                         if (replacement != null) {
                             expanded.append(replacement);
                             i = close + 1;
@@ -261,7 +261,7 @@ public final class WordExpander {
     }
 
     public static ExpansionResult expandBraced(String inner, Map<String, String> env, BuiltinContext ctx) {
-        String value = ctx.expandBraced(inner, env);
+        String value = expandBracedImpl(inner, env, ctx);
         boolean error = ctx.wordExpansionErrorOccurred();
         if (error) ctx.clearWordExpansionError();
         return new ExpansionResult(value, error);
