@@ -350,6 +350,78 @@ class LexerTest {
     }
 
     @Test
+    void dollarParenStaysInWord() {
+        Lexer l = lexer("$(echo hi)");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("$(echo hi)", t.text());
+    }
+
+    @Test
+    void dollarDoubleParenArithStaysInWord() {
+        Lexer l = lexer("$((1+2*3))");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("$((1+2*3))", t.text());
+    }
+
+    @Test
+    void dollarParenWithNestedParensStaysInWord() {
+        Lexer l = lexer("$(echo $((1+2)))");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("$(echo $((1+2)))", t.text());
+    }
+
+    @Test
+    void dollarBraceStaysInWord() {
+        Lexer l = lexer("${VAR}");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("${VAR}", t.text());
+    }
+
+    @Test
+    void dollarBraceWithNestedBraceStaysInWord() {
+        Lexer l = lexer("${a:-${b}}");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("${a:-${b}}", t.text());
+    }
+
+    @Test
+    void backtickStaysInWord() {
+        Lexer l = lexer("`echo hi`");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("`echo hi`", t.text());
+    }
+
+    @Test
+    void backtickWithBackslashEscape() {
+        Lexer l = lexer("`echo \\`hi\\``");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("`echo \\`hi\\``", t.text());
+    }
+
+    @Test
+    void wordWithDollarParenAndTrailingText() {
+        Lexer l = lexer("a$(echo b)c");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("a$(echo b)c", t.text());
+    }
+
+    @Test
+    void wordWithBacktickAndTrailingText() {
+        Lexer l = lexer("a`b`c");
+        Token t = l.nextToken();
+        assertEquals(TokenType.WORD, t.type());
+        assertEquals("a`b`c", t.text());
+    }
+
+    @Test
     void readHereDocContentSkipsLeadingNewline() {
         Lexer l = lexer("\nhello\nEOF\n");
         String content = l.readHereDocContent("EOF", false);
