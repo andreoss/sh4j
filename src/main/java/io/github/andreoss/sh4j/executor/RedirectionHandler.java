@@ -18,6 +18,10 @@ import java.util.function.UnaryOperator;
 
 public final class RedirectionHandler {
 
+    @io.github.andreoss.sh4j.annotation.GeneratedDefensive
+    private RedirectionHandler() {}
+
+
     public record StreamSwap(PrintStream out, PrintStream err,
                              PrintStream savedOut, PrintStream savedErr) {}
 

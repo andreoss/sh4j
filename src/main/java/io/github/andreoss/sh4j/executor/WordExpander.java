@@ -17,6 +17,9 @@ import java.util.regex.Pattern;
 
 public final class WordExpander {
 
+    @io.github.andreoss.sh4j.annotation.GeneratedDefensive
+    private WordExpander() {}
+
     static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
 
     public record ExpansionResult(String value, boolean error) {}
