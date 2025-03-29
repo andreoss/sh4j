@@ -547,6 +547,32 @@ class ParserTest {
     }
 
     @Test
+    void parseEmptyIfThenBody() {
+        ListNode list = parser("if true; then fi").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseEmptyForBody() {
+        ListNode list = parser("for i in 1 2; do done").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseTwoPipelinesSemiTerminatedBeforeReserved() {
+        // exercises the post-separator reserved-terminator break in parseList
+        ListNode list = parser("if true; then echo a; echo b; fi").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parsePipelineEmptyPipeStage() {
+        // Pipe followed by `fi` -> second stage returns null, break loop
+        ListNode list = parser("if echo a | echo b; then echo c; fi").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
     void parseHereDocRedirect() {
         ListNode list = parser("cat <<EOF\nhello\nEOF\n").parse();
         SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
