@@ -1613,6 +1613,15 @@ class ExecutorTest {
     }
 
     @Test
+    void exportArgWithEqualsNonStandardName() throws Exception {
+        Executor executor = new Executor(new HashMap<>());
+        ListNode list = parser("export 1foo=bar").parse();
+        int code = executor.execute(list);
+        assertEquals(0, code);
+        assertEquals("bar", executor.getVariable("1foo"));
+    }
+
+    @Test
     void execNonExecutableFileTriggersIoException() throws Exception {
         java.io.File nonExec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
         nonExec.deleteOnExit();
