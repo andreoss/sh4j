@@ -74,4 +74,60 @@ class ArithmeticEvaluatorTest {
     @Test void divByZeroIsZero() {
         assertEquals("0", e.evalArithmetic("5 / 0", env));
     }
+
+    @Test void modByZeroIsZero() {
+        assertEquals("0", e.evalArithmetic("5 % 0", env));
+    }
+
+    @Test void emptyExprIsZero() {
+        assertEquals("0", e.evalArithmetic("", env));
+    }
+
+    @Test void whitespaceOnlyIsZero() {
+        assertEquals("0", e.evalArithmetic("   ", env));
+    }
+
+    @Test void unmatchedParenStillEvalsInner() {
+        // missing closing paren — parser stops at end of input
+        assertEquals("3", e.evalArithmetic("(1+2", env));
+    }
+
+    @Test void leadingPlus() {
+        assertEquals("5", e.evalArithmetic("+5", env));
+    }
+
+    @Test void doubleNegation() {
+        assertEquals("5", e.evalArithmetic("--5", env));
+    }
+
+    @Test void doubleBitwiseNot() {
+        assertEquals("5", e.evalArithmetic("~~5", env));
+    }
+
+    @Test void doubleLogicalNot() {
+        assertEquals("1", e.evalArithmetic("!!5", env));
+    }
+
+    @Test void compoundAssignToUnsetVar() {
+        // unset var treated as 0
+        assertEquals("5", e.evalArithmetic("new += 5", env));
+        assertEquals("5", env.get("new"));
+    }
+
+    @Test void chainedAssignmentRightAssoc() {
+        assertEquals("7", e.evalArithmetic("a = b = c = 7", env));
+        assertEquals("7", env.get("a"));
+        assertEquals("7", env.get("b"));
+        assertEquals("7", env.get("c"));
+    }
+
+    @Test void ternaryFalseEvaluatesElseOnly() {
+        // arithMute should suppress the THEN side's assignment
+        e.evalArithmetic("0 ? (z = 1) : (z = 2)", env);
+        assertEquals("2", env.get("z"));
+    }
+
+    @Test void numericLiteralWithLeadingZeros() {
+        assertEquals("42", e.evalArithmetic("042", env));
+    }
 }
