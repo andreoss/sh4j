@@ -1613,6 +1613,31 @@ class ExecutorTest {
     }
 
     @Test
+    void captureStreamFromPipeline() throws Exception {
+        Executor executor = new Executor();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setCaptureStream(bos);
+        ListNode list = parser("echo capture-me | cat").parse();
+        executor.execute(list);
+        assertTrue(bos.toString().contains("capture-me"), "captureStream: " + bos);
+    }
+
+    @Test
+    void resolveCommandWithCustomPathDirInPath() throws Exception {
+        java.io.File dir = java.nio.file.Files.createTempDirectory("sh4j_custompath_").toFile();
+        dir.deleteOnExit();
+        java.io.File bin = new java.io.File(dir, "myhello");
+        try (java.io.FileWriter w = new java.io.FileWriter(bin)) { w.write("#!/bin/sh\necho ok\n"); }
+        bin.setExecutable(true);
+        bin.deleteOnExit();
+        Map<String, String> env = new HashMap<>();
+        env.put("PATH", dir.getAbsolutePath());
+        Executor executor = new Executor(env);
+        ListNode list = parser("myhello").parse();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void externalCloseStdin() {
         ListNode list = parser("cat <&-").parse();
         Executor executor = new Executor();
