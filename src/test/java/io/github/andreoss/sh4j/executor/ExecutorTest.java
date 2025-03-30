@@ -1613,6 +1613,37 @@ class ExecutorTest {
     }
 
     @Test
+    void externalCloseStdin() {
+        ListNode list = parser("cat <&-").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void externalStdoutToStderr() {
+        ListNode list = parser("true 1>&2").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
+    void externalReadWriteFd0() throws Exception {
+        java.io.File f = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
+        f.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(f)) { w.write("seed\n"); }
+        ListNode list = parser("cat <>" + f.getAbsolutePath()).parse();
+        Executor executor = new Executor();
+        executor.execute(list);
+    }
+
+    @Test
+    void externalHeredocDashStripsTabs() throws Exception {
+        ListNode list = parser("cat <<-EOF\n\t\thello\nEOF\n").parse();
+        Executor executor = new Executor();
+        assertEquals(0, executor.execute(list));
+    }
+
+    @Test
     void exportArgWithEqualsNonStandardName() throws Exception {
         Executor executor = new Executor(new HashMap<>());
         ListNode list = parser("export 1foo=bar").parse();
