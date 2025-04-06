@@ -100,6 +100,41 @@ class WordExpanderTest {
         assertTrue(r.error(), "expected error flag set on :? for unset var");
     }
 
+    @Test void expandVariablesUnclosedArithmetic() {
+        Executor exe = new Executor(new HashMap<>());
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("$((1+2", new HashMap<>(), exe);
+        // unclosed -> literal text preserved
+        assertEquals("$((1+2", r.value());
+    }
+
+    @Test void expandVariablesUnclosedCmdSub() {
+        Executor exe = new Executor(new HashMap<>());
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("$(unclosed", new HashMap<>(), exe);
+        assertEquals("$(unclosed", r.value());
+    }
+
+    @Test void expandVariablesDollarAtEnd() {
+        Executor exe = new Executor(new HashMap<>());
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("trailing$", new HashMap<>(), exe);
+        assertEquals("trailing$", r.value());
+    }
+
+    @Test void expandVariablesDollarBraceWithoutClose() {
+        // ${unclosed: expandBraced sees no closing `}`, falls through to VAR_PATTERN
+        // which then matches ${unclosed (optional close) → resolves to unset var → "".
+        Executor exe = new Executor(new HashMap<>());
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("${unclosed", new HashMap<>(), exe);
+        assertEquals("", r.value());
+    }
+
+    @Test void expandVariablesDollarLetterPlainVar() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("X", "hi");
+        WordExpander.ExpansionResult r = WordExpander.expandVariables("$X-suffix", env, exe);
+        assertEquals("hi-suffix", r.value());
+    }
+
     @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
         Executor e = new Executor(new HashMap<>());
         Map<String, String> env = new HashMap<>();
