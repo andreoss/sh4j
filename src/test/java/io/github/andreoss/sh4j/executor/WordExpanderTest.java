@@ -175,6 +175,82 @@ class WordExpanderTest {
         assertEquals("5", r.value());
     }
 
+    @Test void expandBracedDashWithoutColonUnset() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x-fallback", env, exe);
+        assertEquals("fallback", r.value());
+    }
+
+    @Test void expandBracedDashWithoutColonSetEmpty() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("x", "");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x-fallback", env, exe);
+        assertEquals("", r.value(), "set-but-empty: no fallback");
+    }
+
+    @Test void expandBracedPlusSet() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("x", "");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x+word", env, exe);
+        assertEquals("word", r.value());
+    }
+
+    @Test void expandBracedColonPlusSetNonEmpty() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("x", "v");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x:+word", env, exe);
+        assertEquals("word", r.value());
+    }
+
+    @Test void expandBracedQuestionWithoutColonUnsetSetsError() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x?required", env, exe);
+        assertTrue(r.error());
+    }
+
+    @Test void expandBracedEqualsWithoutColonUnsetAssigns() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("x=42", env, exe);
+        assertEquals("42", r.value());
+        assertEquals("42", env.get("x"));
+    }
+
+    @Test void expandBracedHashHashLongestPrefix() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("f", "a/b/c/d");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("f##*/", env, exe);
+        assertEquals("d", r.value());
+    }
+
+    @Test void expandBracedPercentPercentLongestSuffix() {
+        Executor exe = new Executor(new HashMap<>());
+        Map<String,String> env = new HashMap<>();
+        env.put("f", "a.b.c");
+        WordExpander.ExpansionResult r = WordExpander.expandBraced("f%%.*", env, exe);
+        assertEquals("a", r.value());
+    }
+
+    @Test void splitFieldsConsecutiveIfsCreatesEmptyField() {
+        // non-whitespace IFS: consecutive separators produce empty fields per POSIX.
+        java.util.List<String> r = WordExpander.splitFields("a::b", ":");
+        assertEquals(3, r.size());
+        assertEquals("a", r.get(0));
+        assertEquals("", r.get(1));
+        assertEquals("b", r.get(2));
+    }
+
+    @Test void globMatchesEmptyPattern() {
+        assertTrue(WordExpander.globMatches("", ""));
+        assertFalse(WordExpander.globMatches("", "anything"));
+    }
+
     @Test void expandBracedPercentSuffix() {
         Executor e = new Executor(new HashMap<>());
         Map<String, String> env = new HashMap<>();
