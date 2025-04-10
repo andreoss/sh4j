@@ -547,6 +547,18 @@ class ParserTest {
     }
 
     @Test
+    void parseSubshellWithTrailingSemi() {
+        ListNode list = parser("(echo a;)").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseGroupingWithTrailingSemi() {
+        ListNode list = parser("{ echo a; }").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
     void parseEmptyIfThenBody() {
         ListNode list = parser("if true; then fi").parse();
         assertEquals(1, list.getPipelines().size());
