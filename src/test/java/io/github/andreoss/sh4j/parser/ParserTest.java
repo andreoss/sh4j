@@ -547,6 +547,18 @@ class ParserTest {
     }
 
     @Test
+    void parseTopLevelTrailingSemicolon() {
+        ListNode list = parser("echo a;").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
+    void parseTopLevelTrailingAmpersand() {
+        ListNode list = parser("sleep 0 &").parse();
+        assertEquals(1, list.getPipelines().size());
+    }
+
+    @Test
     void parseSubshellWithTrailingSemi() {
         ListNode list = parser("(echo a;)").parse();
         assertEquals(1, list.getPipelines().size());
