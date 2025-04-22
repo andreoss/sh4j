@@ -4,8 +4,22 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+/**
+ * Thrown by {@link Parser} when the input token stream does not form a
+ * valid POSIX shell command list. Unchecked because the lexer/parser are
+ * exercised by tests and the executor surfaces parse errors at the CLI
+ * boundary.
+ *
+ * @since 1.0
+ */
 public class ParseException extends RuntimeException {
-    public ParseException(String message) {
+
+    /**
+     * Creates a new parse exception with the given diagnostic message.
+     *
+     * @param message human-readable description of the parse failure
+     */
+    public ParseException(final String message) {
         super(message);
     }
 }

@@ -7,7 +7,29 @@ package io.github.andreoss.sh4j.executor;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Functional contract for a shell built-in (e.g. {@code echo}, {@code cd}).
+ * Implementations are registered in {@link BuiltinDispatcher} and invoked by
+ * the executor when the dispatcher recognises a command name.
+ *
+ * @since 1.0
+ */
 @FunctionalInterface
 interface Builtin {
-    int invoke(BuiltinContext self, List<String> arguments, Map<String, String> env, List<String> assignments);
+
+    /**
+     * Runs the built-in.
+     *
+     * @param self        narrow façade over the executor for env / I/O access
+     * @param arguments   the command words excluding the built-in name
+     * @param env         the current environment view (may be mutated)
+     * @param assignments inline {@code KEY=VALUE} pairs attached to this call
+     * @return the POSIX exit status the built-in produced
+     */
+    int invoke(
+        BuiltinContext self,
+        List<String> arguments,
+        Map<String, String> env,
+        List<String> assignments
+    );
 }
