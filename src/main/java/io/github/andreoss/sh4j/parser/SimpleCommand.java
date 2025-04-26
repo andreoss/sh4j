@@ -7,41 +7,88 @@ package io.github.andreoss.sh4j.parser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleCommand extends Node {
+/**
+ * AST node for a single command invocation: a name, its arguments, any
+ * inline assignments, and any redirections.
+ *
+ * @since 1.0
+ */
+public final class SimpleCommand extends Node {
+
+    /** Command name as parsed; may be null for assignment-only commands. */
     private final String name;
-    private final List<String> arguments = new ArrayList<>();
-    private final List<Redirection> redirections = new ArrayList<>();
-    private final List<String> assignments = new ArrayList<>();
+    /** Positional arguments in source order. */
+    private final List<String> arguments;
+    /** Redirections in source order. */
+    private final List<Redirection> redirections;
+    /** Inline {@code KEY=VALUE} assignments in source order. */
+    private final List<String> assignments;
 
-    public SimpleCommand(String name) {
+    /**
+     * Creates a simple-command node.
+     *
+     * @param name the command name (may be null for assignment-only commands)
+     */
+    public SimpleCommand(final String name) {
+        super();
         this.name = name;
+        this.arguments = new ArrayList<>();
+        this.redirections = new ArrayList<>();
+        this.assignments = new ArrayList<>();
     }
 
+    /**
+     * @return the command name (may be null)
+     */
     public String getName() {
-        return name;
+        return this.name;
     }
 
+    /**
+     * @return positional arguments
+     */
     public List<String> getArguments() {
-        return arguments;
+        return this.arguments;
     }
 
+    /**
+     * @return inline redirections
+     */
     public List<Redirection> getRedirections() {
-        return redirections;
+        return this.redirections;
     }
 
+    /**
+     * @return inline assignments ({@code KEY=VALUE} strings)
+     */
     public List<String> getAssignments() {
-        return assignments;
+        return this.assignments;
     }
 
-    public void addArgument(String arg) {
-        arguments.add(arg);
+    /**
+     * Appends a positional argument.
+     *
+     * @param arg the argument text
+     */
+    public void addArgument(final String arg) {
+        this.arguments.add(arg);
     }
 
-    public void addRedirection(Redirection redir) {
-        redirections.add(redir);
+    /**
+     * Appends a redirection.
+     *
+     * @param redir the redirection to attach
+     */
+    public void addRedirection(final Redirection redir) {
+        this.redirections.add(redir);
     }
 
-    public void addAssignment(String assignment) {
-        assignments.add(assignment);
+    /**
+     * Appends an inline assignment.
+     *
+     * @param assignment the {@code KEY=VALUE} string
+     */
+    public void addAssignment(final String assignment) {
+        this.assignments.add(assignment);
     }
 }

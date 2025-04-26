@@ -4,22 +4,41 @@
  */
 package io.github.andreoss.sh4j.parser;
 
-import java.util.List;
+/**
+ * AST node for a function definition: {@code name() compound-command}.
+ *
+ * @since 1.0
+ */
+public final class FunctionNode extends Node {
 
-public class FunctionNode extends Node {
+    /** Function name as written in source. */
     private final String name;
+    /** The compound command that runs when the function is invoked. */
     private final Node body;
 
-    public FunctionNode(String name, Node body) {
+    /**
+     * Creates a function-definition node.
+     *
+     * @param name function name
+     * @param body the function's compound body
+     */
+    public FunctionNode(final String name, final Node body) {
+        super();
         this.name = name;
         this.body = body;
     }
 
+    /**
+     * @return the function name
+     */
     public String getName() {
-        return name;
+        return this.name;
     }
 
+    /**
+     * @return the function body
+     */
     public Node getBody() {
-        return body;
+        return this.body;
     }
 }

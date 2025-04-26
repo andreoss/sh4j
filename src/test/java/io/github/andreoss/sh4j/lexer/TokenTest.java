@@ -21,7 +21,7 @@ class TokenTest {
     @Test
     void createsTokenFromCharReader() {
         CharReader r = new CharReader("abc");
-        Token t = new Token(TokenType.WORD, "abc", r);
+        Token t = Token.of(TokenType.WORD, "abc", r);
         assertEquals(TokenType.WORD, t.type());
         assertEquals("abc", t.text());
         assertEquals(1, t.line());

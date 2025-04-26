@@ -14,12 +14,12 @@ public class Lexer {
     public Token nextToken() {
         skipWhitespace();
         if (reader.isEOF()) {
-            return new Token(TokenType.END_OF_FILE, "", reader);
+            return Token.of(TokenType.END_OF_FILE, "", reader);
         }
         int c = reader.peek();
         if (c == '\n') {
             reader.consume();
-            return new Token(TokenType.NEWLINE, "\n", reader);
+            return Token.of(TokenType.NEWLINE, "\n", reader);
         }
         Token op = tryOperator();
         if (op != null) {

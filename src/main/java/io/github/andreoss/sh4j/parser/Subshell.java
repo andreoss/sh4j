@@ -4,14 +4,33 @@
  */
 package io.github.andreoss.sh4j.parser;
 
-public class Subshell extends Node {
+/**
+ * AST node for a subshell command list, written as {@code (list)} in
+ * POSIX. The list is executed in a forked environment in real shells; sh4j
+ * approximates that by running the list in the same JVM but with a copied
+ * environment view.
+ *
+ * @since 1.0
+ */
+public final class Subshell extends Node {
+
+    /** The command list to run inside the subshell. */
     private final ListNode list;
 
-    public Subshell(ListNode list) {
+    /**
+     * Creates a subshell node wrapping the given command list.
+     *
+     * @param list the list to execute
+     */
+    public Subshell(final ListNode list) {
+        super();
         this.list = list;
     }
 
+    /**
+     * @return the wrapped command list
+     */
     public ListNode getList() {
-        return list;
+        return this.list;
     }
 }

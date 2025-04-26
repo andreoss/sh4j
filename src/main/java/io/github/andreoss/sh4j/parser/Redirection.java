@@ -4,48 +4,80 @@
  */
 package io.github.andreoss.sh4j.parser;
 
-public class Redirection {
-    private final int fd;
-    private final RedirectionType type;
-    private final String target;
-    private final String hereDocContent;
+/**
+ * AST element describing one I/O redirection attached to a
+ * {@link SimpleCommand}: file descriptor, kind of operation, target word,
+ * and optional here-document body.
+ *
+ * @since 1.0
+ */
+public final class Redirection {
 
-    public Redirection(int fd, RedirectionType type, String target) {
-        this(fd, type, target, null);
+    /** File descriptor the redirection acts on. */
+    private final int desc;
+    /** Kind of redirection. */
+    private final RedirectionType type;
+    /** Target word (file path, fd number, or null). */
+    private final String target;
+    /** Inline here-document text when {@link #type} is HERE_DOC*; else null. */
+    private final String heredoc;
+
+    /**
+     * Creates a redirection with no here-document body.
+     *
+     * @param desc   the file descriptor
+     * @param type   the kind of redirection
+     * @param target target word (file path, fd, ...)
+     */
+    public Redirection(final int desc, final RedirectionType type, final String target) {
+        this(desc, type, target, null);
     }
 
-    public Redirection(int fd, RedirectionType type, String target, String hereDocContent) {
-        this.fd = fd;
+    /**
+     * Creates a redirection, including any inline here-document.
+     *
+     * @param desc    the file descriptor
+     * @param type    the kind of redirection
+     * @param target  target word (file path, fd, ...)
+     * @param heredoc the here-document body, or null
+     */
+    public Redirection(
+        final int desc,
+        final RedirectionType type,
+        final String target,
+        final String heredoc
+    ) {
+        this.desc = desc;
         this.type = type;
         this.target = target;
-        this.hereDocContent = hereDocContent;
+        this.heredoc = heredoc;
     }
 
+    /**
+     * @return the file descriptor this redirection targets
+     */
     public int getFd() {
-        return fd;
+        return this.desc;
     }
 
+    /**
+     * @return the redirection kind
+     */
     public RedirectionType getType() {
-        return type;
+        return this.type;
     }
 
+    /**
+     * @return the target word
+     */
     public String getTarget() {
-        return target;
+        return this.target;
     }
 
+    /**
+     * @return inline here-document body, or null
+     */
     public String getHereDocContent() {
-        return hereDocContent;
-    }
-
-    public static Redirection input(int fd, String target) {
-        return new Redirection(fd, RedirectionType.INPUT, target);
-    }
-
-    public static Redirection output(int fd, String target) {
-        return new Redirection(fd, RedirectionType.OUTPUT, target);
-    }
-
-    public static Redirection append(int fd, String target) {
-        return new Redirection(fd, RedirectionType.APPEND, target);
+        return this.heredoc;
     }
 }

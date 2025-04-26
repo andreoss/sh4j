@@ -4,26 +4,53 @@
  */
 package io.github.andreoss.sh4j.parser;
 
-public class WhileNode extends Node {
+/**
+ * AST node for {@code while} and {@code until} loops. The two share their
+ * structure; {@link #isUntil()} distinguishes them.
+ *
+ * @since 1.0
+ */
+public final class WhileNode extends Node {
+
+    /** Loop condition; re-evaluated each iteration. */
     private final ListNode condition;
+    /** Loop body. */
     private final ListNode body;
+    /** True when the keyword was {@code until} (inverts the predicate). */
     private final boolean until;
 
-    public WhileNode(ListNode condition, ListNode body, boolean until) {
+    /**
+     * Creates a while-loop or until-loop node.
+     *
+     * @param condition predicate command list
+     * @param body      list to run while the predicate matches
+     * @param until     true for {@code until} semantics, false for {@code while}
+     */
+    public WhileNode(final ListNode condition, final ListNode body, final boolean until) {
+        super();
         this.condition = condition;
         this.body = body;
         this.until = until;
     }
 
+    /**
+     * @return the loop's predicate
+     */
     public ListNode getCondition() {
-        return condition;
+        return this.condition;
     }
 
+    /**
+     * @return the loop body
+     */
     public ListNode getBody() {
-        return body;
+        return this.body;
     }
 
+    /**
+     * @return true when this is an {@code until} loop
+     */
     public boolean isUntil() {
-        return until;
+        return this.until;
     }
 }
