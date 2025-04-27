@@ -131,7 +131,7 @@ final class BuiltinDispatcher {
                 Process process = pb.start();
                 return process.waitFor();
             } catch (IOException e) {
-                return self.exitCodeForIOException(e);
+                return self.exitCodeForIoException(e);
             } catch (InterruptedException e) {
                 return 1;
             }

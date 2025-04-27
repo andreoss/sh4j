@@ -13,7 +13,7 @@ public class Lexer {
 
     public Token nextToken() {
         skipWhitespace();
-        if (reader.isEOF()) {
+        if (reader.isEof()) {
             return Token.of(TokenType.END_OF_FILE, "", reader);
         }
         int c = reader.peek();
@@ -29,7 +29,7 @@ public class Lexer {
     }
 
     private void skipWhitespace() {
-        while (!reader.isEOF() && (reader.peek() == ' ' || reader.peek() == '\t')) {
+        while (!reader.isEof() && (reader.peek() == ' ' || reader.peek() == '\t')) {
             reader.consume();
         }
     }
@@ -129,7 +129,7 @@ public class Lexer {
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
 
-        while (!reader.isEOF()) {
+        while (!reader.isEof()) {
             int c = reader.peek();
 
             if (c == '\\' && !inSingleQuote && !inDoubleQuote) {
@@ -139,7 +139,7 @@ public class Lexer {
                     continue;
                 }
                 sb.append('\\');
-                if (!reader.isEOF()) {
+                if (!reader.isEof()) {
                     sb.append((char) reader.consume());
                 }
                 continue;
@@ -186,13 +186,13 @@ public class Lexer {
             if (c == '$') {
                 reader.consume();
                 sb.append('$');
-                if (!reader.isEOF() && reader.peek() == '(') {
+                if (!reader.isEof() && reader.peek() == '(') {
                     reader.consume();
                     sb.append('(');
-                    boolean arith = !reader.isEOF() && reader.peek() == '(';
+                    boolean arith = !reader.isEof() && reader.peek() == '(';
                     if (arith) { reader.consume(); sb.append('('); }
                     int depth = arith ? 2 : 1;
-                    while (!reader.isEOF() && depth > 0) {
+                    while (!reader.isEof() && depth > 0) {
                         int nc = reader.consume();
                         sb.append((char) nc);
                         if (nc == '(') depth++;
@@ -200,11 +200,11 @@ public class Lexer {
                     }
                     continue;
                 }
-                if (!reader.isEOF() && reader.peek() == '{') {
+                if (!reader.isEof() && reader.peek() == '{') {
                     reader.consume();
                     sb.append('{');
                     int depth = 1;
-                    while (!reader.isEOF() && depth > 0) {
+                    while (!reader.isEof() && depth > 0) {
                         int nc = reader.consume();
                         sb.append((char) nc);
                         if (nc == '{') depth++;
@@ -218,11 +218,11 @@ public class Lexer {
             if (c == '`') {
                 reader.consume();
                 sb.append('`');
-                while (!reader.isEOF()) {
+                while (!reader.isEof()) {
                     int nc = reader.consume();
                     sb.append((char) nc);
                     if (nc == '`') break;
-                    if (nc == '\\' && !reader.isEOF()) {
+                    if (nc == '\\' && !reader.isEof()) {
                         sb.append((char) reader.consume());
                     }
                 }
@@ -236,7 +236,7 @@ public class Lexer {
             sb.append((char) reader.consume());
         }
         String text = sb.toString();
-        if (isAllDigits(text) && !reader.isEOF()
+        if (isAllDigits(text) && !reader.isEof()
                 && (reader.peek() == '<' || reader.peek() == '>')) {
             return new Token(TokenType.IO_NUMBER, text, line, col);
         }
@@ -249,9 +249,9 @@ public class Lexer {
         if (reader.peek() == '\n') {
             reader.consume();
         }
-        while (!reader.isEOF()) {
+        while (!reader.isEof()) {
             StringBuilder line = new StringBuilder();
-            while (!reader.isEOF()) {
+            while (!reader.isEof()) {
                 int c = reader.peek();
                 if (c == '\n') break;
                 if (stripTabs && line.length() == 0 && c == '\t') {
@@ -260,7 +260,7 @@ public class Lexer {
                 }
                 line.append((char) reader.consume());
             }
-            if (!reader.isEOF()) reader.consume();
+            if (!reader.isEof()) reader.consume();
             String lineStr = line.toString();
             String check = stripTabs ? stripLeadingTabs(lineStr) : lineStr;
             if (check.equals(delimiter)) break;

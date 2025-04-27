@@ -296,7 +296,7 @@ public class Executor implements BuiltinContext {
             for (Process p : processes) {
                 p.destroyForcibly();
             }
-            return exitCodeForIOException(e);
+            return exitCodeForIoException(e);
         } catch (InterruptedException e) {
             for (Process p : processes) {
                 p.destroyForcibly();
@@ -363,7 +363,7 @@ public class Executor implements BuiltinContext {
             int exitCode = process.waitFor();
             return exitCode;
         } catch (IOException e) {
-            return exitCodeForIOException(e);
+            return exitCodeForIoException(e);
         } catch (InterruptedException e) {
             return 1;
         }
@@ -430,7 +430,7 @@ public class Executor implements BuiltinContext {
         };
     }
 
-    @Override public int exitCodeForIOException(IOException e) {
+    @Override public int exitCodeForIoException(IOException e) {
         String msg = e.getMessage();
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
             return EXIT_COMMAND_NOT_FOUND;

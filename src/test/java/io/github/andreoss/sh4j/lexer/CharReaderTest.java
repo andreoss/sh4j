@@ -35,13 +35,13 @@ class CharReaderTest {
     @Test
     void isEOFReturnsFalseWhenCharsRemain() {
         CharReader r = new CharReader("abc");
-        assertFalse(r.isEOF());
+        assertFalse(r.isEof());
     }
 
     @Test
     void eofOnEmptyString() {
         CharReader r = new CharReader("");
-        assertTrue(r.isEOF());
+        assertTrue(r.isEof());
         assertEquals(-1, r.peek());
     }
 
@@ -49,7 +49,7 @@ class CharReaderTest {
     void eofAfterFullConsume() {
         CharReader r = new CharReader("a");
         r.consume();
-        assertTrue(r.isEOF());
+        assertTrue(r.isEof());
         assertEquals(-1, r.peek());
     }
 
@@ -113,7 +113,7 @@ class CharReaderTest {
             public void close() {}
         };
         CharReader r = new CharReader(broken);
-        assertTrue(r.isEOF());
+        assertTrue(r.isEof());
         assertEquals(-1, r.peek());
         assertEquals(-1, r.consume());
     }
@@ -121,10 +121,10 @@ class CharReaderTest {
     @Test
     void eofStaysEofOnMultipleCalls() {
         CharReader r = new CharReader("");
-        assertTrue(r.isEOF());
+        assertTrue(r.isEof());
         assertEquals(-1, r.peek());
         assertEquals(-1, r.consume());
-        assertTrue(r.isEOF());
+        assertTrue(r.isEof());
         assertEquals(-1, r.peek());
     }
 }

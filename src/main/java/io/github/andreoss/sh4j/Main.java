@@ -6,80 +6,127 @@ package io.github.andreoss.sh4j;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.executor.Executor;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
-import java.util.ArrayList;
-import java.util.List;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 
-public class Main {
-    @GeneratedDefensive
-    private Main() {}
+/**
+ * Command-line entry point for sh4j. Dispatches to either script mode (a
+ * single filename argument plus positional parameters) or interactive
+ * mode (read-eval-print loop over stdin).
+ *
+ * @since 1.0
+ */
+public final class Main {
 
+    /**
+     * Utility class; the constructor exists only to enforce non-instantiation
+     * and is annotated as defensive code for JaCoCo's filter.
+     */
     @GeneratedDefensive
-    public static void main(String[] args) {
+    private Main() {
+        super();
+    }
+
+    /**
+     * Standard {@code main} entry. Delegates to {@link #exitCode(String[])}
+     * and feeds the result to {@link System#exit(int)}.
+     *
+     * @param args the CLI arguments
+     */
+    @GeneratedDefensive
+    public static void main(final String[] args) {
         System.exit(exitCode(args));
     }
 
-    static int exitCode(String[] args) {
+    /**
+     * Computes the process exit code for the given CLI arguments.
+     *
+     * @param args the CLI arguments (script path first, then positional args)
+     * @return the exit status the JVM should report
+     */
+    static int exitCode(final String[] args) {
+        final int code;
         if (args.length > 0) {
-            List<String> scriptArgs = new ArrayList<>();
-            scriptArgs.add(args[0]);
-            for (int i = 1; i < args.length; i++) {
-                scriptArgs.add(args[i]);
+            final List<String> scriptArgs = new ArrayList<>(args.length);
+            for (final String arg : args) {
+                scriptArgs.add(arg);
             }
-            return runScript(args[0], scriptArgs);
+            code = runScript(args[0], scriptArgs);
+        } else {
+            code = interactive();
         }
-        return interactive();
+        return code;
     }
 
-    static int runScript(String filename) {
+    /**
+     * Runs a script with the script name as its sole positional parameter.
+     *
+     * @param filename the script path
+     * @return the script's exit status
+     */
+    static int runScript(final String filename) {
         return runScript(filename, List.of(filename));
     }
 
-    static int runScript(String filename, List<String> scriptArgs) {
-        StringBuilder content = new StringBuilder();
+    /**
+     * Runs a script with the given positional parameters.
+     *
+     * @param filename   the script path
+     * @param scriptArgs the positional parameters (including {@code $0})
+     * @return the script's exit status
+     */
+    static int runScript(final String filename, final List<String> scriptArgs) {
+        final StringBuilder content = new StringBuilder();
+        int code;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
+            String line = reader.readLine();
+            while (line != null) {
                 content.append(line).append('\n');
+                line = reader.readLine();
             }
-        } catch (IOException e) {
-            return 1;
+            final CharReader charReader = new CharReader(content.toString());
+            final Lexer lexer = new Lexer(charReader);
+            final Parser parser = new Parser(lexer);
+            final ListNode ast = parser.parse();
+            final Executor executor = new Executor(System.getenv(), scriptArgs);
+            code = executor.execute(ast);
+        } catch (final IOException ex) {
+            code = 1;
         }
-        CharReader charReader = new CharReader(content.toString());
-        Lexer lexer = new Lexer(charReader);
-        Parser parser = new Parser(lexer);
-        ListNode ast = parser.parse();
-        Executor executor = new Executor(System.getenv(), scriptArgs);
-        return executor.execute(ast);
+        return code;
     }
 
+    /**
+     * Runs the interactive REPL on stdin until EOF or an IO failure.
+     *
+     * @return always 0; failures are surfaced via the prompt
+     */
     static int interactive() {
-        Executor executor = new Executor();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
-        while (true) {
+        final Executor executor = new Executor();
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        boolean running = true;
+        while (running) {
             System.out.print("$ ");
             try {
-                String line = reader.readLine();
+                final String line = reader.readLine();
                 if (line == null) {
-                    break;
+                    running = false;
+                } else if (!line.trim().isEmpty()) {
+                    final Lexer lexer = new Lexer(new CharReader(line));
+                    final Parser parser = new Parser(lexer);
+                    final ListNode ast = parser.parse();
+                    executor.execute(ast);
                 }
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
-                Lexer lexer = new Lexer(new CharReader(line));
-                Parser parser = new Parser(lexer);
-                ListNode ast = parser.parse();
-                executor.execute(ast);
-            } catch (IOException e) {
-                break;
+            } catch (final IOException ex) {
+                running = false;
             }
         }
         return 0;
