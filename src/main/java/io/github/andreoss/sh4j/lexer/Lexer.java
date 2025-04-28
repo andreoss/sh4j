@@ -4,313 +4,495 @@
  */
 package io.github.andreoss.sh4j.lexer;
 
-public class Lexer {
+/**
+ * Tokeniser for the POSIX shell grammar (section 2.10). Pulls characters
+ * from a {@link CharReader} and emits {@link Token} instances; one call
+ * to {@link #nextToken()} yields the next token (or
+ * {@link TokenType#END_OF_FILE} when the input is exhausted).
+ *
+ * @since 1.0
+ */
+public final class Lexer {
+
+    /** Lookahead cursor over the input. */
     private final CharReader reader;
 
-    public Lexer(CharReader reader) {
+    /**
+     * Creates a lexer over the given character source.
+     *
+     * @param reader the input cursor
+     */
+    public Lexer(final CharReader reader) {
         this.reader = reader;
     }
 
+    /**
+     * Returns the next token. Skips whitespace before classifying.
+     *
+     * @return the next token, or an END_OF_FILE token at end-of-input
+     */
     public Token nextToken() {
-        skipWhitespace();
-        if (reader.isEof()) {
-            return Token.of(TokenType.END_OF_FILE, "", reader);
-        }
-        int c = reader.peek();
-        if (c == '\n') {
-            reader.consume();
-            return Token.of(TokenType.NEWLINE, "\n", reader);
-        }
-        Token op = tryOperator();
-        if (op != null) {
-            return op;
-        }
-        return readWord();
-    }
-
-    private void skipWhitespace() {
-        while (!reader.isEof() && (reader.peek() == ' ' || reader.peek() == '\t')) {
-            reader.consume();
-        }
-    }
-
-    private Token tryOperator() {
-        int c = reader.peek();
-        int line = reader.getLine();
-        int col = reader.getColumn();
-        return switch (c) {
-            case '&' -> tryAmpersand(line, col);
-            case '|' -> tryPipe(line, col);
-            case ';' -> trySemi(line, col);
-            case '<' -> tryLess(line, col);
-            case '>' -> tryGreater(line, col);
-            case '(' -> singleCharOp(TokenType.LPAREN, line, col);
-            case ')' -> singleCharOp(TokenType.RPAREN, line, col);
-            case '{' -> singleCharOp(TokenType.LBRACE, line, col);
-            case '}' -> singleCharOp(TokenType.RBRACE, line, col);
-            default -> null;
-        };
-    }
-
-    private Token singleCharOp(TokenType type, int line, int col) {
-        int c = reader.consume();
-        return new Token(type, String.valueOf((char) c), line, col);
-    }
-
-    private Token tryAmpersand(int line, int col) {
-        reader.consume();
-        if (reader.peek() == '&') {
-            reader.consume();
-            return new Token(TokenType.AND_IF, "&&", line, col);
-        }
-        return new Token(TokenType.AMP, "&", line, col);
-    }
-
-    private Token tryPipe(int line, int col) {
-        reader.consume();
-        if (reader.peek() == '|') {
-            reader.consume();
-            return new Token(TokenType.OR_IF, "||", line, col);
-        }
-        return new Token(TokenType.PIPE, "|", line, col);
-    }
-
-    private Token trySemi(int line, int col) {
-        reader.consume();
-        if (reader.peek() == ';') {
-            reader.consume();
-            return new Token(TokenType.DSEMI, ";;", line, col);
-        }
-        return new Token(TokenType.SEMI, ";", line, col);
-    }
-
-    private Token tryLess(int line, int col) {
-        reader.consume();
-        if (reader.peek() == '<') {
-            reader.consume();
-            if (reader.peek() == '-') {
-                reader.consume();
-                return new Token(TokenType.DLESSDASH, "<<-", line, col);
+        this.skipWhitespace();
+        final Token result;
+        if (this.reader.isEof()) {
+            result = Token.of(TokenType.END_OF_FILE, "", this.reader);
+        } else if (this.reader.peek() == '\n') {
+            this.reader.consume();
+            result = Token.of(TokenType.NEWLINE, "\n", this.reader);
+        } else {
+            final Token operator = this.tryOperator();
+            if (operator == null) {
+                result = this.readWord();
+            } else {
+                result = operator;
             }
-            return new Token(TokenType.DLESS, "<<", line, col);
         }
-        if (reader.peek() == '&') {
-            reader.consume();
-            return new Token(TokenType.LESSAND, "<&", line, col);
-        }
-        if (reader.peek() == '>') {
-            reader.consume();
-            return new Token(TokenType.LESSGREATER, "<>", line, col);
-        }
-        return new Token(TokenType.LESS, "<", line, col);
+        return result;
     }
 
-    private Token tryGreater(int line, int col) {
-        reader.consume();
-        if (reader.peek() == '>') {
-            reader.consume();
-            return new Token(TokenType.DGREATER, ">>", line, col);
+    /**
+     * Reads the body of a here-document up to (but not including) the
+     * closing delimiter line.
+     *
+     * @param delimiter the heredoc delimiter
+     * @param stripTabs true for {@code <<-} (strip leading tabs on each line)
+     * @return the heredoc content (without trailing newline)
+     */
+    public String readHereDocContent(final String delimiter, final boolean stripTabs) {
+        final StringBuilder content = new StringBuilder();
+        if (this.reader.peek() == '\n') {
+            this.reader.consume();
         }
-        if (reader.peek() == '|') {
-            reader.consume();
-            return new Token(TokenType.CLOBBER, ">|", line, col);
-        }
-        if (reader.peek() == '&') {
-            reader.consume();
-            return new Token(TokenType.GREATAND, ">&", line, col);
-        }
-        return new Token(TokenType.GREAT, ">", line, col);
-    }
-
-    private Token readWord() {
-        int line = reader.getLine();
-        int col = reader.getColumn();
-        StringBuilder sb = new StringBuilder();
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-
-        while (!reader.isEof()) {
-            int c = reader.peek();
-
-            if (c == '\\' && !inSingleQuote && !inDoubleQuote) {
-                reader.consume();
-                if (reader.peek() == '\n') {
-                    reader.consume();
-                    continue;
+        boolean done = false;
+        while (!done && !this.reader.isEof()) {
+            final String lineStr = this.readHereDocLine(stripTabs);
+            if (!this.reader.isEof()) {
+                this.reader.consume();
+            }
+            final String check;
+            if (stripTabs) {
+                check = stripLeadingTabs(lineStr);
+            } else {
+                check = lineStr;
+            }
+            if (check.equals(delimiter)) {
+                done = true;
+            } else {
+                if (content.length() > 0) {
+                    content.append('\n');
                 }
-                sb.append('\\');
-                if (!reader.isEof()) {
-                    sb.append((char) reader.consume());
-                }
-                continue;
+                content.append(lineStr);
             }
-
-            if (c == '\'' && !inDoubleQuote) {
-                reader.consume();
-                sb.append('\'');
-                inSingleQuote = !inSingleQuote;
-                continue;
-            }
-
-            if (c == '"' && !inSingleQuote) {
-                reader.consume();
-                sb.append('"');
-                inDoubleQuote = !inDoubleQuote;
-                continue;
-            }
-
-            if (inSingleQuote) {
-                sb.append((char) reader.consume());
-                continue;
-            }
-
-            if (inDoubleQuote) {
-                if (c == '\\') {
-                    reader.consume();
-                    sb.append('\\');
-                    if (reader.peek() == '\n') {
-                        reader.consume();
-                        sb.deleteCharAt(sb.length() - 1);
-                        continue;
-                    }
-                    if (reader.peek() == '$' || reader.peek() == '`'
-                            || reader.peek() == '"' || reader.peek() == '\\') {
-                        sb.append((char) reader.consume());
-                    }
-                    continue;
-                }
-                sb.append((char) reader.consume());
-                continue;
-            }
-
-            if (c == '$') {
-                reader.consume();
-                sb.append('$');
-                if (!reader.isEof() && reader.peek() == '(') {
-                    reader.consume();
-                    sb.append('(');
-                    boolean arith = !reader.isEof() && reader.peek() == '(';
-                    if (arith) { reader.consume(); sb.append('('); }
-                    int depth = arith ? 2 : 1;
-                    while (!reader.isEof() && depth > 0) {
-                        int nc = reader.consume();
-                        sb.append((char) nc);
-                        if (nc == '(') depth++;
-                        else if (nc == ')') depth--;
-                    }
-                    continue;
-                }
-                if (!reader.isEof() && reader.peek() == '{') {
-                    reader.consume();
-                    sb.append('{');
-                    int depth = 1;
-                    while (!reader.isEof() && depth > 0) {
-                        int nc = reader.consume();
-                        sb.append((char) nc);
-                        if (nc == '{') depth++;
-                        else if (nc == '}') depth--;
-                    }
-                    continue;
-                }
-                continue;
-            }
-
-            if (c == '`') {
-                reader.consume();
-                sb.append('`');
-                while (!reader.isEof()) {
-                    int nc = reader.consume();
-                    sb.append((char) nc);
-                    if (nc == '`') break;
-                    if (nc == '\\' && !reader.isEof()) {
-                        sb.append((char) reader.consume());
-                    }
-                }
-                continue;
-            }
-
-            if (c == '\n' || c == ' ' || c == '\t' || isOperatorChar(c)) {
-                break;
-            }
-
-            sb.append((char) reader.consume());
-        }
-        String text = sb.toString();
-        if (isAllDigits(text) && !reader.isEof()
-                && (reader.peek() == '<' || reader.peek() == '>')) {
-            return new Token(TokenType.IO_NUMBER, text, line, col);
-        }
-        TokenType type = isAssignmentWord(text) ? TokenType.ASSIGNMENT_WORD : TokenType.WORD;
-        return new Token(type, text, line, col);
-    }
-
-    public String readHereDocContent(String delimiter, boolean stripTabs) {
-        StringBuilder content = new StringBuilder();
-        if (reader.peek() == '\n') {
-            reader.consume();
-        }
-        while (!reader.isEof()) {
-            StringBuilder line = new StringBuilder();
-            while (!reader.isEof()) {
-                int c = reader.peek();
-                if (c == '\n') break;
-                if (stripTabs && line.length() == 0 && c == '\t') {
-                    reader.consume();
-                    continue;
-                }
-                line.append((char) reader.consume());
-            }
-            if (!reader.isEof()) reader.consume();
-            String lineStr = line.toString();
-            String check = stripTabs ? stripLeadingTabs(lineStr) : lineStr;
-            if (check.equals(delimiter)) break;
-            if (content.length() > 0) content.append('\n');
-            content.append(lineStr);
         }
         return content.toString();
     }
 
-    private static String stripLeadingTabs(String s) {
-        int i = 0;
-        while (i < s.length() && s.charAt(i) == '\t') i++;
-        return s.substring(i);
-    }
-
-    private boolean isAssignmentWord(String text) {
-        if (text.isEmpty() || text.equals("=")) {
-            return false;
-        }
-        int eqIndex = text.indexOf('=');
-        if (eqIndex <= 0) {
-            return false;
-        }
-        String name = text.substring(0, eqIndex);
-        return isValidVarName(name);
-    }
-
-    private boolean isValidVarName(String name) {
-        char first = name.charAt(0);
-        if (!Character.isLetter(first) && first != '_') {
-            return false;
-        }
-        for (int i = 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (!Character.isLetterOrDigit(c) && c != '_') {
-                return false;
+    /**
+     * Reads one line of heredoc body, optionally stripping leading tabs.
+     *
+     * @param stripTabs true to strip leading tabs (for {@code <<-})
+     * @return the line text (without the trailing newline)
+     */
+    private String readHereDocLine(final boolean stripTabs) {
+        final StringBuilder line = new StringBuilder();
+        boolean stripping = stripTabs;
+        boolean exit = false;
+        while (!exit && !this.reader.isEof()) {
+            final int chr = this.reader.peek();
+            if (chr == '\n') {
+                exit = true;
+            } else if (stripping && chr == '\t') {
+                this.reader.consume();
+            } else {
+                stripping = false;
+                line.append((char) this.reader.consume());
             }
         }
-        return true;
+        return line.toString();
     }
 
-    private static boolean isAllDigits(String s) {
-        if (s.isEmpty()) return false;
-        for (int i = 0; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) return false;
+    /**
+     * Consumes spaces and tabs.
+     */
+    private void skipWhitespace() {
+        while (!this.reader.isEof()
+            && (this.reader.peek() == ' ' || this.reader.peek() == '\t')) {
+            this.reader.consume();
         }
-        return true;
     }
 
-    private static boolean isOperatorChar(int c) {
-        return c == '&' || c == '|' || c == ';' || c == '<' || c == '>' || c == '(' || c == ')' || c == '{' || c == '}';
+    /**
+     * Tries to match an operator at the current position.
+     *
+     * @return the operator token, or null when the current character is
+     *         not an operator
+     */
+    private Token tryOperator() {
+        final int chr = this.reader.peek();
+        final int line = this.reader.getLine();
+        final int col = this.reader.getColumn();
+        return switch (chr) {
+            case '&' -> this.tryAmpersand(line, col);
+            case '|' -> this.tryPipe(line, col);
+            case ';' -> this.trySemi(line, col);
+            case '<' -> this.tryLess(line, col);
+            case '>' -> this.tryGreater(line, col);
+            case '(' -> this.singleCharOp(TokenType.LPAREN, line, col);
+            case ')' -> this.singleCharOp(TokenType.RPAREN, line, col);
+            case '{' -> this.singleCharOp(TokenType.LBRACE, line, col);
+            case '}' -> this.singleCharOp(TokenType.RBRACE, line, col);
+            default -> null;
+        };
+    }
+
+    private Token singleCharOp(final TokenType type, final int line, final int col) {
+        final int chr = this.reader.consume();
+        return new Token(type, String.valueOf((char) chr), line, col);
+    }
+
+    private Token tryAmpersand(final int line, final int col) {
+        this.reader.consume();
+        final Token result;
+        if (this.reader.peek() == '&') {
+            this.reader.consume();
+            result = new Token(TokenType.AND_IF, "&&", line, col);
+        } else {
+            result = new Token(TokenType.AMP, "&", line, col);
+        }
+        return result;
+    }
+
+    private Token tryPipe(final int line, final int col) {
+        this.reader.consume();
+        final Token result;
+        if (this.reader.peek() == '|') {
+            this.reader.consume();
+            result = new Token(TokenType.OR_IF, "||", line, col);
+        } else {
+            result = new Token(TokenType.PIPE, "|", line, col);
+        }
+        return result;
+    }
+
+    private Token trySemi(final int line, final int col) {
+        this.reader.consume();
+        final Token result;
+        if (this.reader.peek() == ';') {
+            this.reader.consume();
+            result = new Token(TokenType.DSEMI, ";;", line, col);
+        } else {
+            result = new Token(TokenType.SEMI, ";", line, col);
+        }
+        return result;
+    }
+
+    private Token tryLess(final int line, final int col) {
+        this.reader.consume();
+        final Token result;
+        final int next = this.reader.peek();
+        if (next == '<') {
+            this.reader.consume();
+            if (this.reader.peek() == '-') {
+                this.reader.consume();
+                result = new Token(TokenType.DLESSDASH, "<<-", line, col);
+            } else {
+                result = new Token(TokenType.DLESS, "<<", line, col);
+            }
+        } else if (next == '&') {
+            this.reader.consume();
+            result = new Token(TokenType.LESSAND, "<&", line, col);
+        } else if (next == '>') {
+            this.reader.consume();
+            result = new Token(TokenType.LESSGREATER, "<>", line, col);
+        } else {
+            result = new Token(TokenType.LESS, "<", line, col);
+        }
+        return result;
+    }
+
+    private Token tryGreater(final int line, final int col) {
+        this.reader.consume();
+        final Token result;
+        final int next = this.reader.peek();
+        if (next == '>') {
+            this.reader.consume();
+            result = new Token(TokenType.DGREATER, ">>", line, col);
+        } else if (next == '|') {
+            this.reader.consume();
+            result = new Token(TokenType.CLOBBER, ">|", line, col);
+        } else if (next == '&') {
+            this.reader.consume();
+            result = new Token(TokenType.GREATAND, ">&", line, col);
+        } else {
+            result = new Token(TokenType.GREAT, ">", line, col);
+        }
+        return result;
+    }
+
+    /**
+     * Reads a single WORD token, honouring quoting and the
+     * {@code $(…)}, {@code $((…))}, {@code ${…}}, and {@code `…`}
+     * balanced word-boundaries (POSIX 2.10).
+     *
+     * @return the next word token
+     */
+    private Token readWord() {
+        final int line = this.reader.getLine();
+        final int col = this.reader.getColumn();
+        final StringBuilder buf = new StringBuilder();
+        final QuoteState quotes = new QuoteState();
+        boolean done = false;
+        while (!done && !this.reader.isEof()) {
+            done = this.readWordChar(buf, quotes);
+        }
+        final String text = buf.toString();
+        final TokenType type;
+        if (isAllDigits(text) && !this.reader.isEof()
+            && (this.reader.peek() == '<' || this.reader.peek() == '>')) {
+            type = TokenType.IO_NUMBER;
+        } else if (isAssignmentWord(text)) {
+            type = TokenType.ASSIGNMENT_WORD;
+        } else {
+            type = TokenType.WORD;
+        }
+        return new Token(type, text, line, col);
+    }
+
+    /**
+     * Consumes one character into the word buffer.
+     *
+     * @param buf    the accumulator for the current word
+     * @param quotes quote-state flags (mutated)
+     * @return true when the word ends at the current position
+     */
+    private boolean readWordChar(final StringBuilder buf, final QuoteState quotes) {
+        final int chr = this.reader.peek();
+        boolean done = false;
+        if (chr == '\\' && !quotes.inSingle && !quotes.inDouble) {
+            this.consumeBackslash(buf);
+        } else if (chr == '\'' && !quotes.inDouble) {
+            this.reader.consume();
+            buf.append('\'');
+            quotes.inSingle = !quotes.inSingle;
+        } else if (chr == '"' && !quotes.inSingle) {
+            this.reader.consume();
+            buf.append('"');
+            quotes.inDouble = !quotes.inDouble;
+        } else if (quotes.inSingle) {
+            buf.append((char) this.reader.consume());
+        } else if (quotes.inDouble) {
+            this.consumeDoubleQuoted(buf, chr);
+        } else if (chr == '$') {
+            this.consumeDollar(buf);
+        } else if (chr == '`') {
+            this.consumeBackticks(buf);
+        } else if (chr == '\n' || chr == ' ' || chr == '\t' || isOperatorChar(chr)) {
+            done = true;
+        } else {
+            buf.append((char) this.reader.consume());
+        }
+        return done;
+    }
+
+    /**
+     * Handles a backslash outside any quotes (line continuation or escape).
+     */
+    private void consumeBackslash(final StringBuilder buf) {
+        this.reader.consume();
+        if (this.reader.peek() == '\n') {
+            this.reader.consume();
+        } else {
+            buf.append('\\');
+            if (!this.reader.isEof()) {
+                buf.append((char) this.reader.consume());
+            }
+        }
+    }
+
+    /**
+     * Handles a character inside double-quotes.
+     */
+    private void consumeDoubleQuoted(final StringBuilder buf, final int chr) {
+        if (chr == '\\') {
+            this.reader.consume();
+            buf.append('\\');
+            final int next = this.reader.peek();
+            if (next == '\n') {
+                this.reader.consume();
+                buf.deleteCharAt(buf.length() - 1);
+            } else if (next == '$' || next == '`' || next == '"' || next == '\\') {
+                buf.append((char) this.reader.consume());
+            }
+        } else {
+            buf.append((char) this.reader.consume());
+        }
+    }
+
+    /**
+     * Handles a {@code $}-introduced expansion: {@code $(...)},
+     * {@code $((...))}, {@code ${...}}, or a bare {@code $NAME}.
+     */
+    private void consumeDollar(final StringBuilder buf) {
+        this.reader.consume();
+        buf.append('$');
+        if (!this.reader.isEof() && this.reader.peek() == '(') {
+            this.consumeBalancedParens(buf);
+        } else if (!this.reader.isEof() && this.reader.peek() == '{') {
+            this.consumeBalancedBraces(buf);
+        }
+    }
+
+    /**
+     * Handles a {@code $(...)} or {@code $((...))} expansion by balancing
+     * the opening parens.
+     */
+    private void consumeBalancedParens(final StringBuilder buf) {
+        this.reader.consume();
+        buf.append('(');
+        final boolean arith = !this.reader.isEof() && this.reader.peek() == '(';
+        int depth = 1;
+        if (arith) {
+            this.reader.consume();
+            buf.append('(');
+            depth = 2;
+        }
+        while (!this.reader.isEof() && depth > 0) {
+            final int next = this.reader.consume();
+            buf.append((char) next);
+            if (next == '(') {
+                depth = depth + 1;
+            } else if (next == ')') {
+                depth = depth - 1;
+            }
+        }
+    }
+
+    /**
+     * Handles a {@code ${...}} expansion by balancing the opening brace.
+     */
+    private void consumeBalancedBraces(final StringBuilder buf) {
+        this.reader.consume();
+        buf.append('{');
+        int depth = 1;
+        while (!this.reader.isEof() && depth > 0) {
+            final int next = this.reader.consume();
+            buf.append((char) next);
+            if (next == '{') {
+                depth = depth + 1;
+            } else if (next == '}') {
+                depth = depth - 1;
+            }
+        }
+    }
+
+    /**
+     * Handles a backtick-delimited command substitution.
+     */
+    private void consumeBackticks(final StringBuilder buf) {
+        this.reader.consume();
+        buf.append('`');
+        boolean done = false;
+        while (!done && !this.reader.isEof()) {
+            final int next = this.reader.consume();
+            buf.append((char) next);
+            if (next == '`') {
+                done = true;
+            } else if (next == '\\' && !this.reader.isEof()) {
+                buf.append((char) this.reader.consume());
+            }
+        }
+    }
+
+    /**
+     * @param text any word
+     * @return true when the word is a valid POSIX assignment ({@code NAME=value})
+     */
+    private static boolean isAssignmentWord(final String text) {
+        boolean result = false;
+        if (!text.isEmpty() && !"=".equals(text)) {
+            final int eqIndex = text.indexOf('=');
+            if (eqIndex > 0) {
+                result = isValidVarName(text.substring(0, eqIndex));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param name a candidate identifier
+     * @return true when {@code name} is a valid POSIX variable name
+     */
+    private static boolean isValidVarName(final String name) {
+        boolean valid = true;
+        final char first = name.charAt(0);
+        if (!Character.isLetter(first) && first != '_') {
+            valid = false;
+        } else {
+            for (int idx = 1; valid && idx < name.length(); idx = idx + 1) {
+                final char chr = name.charAt(idx);
+                if (!Character.isLetterOrDigit(chr) && chr != '_') {
+                    valid = false;
+                }
+            }
+        }
+        return valid;
+    }
+
+    /**
+     * @param text any string
+     * @return true when {@code text} is non-empty and contains only digits
+     */
+    private static boolean isAllDigits(final String text) {
+        boolean result = !text.isEmpty();
+        for (int idx = 0; result && idx < text.length(); idx = idx + 1) {
+            if (!Character.isDigit(text.charAt(idx))) {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param chr a character
+     * @return true when {@code chr} is one of the POSIX operator characters
+     *         that end a word
+     */
+    private static boolean isOperatorChar(final int chr) {
+        return chr == '&' || chr == '|' || chr == ';' || chr == '<' || chr == '>'
+            || chr == '(' || chr == ')' || chr == '{' || chr == '}';
+    }
+
+    /**
+     * Strips leading tabs from a heredoc line ({@code <<-}).
+     *
+     * @param str the line
+     * @return the line with leading tabs removed
+     */
+    private static String stripLeadingTabs(final String str) {
+        int idx = 0;
+        while (idx < str.length() && str.charAt(idx) == '\t') {
+            idx = idx + 1;
+        }
+        return str.substring(idx);
+    }
+
+    /**
+     * Mutable holder for the current quoting state inside {@link #readWord()}.
+     *
+     * @since 1.0
+     */
+    private static final class QuoteState {
+
+        /** True while the scanner is inside single quotes. */
+        private boolean inSingle;
+        /** True while the scanner is inside double quotes. */
+        private boolean inDouble;
+
+        /**
+         * Default constructor; both flags start false.
+         */
+        QuoteState() {
+            super();
+        }
     }
 }
