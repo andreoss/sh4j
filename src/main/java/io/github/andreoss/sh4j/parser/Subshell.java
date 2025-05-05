@@ -9,7 +9,6 @@ package io.github.andreoss.sh4j.parser;
  * POSIX. The list is executed in a forked environment in real shells; sh4j
  * approximates that by running the list in the same JVM but with a copied
  * environment view.
- *
  * @since 1.0
  */
 public final class Subshell extends Node {
@@ -19,7 +18,6 @@ public final class Subshell extends Node {
 
     /**
      * Creates a subshell node wrapping the given command list.
-     *
      * @param list The list to execute
      */
     public Subshell(final ListNode list) {

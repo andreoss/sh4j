@@ -20,7 +20,6 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
  * Stateless helpers that translate {@link Redirection} AST nodes into the
  * concrete I/O wiring the executor needs: stream swaps for built-ins and
  * {@link ProcessBuilder} redirects for external commands.
- *
  * @since 1.0
  */
 public final class RedirectionHandler {
@@ -45,7 +44,6 @@ public final class RedirectionHandler {
     /**
      * The new and saved stdout/stderr pair returned by
      * {@link #redirectOutputForBuiltin(List, PrintStream, PrintStream, UnaryOperator)}.
-     *
      * @param out      The new live stdout
      * @param err      The new live stderr
      * @param savedOut The pre-call stdout (null when not swapped)
@@ -62,7 +60,6 @@ public final class RedirectionHandler {
     /**
      * Computes the stdout/stderr swap that an executor built-in must apply
      * before running, given the redirections attached to the command.
-     *
      * @param redirs     The redirections attached to the built-in invocation
      * @param currentOut The executor's current stdout
      * @param currentErr The executor's current stderr
@@ -132,7 +129,6 @@ public final class RedirectionHandler {
     /**
      * Applies redirections to a {@link ProcessBuilder} so an external
      * command honours them.
-     *
      * @param builder      The process builder to mutate
      * @param redirections The redirections in source order
      * @param expander     Word-expansion callback for the targets
@@ -150,7 +146,6 @@ public final class RedirectionHandler {
     /**
      * Writes the heredoc body to a temp file the caller can pass to
      * {@link ProcessBuilder#redirectInput(File)}.
-     *
      * @param content The heredoc body (may be null)
      * @return The temp file, or null when content is null / IO failed
      */
@@ -174,7 +169,6 @@ public final class RedirectionHandler {
     /**
      * Defensive fallback when the heredoc temp file cannot be created;
      * factored out so JaCoCo can exclude it via {@link GeneratedDefensive}.
-     *
      * @return Null
      */
     @GeneratedDefensive
@@ -185,7 +179,6 @@ public final class RedirectionHandler {
     /**
      * Opens a file for writing as a {@link PrintStream}, swallowing IO
      * failures (the caller checks for null).
-     *
      * @param target The file path
      * @param append True for append-mode, false for truncate
      * @return The print stream, or null on IO failure
@@ -206,7 +199,6 @@ public final class RedirectionHandler {
 
     /**
      * Applies a single redirection to the process builder.
-     *
      * @param builder  The builder to mutate
      * @param redir    The redirection to apply
      * @param expander Word-expansion callback
@@ -235,7 +227,6 @@ public final class RedirectionHandler {
 
     /**
      * Applies a {@code DUP_OUTPUT} redirection to the process builder.
-     *
      * @param builder The builder to mutate
      * @param desc    The file descriptor
      * @param target  The duplicate target ({@code -}, {@code 1}, {@code 2}, ...)
@@ -260,7 +251,6 @@ public final class RedirectionHandler {
 
     /**
      * Applies a here-document redirection to the process builder.
-     *
      * @param builder  The builder to mutate
      * @param desc     The file descriptor (only fd 0 is honoured)
      * @param redir    The redirection node
@@ -284,7 +274,6 @@ public final class RedirectionHandler {
 
     /**
      * Applies a file-based input/output/append/readwrite redirection.
-     *
      * @param builder The builder to mutate
      * @param desc    The file descriptor
      * @param type    The redirection kind

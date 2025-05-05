@@ -21,7 +21,6 @@ import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
  * parameter, command-substitution, arithmetic, field-splitting, pathname,
  * and quote-removal. The methods cooperate with {@link BuiltinContext} to
  * read the executor's environment and signal expansion errors.
- *
  * @since 1.0
  */
 public final class WordExpander {
@@ -47,7 +46,6 @@ public final class WordExpander {
     /**
      * The result of a word expansion: the produced text and whether a
      * sub-expansion (e.g. {@code ${var:?}}) flagged an error.
-     *
      * @param value The expanded text
      * @param error True when at least one sub-expansion failed
      */
@@ -57,7 +55,6 @@ public final class WordExpander {
     /**
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
      * brace expansion, and bare variable references.
-     *
      * @param arg The source word
      * @param env Environment view for lookups
      * @param ctx Callbacks into the executor
@@ -91,7 +88,6 @@ public final class WordExpander {
     /**
      * Consumes the expansion that starts at {@code idx} (if any) and
      * appends its result to {@code expanded}.
-     *
      * @return The number of source characters consumed
      */
     private static int appendOneExpansion(
@@ -124,7 +120,6 @@ public final class WordExpander {
 
     /**
      * Handles {@code $(...)} or {@code $((...))} starting at {@code idx}.
-     *
      * @return Number of source characters consumed (or 1 on no match)
      */
     private static int appendDollarParen(
@@ -157,7 +152,6 @@ public final class WordExpander {
 
     /**
      * Handles {@code ${...}} starting at {@code idx}.
-     *
      * @return Number of source characters consumed (or 1 on no match)
      */
     private static int appendDollarBrace(
@@ -186,7 +180,6 @@ public final class WordExpander {
 
     /**
      * Finds the matching close-character by counting balanced open/close.
-     *
      * @param arg       The source string
      * @param start     Position immediately after the opener(s)
      * @param open      Open character
@@ -251,7 +244,6 @@ public final class WordExpander {
 
     /**
      * Full implementation of {@code ${...}} brace expansion.
-     *
      * @param inner The text between {@code ${} and {@code }}
      * @param env   Environment view
      * @param ctx   Executor callbacks
@@ -296,7 +288,6 @@ public final class WordExpander {
 
     /**
      * Finds the end of the variable-name portion of an inner-brace string.
-     *
      * @param inner The inner-brace text
      * @return The index just past the name (0 when no valid name was found)
      */
@@ -323,7 +314,6 @@ public final class WordExpander {
     /**
      * Applies the {@code :-}, {@code -}, {@code :=}, {@code =},
      * {@code :+}, {@code +} operators.
-     *
      * @return The expansion, or null when no default-class operator matches
      */
     private static String applyDefaultOps(
@@ -354,7 +344,6 @@ public final class WordExpander {
 
     /**
      * Applies the {@code :?} and {@code ?} error operators.
-     *
      * @return The expansion, or null when no error-class operator matches
      */
     private static String applyErrorOps(
@@ -606,7 +595,6 @@ public final class WordExpander {
 
     /**
      * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
-     *
      * @param arg The word to expand
      * @param env Environment view (HOME, PWD)
      * @return The word with the leading tilde resolved
@@ -640,7 +628,6 @@ public final class WordExpander {
     /**
      * Rewrites backtick command substitutions as {@code $(...)} so they
      * can be handled by the rest of the expansion pipeline uniformly.
-     *
      * @param arg The input word
      * @return The rewritten word
      */
@@ -657,7 +644,6 @@ public final class WordExpander {
     /**
      * Normalises one source position (a backtick, a {@code $(...)} chunk,
      * a {@code ${...}} chunk, or a literal character).
-     *
      * @return Number of source characters consumed
      */
     private static int normaliseOne(final String arg, final int idx, final StringBuilder result) {
@@ -683,7 +669,6 @@ public final class WordExpander {
     /**
      * Copies a balanced {@code $(...)} or {@code ${...}} chunk verbatim
      * into the result buffer.
-     *
      * @return Number of source characters consumed
      */
     private static int copyBalanced(
@@ -709,7 +694,6 @@ public final class WordExpander {
 
     /**
      * Rewrites one backtick chunk as a {@code $(...)} substitution.
-     *
      * @return Number of source characters consumed (always 1+content_length)
      */
     private static int rewriteBacktick(final String arg, final int idx, final StringBuilder result) {
@@ -749,7 +733,6 @@ public final class WordExpander {
     /**
      * Field splitting (POSIX 2.6.5). Returns the fields {@code value} is
      * broken into according to the IFS characters.
-     *
      * @param value The post-expansion text
      * @param ifs   The IFS value (each character is a separator)
      * @return One field per non-IFS run
@@ -820,7 +803,6 @@ public final class WordExpander {
     /**
      * Quote removal (POSIX 2.6.7). Strips the outer single/double quotes
      * and resolves backslash-escapes inside double quotes.
-     *
      * @param word The source word
      * @return The de-quoted text
      */
@@ -886,7 +868,6 @@ public final class WordExpander {
      * Pathname expansion (POSIX 2.6.6): replaces any field containing
      * glob characters with the alphabetic list of matching files (or the
      * literal field when no match).
-     *
      * @param fields The post-IFS fields
      * @return The post-glob fields
      */

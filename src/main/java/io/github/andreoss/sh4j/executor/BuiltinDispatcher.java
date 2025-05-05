@@ -19,7 +19,6 @@ import io.github.andreoss.sh4j.parser.Parser;
  * Holds the executor's table of built-in commands and routes calls to the
  * matching {@link Builtin}. Every built-in registered here keeps its own
  * lambda body; the dispatcher itself stays generic.
- *
  * @since 1.0
  */
 final class BuiltinDispatcher {
@@ -60,7 +59,6 @@ final class BuiltinDispatcher {
 
     /**
      * Registers a built-in by name.
-     *
      * @param name    The command name (as written in source)
      * @param builtin The implementation
      */
@@ -79,7 +77,6 @@ final class BuiltinDispatcher {
     /**
      * Dispatches to the matching built-in, or returns null when no entry
      * exists (the executor then resolves an external command).
-     *
      * @param name        The command name
      * @param self        Narrow façade over the executor
      * @param arguments   Command arguments (excluding the name)
@@ -190,7 +187,6 @@ final class BuiltinDispatcher {
 
     /**
      * Mutates PWD/OLDPWD and {@code user.dir} for a successful cd.
-     *
      * @param environment The live env map
      * @param dir         The directory being entered
      * @return The cd exit code (always 0 here)
@@ -305,7 +301,6 @@ final class BuiltinDispatcher {
 
     /**
      * Forks the external command and waits for it.
-     *
      * @param self     Façade for env / expansion / IO-exception mapping
      * @param args     The original args (with {@code args[0]} the command name)
      * @param env      Live environment

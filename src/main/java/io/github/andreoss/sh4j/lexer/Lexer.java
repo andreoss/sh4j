@@ -9,7 +9,6 @@ package io.github.andreoss.sh4j.lexer;
  * from a {@link CharReader} and emits {@link Token} instances; one call
  * to {@link #nextToken()} yields the next token (or
  * {@link TokenType#END_OF_FILE} when the input is exhausted).
- *
  * @since 1.0
  */
 public final class Lexer {
@@ -19,7 +18,6 @@ public final class Lexer {
 
     /**
      * Creates a lexer over the given character source.
-     *
      * @param reader The input cursor
      */
     public Lexer(final CharReader reader) {
@@ -28,7 +26,6 @@ public final class Lexer {
 
     /**
      * Returns the next token. Skips whitespace before classifying.
-     *
      * @return The next token, or an END_OF_FILE token at end-of-input
      */
     public Token nextToken() {
@@ -53,7 +50,6 @@ public final class Lexer {
     /**
      * Reads the body of a here-document up to (but not including) the
      * closing delimiter line.
-     *
      * @param delimiter The heredoc delimiter
      * @param stripTabs True for {@code <<-} (strip leading tabs on each line)
      * @return The heredoc content (without trailing newline)
@@ -89,7 +85,6 @@ public final class Lexer {
 
     /**
      * Reads one line of heredoc body, optionally stripping leading tabs.
-     *
      * @param stripTabs True to strip leading tabs (for {@code <<-})
      * @return The line text (without the trailing newline)
      */
@@ -123,7 +118,6 @@ public final class Lexer {
 
     /**
      * Tries to match an operator at the current position.
-     *
      * @return The operator token, or null when the current character is
      *         not an operator
      */
@@ -233,7 +227,6 @@ public final class Lexer {
      * Reads a single WORD token, honouring quoting and the
      * {@code $(…)}, {@code $((…))}, {@code ${…}}, and {@code `…`}
      * balanced word-boundaries (POSIX 2.10).
-     *
      * @return The next word token
      */
     private Token readWord() {
@@ -260,7 +253,6 @@ public final class Lexer {
 
     /**
      * Consumes one character into the word buffer.
-     *
      * @param buf    The accumulator for the current word
      * @param quotes Quote-state flags (mutated)
      * @return True when the word ends at the current position
@@ -464,7 +456,6 @@ public final class Lexer {
 
     /**
      * Strips leading tabs from a heredoc line ({@code <<-}).
-     *
      * @param str The line
      * @return The line with leading tabs removed
      */
@@ -478,7 +469,6 @@ public final class Lexer {
 
     /**
      * Mutable holder for the current quoting state inside {@link #readWord()}.
-     *
      * @since 1.0
      */
     private static final class QuoteState {

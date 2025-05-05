@@ -8,7 +8,6 @@ package io.github.andreoss.sh4j.parser;
  * AST element describing one I/O redirection attached to a
  * {@link SimpleCommand}: file descriptor, kind of operation, target word,
  * and optional here-document body.
- *
  * @since 1.0
  */
 public final class Redirection {
@@ -24,7 +23,6 @@ public final class Redirection {
 
     /**
      * Creates a redirection with no here-document body.
-     *
      * @param desc   The file descriptor
      * @param type   The kind of redirection
      * @param target Target word (file path, fd, ...)
@@ -35,7 +33,6 @@ public final class Redirection {
 
     /**
      * Creates a redirection, including any inline here-document.
-     *
      * @param desc    The file descriptor
      * @param type    The kind of redirection
      * @param target  Target word (file path, fd, ...)

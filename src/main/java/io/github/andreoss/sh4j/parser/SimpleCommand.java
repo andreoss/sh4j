@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * AST node for a single command invocation: a name, its arguments, any
  * inline assignments, and any redirections.
- *
  * @since 1.0
  */
 public final class SimpleCommand extends Node {
@@ -26,7 +25,6 @@ public final class SimpleCommand extends Node {
 
     /**
      * Creates a simple-command node.
-     *
      * @param name The command name (may be null for assignment-only commands)
      */
     public SimpleCommand(final String name) {
@@ -67,7 +65,6 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends a positional argument.
-     *
      * @param arg The argument text
      */
     public void addArgument(final String arg) {
@@ -76,7 +73,6 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends a redirection.
-     *
      * @param redir The redirection to attach
      */
     public void addRedirection(final Redirection redir) {
@@ -85,7 +81,6 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends an inline assignment.
-     *
      * @param assignment The {@code KEY=VALUE} string
      */
     public void addAssignment(final String assignment) {

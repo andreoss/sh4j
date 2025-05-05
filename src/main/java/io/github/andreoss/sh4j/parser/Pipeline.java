@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * AST node for a pipeline: one or more commands joined by {@code |}, with
  * an optional leading {@code !} that inverts the exit status.
- *
  * @since 1.0
  */
 public final class Pipeline extends Node {
@@ -23,7 +22,6 @@ public final class Pipeline extends Node {
     /**
      * Creates an empty pipeline that callers populate via
      * {@link #addCommand(Node)}.
-     *
      * @param bang Whether to invert the final exit status
      */
     public Pipeline(final boolean bang) {
@@ -48,7 +46,6 @@ public final class Pipeline extends Node {
 
     /**
      * Appends a stage to this pipeline.
-     *
      * @param cmd The AST node for the next stage
      */
     public void addCommand(final Node cmd) {

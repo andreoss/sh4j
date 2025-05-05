@@ -15,7 +15,6 @@ import java.util.Map;
  * <p>The grammar is implemented as a precedence-climbing chain:
  * assignment → ternary → logical-or → logical-and → bit-or → bit-xor →
  * bit-and → equality → relational → shift → additive → term → factor.</p>
- *
  * @since 1.0
  */
 public final class ArithmeticEvaluator {
@@ -35,7 +34,6 @@ public final class ArithmeticEvaluator {
 
     /**
      * Evaluates an arithmetic expression in the context of {@code env}.
-     *
      * @param expr The expression body (already stripped of {@code $((...))})
      * @param env  Environment view for identifier lookup / mutation
      * @return The integer result formatted as a decimal string
@@ -79,7 +77,6 @@ public final class ArithmeticEvaluator {
 
     /**
      * Tries to match an assignment-form prefix at the current position.
-     *
      * @return The match, or null when the current position is not an
      *         assignment target
      */
@@ -461,7 +458,6 @@ public final class ArithmeticEvaluator {
 
     /**
      * Holds the data for a matched assignment-form prefix.
-     *
      * @param name    Target identifier
      * @param op      Operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...)
      * @param afterOp Position just past the operator

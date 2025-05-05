@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * AST node for the POSIX {@code for var in words; do body; done} loop.
- *
  * @since 1.0
  */
 public final class ForNode extends Node {
@@ -22,7 +21,6 @@ public final class ForNode extends Node {
 
     /**
      * Creates a for-loop node.
-     *
      * @param variable Name of the loop variable
      * @param words    Words to iterate (already lexed, not yet expanded)
      * @param body     Body to execute per iteration

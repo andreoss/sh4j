@@ -15,14 +15,12 @@ import io.github.andreoss.sh4j.parser.ListNode;
  * Narrow façade that built-ins use to reach back into the executor for
  * shared resources (environment, I/O streams, expansion helpers, ...)
  * without having to depend on the full {@code Executor} class.
- *
  * @since 1.0
  */
 interface BuiltinContext {
 
     /**
      * Performs POSIX 2.6 word expansion on a single word.
-     *
      * @param arg Word to expand
      * @param env Environment view for variable lookup
      * @return The expanded text
@@ -31,7 +29,6 @@ interface BuiltinContext {
 
     /**
      * Resolves a one-character special parameter ({@code $?}, {@code $#}, ...).
-     *
      * @param name The character following the dollar sign
      * @return The parameter's current value
      */
@@ -39,7 +36,6 @@ interface BuiltinContext {
 
     /**
      * Runs a command substitution and captures its stdout.
-     *
      * @param text The body between {@code $(} and {@code )}
      * @return The captured stdout, trailing newline stripped
      */
@@ -47,7 +43,6 @@ interface BuiltinContext {
 
     /**
      * Evaluates an arithmetic expansion.
-     *
      * @param expr The body between {@code $((} and {@code ))}
      * @param env  Environment view for variable lookup
      * @return The textual result
@@ -56,7 +51,6 @@ interface BuiltinContext {
 
     /**
      * Looks up a variable, taking positional parameters into account.
-     *
      * @param name Variable name
      * @param env  Environment view
      * @return The variable's current value, or empty string when unset
@@ -95,7 +89,6 @@ interface BuiltinContext {
 
     /**
      * Resolves a command name to its absolute path via PATH.
-     *
      * @param name The command name as written in source
      * @return The absolute path, or null when not found
      */
@@ -113,7 +106,6 @@ interface BuiltinContext {
 
     /**
      * Maps an IO failure to the POSIX exit code the shell should return.
-     *
      * @param exc The exception caught while invoking an external command
      * @return 127 (not found) or 126 (not executable)
      */
@@ -121,7 +113,6 @@ interface BuiltinContext {
 
     /**
      * Recursively executes another AST list (used by {@code eval}).
-     *
      * @param list The list to execute
      * @return The list's exit status
      */

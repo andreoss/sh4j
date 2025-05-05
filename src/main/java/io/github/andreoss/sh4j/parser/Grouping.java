@@ -8,7 +8,6 @@ package io.github.andreoss.sh4j.parser;
  * AST node for a brace-group command list, written as
  * <code>&#123; list; &#125;</code> in POSIX. Unlike {@link Subshell}, the
  * list executes in the current shell environment.
- *
  * @since 1.0
  */
 public final class Grouping extends Node {
@@ -18,7 +17,6 @@ public final class Grouping extends Node {
 
     /**
      * Creates a grouping node wrapping the given command list.
-     *
      * @param list The list to execute
      */
     public Grouping(final ListNode list) {

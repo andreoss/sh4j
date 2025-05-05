@@ -34,7 +34,6 @@ import io.github.andreoss.sh4j.parser.WhileNode;
  * dispatch lives here; subsystems delegate to {@link WordExpander},
  * {@link ArithmeticEvaluator}, {@link RedirectionHandler}, and
  * {@link BuiltinDispatcher}.
- *
  * @since 1.0
  */
 public class Executor implements BuiltinContext {
@@ -86,7 +85,6 @@ public class Executor implements BuiltinContext {
 
     /**
      * Builds an executor with the given environment view.
-     *
      * @param environment Environment variables (copied, not aliased)
      */
     public Executor(final Map<String, String> environment) {
@@ -95,7 +93,6 @@ public class Executor implements BuiltinContext {
 
     /**
      * Builds an executor with the given environment and positional params.
-     *
      * @param environment       Environment variables (copied)
      * @param positionalParams  Positional parameters ({@code $0} first)
      */
@@ -140,7 +137,6 @@ public class Executor implements BuiltinContext {
     /**
      * Redirects subsequent stdout into the given buffer (used by command
      * substitution).
-     *
      * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
@@ -150,7 +146,6 @@ public class Executor implements BuiltinContext {
 
     /**
      * Overrides the executor's stdout.
-     *
      * @param outStream The new live stdout
      */
     public void setOutputStream(final PrintStream outStream) {
@@ -159,7 +154,6 @@ public class Executor implements BuiltinContext {
 
     /**
      * Overrides the executor's stderr.
-     *
      * @param errStream The new live stderr
      */
     public void setErrorStream(final PrintStream errStream) {
@@ -717,7 +711,6 @@ public class Executor implements BuiltinContext {
     /**
      * Throwable used to unwind a {@code break} from a loop body. Package
      * private; thrown by the break-builtin and caught in runFor/runWhile.
-     *
      * @since 1.0
      */
     static class BreakSignal extends RuntimeException {
@@ -733,7 +726,6 @@ public class Executor implements BuiltinContext {
 
     /**
      * Throwable used to unwind a {@code continue} from a loop body.
-     *
      * @since 1.0
      */
     static class ContinueSignal extends RuntimeException {

@@ -6,7 +6,6 @@ package io.github.andreoss.sh4j.parser;
 
 /**
  * AST node for a function definition: {@code name() compound-command}.
- *
  * @since 1.0
  */
 public final class FunctionNode extends Node {
@@ -18,7 +17,6 @@ public final class FunctionNode extends Node {
 
     /**
      * Creates a function-definition node.
-     *
      * @param name Function name
      * @param body The function's compound body
      */

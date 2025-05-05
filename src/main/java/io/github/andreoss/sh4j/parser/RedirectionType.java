@@ -7,7 +7,6 @@ package io.github.andreoss.sh4j.parser;
 /**
  * The kinds of I/O redirection the executor recognises, mirroring the
  * operators in POSIX 2.7.
- *
  * @since 1.0
  */
 public enum RedirectionType {

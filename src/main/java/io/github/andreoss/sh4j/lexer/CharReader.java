@@ -12,7 +12,6 @@ import java.io.StringReader;
  * Single-character lookahead cursor over the lexer's input stream. The
  * cursor caches the next character so {@link #peek()} is O(1) and
  * {@link #consume()} fetches the following character lazily.
- *
  * @since 1.0
  */
 public final class CharReader {
@@ -28,7 +27,6 @@ public final class CharReader {
 
     /**
      * Reads from the given string.
-     *
      * @param input The script source
      */
     public CharReader(final String input) {
@@ -37,7 +35,6 @@ public final class CharReader {
 
     /**
      * Reads from the given reader.
-     *
      * @param reader The source to consume
      */
     public CharReader(final Reader reader) {
@@ -49,7 +46,6 @@ public final class CharReader {
 
     /**
      * Looks at the next character without consuming it.
-     *
      * @return The next character, or -1 at end-of-input
      */
     public int peek() {
@@ -58,7 +54,6 @@ public final class CharReader {
 
     /**
      * Advances the cursor.
-     *
      * @return The character that was previously at the cursor
      */
     public int consume() {

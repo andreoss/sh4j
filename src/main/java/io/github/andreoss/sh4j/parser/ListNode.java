@@ -11,14 +11,12 @@ import java.util.List;
  * AST node for a sequence of pipelines joined by separators. This is the
  * top-level shape returned by {@link Parser#parse()}; nested constructs
  * (then-bodies, loop bodies, case-arm bodies, ...) are also ListNodes.
- *
  * @since 1.0
  */
 public final class ListNode extends Node {
 
     /**
      * How two pipelines are joined.
-     *
      * @since 1.0
      */
     public enum Separator {
@@ -66,7 +64,6 @@ public final class ListNode extends Node {
 
     /**
      * Appends a pipeline and its trailing separator.
-     *
      * @param pipeline The pipeline to append
      * @param sep      The separator that follows it (or {@link Separator#NONE})
      */

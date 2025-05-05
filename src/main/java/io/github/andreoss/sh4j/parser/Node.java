@@ -11,7 +11,6 @@ package io.github.andreoss.sh4j.parser;
  * {@link SimpleCommand}, {@link Pipeline}, {@link IfNode}) defines its own
  * shape and is interpreted by the executor via a {@code switch} over
  * concrete types rather than via virtual dispatch.</p>
- *
  * @since 1.0
  */
 public abstract class Node {

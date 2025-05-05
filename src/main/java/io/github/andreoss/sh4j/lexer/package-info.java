@@ -7,7 +7,6 @@
  * the raw script via {@link io.github.andreoss.sh4j.lexer.CharReader} and emits
  * {@link io.github.andreoss.sh4j.lexer.Token} instances tagged with a
  * {@link io.github.andreoss.sh4j.lexer.TokenType}.
- *
  * @since 1.0
  */
 package io.github.andreoss.sh4j.lexer;

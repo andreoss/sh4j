@@ -16,7 +16,6 @@ import java.lang.annotation.Target;
  *
  * <p>JaCoCo's filter excludes methods annotated with any annotation whose
  * simple name contains "Generated"; this annotation rides that contract.</p>
- *
  * @since 1.0
  */
 @Retention(RetentionPolicy.CLASS)

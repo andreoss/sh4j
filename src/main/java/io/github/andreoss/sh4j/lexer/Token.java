@@ -7,19 +7,16 @@ package io.github.andreoss.sh4j.lexer;
 /**
  * Immutable lexer output. Carries the token's category plus its raw text
  * and the source position it came from.
- *
  * @param type   The token's syntactic category
  * @param text   The verbatim characters that produced the token
  * @param line   1-based source line where the token starts
  * @param column 1-based source column where the token starts
- *
  * @since 1.0
  */
 public record Token(TokenType type, String text, int line, int column) {
 
     /**
      * Builds a token, reading its position from the given reader.
-     *
      * @param type   The token's syntactic category
      * @param text   The verbatim characters that produced the token
      * @param reader The lexer's input cursor, queried for line/column

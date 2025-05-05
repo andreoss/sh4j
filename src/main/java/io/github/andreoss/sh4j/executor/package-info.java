@@ -10,7 +10,6 @@
  * {@link io.github.andreoss.sh4j.executor.ArithmeticEvaluator} (POSIX 2.6.4 arithmetic),
  * {@link io.github.andreoss.sh4j.executor.RedirectionHandler} (POSIX 2.7 redirections),
  * and {@link io.github.andreoss.sh4j.executor.BuiltinDispatcher} (POSIX 2.14 built-ins).
- *
  * @since 1.0
  */
 package io.github.andreoss.sh4j.executor;

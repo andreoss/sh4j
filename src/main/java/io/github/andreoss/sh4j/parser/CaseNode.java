@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * AST node for a {@code case word in pat) body;; esac} compound command.
- *
  * @since 1.0
  */
 public final class CaseNode extends Node {
@@ -20,7 +19,6 @@ public final class CaseNode extends Node {
 
     /**
      * Creates a case-node.
-     *
      * @param word  The word the executor matches against the patterns
      * @param items The case-arms, in source order
      */
@@ -47,7 +45,6 @@ public final class CaseNode extends Node {
     /**
      * A single case-arm: one or more patterns plus a body to execute when
      * any pattern matches.
-     *
      * @since 1.0
      */
     public static final class CaseItem {
@@ -59,7 +56,6 @@ public final class CaseNode extends Node {
 
         /**
          * Creates a case-arm.
-         *
          * @param patterns Alternative patterns for this arm
          * @param body     Body to execute on match
          */

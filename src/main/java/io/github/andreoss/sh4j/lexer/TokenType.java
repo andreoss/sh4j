@@ -8,7 +8,6 @@ package io.github.andreoss.sh4j.lexer;
  * The set of lexical categories the {@link Lexer} can emit. Each constant
  * corresponds to a POSIX shell token class from the standard's lexical
  * grammar (section 2.10).
- *
  * @since 1.0
  */
 public enum TokenType {

@@ -15,7 +15,6 @@ import io.github.andreoss.sh4j.lexer.TokenType;
  * Recursive-descent parser for the POSIX shell grammar (section 2.10).
  * Pulls tokens from a {@link Lexer} and emits a {@link ListNode} AST that
  * the executor walks.
- *
  * @since 1.0
  */
 public final class Parser {
@@ -33,7 +32,6 @@ public final class Parser {
 
     /**
      * Creates a parser over the given lexer and primes the first token.
-     *
      * @param lexer The token source
      */
     public Parser(final Lexer lexer) {
@@ -46,7 +44,6 @@ public final class Parser {
 
     /**
      * Parses the entire token stream as a top-level command list.
-     *
      * @return The AST root
      */
     public ListNode parse() {

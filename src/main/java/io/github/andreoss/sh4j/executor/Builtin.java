@@ -11,7 +11,6 @@ import java.util.Map;
  * Functional contract for a shell built-in (e.g. {@code echo}, {@code cd}).
  * Implementations are registered in {@link BuiltinDispatcher} and invoked by
  * the executor when the dispatcher recognises a command name.
- *
  * @since 1.0
  */
 @FunctionalInterface
@@ -19,7 +18,6 @@ interface Builtin {
 
     /**
      * Runs the built-in.
-     *
      * @param self        Narrow façade over the executor for env / I/O access
      * @param arguments   The command words excluding the built-in name
      * @param env         The current environment view (may be mutated)

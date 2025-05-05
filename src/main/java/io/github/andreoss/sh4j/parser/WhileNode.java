@@ -7,7 +7,6 @@ package io.github.andreoss.sh4j.parser;
 /**
  * AST node for {@code while} and {@code until} loops. The two share their
  * structure; {@link #isUntil()} distinguishes them.
- *
  * @since 1.0
  */
 public final class WhileNode extends Node {
@@ -21,7 +20,6 @@ public final class WhileNode extends Node {
 
     /**
      * Creates a while-loop or until-loop node.
-     *
      * @param condition Predicate command list
      * @param body      List to run while the predicate matches
      * @param until     True for {@code until} semantics, false for {@code while}

@@ -21,7 +21,6 @@ import io.github.andreoss.sh4j.parser.Parser;
  * Command-line entry point for sh4j. Dispatches to either script mode (a
  * single filename argument plus positional parameters) or interactive
  * mode (read-eval-print loop over stdin).
- *
  * @since 1.0
  */
 public final class Main {
@@ -38,7 +37,6 @@ public final class Main {
     /**
      * Standard {@code main} entry. Delegates to {@link #exitCode(String[])}
      * and feeds the result to {@link System#exit(int)}.
-     *
      * @param args The CLI arguments
      */
     @GeneratedDefensive
@@ -48,7 +46,6 @@ public final class Main {
 
     /**
      * Computes the process exit code for the given CLI arguments.
-     *
      * @param args The CLI arguments (script path first, then positional args)
      * @return The exit status the JVM should report
      */
@@ -68,7 +65,6 @@ public final class Main {
 
     /**
      * Runs a script with the script name as its sole positional parameter.
-     *
      * @param filename The script path
      * @return The script's exit status
      */
@@ -78,7 +74,6 @@ public final class Main {
 
     /**
      * Runs a script with the given positional parameters.
-     *
      * @param filename   The script path
      * @param scriptArgs The positional parameters (including {@code $0})
      * @return The script's exit status
@@ -106,7 +101,6 @@ public final class Main {
 
     /**
      * Runs the interactive REPL on stdin until EOF or an IO failure.
-     *
      * @return Always 0; failures are surfaced via the prompt
      */
     static int interactive() {

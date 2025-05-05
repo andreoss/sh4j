@@ -9,7 +9,6 @@ package io.github.andreoss.sh4j.parser;
  * branch is the same shape as the then branch; {@code elif} chains are
  * desugared by the parser into nested {@code IfNode} instances in the
  * else slot.
- *
  * @since 1.0
  */
 public final class IfNode extends Node {
@@ -23,7 +22,6 @@ public final class IfNode extends Node {
 
     /**
      * Creates an if-node.
-     *
      * @param condition List whose final exit status drives the branch
      * @param then      Body for the success branch
      * @param otherwise Body for the failure branch (may be null)
