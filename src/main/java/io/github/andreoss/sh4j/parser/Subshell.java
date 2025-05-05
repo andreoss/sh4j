@@ -20,7 +20,7 @@ public final class Subshell extends Node {
     /**
      * Creates a subshell node wrapping the given command list.
      *
-     * @param list the list to execute
+     * @param list The list to execute
      */
     public Subshell(final ListNode list) {
         super();
@@ -28,7 +28,7 @@ public final class Subshell extends Node {
     }
 
     /**
-     * @return the wrapped command list
+     * @return The wrapped command list
      */
     public ListNode getList() {
         return this.list;

@@ -27,7 +27,7 @@ public final class SimpleCommand extends Node {
     /**
      * Creates a simple-command node.
      *
-     * @param name the command name (may be null for assignment-only commands)
+     * @param name The command name (may be null for assignment-only commands)
      */
     public SimpleCommand(final String name) {
         super();
@@ -38,28 +38,28 @@ public final class SimpleCommand extends Node {
     }
 
     /**
-     * @return the command name (may be null)
+     * @return The command name (may be null)
      */
     public String getName() {
         return this.name;
     }
 
     /**
-     * @return positional arguments
+     * @return Positional arguments
      */
     public List<String> getArguments() {
         return this.arguments;
     }
 
     /**
-     * @return inline redirections
+     * @return Inline redirections
      */
     public List<Redirection> getRedirections() {
         return this.redirections;
     }
 
     /**
-     * @return inline assignments ({@code KEY=VALUE} strings)
+     * @return Inline assignments ({@code KEY=VALUE} strings)
      */
     public List<String> getAssignments() {
         return this.assignments;
@@ -68,7 +68,7 @@ public final class SimpleCommand extends Node {
     /**
      * Appends a positional argument.
      *
-     * @param arg the argument text
+     * @param arg The argument text
      */
     public void addArgument(final String arg) {
         this.arguments.add(arg);
@@ -77,7 +77,7 @@ public final class SimpleCommand extends Node {
     /**
      * Appends a redirection.
      *
-     * @param redir the redirection to attach
+     * @param redir The redirection to attach
      */
     public void addRedirection(final Redirection redir) {
         this.redirections.add(redir);
@@ -86,7 +86,7 @@ public final class SimpleCommand extends Node {
     /**
      * Appends an inline assignment.
      *
-     * @param assignment the {@code KEY=VALUE} string
+     * @param assignment The {@code KEY=VALUE} string
      */
     public void addAssignment(final String assignment) {
         this.assignments.add(assignment);

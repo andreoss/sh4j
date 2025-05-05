@@ -24,9 +24,9 @@ public final class IfNode extends Node {
     /**
      * Creates an if-node.
      *
-     * @param condition list whose final exit status drives the branch
-     * @param then      body for the success branch
-     * @param otherwise body for the failure branch (may be null)
+     * @param condition List whose final exit status drives the branch
+     * @param then      Body for the success branch
+     * @param otherwise Body for the failure branch (may be null)
      */
     public IfNode(final ListNode condition, final ListNode then, final ListNode otherwise) {
         super();
@@ -36,21 +36,21 @@ public final class IfNode extends Node {
     }
 
     /**
-     * @return the if-condition's command list
+     * @return The if-condition's command list
      */
     public ListNode getCondition() {
         return this.condition;
     }
 
     /**
-     * @return the then-branch command list
+     * @return The then-branch command list
      */
     public ListNode getThenBody() {
         return this.then;
     }
 
     /**
-     * @return the else-branch command list, or null
+     * @return The else-branch command list, or null
      */
     public ListNode getElseBody() {
         return this.otherwise;

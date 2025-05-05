@@ -19,8 +19,8 @@ public final class FunctionNode extends Node {
     /**
      * Creates a function-definition node.
      *
-     * @param name function name
-     * @param body the function's compound body
+     * @param name Function name
+     * @param body The function's compound body
      */
     public FunctionNode(final String name, final Node body) {
         super();
@@ -29,14 +29,14 @@ public final class FunctionNode extends Node {
     }
 
     /**
-     * @return the function name
+     * @return The function name
      */
     public String getName() {
         return this.name;
     }
 
     /**
-     * @return the function body
+     * @return The function body
      */
     public Node getBody() {
         return this.body;

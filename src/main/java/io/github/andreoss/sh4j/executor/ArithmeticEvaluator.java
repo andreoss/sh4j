@@ -36,9 +36,9 @@ public final class ArithmeticEvaluator {
     /**
      * Evaluates an arithmetic expression in the context of {@code env}.
      *
-     * @param expr the expression body (already stripped of {@code $((...))})
-     * @param env  environment view for identifier lookup / mutation
-     * @return the integer result formatted as a decimal string
+     * @param expr The expression body (already stripped of {@code $((...))})
+     * @param env  Environment view for identifier lookup / mutation
+     * @return The integer result formatted as a decimal string
      */
     public String evalArithmetic(final String expr, final Map<String, String> env) {
         final Map<String, String> prev = this.arenv;
@@ -80,7 +80,7 @@ public final class ArithmeticEvaluator {
     /**
      * Tries to match an assignment-form prefix at the current position.
      *
-     * @return the match, or null when the current position is not an
+     * @return The match, or null when the current position is not an
      *         assignment target
      */
     private AssignmentMatch tryAssignment(final String str, final int[] pos) {
@@ -462,9 +462,9 @@ public final class ArithmeticEvaluator {
     /**
      * Holds the data for a matched assignment-form prefix.
      *
-     * @param name    target identifier
-     * @param op      operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...)
-     * @param afterOp position just past the operator
+     * @param name    Target identifier
+     * @param op      Operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...)
+     * @param afterOp Position just past the operator
      */
     private record AssignmentMatch(String name, String op, int afterOp) {
     }

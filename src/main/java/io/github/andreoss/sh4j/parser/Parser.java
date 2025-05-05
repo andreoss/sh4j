@@ -34,7 +34,7 @@ public final class Parser {
     /**
      * Creates a parser over the given lexer and primes the first token.
      *
-     * @param lexer the token source
+     * @param lexer The token source
      */
     public Parser(final Lexer lexer) {
         this.lexer = lexer;
@@ -47,7 +47,7 @@ public final class Parser {
     /**
      * Parses the entire token stream as a top-level command list.
      *
-     * @return the AST root
+     * @return The AST root
      */
     public ListNode parse() {
         this.skipNewlines();

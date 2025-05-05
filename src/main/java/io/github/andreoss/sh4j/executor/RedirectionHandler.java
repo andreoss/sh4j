@@ -46,10 +46,10 @@ public final class RedirectionHandler {
      * The new and saved stdout/stderr pair returned by
      * {@link #redirectOutputForBuiltin(List, PrintStream, PrintStream, UnaryOperator)}.
      *
-     * @param out      the new live stdout
-     * @param err      the new live stderr
-     * @param savedOut the pre-call stdout (null when not swapped)
-     * @param savedErr the pre-call stderr (null when not swapped)
+     * @param out      The new live stdout
+     * @param err      The new live stderr
+     * @param savedOut The pre-call stdout (null when not swapped)
+     * @param savedErr The pre-call stderr (null when not swapped)
      */
     public record StreamSwap(
         PrintStream out,
@@ -63,11 +63,11 @@ public final class RedirectionHandler {
      * Computes the stdout/stderr swap that an executor built-in must apply
      * before running, given the redirections attached to the command.
      *
-     * @param redirs     the redirections attached to the built-in invocation
-     * @param currentOut the executor's current stdout
-     * @param currentErr the executor's current stderr
-     * @param expander   the executor's word-expansion callback
-     * @return the new live + saved stream pair
+     * @param redirs     The redirections attached to the built-in invocation
+     * @param currentOut The executor's current stdout
+     * @param currentErr The executor's current stderr
+     * @param expander   The executor's word-expansion callback
+     * @return The new live + saved stream pair
      */
     public static StreamSwap redirectOutputForBuiltin(
         final List<Redirection> redirs,
@@ -133,9 +133,9 @@ public final class RedirectionHandler {
      * Applies redirections to a {@link ProcessBuilder} so an external
      * command honours them.
      *
-     * @param builder      the process builder to mutate
-     * @param redirections the redirections in source order
-     * @param expander     word-expansion callback for the targets
+     * @param builder      The process builder to mutate
+     * @param redirections The redirections in source order
+     * @param expander     Word-expansion callback for the targets
      */
     public static void setupRedirections(
         final ProcessBuilder builder,
@@ -151,8 +151,8 @@ public final class RedirectionHandler {
      * Writes the heredoc body to a temp file the caller can pass to
      * {@link ProcessBuilder#redirectInput(File)}.
      *
-     * @param content the heredoc body (may be null)
-     * @return the temp file, or null when content is null / IO failed
+     * @param content The heredoc body (may be null)
+     * @return The temp file, or null when content is null / IO failed
      */
     static File heredocFile(final String content) {
         File result = null;
@@ -175,7 +175,7 @@ public final class RedirectionHandler {
      * Defensive fallback when the heredoc temp file cannot be created;
      * factored out so JaCoCo can exclude it via {@link GeneratedDefensive}.
      *
-     * @return null
+     * @return Null
      */
     @GeneratedDefensive
     private static File heredocFileIoFailure() {
@@ -186,9 +186,9 @@ public final class RedirectionHandler {
      * Opens a file for writing as a {@link PrintStream}, swallowing IO
      * failures (the caller checks for null).
      *
-     * @param target the file path
-     * @param append true for append-mode, false for truncate
-     * @return the print stream, or null on IO failure
+     * @param target The file path
+     * @param append True for append-mode, false for truncate
+     * @return The print stream, or null on IO failure
      */
     private static PrintStream openForWrite(final String target, final boolean append) {
         PrintStream result;
@@ -207,9 +207,9 @@ public final class RedirectionHandler {
     /**
      * Applies a single redirection to the process builder.
      *
-     * @param builder  the builder to mutate
-     * @param redir    the redirection to apply
-     * @param expander word-expansion callback
+     * @param builder  The builder to mutate
+     * @param redir    The redirection to apply
+     * @param expander Word-expansion callback
      */
     private static void applyOne(
         final ProcessBuilder builder,
@@ -236,9 +236,9 @@ public final class RedirectionHandler {
     /**
      * Applies a {@code DUP_OUTPUT} redirection to the process builder.
      *
-     * @param builder the builder to mutate
-     * @param desc    the file descriptor
-     * @param target  the duplicate target ({@code -}, {@code 1}, {@code 2}, ...)
+     * @param builder The builder to mutate
+     * @param desc    The file descriptor
+     * @param target  The duplicate target ({@code -}, {@code 1}, {@code 2}, ...)
      */
     private static void applyDupOutput(
         final ProcessBuilder builder,
@@ -261,10 +261,10 @@ public final class RedirectionHandler {
     /**
      * Applies a here-document redirection to the process builder.
      *
-     * @param builder  the builder to mutate
-     * @param desc     the file descriptor (only fd 0 is honoured)
-     * @param redir    the redirection node
-     * @param expander word-expansion callback for the heredoc body
+     * @param builder  The builder to mutate
+     * @param desc     The file descriptor (only fd 0 is honoured)
+     * @param redir    The redirection node
+     * @param expander Word-expansion callback for the heredoc body
      */
     private static void applyHereDoc(
         final ProcessBuilder builder,
@@ -285,10 +285,10 @@ public final class RedirectionHandler {
     /**
      * Applies a file-based input/output/append/readwrite redirection.
      *
-     * @param builder the builder to mutate
-     * @param desc    the file descriptor
-     * @param type    the redirection kind
-     * @param file    the target file
+     * @param builder The builder to mutate
+     * @param desc    The file descriptor
+     * @param type    The redirection kind
+     * @param file    The target file
      */
     private static void applyFileRedirect(
         final ProcessBuilder builder,

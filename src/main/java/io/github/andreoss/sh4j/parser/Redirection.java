@@ -25,9 +25,9 @@ public final class Redirection {
     /**
      * Creates a redirection with no here-document body.
      *
-     * @param desc   the file descriptor
-     * @param type   the kind of redirection
-     * @param target target word (file path, fd, ...)
+     * @param desc   The file descriptor
+     * @param type   The kind of redirection
+     * @param target Target word (file path, fd, ...)
      */
     public Redirection(final int desc, final RedirectionType type, final String target) {
         this(desc, type, target, null);
@@ -36,10 +36,10 @@ public final class Redirection {
     /**
      * Creates a redirection, including any inline here-document.
      *
-     * @param desc    the file descriptor
-     * @param type    the kind of redirection
-     * @param target  target word (file path, fd, ...)
-     * @param heredoc the here-document body, or null
+     * @param desc    The file descriptor
+     * @param type    The kind of redirection
+     * @param target  Target word (file path, fd, ...)
+     * @param heredoc The here-document body, or null
      */
     public Redirection(
         final int desc,
@@ -54,28 +54,28 @@ public final class Redirection {
     }
 
     /**
-     * @return the file descriptor this redirection targets
+     * @return The file descriptor this redirection targets
      */
     public int getFd() {
         return this.desc;
     }
 
     /**
-     * @return the redirection kind
+     * @return The redirection kind
      */
     public RedirectionType getType() {
         return this.type;
     }
 
     /**
-     * @return the target word
+     * @return The target word
      */
     public String getTarget() {
         return this.target;
     }
 
     /**
-     * @return inline here-document body, or null
+     * @return Inline here-document body, or null
      */
     public String getHereDocContent() {
         return this.heredoc;

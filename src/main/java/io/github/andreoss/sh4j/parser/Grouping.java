@@ -19,7 +19,7 @@ public final class Grouping extends Node {
     /**
      * Creates a grouping node wrapping the given command list.
      *
-     * @param list the list to execute
+     * @param list The list to execute
      */
     public Grouping(final ListNode list) {
         super();
@@ -27,7 +27,7 @@ public final class Grouping extends Node {
     }
 
     /**
-     * @return the wrapped command list
+     * @return The wrapped command list
      */
     public ListNode getList() {
         return this.list;

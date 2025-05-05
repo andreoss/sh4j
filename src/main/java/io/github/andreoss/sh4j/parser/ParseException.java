@@ -17,7 +17,7 @@ public class ParseException extends RuntimeException {
     /**
      * Creates a new parse exception with the given diagnostic message.
      *
-     * @param message human-readable description of the parse failure
+     * @param message Human-readable description of the parse failure
      */
     public ParseException(final String message) {
         super(message);

@@ -24,7 +24,7 @@ public final class Pipeline extends Node {
      * Creates an empty pipeline that callers populate via
      * {@link #addCommand(Node)}.
      *
-     * @param bang whether to invert the final exit status
+     * @param bang Whether to invert the final exit status
      */
     public Pipeline(final boolean bang) {
         super();
@@ -33,14 +33,14 @@ public final class Pipeline extends Node {
     }
 
     /**
-     * @return the list of pipeline stages
+     * @return The list of pipeline stages
      */
     public List<Node> getCommands() {
         return this.commands;
     }
 
     /**
-     * @return true when the pipeline is logically negated
+     * @return True when the pipeline is logically negated
      */
     public boolean isBang() {
         return this.bang;
@@ -49,7 +49,7 @@ public final class Pipeline extends Node {
     /**
      * Appends a stage to this pipeline.
      *
-     * @param cmd the AST node for the next stage
+     * @param cmd The AST node for the next stage
      */
     public void addCommand(final Node cmd) {
         this.commands.add(cmd);

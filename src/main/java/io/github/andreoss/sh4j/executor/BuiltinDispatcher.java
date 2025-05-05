@@ -61,16 +61,16 @@ final class BuiltinDispatcher {
     /**
      * Registers a built-in by name.
      *
-     * @param name    the command name (as written in source)
-     * @param builtin the implementation
+     * @param name    The command name (as written in source)
+     * @param builtin The implementation
      */
     void register(final String name, final Builtin builtin) {
         this.registry.put(name, builtin);
     }
 
     /**
-     * @param name a command name
-     * @return true when a built-in is registered under {@code name}
+     * @param name A command name
+     * @return True when a built-in is registered under {@code name}
      */
     boolean isBuiltin(final String name) {
         return this.registry.containsKey(name);
@@ -80,12 +80,12 @@ final class BuiltinDispatcher {
      * Dispatches to the matching built-in, or returns null when no entry
      * exists (the executor then resolves an external command).
      *
-     * @param name        the command name
-     * @param self        narrow façade over the executor
-     * @param arguments   command arguments (excluding the name)
-     * @param env         the live environment view
-     * @param assignments inline assignments attached to this call
-     * @return the built-in's exit code, or null when not a built-in
+     * @param name        The command name
+     * @param self        Narrow façade over the executor
+     * @param arguments   Command arguments (excluding the name)
+     * @param env         The live environment view
+     * @param assignments Inline assignments attached to this call
+     * @return The built-in's exit code, or null when not a built-in
      */
     Integer dispatch(
         final String name,
@@ -191,9 +191,9 @@ final class BuiltinDispatcher {
     /**
      * Mutates PWD/OLDPWD and {@code user.dir} for a successful cd.
      *
-     * @param environment the live env map
-     * @param dir         the directory being entered
-     * @return the cd exit code (always 0 here)
+     * @param environment The live env map
+     * @param dir         The directory being entered
+     * @return The cd exit code (always 0 here)
      */
     private static int applyChdir(final Map<String, String> environment, final File dir) {
         String abs;
@@ -306,11 +306,11 @@ final class BuiltinDispatcher {
     /**
      * Forks the external command and waits for it.
      *
-     * @param self     façade for env / expansion / IO-exception mapping
-     * @param args     the original args (with {@code args[0]} the command name)
-     * @param env      live environment
-     * @param resolved absolute path of the resolved command
-     * @return the child's exit code, or a POSIX mapping of an IO failure
+     * @param self     Façade for env / expansion / IO-exception mapping
+     * @param args     The original args (with {@code args[0]} the command name)
+     * @param env      Live environment
+     * @param resolved Absolute path of the resolved command
+     * @return The child's exit code, or a POSIX mapping of an IO failure
      */
     private static int runExec(
         final BuiltinContext self,

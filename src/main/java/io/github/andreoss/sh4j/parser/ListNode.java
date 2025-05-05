@@ -51,14 +51,14 @@ public final class ListNode extends Node {
     }
 
     /**
-     * @return the pipelines in source order
+     * @return The pipelines in source order
      */
     public List<Pipeline> getPipelines() {
         return this.pipelines;
     }
 
     /**
-     * @return separator slots, parallel to {@link #getPipelines()}
+     * @return Separator slots, parallel to {@link #getPipelines()}
      */
     public List<Separator> getSeparators() {
         return this.separators;
@@ -67,8 +67,8 @@ public final class ListNode extends Node {
     /**
      * Appends a pipeline and its trailing separator.
      *
-     * @param pipeline the pipeline to append
-     * @param sep      the separator that follows it (or {@link Separator#NONE})
+     * @param pipeline The pipeline to append
+     * @param sep      The separator that follows it (or {@link Separator#NONE})
      */
     public void addPipeline(final Pipeline pipeline, final Separator sep) {
         this.pipelines.add(pipeline);

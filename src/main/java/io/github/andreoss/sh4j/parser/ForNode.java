@@ -23,9 +23,9 @@ public final class ForNode extends Node {
     /**
      * Creates a for-loop node.
      *
-     * @param variable name of the loop variable
-     * @param words    words to iterate (already lexed, not yet expanded)
-     * @param body     body to execute per iteration
+     * @param variable Name of the loop variable
+     * @param words    Words to iterate (already lexed, not yet expanded)
+     * @param body     Body to execute per iteration
      */
     public ForNode(final String variable, final List<String> words, final ListNode body) {
         super();
@@ -35,21 +35,21 @@ public final class ForNode extends Node {
     }
 
     /**
-     * @return the loop variable name
+     * @return The loop variable name
      */
     public String getVariable() {
         return this.variable;
     }
 
     /**
-     * @return the iteration words
+     * @return The iteration words
      */
     public List<String> getWords() {
         return this.words;
     }
 
     /**
-     * @return the loop body
+     * @return The loop body
      */
     public ListNode getBody() {
         return this.body;

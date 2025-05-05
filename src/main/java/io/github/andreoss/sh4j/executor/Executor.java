@@ -87,7 +87,7 @@ public class Executor implements BuiltinContext {
     /**
      * Builds an executor with the given environment view.
      *
-     * @param environment environment variables (copied, not aliased)
+     * @param environment Environment variables (copied, not aliased)
      */
     public Executor(final Map<String, String> environment) {
         this(environment, List.of("sh"));
@@ -96,8 +96,8 @@ public class Executor implements BuiltinContext {
     /**
      * Builds an executor with the given environment and positional params.
      *
-     * @param environment       environment variables (copied)
-     * @param positionalParams  positional parameters ({@code $0} first)
+     * @param environment       Environment variables (copied)
+     * @param positionalParams  Positional parameters ({@code $0} first)
      */
     public Executor(
         final Map<String, String> environment,
@@ -130,8 +130,8 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * @param name a variable name
-     * @return the variable's current value, or null when unset
+     * @param name A variable name
+     * @return The variable's current value, or null when unset
      */
     public String getVariable(final String name) {
         return this.environment.get(name);
@@ -141,7 +141,7 @@ public class Executor implements BuiltinContext {
      * Redirects subsequent stdout into the given buffer (used by command
      * substitution).
      *
-     * @param stream destination for captured stdout
+     * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
         this.captureStream = stream;
@@ -151,7 +151,7 @@ public class Executor implements BuiltinContext {
     /**
      * Overrides the executor's stdout.
      *
-     * @param outStream the new live stdout
+     * @param outStream The new live stdout
      */
     public void setOutputStream(final PrintStream outStream) {
         this.out = outStream;
@@ -160,7 +160,7 @@ public class Executor implements BuiltinContext {
     /**
      * Overrides the executor's stderr.
      *
-     * @param errStream the new live stderr
+     * @param errStream The new live stderr
      */
     public void setErrorStream(final PrintStream errStream) {
         this.err = errStream;
@@ -539,8 +539,8 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * @param name a command name
-     * @return true when {@code name} is a known shell built-in
+     * @param name A command name
+     * @return True when {@code name} is a known shell built-in
      */
     static boolean isBuiltin(final String name) {
         return "exit".equals(name) || "export".equals(name) || "echo".equals(name)
@@ -708,7 +708,7 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * @return the most recent background-job PID ({@code $!})
+     * @return The most recent background-job PID ({@code $!})
      */
     int getLastBgPid() {
         return this.lastBgPid;

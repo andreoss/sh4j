@@ -39,7 +39,7 @@ public final class Main {
      * Standard {@code main} entry. Delegates to {@link #exitCode(String[])}
      * and feeds the result to {@link System#exit(int)}.
      *
-     * @param args the CLI arguments
+     * @param args The CLI arguments
      */
     @GeneratedDefensive
     public static void main(final String[] args) {
@@ -49,8 +49,8 @@ public final class Main {
     /**
      * Computes the process exit code for the given CLI arguments.
      *
-     * @param args the CLI arguments (script path first, then positional args)
-     * @return the exit status the JVM should report
+     * @param args The CLI arguments (script path first, then positional args)
+     * @return The exit status the JVM should report
      */
     static int exitCode(final String[] args) {
         final int code;
@@ -69,8 +69,8 @@ public final class Main {
     /**
      * Runs a script with the script name as its sole positional parameter.
      *
-     * @param filename the script path
-     * @return the script's exit status
+     * @param filename The script path
+     * @return The script's exit status
      */
     static int runScript(final String filename) {
         return runScript(filename, List.of(filename));
@@ -79,9 +79,9 @@ public final class Main {
     /**
      * Runs a script with the given positional parameters.
      *
-     * @param filename   the script path
-     * @param scriptArgs the positional parameters (including {@code $0})
-     * @return the script's exit status
+     * @param filename   The script path
+     * @param scriptArgs The positional parameters (including {@code $0})
+     * @return The script's exit status
      */
     static int runScript(final String filename, final List<String> scriptArgs) {
         final StringBuilder content = new StringBuilder();
@@ -107,7 +107,7 @@ public final class Main {
     /**
      * Runs the interactive REPL on stdin until EOF or an IO failure.
      *
-     * @return always 0; failures are surfaced via the prompt
+     * @return Always 0; failures are surfaced via the prompt
      */
     static int interactive() {
         final Executor executor = new Executor();

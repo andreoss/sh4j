@@ -21,8 +21,8 @@ public final class CaseNode extends Node {
     /**
      * Creates a case-node.
      *
-     * @param word  the word the executor matches against the patterns
-     * @param items the case-arms, in source order
+     * @param word  The word the executor matches against the patterns
+     * @param items The case-arms, in source order
      */
     public CaseNode(final String word, final List<CaseItem> items) {
         super();
@@ -31,14 +31,14 @@ public final class CaseNode extends Node {
     }
 
     /**
-     * @return the case-word
+     * @return The case-word
      */
     public String getWord() {
         return this.word;
     }
 
     /**
-     * @return the case-arms
+     * @return The case-arms
      */
     public List<CaseItem> getItems() {
         return this.items;
@@ -60,8 +60,8 @@ public final class CaseNode extends Node {
         /**
          * Creates a case-arm.
          *
-         * @param patterns alternative patterns for this arm
-         * @param body     body to execute on match
+         * @param patterns Alternative patterns for this arm
+         * @param body     Body to execute on match
          */
         public CaseItem(final List<String> patterns, final ListNode body) {
             this.patterns = patterns;
@@ -69,14 +69,14 @@ public final class CaseNode extends Node {
         }
 
         /**
-         * @return this arm's alternative patterns
+         * @return This arm's alternative patterns
          */
         public List<String> getPatterns() {
             return this.patterns;
         }
 
         /**
-         * @return this arm's body
+         * @return This arm's body
          */
         public ListNode getBody() {
             return this.body;

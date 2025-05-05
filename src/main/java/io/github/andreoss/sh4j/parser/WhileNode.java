@@ -22,9 +22,9 @@ public final class WhileNode extends Node {
     /**
      * Creates a while-loop or until-loop node.
      *
-     * @param condition predicate command list
-     * @param body      list to run while the predicate matches
-     * @param until     true for {@code until} semantics, false for {@code while}
+     * @param condition Predicate command list
+     * @param body      List to run while the predicate matches
+     * @param until     True for {@code until} semantics, false for {@code while}
      */
     public WhileNode(final ListNode condition, final ListNode body, final boolean until) {
         super();
@@ -34,21 +34,21 @@ public final class WhileNode extends Node {
     }
 
     /**
-     * @return the loop's predicate
+     * @return The loop's predicate
      */
     public ListNode getCondition() {
         return this.condition;
     }
 
     /**
-     * @return the loop body
+     * @return The loop body
      */
     public ListNode getBody() {
         return this.body;
     }
 
     /**
-     * @return true when this is an {@code until} loop
+     * @return True when this is an {@code until} loop
      */
     public boolean isUntil() {
         return this.until;

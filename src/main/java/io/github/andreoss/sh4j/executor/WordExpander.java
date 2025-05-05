@@ -48,8 +48,8 @@ public final class WordExpander {
      * The result of a word expansion: the produced text and whether a
      * sub-expansion (e.g. {@code ${var:?}}) flagged an error.
      *
-     * @param value the expanded text
-     * @param error true when at least one sub-expansion failed
+     * @param value The expanded text
+     * @param error True when at least one sub-expansion failed
      */
     public record ExpansionResult(String value, boolean error) {
     }
@@ -58,10 +58,10 @@ public final class WordExpander {
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
      * brace expansion, and bare variable references.
      *
-     * @param arg the source word
-     * @param env environment view for lookups
-     * @param ctx callbacks into the executor
-     * @return the expanded text
+     * @param arg The source word
+     * @param env Environment view for lookups
+     * @param ctx Callbacks into the executor
+     * @return The expanded text
      */
     public static String expandVariablesImpl(
         final String arg,
@@ -92,7 +92,7 @@ public final class WordExpander {
      * Consumes the expansion that starts at {@code idx} (if any) and
      * appends its result to {@code expanded}.
      *
-     * @return the number of source characters consumed
+     * @return The number of source characters consumed
      */
     private static int appendOneExpansion(
         final String arg,
@@ -125,7 +125,7 @@ public final class WordExpander {
     /**
      * Handles {@code $(...)} or {@code $((...))} starting at {@code idx}.
      *
-     * @return number of source characters consumed (or 1 on no match)
+     * @return Number of source characters consumed (or 1 on no match)
      */
     private static int appendDollarParen(
         final String arg,
@@ -158,7 +158,7 @@ public final class WordExpander {
     /**
      * Handles {@code ${...}} starting at {@code idx}.
      *
-     * @return number of source characters consumed (or 1 on no match)
+     * @return Number of source characters consumed (or 1 on no match)
      */
     private static int appendDollarBrace(
         final String arg,
@@ -187,12 +187,12 @@ public final class WordExpander {
     /**
      * Finds the matching close-character by counting balanced open/close.
      *
-     * @param arg       the source string
-     * @param start     position immediately after the opener(s)
-     * @param open      open character
-     * @param close     close character
-     * @param initial   initial depth (1 for {@code $(}, 2 for {@code $((})
-     * @return the position immediately after the closing character(s), or
+     * @param arg       The source string
+     * @param start     Position immediately after the opener(s)
+     * @param open      Open character
+     * @param close     Close character
+     * @param initial   Initial depth (1 for {@code $(}, 2 for {@code $((})
+     * @return The position immediately after the closing character(s), or
      *         -1 when unbalanced
      */
     private static int findBalancedClose(
@@ -240,8 +240,8 @@ public final class WordExpander {
     }
 
     /**
-     * @param chr a character
-     * @return true when {@code chr} is one of POSIX's special parameter
+     * @param chr A character
+     * @return True when {@code chr} is one of POSIX's special parameter
      *         characters ({@code ?}, {@code -}, {@code $}, ...)
      */
     private static boolean isSpecialParamChar(final char chr) {
@@ -252,10 +252,10 @@ public final class WordExpander {
     /**
      * Full implementation of {@code ${...}} brace expansion.
      *
-     * @param inner the text between {@code ${} and {@code }}
-     * @param env   environment view
-     * @param ctx   executor callbacks
-     * @return the expansion, or null when the inner text doesn't match any
+     * @param inner The text between {@code ${} and {@code }}
+     * @param env   Environment view
+     * @param ctx   Executor callbacks
+     * @return The expansion, or null when the inner text doesn't match any
      *         recognised operator
      */
     public static String expandBracedImpl(
@@ -297,8 +297,8 @@ public final class WordExpander {
     /**
      * Finds the end of the variable-name portion of an inner-brace string.
      *
-     * @param inner the inner-brace text
-     * @return the index just past the name (0 when no valid name was found)
+     * @param inner The inner-brace text
+     * @return The index just past the name (0 when no valid name was found)
      */
     private static int findNameEnd(final String inner) {
         int nameEnd = 0;
@@ -324,7 +324,7 @@ public final class WordExpander {
      * Applies the {@code :-}, {@code -}, {@code :=}, {@code =},
      * {@code :+}, {@code +} operators.
      *
-     * @return the expansion, or null when no default-class operator matches
+     * @return The expansion, or null when no default-class operator matches
      */
     private static String applyDefaultOps(
         final String rest,
@@ -355,7 +355,7 @@ public final class WordExpander {
     /**
      * Applies the {@code :?} and {@code ?} error operators.
      *
-     * @return the expansion, or null when no error-class operator matches
+     * @return The expansion, or null when no error-class operator matches
      */
     private static String applyErrorOps(
         final String rest,
@@ -607,9 +607,9 @@ public final class WordExpander {
     /**
      * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
      *
-     * @param arg the word to expand
-     * @param env environment view (HOME, PWD)
-     * @return the word with the leading tilde resolved
+     * @param arg The word to expand
+     * @param env Environment view (HOME, PWD)
+     * @return The word with the leading tilde resolved
      */
     public static String expandTilde(final String arg, final Map<String, String> env) {
         final String result;
@@ -641,8 +641,8 @@ public final class WordExpander {
      * Rewrites backtick command substitutions as {@code $(...)} so they
      * can be handled by the rest of the expansion pipeline uniformly.
      *
-     * @param arg the input word
-     * @return the rewritten word
+     * @param arg The input word
+     * @return The rewritten word
      */
     public static String normaliseBackticks(final String arg) {
         final StringBuilder result = new StringBuilder();
@@ -658,7 +658,7 @@ public final class WordExpander {
      * Normalises one source position (a backtick, a {@code $(...)} chunk,
      * a {@code ${...}} chunk, or a literal character).
      *
-     * @return number of source characters consumed
+     * @return Number of source characters consumed
      */
     private static int normaliseOne(final String arg, final int idx, final StringBuilder result) {
         final char chr = arg.charAt(idx);
@@ -684,7 +684,7 @@ public final class WordExpander {
      * Copies a balanced {@code $(...)} or {@code ${...}} chunk verbatim
      * into the result buffer.
      *
-     * @return number of source characters consumed
+     * @return Number of source characters consumed
      */
     private static int copyBalanced(
         final String arg,
@@ -710,7 +710,7 @@ public final class WordExpander {
     /**
      * Rewrites one backtick chunk as a {@code $(...)} substitution.
      *
-     * @return number of source characters consumed (always 1+content_length)
+     * @return Number of source characters consumed (always 1+content_length)
      */
     private static int rewriteBacktick(final String arg, final int idx, final StringBuilder result) {
         int cur = idx + 1;
@@ -750,9 +750,9 @@ public final class WordExpander {
      * Field splitting (POSIX 2.6.5). Returns the fields {@code value} is
      * broken into according to the IFS characters.
      *
-     * @param value the post-expansion text
-     * @param ifs   the IFS value (each character is a separator)
-     * @return one field per non-IFS run
+     * @param value The post-expansion text
+     * @param ifs   The IFS value (each character is a separator)
+     * @return One field per non-IFS run
      */
     public static List<String> splitFields(final String value, final String ifs) {
         if (ifs == null || ifs.isEmpty()) {
@@ -800,8 +800,8 @@ public final class WordExpander {
     }
 
     /**
-     * @param arg any word
-     * @return true when the word is surrounded by matching single or double
+     * @param arg Any word
+     * @return True when the word is surrounded by matching single or double
      *         quotes
      */
     public static boolean isQuoted(final String arg) {
@@ -821,8 +821,8 @@ public final class WordExpander {
      * Quote removal (POSIX 2.6.7). Strips the outer single/double quotes
      * and resolves backslash-escapes inside double quotes.
      *
-     * @param word the source word
-     * @return the de-quoted text
+     * @param word The source word
+     * @return The de-quoted text
      */
     public static String removeQuotes(final String word) {
         final StringBuilder result = new StringBuilder();
@@ -887,8 +887,8 @@ public final class WordExpander {
      * glob characters with the alphabetic list of matching files (or the
      * literal field when no match).
      *
-     * @param fields the post-IFS fields
-     * @return the post-glob fields
+     * @param fields The post-IFS fields
+     * @return The post-glob fields
      */
     public static List<String> pathnameExpand(final List<String> fields) {
         final List<String> result = new ArrayList<>();
@@ -909,8 +909,8 @@ public final class WordExpander {
     }
 
     /**
-     * @param str any string
-     * @return true when {@code str} contains any of {@code *}, {@code ?},
+     * @param str Any string
+     * @return True when {@code str} contains any of {@code *}, {@code ?},
      *         or {@code [}
      */
     public static boolean containsGlobChars(final String str) {
@@ -918,8 +918,8 @@ public final class WordExpander {
     }
 
     /**
-     * @param pattern a glob pattern
-     * @return the matching files in the current directory
+     * @param pattern A glob pattern
+     * @return The matching files in the current directory
      */
     static List<String> globFiles(final String pattern) {
         final File cwd = new File(System.getProperty("user.dir"));
@@ -941,9 +941,9 @@ public final class WordExpander {
     }
 
     /**
-     * @param pattern a glob pattern
-     * @param str     the candidate text
-     * @return true when {@code pattern} matches {@code str}
+     * @param pattern A glob pattern
+     * @param str     The candidate text
+     * @return True when {@code pattern} matches {@code str}
      */
     public static boolean globMatches(final String pattern, final String str) {
         final StringBuilder regex = new StringBuilder();

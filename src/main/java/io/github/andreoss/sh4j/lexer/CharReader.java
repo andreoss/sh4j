@@ -29,7 +29,7 @@ public final class CharReader {
     /**
      * Reads from the given string.
      *
-     * @param input the script source
+     * @param input The script source
      */
     public CharReader(final String input) {
         this(new StringReader(input));
@@ -38,7 +38,7 @@ public final class CharReader {
     /**
      * Reads from the given reader.
      *
-     * @param reader the source to consume
+     * @param reader The source to consume
      */
     public CharReader(final Reader reader) {
         this.reader = reader;
@@ -50,7 +50,7 @@ public final class CharReader {
     /**
      * Looks at the next character without consuming it.
      *
-     * @return the next character, or -1 at end-of-input
+     * @return The next character, or -1 at end-of-input
      */
     public int peek() {
         return this.peeked;
@@ -59,7 +59,7 @@ public final class CharReader {
     /**
      * Advances the cursor.
      *
-     * @return the character that was previously at the cursor
+     * @return The character that was previously at the cursor
      */
     public int consume() {
         final int cur = this.peeked;
@@ -74,7 +74,7 @@ public final class CharReader {
     }
 
     /**
-     * @return true when the cursor has reached end-of-input
+     * @return True when the cursor has reached end-of-input
      */
     public boolean isEof() {
         return this.peeked == -1;

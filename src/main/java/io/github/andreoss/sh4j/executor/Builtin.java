@@ -20,11 +20,11 @@ interface Builtin {
     /**
      * Runs the built-in.
      *
-     * @param self        narrow façade over the executor for env / I/O access
-     * @param arguments   the command words excluding the built-in name
-     * @param env         the current environment view (may be mutated)
-     * @param assignments inline {@code KEY=VALUE} pairs attached to this call
-     * @return the POSIX exit status the built-in produced
+     * @param self        Narrow façade over the executor for env / I/O access
+     * @param arguments   The command words excluding the built-in name
+     * @param env         The current environment view (may be mutated)
+     * @param assignments Inline {@code KEY=VALUE} pairs attached to this call
+     * @return The POSIX exit status the built-in produced
      */
     int invoke(
         BuiltinContext self,

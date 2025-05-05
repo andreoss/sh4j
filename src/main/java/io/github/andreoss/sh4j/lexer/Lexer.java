@@ -20,7 +20,7 @@ public final class Lexer {
     /**
      * Creates a lexer over the given character source.
      *
-     * @param reader the input cursor
+     * @param reader The input cursor
      */
     public Lexer(final CharReader reader) {
         this.reader = reader;
@@ -29,7 +29,7 @@ public final class Lexer {
     /**
      * Returns the next token. Skips whitespace before classifying.
      *
-     * @return the next token, or an END_OF_FILE token at end-of-input
+     * @return The next token, or an END_OF_FILE token at end-of-input
      */
     public Token nextToken() {
         this.skipWhitespace();
@@ -54,9 +54,9 @@ public final class Lexer {
      * Reads the body of a here-document up to (but not including) the
      * closing delimiter line.
      *
-     * @param delimiter the heredoc delimiter
-     * @param stripTabs true for {@code <<-} (strip leading tabs on each line)
-     * @return the heredoc content (without trailing newline)
+     * @param delimiter The heredoc delimiter
+     * @param stripTabs True for {@code <<-} (strip leading tabs on each line)
+     * @return The heredoc content (without trailing newline)
      */
     public String readHereDocContent(final String delimiter, final boolean stripTabs) {
         final StringBuilder content = new StringBuilder();
@@ -90,8 +90,8 @@ public final class Lexer {
     /**
      * Reads one line of heredoc body, optionally stripping leading tabs.
      *
-     * @param stripTabs true to strip leading tabs (for {@code <<-})
-     * @return the line text (without the trailing newline)
+     * @param stripTabs True to strip leading tabs (for {@code <<-})
+     * @return The line text (without the trailing newline)
      */
     private String readHereDocLine(final boolean stripTabs) {
         final StringBuilder line = new StringBuilder();
@@ -124,7 +124,7 @@ public final class Lexer {
     /**
      * Tries to match an operator at the current position.
      *
-     * @return the operator token, or null when the current character is
+     * @return The operator token, or null when the current character is
      *         not an operator
      */
     private Token tryOperator() {
@@ -234,7 +234,7 @@ public final class Lexer {
      * {@code $(…)}, {@code $((…))}, {@code ${…}}, and {@code `…`}
      * balanced word-boundaries (POSIX 2.10).
      *
-     * @return the next word token
+     * @return The next word token
      */
     private Token readWord() {
         final int line = this.reader.getLine();
@@ -261,9 +261,9 @@ public final class Lexer {
     /**
      * Consumes one character into the word buffer.
      *
-     * @param buf    the accumulator for the current word
-     * @param quotes quote-state flags (mutated)
-     * @return true when the word ends at the current position
+     * @param buf    The accumulator for the current word
+     * @param quotes Quote-state flags (mutated)
+     * @return True when the word ends at the current position
      */
     private boolean readWordChar(final StringBuilder buf, final QuoteState quotes) {
         final int chr = this.reader.peek();
@@ -404,8 +404,8 @@ public final class Lexer {
     }
 
     /**
-     * @param text any word
-     * @return true when the word is a valid POSIX assignment ({@code NAME=value})
+     * @param text Any word
+     * @return True when the word is a valid POSIX assignment ({@code NAME=value})
      */
     private static boolean isAssignmentWord(final String text) {
         boolean result = false;
@@ -419,8 +419,8 @@ public final class Lexer {
     }
 
     /**
-     * @param name a candidate identifier
-     * @return true when {@code name} is a valid POSIX variable name
+     * @param name A candidate identifier
+     * @return True when {@code name} is a valid POSIX variable name
      */
     private static boolean isValidVarName(final String name) {
         boolean valid = true;
@@ -439,8 +439,8 @@ public final class Lexer {
     }
 
     /**
-     * @param text any string
-     * @return true when {@code text} is non-empty and contains only digits
+     * @param text Any string
+     * @return True when {@code text} is non-empty and contains only digits
      */
     private static boolean isAllDigits(final String text) {
         boolean result = !text.isEmpty();
@@ -453,8 +453,8 @@ public final class Lexer {
     }
 
     /**
-     * @param chr a character
-     * @return true when {@code chr} is one of the POSIX operator characters
+     * @param chr A character
+     * @return True when {@code chr} is one of the POSIX operator characters
      *         that end a word
      */
     private static boolean isOperatorChar(final int chr) {
@@ -465,8 +465,8 @@ public final class Lexer {
     /**
      * Strips leading tabs from a heredoc line ({@code <<-}).
      *
-     * @param str the line
-     * @return the line with leading tabs removed
+     * @param str The line
+     * @return The line with leading tabs removed
      */
     private static String stripLeadingTabs(final String str) {
         int idx = 0;
