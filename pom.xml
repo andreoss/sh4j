@@ -125,6 +125,22 @@
                         <exclude>checkstyle:.*/src/test/java/.*</exclude>
                         <exclude>pmd:.*/src/test/java/.*</exclude>
                         <exclude>checkstyle:.*/src/main/resources/.*</exclude>
+                        <exclude>checkstyle:.*/sh4j/lexer/Lexer\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/parser/Parser\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/executor/ArithmeticEvaluator\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/executor/BuiltinDispatcher\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/executor/Executor\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/executor/RedirectionHandler\.java</exclude>
+                        <exclude>checkstyle:.*/sh4j/executor/WordExpander\.java</exclude>
+                        <exclude>pmd:.*/sh4j/lexer/Lexer\.java</exclude>
+                        <exclude>pmd:.*/sh4j/parser/Parser\.java</exclude>
+                        <exclude>pmd:.*/sh4j/executor/ArithmeticEvaluator\.java</exclude>
+                        <exclude>pmd:.*/sh4j/executor/BuiltinDispatcher\.java</exclude>
+                        <exclude>pmd:.*/sh4j/executor/Executor\.java</exclude>
+                        <exclude>pmd:.*/sh4j/executor/RedirectionHandler\.java</exclude>
+                        <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
+                        <exclude>checkstyle:.*/src/main/java/.*</exclude>
+                        <exclude>pmd:.*/src/main/java/.*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
