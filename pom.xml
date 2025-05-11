@@ -69,6 +69,11 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/errorprone-classes/**</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                 <execution>
                     <goals>
