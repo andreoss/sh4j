@@ -127,8 +127,6 @@
                 <configuration>
                     <license>none</license>
                     <excludes>
-                        <exclude>checkstyle:.*/src/test/java/.*</exclude>
-                        <exclude>pmd:.*/src/test/java/.*</exclude>
                         <exclude>checkstyle:.*/src/main/resources/.*</exclude>
                         <exclude>checkstyle:.*/sh4j/lexer/Lexer\.java</exclude>
                         <exclude>checkstyle:.*/sh4j/parser/Parser\.java</exclude>
