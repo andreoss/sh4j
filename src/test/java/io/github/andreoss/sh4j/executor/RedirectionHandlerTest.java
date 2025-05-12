@@ -21,12 +21,12 @@ class RedirectionHandlerTest {
 
     @Test
     void redirectStderrToStdout() {
-        ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(outBuf);
-        PrintStream err = new PrintStream(errBuf);
-        List<Redirection> redirs = List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1"));
-        RedirectionHandler.StreamSwap r =
+        final ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
+        final ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
+        final PrintStream out = new PrintStream(outBuf);
+        final PrintStream err = new PrintStream(errBuf);
+        final List<Redirection> redirs = List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1"));
+        final RedirectionHandler.StreamSwap r =
                 RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, identityExpander);
         assertSame(out, r.err(), "2>&1 should make err point to out");
         assertSame(err, r.savedErr(), "savedErr should be original err for restore");
@@ -35,12 +35,12 @@ class RedirectionHandlerTest {
 
     @Test
     void redirectStdoutToStderr() {
-        ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
-        ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(outBuf);
-        PrintStream err = new PrintStream(errBuf);
-        List<Redirection> redirs = List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2"));
-        RedirectionHandler.StreamSwap r =
+        final ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
+        final ByteArrayOutputStream errBuf = new ByteArrayOutputStream();
+        final PrintStream out = new PrintStream(outBuf);
+        final PrintStream err = new PrintStream(errBuf);
+        final List<Redirection> redirs = List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2"));
+        final RedirectionHandler.StreamSwap r =
                 RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, identityExpander);
         assertSame(err, r.out(), "1>&2 should make out point to err");
         assertSame(out, r.savedOut(), "savedOut should be original out for restore");
@@ -48,9 +48,9 @@ class RedirectionHandlerTest {
 
     @Test
     void noRedirsLeavesStreamsUnchanged() {
-        PrintStream out = new PrintStream(new ByteArrayOutputStream());
-        PrintStream err = new PrintStream(new ByteArrayOutputStream());
-        RedirectionHandler.StreamSwap r =
+        final PrintStream out = new PrintStream(new ByteArrayOutputStream());
+        final PrintStream err = new PrintStream(new ByteArrayOutputStream());
+        final RedirectionHandler.StreamSwap r =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, identityExpander);
         assertSame(out, r.out());
         assertSame(err, r.err());
@@ -65,10 +65,10 @@ class RedirectionHandlerTest {
 
     @Test
     void heredocFileRoundtrip() throws Exception {
-        java.io.File f = RedirectionHandler.heredocFile("alpha\nbeta\n");
+        final java.io.File f = RedirectionHandler.heredocFile("alpha\nbeta\n");
         assertNotNull(f);
         assertTrue(f.isFile());
-        String content = java.nio.file.Files.readString(f.toPath());
+        final String content = java.nio.file.Files.readString(f.toPath());
         assertEquals("alpha\nbeta\n", content);
     }
 }

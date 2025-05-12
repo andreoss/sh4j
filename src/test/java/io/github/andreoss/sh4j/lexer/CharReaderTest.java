@@ -14,40 +14,40 @@ import org.junit.jupiter.api.Test;
 class CharReaderTest {
     @Test
     void peekReturnsFirstChar() {
-        CharReader r = new CharReader("a");
+        final CharReader r = new CharReader("a");
         assertEquals('a', r.peek());
     }
 
     @Test
     void consumeReturnsCharsInOrder() {
-        CharReader r = new CharReader("ab");
+        final CharReader r = new CharReader("ab");
         assertEquals('a', r.consume());
         assertEquals('b', r.consume());
     }
 
     @Test
     void consumeAdvancesPosition() {
-        CharReader r = new CharReader("ab");
+        final CharReader r = new CharReader("ab");
         r.consume();
         assertEquals('b', r.peek());
     }
 
     @Test
     void isEOFReturnsFalseWhenCharsRemain() {
-        CharReader r = new CharReader("abc");
+        final CharReader r = new CharReader("abc");
         assertFalse(r.isEof());
     }
 
     @Test
     void eofOnEmptyString() {
-        CharReader r = new CharReader("");
+        final CharReader r = new CharReader("");
         assertTrue(r.isEof());
         assertEquals(-1, r.peek());
     }
 
     @Test
     void eofAfterFullConsume() {
-        CharReader r = new CharReader("a");
+        final CharReader r = new CharReader("a");
         r.consume();
         assertTrue(r.isEof());
         assertEquals(-1, r.peek());
@@ -55,20 +55,20 @@ class CharReaderTest {
 
     @Test
     void consumeEofReturnsMinusOne() {
-        CharReader r = new CharReader("");
+        final CharReader r = new CharReader("");
         assertEquals(-1, r.consume());
     }
 
     @Test
     void lineColumnInitialValues() {
-        CharReader r = new CharReader("a");
+        final CharReader r = new CharReader("a");
         assertEquals(1, r.getLine());
         assertEquals(0, r.getColumn());
     }
 
     @Test
     void lineColumnAfterConsume() {
-        CharReader r = new CharReader("a");
+        final CharReader r = new CharReader("a");
         r.consume();
         assertEquals(1, r.getLine());
         assertEquals(1, r.getColumn());
@@ -76,7 +76,7 @@ class CharReaderTest {
 
     @Test
     void newlineIncrementsLineAndResetsColumn() {
-        CharReader r = new CharReader("\n");
+        final CharReader r = new CharReader("\n");
         r.consume();
         assertEquals(2, r.getLine());
         assertEquals(0, r.getColumn());
@@ -84,7 +84,7 @@ class CharReaderTest {
 
     @Test
     void multipleLines() {
-        CharReader r = new CharReader("a\nb");
+        final CharReader r = new CharReader("a\nb");
         assertEquals(1, r.getLine());
         assertEquals(0, r.getColumn());
         r.consume(); // 'a'
@@ -100,7 +100,7 @@ class CharReaderTest {
 
     @Test
     void ioExceptionTreatedAsEof() {
-        Reader broken = new Reader() {
+        final Reader broken = new Reader() {
             @Override
             public int read() throws IOException {
                 throw new IOException();
@@ -112,7 +112,7 @@ class CharReaderTest {
             @Override
             public void close() {}
         };
-        CharReader r = new CharReader(broken);
+        final CharReader r = new CharReader(broken);
         assertTrue(r.isEof());
         assertEquals(-1, r.peek());
         assertEquals(-1, r.consume());
@@ -120,7 +120,7 @@ class CharReaderTest {
 
     @Test
     void eofStaysEofOnMultipleCalls() {
-        CharReader r = new CharReader("");
+        final CharReader r = new CharReader("");
         assertTrue(r.isEof());
         assertEquals(-1, r.peek());
         assertEquals(-1, r.consume());

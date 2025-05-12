@@ -17,20 +17,20 @@ class PosixConformanceTest {
     java.nio.file.Path tempDir;
 
     private String run(String script, String... args) throws Exception {
-        File s = tempDir.resolve("c.sh").toFile();
+        final File s = tempDir.resolve("c.sh").toFile();
         try (FileWriter w = new FileWriter(s)) { w.write(script); }
-        String javaBin = System.getProperty("java.home") + "/bin/java";
-        java.util.List<String> cmd = new java.util.ArrayList<>();
+        final String javaBin = System.getProperty("java.home") + "/bin/java";
+        final java.util.List<String> cmd = new java.util.ArrayList<>();
         cmd.add(javaBin);
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
         cmd.add(s.getAbsolutePath());
-        for (String a : args) cmd.add(a);
-        ProcessBuilder pb = new ProcessBuilder(cmd);
+        for (final String a : args) cmd.add(a);
+        final ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
-        Process p = pb.start();
-        String out = new String(p.getInputStream().readAllBytes());
+        final Process p = pb.start();
+        final String out = new String(p.getInputStream().readAllBytes());
         p.waitFor();
         return out;
     }
@@ -87,7 +87,7 @@ class PosixConformanceTest {
 
     @Test
     void forLoopBody() throws Exception {
-        String out = run("for i in a b c; do echo $i; done\n").trim();
+        final String out = run("for i in a b c; do echo $i; done\n").trim();
         assertEquals("a\nb\nc", out);
     }
 
@@ -103,7 +103,7 @@ class PosixConformanceTest {
 
     @Test
     void hereDocContent() throws Exception {
-        String out = run("cat <<EOF\nline1\nline2\nEOF\n").trim();
+        final String out = run("cat <<EOF\nline1\nline2\nEOF\n").trim();
         assertEquals("line1\nline2", out);
     }
 }

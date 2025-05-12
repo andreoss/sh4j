@@ -20,7 +20,7 @@ class PosixTests {
     Path tempDir;
 
     private int run(String script) throws IOException {
-        File f = tempDir.resolve("t.sh").toFile();
+        final File f = tempDir.resolve("t.sh").toFile();
         Files.writeString(f.toPath(), script);
         return Main.runScript(f.getAbsolutePath(), List.of(f.getAbsolutePath()));
     }
