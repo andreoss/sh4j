@@ -25,17 +25,17 @@ class MainTest {
 
     @BeforeEach
     void saveSystemIn() {
-        origIn = System.in;
+        this.origIn = System.in;
     }
 
     @AfterEach
     void restoreSystemIn() {
-        System.setIn(origIn);
+        System.setIn(this.origIn);
     }
 
     @Test
     void runScriptWithEcho() throws IOException {
-        final File script = new File(tempDir, "echo.sh");
+        final File script = new File(this.tempDir, "echo.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("echo hello\n");
         }
@@ -44,7 +44,7 @@ class MainTest {
 
     @Test
     void runScriptWithExitZero() throws IOException {
-        final File script = new File(tempDir, "exit0.sh");
+        final File script = new File(this.tempDir, "exit0.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("exit 0\n");
         }
@@ -53,7 +53,7 @@ class MainTest {
 
     @Test
     void runScriptWithExitOne() throws IOException {
-        final File script = new File(tempDir, "exit1.sh");
+        final File script = new File(this.tempDir, "exit1.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("exit 1\n");
         }
@@ -67,7 +67,7 @@ class MainTest {
 
     @Test
     void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
-        final File script = new File(tempDir, "test_exit.sh");
+        final File script = new File(this.tempDir, "test_exit.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("exit 42\n");
         }
@@ -94,7 +94,7 @@ class MainTest {
 
     @Test
     void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
-        final File script = new File(tempDir, "args.sh");
+        final File script = new File(this.tempDir, "args.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("exit $#\n");
         }
@@ -103,7 +103,7 @@ class MainTest {
 
     @Test
     void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
-        final File script = new File(tempDir, "first.sh");
+        final File script = new File(this.tempDir, "first.sh");
         try (FileWriter w = new FileWriter(script)) {
             w.write("exit $1\n");
         }

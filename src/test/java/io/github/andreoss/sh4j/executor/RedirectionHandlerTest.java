@@ -27,7 +27,7 @@ class RedirectionHandlerTest {
         final PrintStream err = new PrintStream(errBuf);
         final List<Redirection> redirs = List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1"));
         final RedirectionHandler.StreamSwap r =
-                RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, this.identityExpander);
         assertSame(out, r.err(), "2>&1 should make err point to out");
         assertSame(err, r.savedErr(), "savedErr should be original err for restore");
         assertNull(r.savedOut(), "stdout untouched");
@@ -41,7 +41,7 @@ class RedirectionHandlerTest {
         final PrintStream err = new PrintStream(errBuf);
         final List<Redirection> redirs = List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2"));
         final RedirectionHandler.StreamSwap r =
-                RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(redirs, out, err, this.identityExpander);
         assertSame(err, r.out(), "1>&2 should make out point to err");
         assertSame(out, r.savedOut(), "savedOut should be original out for restore");
     }
@@ -51,7 +51,7 @@ class RedirectionHandlerTest {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap r =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identityExpander);
         assertSame(out, r.out());
         assertSame(err, r.err());
         assertNull(r.savedOut());

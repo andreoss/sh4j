@@ -17,7 +17,7 @@ class PosixConformanceTest {
     java.nio.file.Path tempDir;
 
     private String run(String script, String... args) throws Exception {
-        final File s = tempDir.resolve("c.sh").toFile();
+        final File s = this.tempDir.resolve("c.sh").toFile();
         try (FileWriter w = new FileWriter(s)) { w.write(script); }
         final String javaBin = System.getProperty("java.home") + "/bin/java";
         final java.util.List<String> cmd = new java.util.ArrayList<>();
@@ -47,7 +47,7 @@ class PosixConformanceTest {
 
     @Test
     void positionalFirstParam() throws Exception {
-        assertTrue(run("echo $1\n", "hello").trim().equals("hello"));
+        assertTrue(this.run("echo $1\n", "hello").trim().equals("hello"));
     }
 
     @Test
