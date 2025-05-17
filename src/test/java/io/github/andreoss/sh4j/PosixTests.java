@@ -19,12 +19,6 @@ class PosixTests {
     @TempDir
     Path tempDir;
 
-    private int run(String script) throws IOException {
-        final File f = this.tempDir.resolve("t.sh").toFile();
-        Files.writeString(f.toPath(), script);
-        return Main.runScript(f.getAbsolutePath(), List.of(f.getAbsolutePath()));
-    }
-
     @Test void trueExitZero() throws IOException { assertEquals(0, this.run("true\n")); }
     @Test void falseExitOne() throws IOException { assertEquals(1, this.run("false\n")); }
     @Test void exit42() throws IOException { assertEquals(42, this.run("exit 42\n")); }
@@ -48,4 +42,11 @@ class PosixTests {
     @Test void varExpand() throws IOException { assertEquals(0, this.run("echo $HOME\n")); }
     @Test void cmdNotFound() throws IOException { assertEquals(127, this.run("nonexistent_cmd_xyz\n")); }
     @Test void pwd() throws IOException { assertEquals(0, this.run("pwd\n")); }
+
+    private int run(String script) throws IOException {
+        final File f = this.tempDir.resolve("t.sh").toFile();
+        Files.writeString(f.toPath(), script);
+        return Main.runScript(f.getAbsolutePath(), List.of(f.getAbsolutePath()));
+    }
+
 }

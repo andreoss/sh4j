@@ -12,10 +12,6 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 
 class ParserTest {
-    private Parser parser(String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
     @Test
     void parseSimpleCommand() {
         final ListNode list = this.parser("echo hello").parse();
@@ -665,4 +661,9 @@ class ParserTest {
         assertEquals(RedirectionType.APPEND, r.getType());
         assertEquals("/tmp/log", r.getTarget());
     }
+
+    private Parser parser(String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
 }

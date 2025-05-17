@@ -19,15 +19,6 @@ class IntegrationTest {
     @TempDir
     Path tempDir;
 
-    private File writeScript(String name, String content) throws IOException {
-        final File script = this.tempDir.resolve(name).toFile();
-        try (FileWriter w = new FileWriter(script)) {
-            w.write(content);
-        }
-        assertTrue(script.setExecutable(true));
-        return script;
-    }
-
     @Test
     void echoHello() throws IOException {
         final File s = this.writeScript("echo.sh", "echo hello\n");
@@ -96,17 +87,6 @@ class IntegrationTest {
         assertEquals(0, p.waitFor(), "native sh4j exit code; output: " + out);
         assertTrue(out.contains("hello-native"),
                 "native sh4j must propagate external cat stdout; got: '" + out + "'");
-    }
-
-    private String runChildJvm(File script) throws Exception {
-        final ProcessBuilder pb = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
-                System.getProperty("java.class.path"),
-                "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
-        pb.redirectErrorStream(true);
-        final Process p = pb.start();
-        final String out = new String(p.getInputStream().readAllBytes());
-        assertEquals(0, p.waitFor(), "child sh4j exit code; output: " + out);
-        return out;
     }
 
     @org.junit.jupiter.api.Test
@@ -286,4 +266,25 @@ class IntegrationTest {
     void commandNotFound() throws IOException {
         assertEquals(127, Main.runScript(this.writeScript("notfound.sh", "nonexistent_cmd_xyz\n").getAbsolutePath()));
     }
+
+    private File writeScript(String name, String content) throws IOException {
+        final File script = this.tempDir.resolve(name).toFile();
+        try (FileWriter w = new FileWriter(script)) {
+            w.write(content);
+        }
+        assertTrue(script.setExecutable(true));
+        return script;
+    }
+
+    private String runChildJvm(File script) throws Exception {
+        final ProcessBuilder pb = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
+                System.getProperty("java.class.path"),
+                "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        final Process p = pb.start();
+        final String out = new String(p.getInputStream().readAllBytes());
+        assertEquals(0, p.waitFor(), "child sh4j exit code; output: " + out);
+        return out;
+    }
+
 }

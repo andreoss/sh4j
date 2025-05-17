@@ -9,10 +9,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class LexerTest {
-    private Lexer lexer(String input) {
-        return new Lexer(new CharReader(input));
-    }
-
     @Test
     void eofOnEmptyInput() {
         final Lexer l = this.lexer("");
@@ -52,13 +48,6 @@ class LexerTest {
         this.assertOperator("<>", TokenType.LESSGREATER);
         this.assertOperator("<<-", TokenType.DLESSDASH);
         this.assertOperator(">|", TokenType.CLOBBER);
-    }
-
-    private void assertOperator(String op, TokenType expected) {
-        final Lexer l = this.lexer(op);
-        final Token t = l.nextToken();
-        assertEquals(expected, t.type(), "Operator " + op);
-        assertEquals(op, t.text(), "Operator text " + op);
     }
 
     @Test
@@ -433,4 +422,16 @@ class LexerTest {
         final Lexer l = this.lexer("\nfirst\nsecond\nthird\nEOF\n");
         assertEquals("first\nsecond\nthird", l.readHereDocContent("EOF", false));
     }
+
+    private Lexer lexer(String input) {
+        return new Lexer(new CharReader(input));
+    }
+
+    private void assertOperator(String op, TokenType expected) {
+        final Lexer l = this.lexer(op);
+        final Token t = l.nextToken();
+        assertEquals(expected, t.type(), "Operator " + op);
+        assertEquals(op, t.text(), "Operator text " + op);
+    }
+
 }

@@ -33,10 +33,6 @@ import io.github.andreoss.sh4j.parser.CaseNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 
 class ExecutorTest {
-    private Parser parser(String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
     @Test
     void executeSimpleEcho() {
         final ListNode list = this.parser("echo hello").parse();
@@ -2677,4 +2673,9 @@ class ExecutorTest {
     void shiftNegativeReturns1() {
         assertEquals(1, new Executor().execute(this.parser("shift -1").parse()));
     }
+
+    private Parser parser(String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
 }
