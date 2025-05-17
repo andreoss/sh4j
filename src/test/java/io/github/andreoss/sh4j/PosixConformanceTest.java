@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class PosixConformanceTest {
+
     @TempDir
     java.nio.file.Path tempDir;
 
@@ -88,7 +89,9 @@ class PosixConformanceTest {
 
     private String run(String script, String... args) throws Exception {
         final File s = this.tempDir.resolve("c.sh").toFile();
-        try (FileWriter w = new FileWriter(s)) { w.write(script); }
+        try (FileWriter w = new FileWriter(s)) {
+            w.write(script);
+        }
         final java.util.List<String> cmd = new java.util.ArrayList<>();
         cmd.add(System.getProperty("java.home") + "/bin/java");
         cmd.add("-cp");

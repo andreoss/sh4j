@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class TokenTest {
+
     @Test
     void createsTokenWithTypeTextAndPosition() {
         final Token t = new Token(TokenType.WORD, "echo", 1, 0);

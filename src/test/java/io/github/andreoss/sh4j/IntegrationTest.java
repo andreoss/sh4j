@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class IntegrationTest {
+
     @TempDir
     Path tempDir;
 
@@ -58,7 +59,9 @@ class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
         final File probe = this.tempDir.resolve("probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) { w.write("hello-from-cat\n"); }
+        try (FileWriter w = new FileWriter(probe)) {
+            w.write("hello-from-cat\n");
+        }
         final File script = this.writeScript("catprobe.sh", "cat " + probe.getAbsolutePath() + "\n");
         final ProcessBuilder pb = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
                 System.getProperty("java.class.path"),
@@ -77,7 +80,9 @@ class IntegrationTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(nativeBin.isFile() && nativeBin.canExecute(),
                 "target/sh4j native binary not built; skipping native smoke");
         final File probe = this.tempDir.resolve("nprobe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) { w.write("hello-native\n"); }
+        try (FileWriter w = new FileWriter(probe)) {
+            w.write("hello-native\n");
+        }
         final File script = this.writeScript("ncatprobe.sh", "cat " + probe.getAbsolutePath() + "\n");
         final ProcessBuilder pb = new ProcessBuilder(nativeBin.getAbsolutePath(),
                 script.getAbsolutePath());
@@ -99,7 +104,9 @@ class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatProbe() throws Exception {
         final File probe = this.tempDir.resolve("h_probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) { w.write("child-probe\n"); }
+        try (FileWriter w = new FileWriter(probe)) {
+            w.write("child-probe\n");
+        }
         final File s = this.writeScript("h_cat.sh", "cat " + probe.getAbsolutePath() + "\n");
         final String out = this.runChildJvm(s);
         assertTrue(out.contains("child-probe"), "cat stdout missing; got: '" + out + "'");

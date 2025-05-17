@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class TokenTypeTest {
+
     @Test
     void allEnumValuesPresent() {
         assertTrue(TokenType.values().length > 0);

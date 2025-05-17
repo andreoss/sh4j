@@ -12,6 +12,7 @@ import java.io.Reader;
 import org.junit.jupiter.api.Test;
 
 class CharReaderTest {
+
     @Test
     void peekReturnsFirstChar() {
         final CharReader r = new CharReader("a");
@@ -101,15 +102,21 @@ class CharReaderTest {
     @Test
     void ioExceptionTreatedAsEof() {
         final Reader broken = new Reader() {
+
             @Override
+
             public int read() throws IOException {
                 throw new IOException();
             }
+
             @Override
+
             public int read(char[] cbuf, int off, int len) throws IOException {
                 throw new IOException();
             }
+
             @Override
+
             public void close() {}
         };
         final CharReader r = new CharReader(broken);

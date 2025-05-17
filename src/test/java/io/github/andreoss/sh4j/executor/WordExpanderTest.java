@@ -13,6 +13,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class WordExpanderTest {
+
     @Test void tildeHome() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/user");
@@ -45,19 +46,60 @@ class WordExpanderTest {
         assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a:b:c", ":"));
     }
 
-    @Test void isQuotedDouble() { assertTrue(WordExpander.isQuoted("\"x\"")); }
-    @Test void isQuotedSingle() { assertTrue(WordExpander.isQuoted("'x'")); }
-    @Test void isQuotedFalseMixed() { assertFalse(WordExpander.isQuoted("\"x'")); }
-    @Test void isQuotedFalseShort() { assertFalse(WordExpander.isQuoted("x")); }
+    @Test
+    void isQuotedDouble() {
+        assertTrue(WordExpander.isQuoted("\"x\""));
+    }
 
-    @Test void removeQuotesDouble() { assertEquals("hello", WordExpander.removeQuotes("\"hello\"")); }
-    @Test void removeQuotesSingle() { assertEquals("hello", WordExpander.removeQuotes("'hello'")); }
-    @Test void removeQuotesUnquoted() { assertEquals("abc", WordExpander.removeQuotes("abc")); }
+    @Test
+    void isQuotedSingle() {
+        assertTrue(WordExpander.isQuoted("'x'"));
+    }
 
-    @Test void containsGlobCharsStar() { assertTrue(WordExpander.containsGlobChars("a*b")); }
-    @Test void containsGlobCharsQuestion() { assertTrue(WordExpander.containsGlobChars("a?b")); }
-    @Test void containsGlobCharsBracket() { assertTrue(WordExpander.containsGlobChars("a[b")); }
-    @Test void containsGlobCharsNone() { assertFalse(WordExpander.containsGlobChars("abc")); }
+    @Test
+    void isQuotedFalseMixed() {
+        assertFalse(WordExpander.isQuoted("\"x'"));
+    }
+
+    @Test
+    void isQuotedFalseShort() {
+        assertFalse(WordExpander.isQuoted("x"));
+    }
+
+    @Test
+    void removeQuotesDouble() {
+        assertEquals("hello", WordExpander.removeQuotes("\"hello\""));
+    }
+
+    @Test
+    void removeQuotesSingle() {
+        assertEquals("hello", WordExpander.removeQuotes("'hello'"));
+    }
+
+    @Test
+    void removeQuotesUnquoted() {
+        assertEquals("abc", WordExpander.removeQuotes("abc"));
+    }
+
+    @Test
+    void containsGlobCharsStar() {
+        assertTrue(WordExpander.containsGlobChars("a*b"));
+    }
+
+    @Test
+    void containsGlobCharsQuestion() {
+        assertTrue(WordExpander.containsGlobChars("a?b"));
+    }
+
+    @Test
+    void containsGlobCharsBracket() {
+        assertTrue(WordExpander.containsGlobChars("a[b"));
+    }
+
+    @Test
+    void containsGlobCharsNone() {
+        assertFalse(WordExpander.containsGlobChars("abc"));
+    }
 
     @Test void pathnameExpandNoGlob() {
         assertEquals(List.of("abc"), WordExpander.pathnameExpand(List.of("abc")));
@@ -256,8 +298,23 @@ class WordExpanderTest {
         assertEquals("a", WordExpander.expandBraced("f%.txt", env, e).value());
     }
 
-    @Test void globMatchesStar() { assertTrue(WordExpander.globMatches("a*", "abc")); }
-    @Test void globMatchesQuestion() { assertTrue(WordExpander.globMatches("a?c", "abc")); }
-    @Test void globMatchesCharClass() { assertTrue(WordExpander.globMatches("[abc]", "b")); }
-    @Test void globMatchesNoMatch() { assertFalse(WordExpander.globMatches("a*", "xyz")); }
+    @Test
+    void globMatchesStar() {
+        assertTrue(WordExpander.globMatches("a*", "abc"));
+    }
+
+    @Test
+    void globMatchesQuestion() {
+        assertTrue(WordExpander.globMatches("a?c", "abc"));
+    }
+
+    @Test
+    void globMatchesCharClass() {
+        assertTrue(WordExpander.globMatches("[abc]", "b"));
+    }
+
+    @Test
+    void globMatchesNoMatch() {
+        assertFalse(WordExpander.globMatches("a*", "xyz"));
+    }
 }

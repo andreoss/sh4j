@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class MainTest {
+
     @TempDir
     File tempDir;
 
@@ -113,6 +114,7 @@ class MainTest {
     @Test
     void exitCodeNoArgsInteractiveIoException() {
         System.setIn(new InputStream() {
+
             public int read() throws IOException {
                 throw new IOException();
             }

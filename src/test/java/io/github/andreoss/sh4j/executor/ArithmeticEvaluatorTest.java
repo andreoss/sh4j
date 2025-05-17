@@ -12,33 +12,120 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class ArithmeticEvaluatorTest {
+
     private final ArithmeticEvaluator e = new ArithmeticEvaluator();
+
     private final Map<String, String> env = new HashMap<>();
 
-    @Test void add() { assertEquals("7", this.e.evalArithmetic("3 + 4", this.env)); }
-    @Test void sub() { assertEquals("3", this.e.evalArithmetic("7 - 4", this.env)); }
-    @Test void mul() { assertEquals("12", this.e.evalArithmetic("3 * 4", this.env)); }
-    @Test void div() { assertEquals("2", this.e.evalArithmetic("9 / 4", this.env)); }
-    @Test void mod() { assertEquals("1", this.e.evalArithmetic("9 % 4", this.env)); }
-    @Test void precedence() { assertEquals("14", this.e.evalArithmetic("2 + 3 * 4", this.env)); }
-    @Test void parens() { assertEquals("20", this.e.evalArithmetic("(2 + 3) * 4", this.env)); }
+    @Test
+    void add() {
+        assertEquals("7", this.e.evalArithmetic("3 + 4", this.env));
+    }
 
-    @Test void shiftLeft() { assertEquals("32", this.e.evalArithmetic("4 << 3", this.env)); }
-    @Test void shiftRight() { assertEquals("4", this.e.evalArithmetic("32 >> 3", this.env)); }
-    @Test void lt() { assertEquals("1", this.e.evalArithmetic("3 < 5", this.env)); }
-    @Test void ge() { assertEquals("1", this.e.evalArithmetic("5 >= 5", this.env)); }
-    @Test void eqEq() { assertEquals("1", this.e.evalArithmetic("5 == 5", this.env)); }
-    @Test void neq() { assertEquals("1", this.e.evalArithmetic("5 != 4", this.env)); }
-    @Test void bitAnd() { assertEquals("4", this.e.evalArithmetic("12 & 6", this.env)); }
-    @Test void bitOr() { assertEquals("14", this.e.evalArithmetic("12 | 6", this.env)); }
-    @Test void bitXor() { assertEquals("10", this.e.evalArithmetic("12 ^ 6", this.env)); }
-    @Test void logicalAnd() { assertEquals("1", this.e.evalArithmetic("1 && 2", this.env)); }
-    @Test void logicalOr() { assertEquals("1", this.e.evalArithmetic("0 || 5", this.env)); }
-    @Test void unaryNot() { assertEquals("1", this.e.evalArithmetic("!0", this.env)); }
-    @Test void unaryBitNot() { assertEquals("-1", this.e.evalArithmetic("~0", this.env)); }
+    @Test
+    void sub() {
+        assertEquals("3", this.e.evalArithmetic("7 - 4", this.env));
+    }
 
-    @Test void ternaryTrue() { assertEquals("10", this.e.evalArithmetic("1 ? 10 : 20", this.env)); }
-    @Test void ternaryFalse() { assertEquals("20", this.e.evalArithmetic("0 ? 10 : 20", this.env)); }
+    @Test
+    void mul() {
+        assertEquals("12", this.e.evalArithmetic("3 * 4", this.env));
+    }
+
+    @Test
+    void div() {
+        assertEquals("2", this.e.evalArithmetic("9 / 4", this.env));
+    }
+
+    @Test
+    void mod() {
+        assertEquals("1", this.e.evalArithmetic("9 % 4", this.env));
+    }
+
+    @Test
+    void precedence() {
+        assertEquals("14", this.e.evalArithmetic("2 + 3 * 4", this.env));
+    }
+
+    @Test
+    void parens() {
+        assertEquals("20", this.e.evalArithmetic("(2 + 3) * 4", this.env));
+    }
+
+    @Test
+    void shiftLeft() {
+        assertEquals("32", this.e.evalArithmetic("4 << 3", this.env));
+    }
+
+    @Test
+    void shiftRight() {
+        assertEquals("4", this.e.evalArithmetic("32 >> 3", this.env));
+    }
+
+    @Test
+    void lt() {
+        assertEquals("1", this.e.evalArithmetic("3 < 5", this.env));
+    }
+
+    @Test
+    void ge() {
+        assertEquals("1", this.e.evalArithmetic("5 >= 5", this.env));
+    }
+
+    @Test
+    void eqEq() {
+        assertEquals("1", this.e.evalArithmetic("5 == 5", this.env));
+    }
+
+    @Test
+    void neq() {
+        assertEquals("1", this.e.evalArithmetic("5 != 4", this.env));
+    }
+
+    @Test
+    void bitAnd() {
+        assertEquals("4", this.e.evalArithmetic("12 & 6", this.env));
+    }
+
+    @Test
+    void bitOr() {
+        assertEquals("14", this.e.evalArithmetic("12 | 6", this.env));
+    }
+
+    @Test
+    void bitXor() {
+        assertEquals("10", this.e.evalArithmetic("12 ^ 6", this.env));
+    }
+
+    @Test
+    void logicalAnd() {
+        assertEquals("1", this.e.evalArithmetic("1 && 2", this.env));
+    }
+
+    @Test
+    void logicalOr() {
+        assertEquals("1", this.e.evalArithmetic("0 || 5", this.env));
+    }
+
+    @Test
+    void unaryNot() {
+        assertEquals("1", this.e.evalArithmetic("!0", this.env));
+    }
+
+    @Test
+    void unaryBitNot() {
+        assertEquals("-1", this.e.evalArithmetic("~0", this.env));
+    }
+
+    @Test
+    void ternaryTrue() {
+        assertEquals("10", this.e.evalArithmetic("1 ? 10 : 20", this.env));
+    }
+
+    @Test
+    void ternaryFalse() {
+        assertEquals("20", this.e.evalArithmetic("0 ? 10 : 20", this.env));
+    }
 
     @Test void assign() {
         assertEquals("5", this.e.evalArithmetic("x = 5", this.env));

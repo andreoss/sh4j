@@ -33,6 +33,7 @@ import io.github.andreoss.sh4j.parser.CaseNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 
 class ExecutorTest {
+
     @Test
     void executeSimpleEcho() {
         final ListNode list = this.parser("echo hello").parse();
@@ -1573,7 +1574,9 @@ class ExecutorTest {
         final java.io.File dir = java.nio.file.Files.createTempDirectory("sh4j_custompath_").toFile();
         dir.deleteOnExit();
         final java.io.File bin = new java.io.File(dir, "myhello");
-        try (java.io.FileWriter w = new java.io.FileWriter(bin)) { w.write("#!/bin/sh\necho ok\n"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(bin)) {
+            w.write("#!/bin/sh\necho ok\n");
+        }
         bin.setExecutable(true);
         bin.deleteOnExit();
         final Map<String, String> env = new HashMap<>();
@@ -1598,7 +1601,9 @@ class ExecutorTest {
     void externalReadWriteFd0() throws Exception {
         final java.io.File f = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         f.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(f)) { w.write("seed\n"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(f)) {
+            w.write("seed\n");
+        }
         final Executor executor = new Executor();
         executor.execute(this.parser("cat <>" + f.getAbsolutePath()).parse());
     }
@@ -1621,7 +1626,9 @@ class ExecutorTest {
     void execNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonExec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
         nonExec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("not a script"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) {
+            w.write("not a script");
+        }
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
         final int code = executor.execute(this.parser("exec " + nonExec.getAbsolutePath()).parse());
@@ -1641,7 +1648,9 @@ class ExecutorTest {
     void externalNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonExec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
         nonExec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("nope"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) {
+            w.write("nope");
+        }
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
         final int code = executor.execute(this.parser(nonExec.getAbsolutePath()).parse());
@@ -2520,7 +2529,9 @@ class ExecutorTest {
         final String inputPath = "/tmp/sh4j_ext_in.txt";
         final String outputPath = "/tmp/sh4j_ext_out.txt";
         new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello world"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) {
+            w.write("hello world");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " > " + outputPath).parse()));
         assertTrue(new java.io.File(outputPath).exists());
@@ -2534,8 +2545,12 @@ class ExecutorTest {
         final String inputPath = "/tmp/sh4j_ext_append_in.txt";
         final String outputPath = "/tmp/sh4j_ext_append_out.txt";
         new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("second"); }
-        try (java.io.FileWriter w = new java.io.FileWriter(outputPath)) { w.write("first\n"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) {
+            w.write("second");
+        }
+        try (java.io.FileWriter w = new java.io.FileWriter(outputPath)) {
+            w.write("first\n");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >> " + outputPath).parse()));
         final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim();
@@ -2550,7 +2565,9 @@ class ExecutorTest {
         final String inputPath = "/tmp/sh4j_ext_clobber_in.txt";
         final String outputPath = "/tmp/sh4j_ext_clobber_out.txt";
         new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello clobber"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) {
+            w.write("hello clobber");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >| " + outputPath).parse()));
         assertTrue(new java.io.File(outputPath).exists());
@@ -2562,7 +2579,9 @@ class ExecutorTest {
     @Test
     void externalRedirectStdoutToStderr() throws Exception {
         final String inputPath = "/tmp/sh4j_ext_12_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) {
+            w.write("hello");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 1>&2").parse()));
         new java.io.File(inputPath).delete();
@@ -2571,7 +2590,9 @@ class ExecutorTest {
     @Test
     void externalRedirectStderrToStdout() throws Exception {
         final String inputPath = "/tmp/sh4j_ext_21_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) {
+            w.write("hello");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 2>&1").parse()));
         new java.io.File(inputPath).delete();
@@ -2603,7 +2624,9 @@ class ExecutorTest {
     void externalStderrAppendRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_append.txt";
         new java.io.File(path).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("initial\n"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(path)) {
+            w.write("initial\n");
+        }
         final Executor executor = new Executor();
         executor.execute(this.parser("cat /nonexistent_path_xyz_456 2>> " + path).parse());
         assertTrue(java.nio.file.Files.readString(java.nio.file.Path.of(path)).contains("initial"));
@@ -2613,7 +2636,9 @@ class ExecutorTest {
     @Test
     void externalReadWriteRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_rw.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("hello"); }
+        try (java.io.FileWriter w = new java.io.FileWriter(path)) {
+            w.write("hello");
+        }
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("cat <> " + path).parse()));
         new java.io.File(path).delete();

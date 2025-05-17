@@ -17,6 +17,7 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 
 class RedirectionHandlerTest {
+
     private final UnaryOperator<String> identityExpander = s -> s;
 
     @Test

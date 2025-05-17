@@ -12,6 +12,7 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 
 class ParserTest {
+
     @Test
     void parseSimpleCommand() {
         final ListNode list = this.parser("echo hello").parse();
