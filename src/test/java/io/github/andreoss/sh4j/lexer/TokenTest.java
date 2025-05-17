@@ -20,8 +20,7 @@ class TokenTest {
 
     @Test
     void createsTokenFromCharReader() {
-        final CharReader r = new CharReader("abc");
-        final Token t = Token.of(TokenType.WORD, "abc", r);
+        final Token t = Token.of(TokenType.WORD, "abc", new CharReader("abc"));
         assertEquals(TokenType.WORD, t.type());
         assertEquals("abc", t.text());
         assertEquals(1, t.line());
@@ -30,14 +29,11 @@ class TokenTest {
 
     @Test
     void tokenEquality() {
-        final Token a = new Token(TokenType.WORD, "x", 1, 0);
-        final Token b = new Token(TokenType.WORD, "x", 1, 0);
-        assertEquals(a, b);
+        assertEquals(new Token(TokenType.WORD, "x", 1, 0), new Token(TokenType.WORD, "x", 1, 0));
     }
 
     @Test
     void tokenToString() {
-        final Token t = new Token(TokenType.NEWLINE, "\n", 1, 0);
-        assertTrue(t.toString().contains("NEWLINE"));
+        assertTrue(new Token(TokenType.NEWLINE, "\n", 1, 0).toString().contains("NEWLINE"));
     }
 }

@@ -138,10 +138,8 @@ class WordExpanderTest {
     @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
         final Executor e = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
-        final WordExpander.ExpansionResult r1 = WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, e);
-        assertTrue(r1.error());
-        final WordExpander.ExpansionResult r2 = WordExpander.expandVariables("plain", env, e);
-        assertFalse(r2.error(), "flag should be consumed by previous wrapper call");
+        assertTrue(WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, e).error());
+        assertFalse(WordExpander.expandVariables("plain", env, e).error(), "flag should be consumed by previous wrapper call");
     }
 
     @Test void expandBracedColonDashUnsetReturnsDefault() {
@@ -255,8 +253,7 @@ class WordExpanderTest {
         final Executor e = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
         env.put("f", "a.txt");
-        final WordExpander.ExpansionResult r = WordExpander.expandBraced("f%.txt", env, e);
-        assertEquals("a", r.value());
+        assertEquals("a", WordExpander.expandBraced("f%.txt", env, e).value());
     }
 
     @Test void globMatchesStar() { assertTrue(WordExpander.globMatches("a*", "abc")); }

@@ -41,96 +41,84 @@ class ExecutorTest {
     void executeSimpleEcho() {
         final ListNode list = this.parser("echo hello").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executePwd() {
         final ListNode list = this.parser("pwd").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeTrue() {
         final ListNode list = this.parser("true").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeFalse() {
         final ListNode list = this.parser("false").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(1, exitCode);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
     void executeWithArguments() {
         final ListNode list = this.parser("echo a b c").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeSemicolonSeparator() {
         final ListNode list = this.parser("echo a; echo b").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeAndIf() {
         final ListNode list = this.parser("echo a && echo b").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeOrIf() {
         final ListNode list = this.parser("false || echo b").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeAndIfStopsOnFailure() {
         final ListNode list = this.parser("false && echo not reached").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(1, exitCode);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
     void executeOrIfStopsOnSuccess() {
         final ListNode list = this.parser("echo success || echo not reached").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeEmptyList() {
         final ListNode list = this.parser("").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeAssignmentOnly() {
         final ListNode list = this.parser("FOO=bar").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
         assertEquals("bar", executor.getVariable("FOO"));
     }
 
@@ -138,16 +126,14 @@ class ExecutorTest {
     void executeAssignmentWithCommand() {
         final ListNode list = this.parser("FOO=hello echo $FOO").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeMultipleAssignments() {
         final ListNode list = this.parser("A=1 B=2").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
         assertEquals("1", executor.getVariable("A"));
         assertEquals("2", executor.getVariable("B"));
     }
@@ -156,40 +142,35 @@ class ExecutorTest {
     void executeVariableExpansion() {
         final ListNode list = this.parser("echo $HOME").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeOutputRedirection() throws Exception {
         final ListNode list = this.parser("echo test > /tmp/sh4j_test_output").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeInputRedirection() throws Exception {
         final ListNode list = this.parser("cat < /dev/null").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executePipeline() {
         final ListNode list = this.parser("echo hello | cat").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeBackground() {
         final ListNode list = this.parser("echo hello &").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
@@ -204,16 +185,14 @@ class ExecutorTest {
     void executeBackgroundAndSequential() {
         final ListNode list = this.parser("echo bg1 & echo seq1").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeClobberRedirection() throws Exception {
         final ListNode list = this.parser("echo test >| /tmp/sh4j_clobber_test").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
@@ -295,16 +274,14 @@ class ExecutorTest {
     void executeMultiplePipelines() {
         final ListNode list = this.parser("echo a; echo b; echo c").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeBangPipeline() {
         final ListNode list = this.parser("! false").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
@@ -313,16 +290,14 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("EMPTY_VAR", "");
         final Executor executor = new Executor(env);
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeCommandNotFound() {
         final ListNode list = this.parser("nonexistent_command_xyz").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(127, exitCode);
+        assertEquals(127, executor.execute(list));
     }
 
     @Test
@@ -336,32 +311,28 @@ class ExecutorTest {
     void executeBangWithTrue() {
         final ListNode list = this.parser("! true").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(1, exitCode);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
     void executeExitZero() {
         final ListNode list = this.parser("exit 0").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeExitOne() {
         final ListNode list = this.parser("exit 1").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(1, exitCode);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
     void executeEchoAbc() {
         final ListNode list = this.parser("echo abc").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
@@ -383,48 +354,42 @@ class ExecutorTest {
     void executeAppendRedirection() throws Exception {
         final ListNode list = this.parser("echo test >> /tmp/sh4j_append_test").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeStderrRedirect() throws Exception {
         final ListNode list = this.parser("echo test 2>/tmp/sh4j_test_stderr").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeStderrToStdout() throws Exception {
         final ListNode list = this.parser("echo test 2>&1").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeCloseStdin() throws Exception {
         final ListNode list = this.parser("cat <&-").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeCloseStdout() throws Exception {
         final ListNode list = this.parser("echo test >&-").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeReadWriteRedirect() throws Exception {
         final ListNode list = this.parser("cat <> /dev/null").parse();
         final Executor executor = new Executor();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
+        assertEquals(0, executor.execute(list));
     }
 
     @Test
@@ -677,8 +642,7 @@ class ExecutorTest {
         final ListNode list = this.parser("pwd").parse();
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        final int result = executor.execute(list);
-        assertEquals(1, result);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
@@ -686,8 +650,7 @@ class ExecutorTest {
         final ListNode list = this.parser("pwd | cat").parse();
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        final int result = executor.execute(list);
-        assertEquals(1, result);
+        assertEquals(1, executor.execute(list));
     }
 
     @Test
@@ -696,8 +659,7 @@ class ExecutorTest {
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
         executor.execute(list);
-        final boolean reInterrupted = Thread.interrupted();
-        assertTrue(reInterrupted, "InterruptedException catch should re-set interrupt flag");
+        assertTrue(Thread.interrupted(), "InterruptedException catch should re-set interrupt flag");
     }
 
     @Test
@@ -708,10 +670,8 @@ class ExecutorTest {
         final Executor executor = new Executor(env);
         executor.setOutputStream(new PrintStream(bos, true));
         final ListNode list = this.parser("export").parse();
-        final int exitCode = executor.execute(list);
-        assertEquals(0, exitCode);
-        final String output = bos.toString();
-        assertTrue(output.contains("export TEST_EXPORT_VAR=hello"));
+        assertEquals(0, executor.execute(list));
+        assertTrue(bos.toString().contains("export TEST_EXPORT_VAR=hello"));
     }
 
     @Test
@@ -1134,32 +1094,28 @@ class ExecutorTest {
     void commandSubstitutionEcho() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        final String result = executor.expandVariables("$(echo hello)", env);
-        assertEquals("hello", result);
+        assertEquals("hello", executor.expandVariables("$(echo hello)", env));
     }
 
     @Test
     void commandSubstitutionInString() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        final String result = executor.expandVariables("msg=$(echo hi)", env);
-        assertEquals("msg=hi", result);
+        assertEquals("msg=hi", executor.expandVariables("msg=$(echo hi)", env));
     }
 
     @Test
     void backtickSubstitution() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        final String result = executor.expandVariables("`echo hello`", env);
-        assertEquals("hello", result);
+        assertEquals("hello", executor.expandVariables("`echo hello`", env));
     }
 
     @Test
     void backtickSubstitutionInString() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        final String result = executor.expandVariables("msg=`echo hi`", env);
-        assertEquals("msg=hi", result);
+        assertEquals("msg=hi", executor.expandVariables("msg=`echo hi`", env));
     }
 
     @Test
@@ -1299,36 +1255,31 @@ class ExecutorTest {
 
     @Test
     void backtickNestedNormalise() {
-        final String result = WordExpander.normaliseBackticks("`echo \\`echo hi\\``");
-        assertEquals("$(echo `echo hi`)", result);
+        assertEquals("$(echo `echo hi`)", WordExpander.normaliseBackticks("`echo \\`echo hi\\``"));
     }
 
     @Test
     void echoBuiltin() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo hello").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo hello").parse()));
     }
 
     @Test
     void echoBuiltinArgs() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo hello world").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo hello world").parse()));
     }
 
     @Test
     void echoBuiltinNoNewline() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo -n hello").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo -n hello").parse()));
     }
 
     @Test
     void echoBuiltinEmpty() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo").parse()));
     }
 
     @Test
@@ -1617,8 +1568,7 @@ class ExecutorTest {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("echo capture-me | cat").parse();
-        executor.execute(list);
+        executor.execute(this.parser("echo capture-me | cat").parse());
         assertTrue(bos.toString().contains("capture-me"), "captureStream: " + bos);
     }
 
@@ -1633,22 +1583,19 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", dir.getAbsolutePath());
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("myhello").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("myhello").parse()));
     }
 
     @Test
     void externalCloseStdin() {
-        final ListNode list = this.parser("cat <&-").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <&-").parse()));
     }
 
     @Test
     void externalStdoutToStderr() {
-        final ListNode list = this.parser("true 1>&2").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true 1>&2").parse()));
     }
 
     @Test
@@ -1656,23 +1603,20 @@ class ExecutorTest {
         final java.io.File f = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         f.deleteOnExit();
         try (java.io.FileWriter w = new java.io.FileWriter(f)) { w.write("seed\n"); }
-        final ListNode list = this.parser("cat <>" + f.getAbsolutePath()).parse();
         final Executor executor = new Executor();
-        executor.execute(list);
+        executor.execute(this.parser("cat <>" + f.getAbsolutePath()).parse());
     }
 
     @Test
     void externalHeredocDashStripsTabs() throws Exception {
-        final ListNode list = this.parser("cat <<-EOF\n\t\thello\nEOF\n").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<-EOF\n\t\thello\nEOF\n").parse()));
     }
 
     @Test
     void exportArgWithEqualsNonStandardName() throws Exception {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("export 1foo=bar").parse();
-        final int code = executor.execute(list);
+        final int code = executor.execute(this.parser("export 1foo=bar").parse());
         assertEquals(0, code);
         assertEquals("bar", executor.getVariable("1foo"));
     }
@@ -1684,8 +1628,7 @@ class ExecutorTest {
         try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("not a script"); }
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
-        final ListNode list = this.parser("exec " + nonExec.getAbsolutePath()).parse();
-        final int code = executor.execute(list);
+        final int code = executor.execute(this.parser("exec " + nonExec.getAbsolutePath()).parse());
         assertTrue(code != 0, "non-executable should fail; got " + code);
     }
 
@@ -1693,8 +1636,7 @@ class ExecutorTest {
     void execInterruptedException() {
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        final ListNode list = this.parser("exec sleep 1").parse();
-        final int code = executor.execute(list);
+        final int code = executor.execute(this.parser("exec sleep 1").parse());
         Thread.interrupted();
         assertEquals(1, code);
     }
@@ -1706,8 +1648,7 @@ class ExecutorTest {
         try (java.io.FileWriter w = new java.io.FileWriter(nonExec)) { w.write("nope"); }
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
-        final ListNode list = this.parser(nonExec.getAbsolutePath()).parse();
-        final int code = executor.execute(list);
+        final int code = executor.execute(this.parser(nonExec.getAbsolutePath()).parse());
         assertTrue(code != 0, "non-executable external should fail; got " + code);
     }
 
@@ -1750,44 +1691,37 @@ class ExecutorTest {
         final String path = "/tmp/sh4j_rw_fd2_" + System.nanoTime();
         new java.io.File(path).delete();
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat /nonexistent_xyz 2<>" + path).parse();
-        executor.execute(list);
+        executor.execute(this.parser("cat /nonexistent_xyz 2<>" + path).parse());
         new java.io.File(path).delete();
     }
 
     @Test
     void externalHereDocRedirect() throws Exception {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat <<EOF\nhello world\nEOF\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<EOF\nhello world\nEOF\n").parse()));
     }
 
     @Test
     void externalHereDocDashRedirect() throws Exception {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat <<-EOF\n\thello dashed\nEOF\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<-EOF\n\thello dashed\nEOF\n").parse()));
     }
 
     @Test
     void shiftLargerThanPositionalCount() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b"));
-        final Executor executor = new Executor(new HashMap<>(), params);
-        final ListNode list = this.parser("shift 100").parse();
-        assertEquals(0, executor.execute(list));
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b")));
+        assertEquals(0, executor.execute(this.parser("shift 100").parse()));
     }
 
     @Test
     void execWithMultipleArgs() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("exec true arg1 arg2 arg3").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("exec true arg1 arg2 arg3").parse()));
     }
 
     @Test
     void positionalParamIndexOutOfRangeIsEmpty() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b"));
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b")));
         final Map<String, String> env = new HashMap<>();
         assertEquals("", executor.expandVariables("$9", env));
     }
@@ -1802,8 +1736,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("c=true; while $c; do c=false; continue; echo unreached; done").parse();
-        executor.execute(list);
+        executor.execute(this.parser("c=true; while $c; do c=false; continue; echo unreached; done").parse());
         assertTrue(bos.toString().trim().isEmpty(), "continue should skip body, got: " + bos);
     }
 
@@ -1812,30 +1745,26 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("type ls").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("type ls").parse()));
         assertTrue(bos.toString().contains("ls is"));
     }
 
     @Test
     void exitWithValidIntegerAndWordExpansionError() {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("exit 5${UNSET_FOR_EXIT_999:?msg}").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, executor.execute(this.parser("exit 5${UNSET_FOR_EXIT_999:?msg}").parse()));
     }
 
     @Test
     void expandBracedMultiDigitPositionalOutOfRange() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c")));
         final Map<String, String> env = new HashMap<>();
         assertEquals("", executor.expandVariables("${10}", env));
     }
 
     @Test
     void expandBracedMultiDigitPositionalInRange() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c")));
         final Map<String, String> env = new HashMap<>();
         assertEquals("b", executor.expandVariables("${2}", env));
     }
@@ -1871,8 +1800,7 @@ class ExecutorTest {
 
     @Test
     void specialParamAtStarWithPositionals() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"));
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c")));
         final Map<String, String> env = new HashMap<>();
         assertEquals("a b c", executor.expandVariables("$@", env));
         assertEquals("a b c", executor.expandVariables("$*", env));
@@ -1880,8 +1808,7 @@ class ExecutorTest {
 
     @Test
     void specialParamAtStarEmpty() {
-        final List<String> params = new ArrayList<>(java.util.Arrays.asList("script"));
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script")));
         final Map<String, String> env = new HashMap<>();
         assertEquals("", executor.expandVariables("$@", env));
     }
@@ -1900,8 +1827,7 @@ class ExecutorTest {
         emptyEnv.put("PATH", "");
         final Executor executor = new Executor(emptyEnv);
         executor.expandVariables("", emptyEnv);
-        final ListNode list = this.parser("nonexistent_xyz_zzz_cmd_abc").parse();
-        assertEquals(127, executor.execute(list));
+        assertEquals(127, executor.execute(this.parser("nonexistent_xyz_zzz_cmd_abc").parse()));
     }
 
     @Test
@@ -1909,15 +1835,13 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", ":/usr/bin");
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true").parse()));
     }
 
     @Test
     void createProcessBuilderWithQuotedArg() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("true \"quoted arg\"").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true \"quoted arg\"").parse()));
     }
 
     @Test
@@ -1925,8 +1849,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("for i in 1 2 3; do continue; echo $i; done").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("for i in 1 2 3; do continue; echo $i; done").parse()));
         assertEquals("", bos.toString().trim());
     }
 
@@ -1935,23 +1858,20 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("type true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("type true").parse()));
         assertTrue(bos.toString().contains("true is"));
     }
 
     @Test
     void exitWithWordExpansionError() {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("exit ${UNSET_FOR_EXIT_8x9:?errmsg}").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, executor.execute(this.parser("exit ${UNSET_FOR_EXIT_8x9:?errmsg}").parse()));
     }
 
     @Test
     void exportArgWithEquals() {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("export FOO=hello").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("export FOO=hello").parse()));
         assertEquals("hello", executor.getVariable("FOO"));
     }
 
@@ -2037,23 +1957,20 @@ class ExecutorTest {
     @Test
     void commandFoundInPath() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true").parse()));
     }
 
     @Test
     void commandNotFoundReturns127() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("nonexistent_cmd_xyz_127").parse();
-        assertEquals(127, executor.execute(list));
+        assertEquals(127, executor.execute(this.parser("nonexistent_cmd_xyz_127").parse()));
     }
 
     @Test
     void commandWithSlashFound() {
         final Map<String, String> env = new HashMap<>();
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("/user/.nix-profile/bin/ls").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("/user/.nix-profile/bin/ls").parse()));
     }
 
     @Test
@@ -2069,10 +1986,8 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", dir.getAbsolutePath());
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("mycmd").parse();
-        final int exitCode = executor.execute(list);
         dir.delete();
-        assertEquals(42, exitCode);
+        assertEquals(42, executor.execute(this.parser("mycmd").parse()));
     }
 
     @Test
@@ -2080,8 +1995,7 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", "");
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("somecmd").parse();
-        assertEquals(127, executor.execute(list));
+        assertEquals(127, executor.execute(this.parser("somecmd").parse()));
     }
 
     @Test
@@ -2097,39 +2011,33 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", "/nonexistent_test_dir_xyz:" + dir.getAbsolutePath());
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("mycmd2").parse();
-        final int exitCode = executor.execute(list);
         dir.delete();
-        assertEquals(7, exitCode);
+        assertEquals(7, executor.execute(this.parser("mycmd2").parse()));
     }
 
     @Test
     void commandWithSlashNotFound() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("/nonexistent_path_xyz_abc/cmd").parse();
-        assertEquals(127, executor.execute(list));
+        assertEquals(127, executor.execute(this.parser("/nonexistent_path_xyz_abc/cmd").parse()));
     }
 
     @Test
     void exportWithValue() {
-        final ListNode list = this.parser("export FOO=bar").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("export FOO=bar").parse()));
         assertEquals("bar", executor.getVariable("FOO"));
     }
 
     @Test
     void exportExistingVariable() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("export FOO").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("export FOO").parse()));
     }
 
     @Test
     void exportThenVariableExpands() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("export MSG=hello; echo $MSG").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("export MSG=hello; echo $MSG").parse()));
         assertEquals("hello", executor.getVariable("MSG"));
     }
 
@@ -2282,22 +2190,19 @@ class ExecutorTest {
     @Test
     void echoQuotedVarNoSplit() {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("MSG=\"hello  world\"; echo \"$MSG\"").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("MSG=\"hello  world\"; echo \"$MSG\"").parse()));
     }
 
     @Test
     void echoUnquotedVarSplit() {
         final Executor executor = new Executor(new HashMap<>());
-        final ListNode list = this.parser("MSG=\"hello  world\"; echo $MSG").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("MSG=\"hello  world\"; echo $MSG").parse()));
     }
 
     @Test
     void echoQuotedLiteralNoSplit() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo \"hello   world\"").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo \"hello   world\"").parse()));
     }
 
     @Test
@@ -2305,8 +2210,7 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("IFS", ":");
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("echo a:b:c").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo a:b:c").parse()));
     }
 
     @Test
@@ -2314,8 +2218,7 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("IFS", "");
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("echo hello   world").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo hello   world").parse()));
     }
 
     @Test
@@ -2355,34 +2258,29 @@ class ExecutorTest {
 
     @Test
     void pathnameExpandGlobNoMatchKeepsPattern() {
-        final List<String> result = WordExpander.pathnameExpand(List.of("__no_match__xyz__"));
-        assertEquals(List.of("__no_match__xyz__"), result);
+        assertEquals(List.of("__no_match__xyz__"), WordExpander.pathnameExpand(List.of("__no_match__xyz__")));
     }
 
     @Test
     void pathnameExpandGlobWithMatch() {
-        final List<String> result = WordExpander.pathnameExpand(List.of("pom.xml"));
-        assertEquals(List.of("pom.xml"), result);
+        assertEquals(List.of("pom.xml"), WordExpander.pathnameExpand(List.of("pom.xml")));
     }
 
     @Test
     void pathnameExpandWildcardMatch() {
-        final List<String> result = WordExpander.pathnameExpand(List.of("*.xml"));
-        assertTrue(result.contains("pom.xml"));
+        assertTrue(WordExpander.pathnameExpand(List.of("*.xml")).contains("pom.xml"));
     }
 
     @Test
     void pathnameExpandGlobQuoted() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo \"*.java\"").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo \"*.java\"").parse()));
     }
 
     @Test
     void pathnameExpandGlobUnquoted() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("echo *.java").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("echo *.java").parse()));
     }
 
     @Test
@@ -2416,17 +2314,15 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setErrorStream(new PrintStream(bos, true));
         executor.expandVariables("${x:?my error}", new HashMap<>());
-        final String output = bos.toString().trim();
-        assertTrue(output.contains("my error"), "error message should go to injected stream");
+        assertTrue(bos.toString().trim().contains("my error"), "error message should go to injected stream");
     }
 
     @Test
     void cdToDirectory() throws Exception {
         final String saved = System.getProperty("user.dir");
         try {
-            final ListNode list = this.parser("cd /tmp").parse();
             final Executor executor = new Executor();
-            assertEquals(0, executor.execute(list));
+            assertEquals(0, executor.execute(this.parser("cd /tmp").parse()));
             assertEquals("/tmp", executor.getVariable("PWD"));
         } finally {
             System.setProperty("user.dir", saved);
@@ -2440,8 +2336,7 @@ class ExecutorTest {
             final Map<String, String> env = new HashMap<>();
             env.put("HOME", "/tmp");
             final Executor executor = new Executor(env);
-            final ListNode list = this.parser("cd").parse();
-            assertEquals(0, executor.execute(list));
+            assertEquals(0, executor.execute(this.parser("cd").parse()));
             assertEquals("/tmp", executor.getVariable("PWD"));
         } finally {
             System.setProperty("user.dir", saved);
@@ -2450,9 +2345,8 @@ class ExecutorTest {
 
     @Test
     void cdToNonexistentReturns1() {
-        final ListNode list = this.parser("cd /sh4j_nonexistent_dir_xyz").parse();
         final Executor executor = new Executor();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, executor.execute(this.parser("cd /sh4j_nonexistent_dir_xyz").parse()));
     }
 
     @Test
@@ -2465,8 +2359,7 @@ class ExecutorTest {
             final Executor executor = new Executor(env);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             executor.setCaptureStream(bos);
-            final ListNode list = this.parser("cd -").parse();
-            assertEquals(0, executor.execute(list));
+            assertEquals(0, executor.execute(this.parser("cd -").parse()));
             assertEquals("/", executor.getVariable("PWD"));
             assertEquals("/tmp", executor.getVariable("OLDPWD"));
             assertEquals("/", bos.toString().trim());
@@ -2482,8 +2375,7 @@ class ExecutorTest {
             final Map<String, String> env = new HashMap<>();
             env.put("MYDIR", "/tmp");
             final Executor executor = new Executor(env);
-            final ListNode list = this.parser("cd $MYDIR").parse();
-            assertEquals(0, executor.execute(list));
+            assertEquals(0, executor.execute(this.parser("cd $MYDIR").parse()));
             assertEquals("/tmp", executor.getVariable("PWD"));
         } finally {
             System.setProperty("user.dir", saved);
@@ -2495,8 +2387,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("type echo cd exit export type true false shift unset").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("type echo cd exit export type true false shift unset").parse()));
         final String out = bos.toString();
         assertTrue(out.contains("echo is a shell built-in"));
         assertTrue(out.contains("cd is a shell built-in"));
@@ -2512,51 +2403,44 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("type true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("type true").parse()));
         assertTrue(bos.toString().contains("true is "));
     }
 
     @Test
     void typeNotFound() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("type nonexistent_cmd_xyz").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, executor.execute(this.parser("type nonexistent_cmd_xyz").parse()));
     }
 
     @Test
     void execBuiltinRunsCommand() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("exec true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("exec true").parse()));
     }
 
     @Test
     void execBuiltinNotFoundReturns127() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("exec nonexistent_cmd_xyz").parse();
-        assertEquals(127, executor.execute(list));
+        assertEquals(127, executor.execute(this.parser("exec nonexistent_cmd_xyz").parse()));
     }
 
     @Test
     void execBuiltinNoArgsIsNoop() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("exec").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("exec").parse()));
     }
 
     @Test
     void trueBuiltinReturns0() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("true").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true").parse()));
     }
 
     @Test
     void falseBuiltinReturns1() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("false").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, executor.execute(this.parser("false").parse()));
     }
 
     @Test
@@ -2564,30 +2448,25 @@ class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("MYVAR", "value");
         final Executor executor = new Executor(env);
-        final ListNode list = this.parser("unset MYVAR").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("unset MYVAR").parse()));
         assertNull(executor.getVariable("MYVAR"));
     }
 
     @Test
     void shiftRemovesPositionalParam() {
-        final List<String> params = new ArrayList<>(List.of("sh", "a", "b", "c"));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(List.of("sh", "a", "b", "c")));
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("shift; echo $#").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("shift; echo $#").parse()));
         assertEquals("2", bos.toString().trim());
     }
 
     @Test
     void shiftWithCount() {
-        final List<String> params = new ArrayList<>(List.of("sh", "a", "b", "c"));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final Executor executor = new Executor(new HashMap<>(), params);
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(List.of("sh", "a", "b", "c")));
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("shift 2; echo $#").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("shift 2; echo $#").parse()));
         assertEquals("1", bos.toString().trim());
     }
 
@@ -2596,8 +2475,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("while exit $?; do echo ran; break; exit 1; done").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("while exit $?; do echo ran; break; exit 1; done").parse()));
         assertEquals("ran", bos.toString().trim());
     }
 
@@ -2606,8 +2484,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("for i in a b c; do echo $i; break; done").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("for i in a b c; do echo $i; break; done").parse()));
         assertEquals("a", bos.toString().trim());
     }
 
@@ -2616,8 +2493,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("for i in a b; do echo $i; continue; echo after; done").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("for i in a b; do echo $i; continue; echo after; done").parse()));
         assertEquals("a\nb", bos.toString().trim());
         assertFalse(bos.toString().contains("after"));
     }
@@ -2625,8 +2501,7 @@ class ExecutorTest {
     @Test
     void colonBuiltinReturns0() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser(":").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser(":").parse()));
     }
 
     @Test
@@ -2634,16 +2509,14 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("eval echo hello world").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("eval echo hello world").parse()));
         assertEquals("hello world", bos.toString().trim());
     }
 
     @Test
     void evalBuiltinNoArgsReturns0() {
         final Executor executor = new Executor();
-        final ListNode list = this.parser("eval").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("eval").parse()));
     }
 
     @Test
@@ -2653,8 +2526,7 @@ class ExecutorTest {
         new java.io.File(outputPath).delete();
         try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello world"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat < " + inputPath + " > " + outputPath).parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " > " + outputPath).parse()));
         assertTrue(new java.io.File(outputPath).exists());
         assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
         new java.io.File(inputPath).delete();
@@ -2669,8 +2541,7 @@ class ExecutorTest {
         try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("second"); }
         try (java.io.FileWriter w = new java.io.FileWriter(outputPath)) { w.write("first\n"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat < " + inputPath + " >> " + outputPath).parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >> " + outputPath).parse()));
         final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim();
         assertTrue(content.startsWith("first"));
         assertTrue(content.contains("second"));
@@ -2685,8 +2556,7 @@ class ExecutorTest {
         new java.io.File(outputPath).delete();
         try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello clobber"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat < " + inputPath + " >| " + outputPath).parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >| " + outputPath).parse()));
         assertTrue(new java.io.File(outputPath).exists());
         assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
         new java.io.File(inputPath).delete();
@@ -2698,8 +2568,7 @@ class ExecutorTest {
         final String inputPath = "/tmp/sh4j_ext_12_in.txt";
         try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat < " + inputPath + " 1>&2").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 1>&2").parse()));
         new java.io.File(inputPath).delete();
     }
 
@@ -2708,23 +2577,20 @@ class ExecutorTest {
         final String inputPath = "/tmp/sh4j_ext_21_in.txt";
         try (java.io.FileWriter w = new java.io.FileWriter(inputPath)) { w.write("hello"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat < " + inputPath + " 2>&1").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 2>&1").parse()));
         new java.io.File(inputPath).delete();
     }
 
     @Test
     void externalCloseStdout() {
-        final ListNode list = this.parser("true 1>&-").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true 1>&-").parse()));
     }
 
     @Test
     void externalCloseStderr() {
-        final ListNode list = this.parser("true 2>&-").parse();
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("true 2>&-").parse()));
     }
 
     @Test
@@ -2732,8 +2598,7 @@ class ExecutorTest {
         final String path = "/tmp/sh4j_ext_err_out.txt";
         new java.io.File(path).delete();
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat /nonexistent_path_xyz_123 2> " + path).parse();
-        executor.execute(list);
+        executor.execute(this.parser("cat /nonexistent_path_xyz_123 2> " + path).parse());
         assertTrue(new java.io.File(path).exists());
         new java.io.File(path).delete();
     }
@@ -2744,10 +2609,8 @@ class ExecutorTest {
         new java.io.File(path).delete();
         try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("initial\n"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat /nonexistent_path_xyz_456 2>> " + path).parse();
-        executor.execute(list);
-        final String content = java.nio.file.Files.readString(java.nio.file.Path.of(path));
-        assertTrue(content.contains("initial"));
+        executor.execute(this.parser("cat /nonexistent_path_xyz_456 2>> " + path).parse());
+        assertTrue(java.nio.file.Files.readString(java.nio.file.Path.of(path)).contains("initial"));
         new java.io.File(path).delete();
     }
 
@@ -2756,8 +2619,7 @@ class ExecutorTest {
         final String path = "/tmp/sh4j_ext_rw.txt";
         try (java.io.FileWriter w = new java.io.FileWriter(path)) { w.write("hello"); }
         final Executor executor = new Executor();
-        final ListNode list = this.parser("cat <> " + path).parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <> " + path).parse()));
         new java.io.File(path).delete();
     }
 
@@ -2766,8 +2628,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("cat <<- EOF\n\thello\nEOF\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<- EOF\n\thello\nEOF\n").parse()));
         assertEquals("hello", bos.toString().trim());
     }
 
@@ -2776,8 +2637,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("cat <<- EOF\n\t\thello\nEOF\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<- EOF\n\t\thello\nEOF\n").parse()));
         assertEquals("hello", bos.toString().trim());
     }
 
@@ -2786,8 +2646,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("cat <<- EOF\n\thello\n\tEOF\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<- EOF\n\thello\n\tEOF\n").parse()));
         assertEquals("hello", bos.toString().trim());
     }
 
@@ -2796,8 +2655,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("cat <<- MARKER\n\tfirst\nsecond\n\tthird\nMARKER\n").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("cat <<- MARKER\n\tfirst\nsecond\n\tthird\nMARKER\n").parse()));
         assertEquals("first\nsecond\nthird", bos.toString().trim());
     }
 
@@ -2806,22 +2664,17 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        final ListNode list = this.parser("myfunc() { true; }; type myfunc").parse();
-        assertEquals(0, executor.execute(list));
+        assertEquals(0, executor.execute(this.parser("myfunc() { true; }; type myfunc").parse()));
         assertTrue(bos.toString().contains("myfunc is a function"));
     }
 
     @Test
     void shiftNonNumericReturns1() {
-        final Executor executor = new Executor();
-        final ListNode list = this.parser("shift abc").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, new Executor().execute(this.parser("shift abc").parse()));
     }
 
     @Test
     void shiftNegativeReturns1() {
-        final Executor executor = new Executor();
-        final ListNode list = this.parser("shift -1").parse();
-        assertEquals(1, executor.execute(list));
+        assertEquals(1, new Executor().execute(this.parser("shift -1").parse()));
     }
 }

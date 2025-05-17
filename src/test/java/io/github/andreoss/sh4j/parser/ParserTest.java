@@ -173,16 +173,14 @@ class ParserTest {
         assertInstanceOf(Subshell.class, pipeline.getCommands().get(0));
         final Subshell sub = (Subshell) pipeline.getCommands().get(0);
         assertEquals(1, sub.getList().getPipelines().size());
-        final SimpleCommand inner = (SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0);
-        assertEquals("echo", inner.getName());
+        assertEquals("echo", ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName());
     }
 
     @Test
     void parseSubshellWithMultiplePipelines() {
         final ListNode list = this.parser("(echo a; echo b)").parse();
         final Pipeline pipeline = list.getPipelines().get(0);
-        final Subshell sub = (Subshell) pipeline.getCommands().get(0);
-        assertEquals(2, sub.getList().getPipelines().size());
+        assertEquals(2, ((Subshell) pipeline.getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test
@@ -204,8 +202,7 @@ class ParserTest {
         assertInstanceOf(Grouping.class, pipeline.getCommands().get(0));
         final Grouping g = (Grouping) pipeline.getCommands().get(0);
         assertEquals(1, g.getList().getPipelines().size());
-        final SimpleCommand inner = (SimpleCommand) g.getList().getPipelines().get(0).getCommands().get(0);
-        assertEquals("echo", inner.getName());
+        assertEquals("echo", ((SimpleCommand) g.getList().getPipelines().get(0).getCommands().get(0)).getName());
     }
 
     @Test
@@ -469,29 +466,25 @@ class ParserTest {
     @Test
     void parseFunctionBodyWithIf() {
         final ListNode list = this.parser("foo() if true; then echo hi; fi").parse();
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithFor() {
         final ListNode list = this.parser("foo() for var in a; do echo $var; done").parse();
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithWhile() {
         final ListNode list = this.parser("foo() while false; do echo hi; done").parse();
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithCase() {
         final ListNode list = this.parser("foo() case foo in pat) echo hi;; esac").parse();
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
@@ -536,8 +529,7 @@ class ParserTest {
     void parseElifChainNestedElif() {
         final ListNode list = this.parser("if false; then a; elif false; then b; elif true; then c; fi").parse();
         assertEquals(1, list.getPipelines().size());
-        final Pipeline p = list.getPipelines().get(0);
-        assertInstanceOf(IfNode.class, p.getCommands().get(0));
+        assertInstanceOf(IfNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
@@ -608,16 +600,14 @@ class ParserTest {
     void parseCaseMultilineBody() {
         final ListNode list = this.parser("case x in\n  a) echo aa;;\n  b) echo bb;;\nesac").parse();
         assertEquals(1, list.getPipelines().size());
-        final CaseNode c = (CaseNode) list.getPipelines().get(0).getCommands().get(0);
-        assertEquals(2, c.getItems().size());
+        assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
     void parseCaseMultilineWithBlankLinesBetweenArms() {
         final ListNode list = this.parser("case y in\n\n  a) echo aa;;\n\n  b) echo bb;;\n\nesac").parse();
         assertEquals(1, list.getPipelines().size());
-        final CaseNode c = (CaseNode) list.getPipelines().get(0).getCommands().get(0);
-        assertEquals(2, c.getItems().size());
+        assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
@@ -639,20 +629,17 @@ class ParserTest {
 
     @Test
     void parseWhileWithAmpInCondition() {
-        final ListNode list = this.parser("while true & false; do echo hi; done").parse();
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parser("while true & false; do echo hi; done").parse().getPipelines().size());
     }
 
     @Test
     void parseWhileWithAndIfInCondition() {
-        final ListNode list = this.parser("while true && false; do echo hi; done").parse();
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parser("while true && false; do echo hi; done").parse().getPipelines().size());
     }
 
     @Test
     void parseWhileWithOrIfInCondition() {
-        final ListNode list = this.parser("while true || false; do echo hi; done").parse();
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parser("while true || false; do echo hi; done").parse().getPipelines().size());
     }
 
     @Test

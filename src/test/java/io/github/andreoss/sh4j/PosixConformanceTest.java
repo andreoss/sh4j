@@ -19,9 +19,8 @@ class PosixConformanceTest {
     private String run(String script, String... args) throws Exception {
         final File s = this.tempDir.resolve("c.sh").toFile();
         try (FileWriter w = new FileWriter(s)) { w.write(script); }
-        final String javaBin = System.getProperty("java.home") + "/bin/java";
         final java.util.List<String> cmd = new java.util.ArrayList<>();
-        cmd.add(javaBin);
+        cmd.add(System.getProperty("java.home") + "/bin/java");
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
@@ -30,9 +29,8 @@ class PosixConformanceTest {
         final ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
         final Process p = pb.start();
-        final String out = new String(p.getInputStream().readAllBytes());
         p.waitFor();
-        return out;
+        return new String(p.getInputStream().readAllBytes());
     }
 
     @Test
@@ -87,8 +85,7 @@ class PosixConformanceTest {
 
     @Test
     void forLoopBody() throws Exception {
-        final String out = run("for i in a b c; do echo $i; done\n").trim();
-        assertEquals("a\nb\nc", out);
+        assertEquals("a\nb\nc", run("for i in a b c; do echo $i; done\n").trim());
     }
 
     @Test
@@ -103,7 +100,6 @@ class PosixConformanceTest {
 
     @Test
     void hereDocContent() throws Exception {
-        final String out = run("cat <<EOF\nline1\nline2\nEOF\n").trim();
-        assertEquals("line1\nline2", out);
+        assertEquals("line1\nline2", run("cat <<EOF\nline1\nline2\nEOF\n").trim());
     }
 }

@@ -86,8 +86,7 @@ class LexerTest {
         final Token t2 = l.nextToken();
         assertEquals(TokenType.WORD, t2.type());
         assertEquals("hello", t2.text());
-        final Token t3 = l.nextToken();
-        assertEquals(TokenType.NEWLINE, t3.type());
+        assertEquals(TokenType.NEWLINE, l.nextToken().type());
     }
 
     @Test
@@ -185,8 +184,7 @@ class LexerTest {
         final Token t1 = l.nextToken();
         assertEquals(TokenType.WORD, t1.type());
         assertEquals("echo", t1.text());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.LPAREN, t2.type());
+        assertEquals(TokenType.LPAREN, l.nextToken().type());
     }
 
     @Test
@@ -195,8 +193,7 @@ class LexerTest {
         final Token t1 = l.nextToken();
         assertEquals(TokenType.WORD, t1.type());
         assertEquals("echo", t1.text());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.RPAREN, t2.type());
+        assertEquals(TokenType.RPAREN, l.nextToken().type());
     }
 
     @Test
@@ -291,8 +288,7 @@ class LexerTest {
     void assignmentWordEdgeCases() {
         final Lexer l = this.lexer("=value");
         assertEquals(TokenType.WORD, l.nextToken().type());
-        final Lexer l2 = this.lexer("_=value");
-        assertEquals(TokenType.ASSIGNMENT_WORD, l2.nextToken().type());
+        assertEquals(TokenType.ASSIGNMENT_WORD, this.lexer("_=value").nextToken().type());
     }
 
     @Test
@@ -321,8 +317,7 @@ class LexerTest {
         final Token t1 = l.nextToken();
         assertEquals(TokenType.IO_NUMBER, t1.type());
         assertEquals("2", t1.text());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.LESS, t2.type());
+        assertEquals(TokenType.LESS, l.nextToken().type());
     }
 
     @Test
@@ -424,21 +419,18 @@ class LexerTest {
     @Test
     void readHereDocContentSkipsLeadingNewline() {
         final Lexer l = this.lexer("\nhello\nEOF\n");
-        final String content = l.readHereDocContent("EOF", false);
-        assertEquals("hello", content);
+        assertEquals("hello", l.readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentEmptyBody() {
         final Lexer l = this.lexer("EOF\n");
-        final String content = l.readHereDocContent("EOF", false);
-        assertEquals("", content);
+        assertEquals("", l.readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentMultipleLines() {
         final Lexer l = this.lexer("\nfirst\nsecond\nthird\nEOF\n");
-        final String content = l.readHereDocContent("EOF", false);
-        assertEquals("first\nsecond\nthird", content);
+        assertEquals("first\nsecond\nthird", l.readHereDocContent("EOF", false));
     }
 }
