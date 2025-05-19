@@ -4,13 +4,11 @@
  */
 package io.github.andreoss.sh4j;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
 import java.io.FileWriter;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PosixConformanceTest {
 

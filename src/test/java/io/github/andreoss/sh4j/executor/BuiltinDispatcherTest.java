@@ -4,12 +4,10 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.HashMap;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BuiltinDispatcherTest {
 

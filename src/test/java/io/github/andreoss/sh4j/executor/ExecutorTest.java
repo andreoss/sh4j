@@ -4,8 +4,6 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,21 +14,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.Test;
-
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.CaseNode;
+import io.github.andreoss.sh4j.parser.ForNode;
+import io.github.andreoss.sh4j.parser.FunctionNode;
+import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
-import io.github.andreoss.sh4j.parser.IfNode;
-import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.WhileNode;
-import io.github.andreoss.sh4j.parser.CaseNode;
-import io.github.andreoss.sh4j.parser.FunctionNode;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExecutorTest {
 

@@ -4,12 +4,10 @@
  */
 package io.github.andreoss.sh4j.lexer;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 import java.io.Reader;
-
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CharReaderTest {
 

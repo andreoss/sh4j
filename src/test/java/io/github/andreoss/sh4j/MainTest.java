@@ -4,18 +4,16 @@
  */
 package io.github.andreoss.sh4j;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MainTest {
 

@@ -4,17 +4,14 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.UnaryOperator;
-
 import org.junit.jupiter.api.Test;
-
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RedirectionHandlerTest {
 
