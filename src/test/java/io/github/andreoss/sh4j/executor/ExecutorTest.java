@@ -206,15 +206,15 @@ class ExecutorTest {
     @Test
     void executeBuiltinStderrRedirectToFile() throws Exception {
         final String file = "/tmp/sh4j_stderr_test";
-        final ListNode list = this.parser("echo hello 2>" + file).parse();
+        final ListNode list = this.parser(String.format("echo hello 2>%s", file)).parse();
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
     }
 
     @Test
     void executeBuiltinStderrAppendToFile() throws Exception {
-        final String file = "/tmp/sh4j_stderr_append_" + System.nanoTime();
-        final ListNode list = this.parser("echo hello 2>>" + file).parse();
+        final String file = String.format("/tmp/sh4j_stderr_append_%s", System.nanoTime());
+        final ListNode list = this.parser(String.format("echo hello 2>>%s", file)).parse();
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
         new java.io.File(file).delete();
@@ -222,8 +222,8 @@ class ExecutorTest {
 
     @Test
     void executeBuiltinStdoutAppendToFile() throws Exception {
-        final String file = "/tmp/sh4j_stdout_append_" + System.nanoTime();
-        final ListNode list = this.parser("echo hello >>" + file).parse();
+        final String file = String.format("/tmp/sh4j_stdout_append_%s", System.nanoTime());
+        final ListNode list = this.parser(String.format("echo hello >>%s", file)).parse();
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(list));
         new java.io.File(file).delete();
@@ -440,7 +440,7 @@ class ExecutorTest {
         final int code = executor.execute(list);
         assertTrue(code == 127 || code == 126,
                 "Pipeline with missing middle stage must exit with POSIX "
-                        + "command-not-found(127) or not-executable(126); got " + code);
+                        + String.format("command-not-found(127) or not-executable(126); got %s", code));
     }
 
     @Test
@@ -1563,7 +1563,7 @@ class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setCaptureStream(bos);
         executor.execute(this.parser("echo capture-me | cat").parse());
-        assertTrue(bos.toString().contains("capture-me"), "captureStream: " + bos);
+        assertTrue(bos.toString().contains("capture-me"), String.format("captureStream: %s", bos));
     }
 
     @Test
@@ -1602,7 +1602,7 @@ class ExecutorTest {
             w.write("seed\n");
         }
         final Executor executor = new Executor();
-        executor.execute(this.parser("cat <>" + f.getAbsolutePath()).parse());
+        executor.execute(this.parser(String.format("cat <>%s", f.getAbsolutePath())).parse());
     }
 
     @Test
@@ -1628,8 +1628,8 @@ class ExecutorTest {
         }
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
-        final int code = executor.execute(this.parser("exec " + nonExec.getAbsolutePath()).parse());
-        assertTrue(code != 0, "non-executable should fail; got " + code);
+        final int code = executor.execute(this.parser(String.format("exec %s", nonExec.getAbsolutePath())).parse());
+        assertTrue(code != 0, String.format("non-executable should fail; got %s", code));
     }
 
     @Test
@@ -1651,7 +1651,7 @@ class ExecutorTest {
         nonExec.setExecutable(false);
         final Executor executor = new Executor();
         final int code = executor.execute(this.parser(nonExec.getAbsolutePath()).parse());
-        assertTrue(code != 0, "non-executable external should fail; got " + code);
+        assertTrue(code != 0, String.format("non-executable external should fail; got %s", code));
     }
 
     @Test
@@ -1690,10 +1690,10 @@ class ExecutorTest {
 
     @Test
     void externalReadWriteRedirectFd2() throws Exception {
-        final String path = "/tmp/sh4j_rw_fd2_" + System.nanoTime();
+        final String path = String.format("/tmp/sh4j_rw_fd2_%s", System.nanoTime());
         new java.io.File(path).delete();
         final Executor executor = new Executor();
-        executor.execute(this.parser("cat /nonexistent_xyz 2<>" + path).parse());
+        executor.execute(this.parser(String.format("cat /nonexistent_xyz 2<>%s", path)).parse());
         new java.io.File(path).delete();
     }
 
@@ -1739,7 +1739,7 @@ class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(this.parser("c=true; while $c; do c=false; continue; echo unreached; done").parse());
-        assertTrue(bos.toString().trim().isEmpty(), "continue should skip body, got: " + bos);
+        assertTrue(bos.toString().trim().isEmpty(), String.format("continue should skip body, got: %s", bos));
     }
 
     @Test
@@ -1977,7 +1977,7 @@ class ExecutorTest {
 
     @Test
     void commandFoundInCustomPath() throws IOException {
-        final File dir = new File("/tmp/sh4j_path_test_" + System.nanoTime());
+        final File dir = new File(String.format("/tmp/sh4j_path_test_%s", System.nanoTime()));
         dir.mkdirs();
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd");
@@ -2002,7 +2002,7 @@ class ExecutorTest {
 
     @Test
     void commandFoundInSecondPathDir() throws IOException {
-        final File dir = new File("/tmp/sh4j_path_test2_" + System.nanoTime());
+        final File dir = new File(String.format("/tmp/sh4j_path_test2_%s", System.nanoTime()));
         dir.mkdirs();
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd2");
@@ -2011,7 +2011,7 @@ class ExecutorTest {
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", "/nonexistent_test_dir_xyz:" + dir.getAbsolutePath());
+        env.put("PATH", String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath()));
         final Executor executor = new Executor(env);
         dir.delete();
         assertEquals(7, executor.execute(this.parser("mycmd2").parse()));
@@ -2530,7 +2530,7 @@ class ExecutorTest {
             w.write("hello world");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " > " + outputPath).parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" > %s", outputPath)).parse()));
         assertTrue(new java.io.File(outputPath).exists());
         assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
         new java.io.File(inputPath).delete();
@@ -2549,7 +2549,7 @@ class ExecutorTest {
             w.write("first\n");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >> " + outputPath).parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" >> %s", outputPath)).parse()));
         final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim();
         assertTrue(content.startsWith("first"));
         assertTrue(content.contains("second"));
@@ -2566,7 +2566,7 @@ class ExecutorTest {
             w.write("hello clobber");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " >| " + outputPath).parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" >| %s", outputPath)).parse()));
         assertTrue(new java.io.File(outputPath).exists());
         assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
         new java.io.File(inputPath).delete();
@@ -2580,7 +2580,7 @@ class ExecutorTest {
             w.write("hello");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 1>&2").parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + " 1>&2").parse()));
         new java.io.File(inputPath).delete();
     }
 
@@ -2591,7 +2591,7 @@ class ExecutorTest {
             w.write("hello");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat < " + inputPath + " 2>&1").parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + " 2>&1").parse()));
         new java.io.File(inputPath).delete();
     }
 
@@ -2612,7 +2612,7 @@ class ExecutorTest {
         final String path = "/tmp/sh4j_ext_err_out.txt";
         new java.io.File(path).delete();
         final Executor executor = new Executor();
-        executor.execute(this.parser("cat /nonexistent_path_xyz_123 2> " + path).parse());
+        executor.execute(this.parser(String.format("cat /nonexistent_path_xyz_123 2> %s", path)).parse());
         assertTrue(new java.io.File(path).exists());
         new java.io.File(path).delete();
     }
@@ -2625,7 +2625,7 @@ class ExecutorTest {
             w.write("initial\n");
         }
         final Executor executor = new Executor();
-        executor.execute(this.parser("cat /nonexistent_path_xyz_456 2>> " + path).parse());
+        executor.execute(this.parser(String.format("cat /nonexistent_path_xyz_456 2>> %s", path)).parse());
         assertTrue(java.nio.file.Files.readString(java.nio.file.Path.of(path)).contains("initial"));
         new java.io.File(path).delete();
     }
@@ -2637,7 +2637,7 @@ class ExecutorTest {
             w.write("hello");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser("cat <> " + path).parse()));
+        assertEquals(0, executor.execute(this.parser(String.format("cat <> %s", path)).parse()));
         new java.io.File(path).delete();
     }
 

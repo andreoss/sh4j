@@ -267,7 +267,7 @@ class LexerTest {
     @Test
     void wordBreakAtAllOperators() {
         for (final String op : new String[]{"&", "|", ";", "<", ">", "(", ")"}) {
-            final Lexer l = this.lexer("a" + op);
+            final Lexer l = this.lexer(String.format("a%s", op));
             assertEquals("a", l.nextToken().text());
             assertEquals(op, l.nextToken().text());
         }
@@ -430,8 +430,8 @@ class LexerTest {
     private void assertOperator(String op, TokenType expected) {
         final Lexer l = this.lexer(op);
         final Token t = l.nextToken();
-        assertEquals(expected, t.type(), "Operator " + op);
-        assertEquals(op, t.text(), "Operator text " + op);
+        assertEquals(expected, t.type(), String.format("Operator %s", op));
+        assertEquals(op, t.text(), String.format("Operator text %s", op));
     }
 
 }
