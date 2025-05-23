@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
@@ -87,7 +88,7 @@ class PosixConformanceTest {
 
     private String run(String script, String... args) throws Exception {
         final File s = this.tempDir.resolve("c.sh").toFile();
-        try (FileWriter w = new FileWriter(s)) {
+        try (FileWriter w = new FileWriter(s, StandardCharsets.UTF_8)) {
             w.write(script);
         }
         final java.util.List<String> cmd = new java.util.ArrayList<>();

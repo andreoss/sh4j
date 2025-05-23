@@ -7,6 +7,7 @@ package io.github.andreoss.sh4j;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
         final File probe = this.tempDir.resolve("probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) {
+        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("hello-from-cat\n");
         }
         final File script = this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -78,7 +79,7 @@ class IntegrationTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(nativeBin.isFile() && nativeBin.canExecute(),
                 "target/sh4j native binary not built; skipping native smoke");
         final File probe = this.tempDir.resolve("nprobe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) {
+        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("hello-native\n");
         }
         final File script = this.writeScript("ncatprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -102,7 +103,7 @@ class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatProbe() throws Exception {
         final File probe = this.tempDir.resolve("h_probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe)) {
+        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("child-probe\n");
         }
         final File s = this.writeScript("h_cat.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -274,7 +275,7 @@ class IntegrationTest {
 
     private File writeScript(String name, String content) throws IOException {
         final File script = this.tempDir.resolve(name).toFile();
-        try (FileWriter w = new FileWriter(script)) {
+        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write(content);
         }
         assertTrue(script.setExecutable(true));
