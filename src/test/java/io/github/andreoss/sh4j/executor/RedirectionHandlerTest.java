@@ -21,33 +21,33 @@ class RedirectionHandlerTest {
     void redirectStderrToStdout() {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
-        final RedirectionHandler.StreamSwap r =
+        final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identityExpander);
-        assertSame(out, r.err(), "2>&1 should make err point to out");
-        assertSame(err, r.savedErr(), "savedErr should be original err for restore");
-        assertNull(r.savedOut(), "stdout untouched");
+        assertSame(out, result.err(), "2>&1 should make err point to out");
+        assertSame(err, result.savedErr(), "savedErr should be original err for restore");
+        assertNull(result.savedOut(), "stdout untouched");
     }
 
     @Test
     void redirectStdoutToStderr() {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
-        final RedirectionHandler.StreamSwap r =
+        final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identityExpander);
-        assertSame(err, r.out(), "1>&2 should make out point to err");
-        assertSame(out, r.savedOut(), "savedOut should be original out for restore");
+        assertSame(err, result.out(), "1>&2 should make out point to err");
+        assertSame(out, result.savedOut(), "savedOut should be original out for restore");
     }
 
     @Test
     void noRedirsLeavesStreamsUnchanged() {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
-        final RedirectionHandler.StreamSwap r =
+        final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identityExpander);
-        assertSame(out, r.out());
-        assertSame(err, r.err());
-        assertNull(r.savedOut());
-        assertNull(r.savedErr());
+        assertSame(out, result.out());
+        assertSame(err, result.err());
+        assertNull(result.savedOut());
+        assertNull(result.savedErr());
     }
 
     @Test

@@ -762,9 +762,9 @@ class ExecutorTest {
 
     @Test
     void testRedirectTargetExpansionInput() throws Exception {
-        final java.io.File f = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
-        f.delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(f, StandardCharsets.UTF_8)) {
+        final java.io.File file = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
+        file.delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
             w.write("hello from file");
         }
         final Map<String, String> env = new HashMap<>();
@@ -775,15 +775,15 @@ class ExecutorTest {
         final ListNode list = this.parser("cat < $TEST_FILE").parse();
         assertEquals(0, executor.execute(list));
         assertEquals("hello from file", bos.toString(StandardCharsets.UTF_8).trim());
-        f.delete();
+        file.delete();
     }
 
     @Test
     void executeNonExecutableCommand() throws Exception {
-        final java.io.File f = new java.io.File("/tmp/sh4j_nonexec_test.sh");
-        f.createNewFile();
-        f.setExecutable(false);
-        final ListNode list = this.parser(f.getAbsolutePath()).parse();
+        final java.io.File file = new java.io.File("/tmp/sh4j_nonexec_test.sh");
+        file.createNewFile();
+        file.setExecutable(false);
+        final ListNode list = this.parser(file.getAbsolutePath()).parse();
         final Executor executor = new Executor();
         assertEquals(126, executor.execute(list));
     }
@@ -1597,13 +1597,13 @@ class ExecutorTest {
 
     @Test
     void externalReadWriteFd0() throws Exception {
-        final java.io.File f = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
-        f.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(f, StandardCharsets.UTF_8)) {
+        final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
+        file.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
             w.write("seed\n");
         }
         final Executor executor = new Executor();
-        executor.execute(this.parser(String.format("cat <>%s", f.getAbsolutePath())).parse());
+        executor.execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse());
     }
 
     @Test
@@ -1622,14 +1622,14 @@ class ExecutorTest {
 
     @Test
     void execNonExecutableFileTriggersIoException() throws Exception {
-        final java.io.File nonExec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
-        nonExec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonExec, StandardCharsets.UTF_8)) {
+        final java.io.File nonexec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
+        nonexec.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(nonexec, StandardCharsets.UTF_8)) {
             w.write("not a script");
         }
-        nonExec.setExecutable(false);
+        nonexec.setExecutable(false);
         final Executor executor = new Executor();
-        final int code = executor.execute(this.parser(String.format("exec %s", nonExec.getAbsolutePath())).parse());
+        final int code = executor.execute(this.parser(String.format("exec %s", nonexec.getAbsolutePath())).parse());
         assertTrue(code != 0, String.format("non-executable should fail; got %s", code));
     }
 
@@ -1644,14 +1644,14 @@ class ExecutorTest {
 
     @Test
     void externalNonExecutableFileTriggersIoException() throws Exception {
-        final java.io.File nonExec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
-        nonExec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonExec, StandardCharsets.UTF_8)) {
+        final java.io.File nonexec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
+        nonexec.deleteOnExit();
+        try (java.io.FileWriter w = new java.io.FileWriter(nonexec, StandardCharsets.UTF_8)) {
             w.write("nope");
         }
-        nonExec.setExecutable(false);
+        nonexec.setExecutable(false);
         final Executor executor = new Executor();
-        final int code = executor.execute(this.parser(nonExec.getAbsolutePath()).parse());
+        final int code = executor.execute(this.parser(nonexec.getAbsolutePath()).parse());
         assertTrue(code != 0, String.format("non-executable external should fail; got %s", code));
     }
 
@@ -1826,10 +1826,10 @@ class ExecutorTest {
 
     @Test
     void resolveCommandPathNullReturnsNull() {
-        final Map<String, String> emptyEnv = new HashMap<>();
-        emptyEnv.put("PATH", "");
-        final Executor executor = new Executor(emptyEnv);
-        executor.expandVariables("", emptyEnv);
+        final Map<String, String> empty = new HashMap<>();
+        empty.put("PATH", "");
+        final Executor executor = new Executor(empty);
+        executor.expandVariables("", empty);
         assertEquals(127, executor.execute(this.parser("nonexistent_xyz_zzz_cmd_abc").parse()));
     }
 
@@ -2524,76 +2524,76 @@ class ExecutorTest {
 
     @Test
     void externalOutputRedirect() throws Exception {
-        final String inputPath = "/tmp/sh4j_ext_in.txt";
-        final String outputPath = "/tmp/sh4j_ext_out.txt";
-        new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath, StandardCharsets.UTF_8)) {
+        final String inpath = "/tmp/sh4j_ext_in.txt";
+        final String outpath = "/tmp/sh4j_ext_out.txt";
+        new java.io.File(outpath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
             w.write("hello world");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" > %s", outputPath)).parse()));
-        assertTrue(new java.io.File(outputPath).exists());
-        assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
-        new java.io.File(inputPath).delete();
-        new java.io.File(outputPath).delete();
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inpath) + String.format(" > %s", outpath)).parse()));
+        assertTrue(new java.io.File(outpath).exists());
+        assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim());
+        new java.io.File(inpath).delete();
+        new java.io.File(outpath).delete();
     }
 
     @Test
     void externalAppendRedirect() throws Exception {
-        final String inputPath = "/tmp/sh4j_ext_append_in.txt";
-        final String outputPath = "/tmp/sh4j_ext_append_out.txt";
-        new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath, StandardCharsets.UTF_8)) {
+        final String inpath = "/tmp/sh4j_ext_append_in.txt";
+        final String outpath = "/tmp/sh4j_ext_append_out.txt";
+        new java.io.File(outpath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
             w.write("second");
         }
-        try (java.io.FileWriter w = new java.io.FileWriter(outputPath, StandardCharsets.UTF_8)) {
+        try (java.io.FileWriter w = new java.io.FileWriter(outpath, StandardCharsets.UTF_8)) {
             w.write("first\n");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" >> %s", outputPath)).parse()));
-        final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim();
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inpath) + String.format(" >> %s", outpath)).parse()));
+        final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim();
         assertTrue(content.startsWith("first"));
         assertTrue(content.contains("second"));
-        new java.io.File(inputPath).delete();
-        new java.io.File(outputPath).delete();
+        new java.io.File(inpath).delete();
+        new java.io.File(outpath).delete();
     }
 
     @Test
     void externalClobberRedirect() throws Exception {
-        final String inputPath = "/tmp/sh4j_ext_clobber_in.txt";
-        final String outputPath = "/tmp/sh4j_ext_clobber_out.txt";
-        new java.io.File(outputPath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath, StandardCharsets.UTF_8)) {
+        final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
+        final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
+        new java.io.File(outpath).delete();
+        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
             w.write("hello clobber");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + String.format(" >| %s", outputPath)).parse()));
-        assertTrue(new java.io.File(outputPath).exists());
-        assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outputPath)).trim());
-        new java.io.File(inputPath).delete();
-        new java.io.File(outputPath).delete();
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inpath) + String.format(" >| %s", outpath)).parse()));
+        assertTrue(new java.io.File(outpath).exists());
+        assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim());
+        new java.io.File(inpath).delete();
+        new java.io.File(outpath).delete();
     }
 
     @Test
     void externalRedirectStdoutToStderr() throws Exception {
-        final String inputPath = "/tmp/sh4j_ext_12_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath, StandardCharsets.UTF_8)) {
+        final String inpath = "/tmp/sh4j_ext_12_in.txt";
+        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
             w.write("hello");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + " 1>&2").parse()));
-        new java.io.File(inputPath).delete();
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inpath) + " 1>&2").parse()));
+        new java.io.File(inpath).delete();
     }
 
     @Test
     void externalRedirectStderrToStdout() throws Exception {
-        final String inputPath = "/tmp/sh4j_ext_21_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inputPath, StandardCharsets.UTF_8)) {
+        final String inpath = "/tmp/sh4j_ext_21_in.txt";
+        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
             w.write("hello");
         }
         final Executor executor = new Executor();
-        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inputPath) + " 2>&1").parse()));
-        new java.io.File(inputPath).delete();
+        assertEquals(0, executor.execute(this.parser(String.format("cat < %s", inpath) + " 2>&1").parse()));
+        new java.io.File(inpath).delete();
     }
 
     @Test

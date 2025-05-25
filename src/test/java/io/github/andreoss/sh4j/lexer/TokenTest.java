@@ -11,20 +11,20 @@ class TokenTest {
 
     @Test
     void createsTokenWithTypeTextAndPosition() {
-        final Token t = new Token(TokenType.WORD, "echo", 1, 0);
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("echo", t.text());
-        assertEquals(1, t.line());
-        assertEquals(0, t.column());
+        final Token tokn = new Token(TokenType.WORD, "echo", 1, 0);
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("echo", tokn.text());
+        assertEquals(1, tokn.line());
+        assertEquals(0, tokn.column());
     }
 
     @Test
     void createsTokenFromCharReader() {
-        final Token t = Token.of(TokenType.WORD, "abc", new CharReader("abc"));
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("abc", t.text());
-        assertEquals(1, t.line());
-        assertEquals(0, t.column());
+        final Token tokn = Token.of(TokenType.WORD, "abc", new CharReader("abc"));
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("abc", tokn.text());
+        assertEquals(1, tokn.line());
+        assertEquals(0, tokn.column());
     }
 
     @Test

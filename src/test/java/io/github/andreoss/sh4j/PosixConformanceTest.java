@@ -87,8 +87,8 @@ class PosixConformanceTest {
     }
 
     private String run(String script, String... args) throws Exception {
-        final File s = this.tempDir.resolve("c.sh").toFile();
-        try (FileWriter w = new FileWriter(s, StandardCharsets.UTF_8)) {
+        final File str = this.tempDir.resolve("c.sh").toFile();
+        try (FileWriter w = new FileWriter(str, StandardCharsets.UTF_8)) {
             w.write(script);
         }
         final java.util.List<String> cmd = new java.util.ArrayList<>();
@@ -96,13 +96,13 @@ class PosixConformanceTest {
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
-        cmd.add(s.getAbsolutePath());
-        for (final String a : args) cmd.add(a);
-        final ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectErrorStream(true);
-        final Process p = pb.start();
-        p.waitFor();
-        return new String(p.getInputStream().readAllBytes());
+        cmd.add(str.getAbsolutePath());
+        for (final String arr : args) cmd.add(arr);
+        final ProcessBuilder builder = new ProcessBuilder(cmd);
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        proc.waitFor();
+        return new String(proc.getInputStream().readAllBytes());
     }
 
 }

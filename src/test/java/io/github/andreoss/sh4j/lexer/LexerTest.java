@@ -11,18 +11,18 @@ class LexerTest {
 
     @Test
     void eofOnEmptyInput() {
-        final Lexer l = this.lexer("");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.END_OF_FILE, t.type());
-        assertEquals("", t.text());
+        final Lexer list = this.lexer("");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.END_OF_FILE, tokn.type());
+        assertEquals("", tokn.text());
     }
 
     @Test
     void newline() {
-        final Lexer l = this.lexer("\n");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.NEWLINE, t.type());
-        assertEquals("\n", t.text());
+        final Lexer list = this.lexer("\n");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.NEWLINE, tokn.type());
+        assertEquals("\n", tokn.text());
     }
 
     @Test
@@ -52,375 +52,375 @@ class LexerTest {
 
     @Test
     void simpleWord() {
-        final Lexer l = this.lexer("echo");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("echo", t.text());
+        final Lexer list = this.lexer("echo");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("echo", tokn.text());
     }
 
     @Test
     void wordWithWhitespacePrefix() {
-        final Lexer l = this.lexer("  ls");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("ls", t.text());
+        final Lexer list = this.lexer("  ls");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("ls", tokn.text());
     }
 
     @Test
     void multipleTokens() {
-        final Lexer l = this.lexer("echo hello\n");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.WORD, t1.type());
-        assertEquals("echo", t1.text());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.WORD, t2.type());
-        assertEquals("hello", t2.text());
-        assertEquals(TokenType.NEWLINE, l.nextToken().type());
+        final Lexer list = this.lexer("echo hello\n");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.WORD, tokfirst.type());
+        assertEquals("echo", tokfirst.text());
+        final Token toksecond = list.nextToken();
+        assertEquals(TokenType.WORD, toksecond.type());
+        assertEquals("hello", toksecond.text());
+        assertEquals(TokenType.NEWLINE, list.nextToken().type());
     }
 
     @Test
     void operatorsSeparatedBySpaces() {
-        final Lexer l = this.lexer("&& ||");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.AND_IF, t1.type());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.OR_IF, t2.type());
+        final Lexer list = this.lexer("&& ||");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.AND_IF, tokfirst.type());
+        final Token toksecond = list.nextToken();
+        assertEquals(TokenType.OR_IF, toksecond.type());
     }
 
     @Test
     void wordThenOperator() {
-        final Lexer l = this.lexer("cmd&");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.WORD, t1.type());
-        assertEquals("cmd", t1.text());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.AMP, t2.type());
+        final Lexer list = this.lexer("cmd&");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.WORD, tokfirst.type());
+        assertEquals("cmd", tokfirst.text());
+        final Token toksecond = list.nextToken();
+        assertEquals(TokenType.AMP, toksecond.type());
     }
 
     @Test
     void operatorThenWord() {
-        final Lexer l = this.lexer(">out");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.GREAT, t1.type());
-        final Token t2 = l.nextToken();
-        assertEquals(TokenType.WORD, t2.type());
-        assertEquals("out", t2.text());
+        final Lexer list = this.lexer(">out");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.GREAT, tokfirst.type());
+        final Token toksecond = list.nextToken();
+        assertEquals(TokenType.WORD, toksecond.type());
+        assertEquals("out", toksecond.text());
     }
 
     @Test
     void consecutiveNewlines() {
-        final Lexer l = this.lexer("\n\n");
-        assertEquals(TokenType.NEWLINE, l.nextToken().type());
-        assertEquals(TokenType.NEWLINE, l.nextToken().type());
+        final Lexer list = this.lexer("\n\n");
+        assertEquals(TokenType.NEWLINE, list.nextToken().type());
+        assertEquals(TokenType.NEWLINE, list.nextToken().type());
     }
 
     @Test
     void tokenPositions() {
-        final Lexer l = this.lexer("  word");
-        final Token t = l.nextToken();
-        assertEquals(1, t.line());
-        assertEquals(2, t.column());
+        final Lexer list = this.lexer("  word");
+        final Token tokn = list.nextToken();
+        assertEquals(1, tokn.line());
+        assertEquals(2, tokn.column());
     }
 
     @Test
     void eofAfterTokens() {
-        final Lexer l = this.lexer("a");
-        l.nextToken();
-        final Token t = l.nextToken();
-        assertEquals(TokenType.END_OF_FILE, t.type());
+        final Lexer list = this.lexer("a");
+        list.nextToken();
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.END_OF_FILE, tokn.type());
     }
 
     @Test
     void whitespaceSkippedBetweenTokens() {
-        final Lexer l = this.lexer("a   b");
-        assertEquals("a", l.nextToken().text());
-        assertEquals("b", l.nextToken().text());
+        final Lexer list = this.lexer("a   b");
+        assertEquals("a", list.nextToken().text());
+        assertEquals("b", list.nextToken().text());
     }
 
     @Test
     void tabIsWhitespace() {
-        final Lexer l = this.lexer("\tword");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("word", t.text());
+        final Lexer list = this.lexer("\tword");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("word", tokn.text());
     }
 
     @Test
     void equalsAloneIsWordNotAssignment() {
-        final Lexer l = this.lexer("=");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("=", t.text());
+        final Lexer list = this.lexer("=");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("=", tokn.text());
     }
 
     @Test
     void numberPrefixedNameIsNotAssignment() {
-        final Lexer l = this.lexer("1a=b");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
+        final Lexer list = this.lexer("1a=b");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
     }
 
     @Test
     void invalidVarNameCharIsNotAssignment() {
-        final Lexer l = this.lexer("a@b=c");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
+        final Lexer list = this.lexer("a@b=c");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
     }
 
     @Test
     void wordBreaksAtLeftParen() {
-        final Lexer l = this.lexer("echo(");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.WORD, t1.type());
-        assertEquals("echo", t1.text());
-        assertEquals(TokenType.LPAREN, l.nextToken().type());
+        final Lexer list = this.lexer("echo(");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.WORD, tokfirst.type());
+        assertEquals("echo", tokfirst.text());
+        assertEquals(TokenType.LPAREN, list.nextToken().type());
     }
 
     @Test
     void wordBreaksAtRightParen() {
-        final Lexer l = this.lexer("echo)");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.WORD, t1.type());
-        assertEquals("echo", t1.text());
-        assertEquals(TokenType.RPAREN, l.nextToken().type());
+        final Lexer list = this.lexer("echo)");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.WORD, tokfirst.type());
+        assertEquals("echo", tokfirst.text());
+        assertEquals(TokenType.RPAREN, list.nextToken().type());
     }
 
     @Test
     void singleQuotedWord() {
-        final Lexer l = this.lexer("'hello'");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("'hello'", t.text());
+        final Lexer list = this.lexer("'hello'");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("'hello'", tokn.text());
     }
 
     @Test
     void doubleQuotedWord() {
-        final Lexer l = this.lexer("\"hello\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"hello\"", t.text());
+        final Lexer list = this.lexer("\"hello\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"hello\"", tokn.text());
     }
 
     @Test
     void backslashEscapesInsideWord() {
-        final Lexer l = this.lexer("a\\ b");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("a\\ b", t.text());
+        final Lexer list = this.lexer("a\\ b");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("a\\ b", tokn.text());
     }
 
     @Test
     void backslashContinuation() {
-        final Lexer l = this.lexer("a\\\nb");
-        final Token t = l.nextToken();
-        assertEquals("ab", t.text());
+        final Lexer list = this.lexer("a\\\nb");
+        final Token tokn = list.nextToken();
+        assertEquals("ab", tokn.text());
     }
 
     @Test
     void mixedQuoting() {
-        final Lexer l = this.lexer("a'b'c");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("a'b'c", t.text());
+        final Lexer list = this.lexer("a'b'c");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("a'b'c", tokn.text());
     }
 
     @Test
     void doubleQuotedBackslashDollar() {
-        final Lexer l = this.lexer("\"\\$\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"\\$\"", t.text());
+        final Lexer list = this.lexer("\"\\$\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"\\$\"", tokn.text());
     }
 
     @Test
     void doubleQuotedBackslashBacktick() {
-        final Lexer l = this.lexer("\"\\`\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"\\`\"", t.text());
+        final Lexer list = this.lexer("\"\\`\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"\\`\"", tokn.text());
     }
 
     @Test
     void doubleQuotedBackslashNewline() {
-        final Lexer l = this.lexer("\"a\\\nb\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"ab\"", t.text());
+        final Lexer list = this.lexer("\"a\\\nb\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"ab\"", tokn.text());
     }
 
     @Test
     void doubleQuotedBackslashBackslash() {
-        final Lexer l = this.lexer("\"a\\\\b\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"a\\\\b\"", t.text());
+        final Lexer list = this.lexer("\"a\\\\b\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"a\\\\b\"", tokn.text());
     }
 
     @Test
     void doubleQuotedBackslashDoublequote() {
-        final Lexer l = this.lexer("\"a\\\"b\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"a\\\"b\"", t.text());
+        final Lexer list = this.lexer("\"a\\\"b\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"a\\\"b\"", tokn.text());
     }
 
     @Test
     void wordBreakAtAllOperators() {
-        for (final String op : new String[]{"&", "|", ";", "<", ">", "(", ")"}) {
-            final Lexer l = this.lexer(String.format("a%s", op));
-            assertEquals("a", l.nextToken().text());
-            assertEquals(op, l.nextToken().text());
+        for (final String oper : new String[]{"&", "|", ";", "<", ">", "(", ")"}) {
+            final Lexer list = this.lexer(String.format("a%s", oper));
+            assertEquals("a", list.nextToken().text());
+            assertEquals(oper, list.nextToken().text());
         }
     }
 
     @Test
     void assignmentWordEdgeCases() {
-        final Lexer l = this.lexer("=value");
-        assertEquals(TokenType.WORD, l.nextToken().type());
+        final Lexer list = this.lexer("=value");
+        assertEquals(TokenType.WORD, list.nextToken().type());
         assertEquals(TokenType.ASSIGNMENT_WORD, this.lexer("_=value").nextToken().type());
     }
 
     @Test
     void backslashAtEof() {
-        final Lexer l = this.lexer("a\\");
-        assertEquals("a\\", l.nextToken().text());
+        final Lexer list = this.lexer("a\\");
+        assertEquals("a\\", list.nextToken().text());
     }
 
     @Test
     void equalsAloneIsWord() {
-        final Lexer l = this.lexer("=value");
-        assertEquals(TokenType.WORD, l.nextToken().type());
+        final Lexer list = this.lexer("=value");
+        assertEquals(TokenType.WORD, list.nextToken().type());
     }
 
     @Test
     void doubleQuotedBackslashNonSpecialKeptLiteral() {
-        final Lexer l = this.lexer("\"\\a\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"\\a\"", t.text());
+        final Lexer list = this.lexer("\"\\a\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"\\a\"", tokn.text());
     }
 
     @Test
     void ioNumberBeforeInputRedirect() {
-        final Lexer l = this.lexer("2<file");
-        final Token t1 = l.nextToken();
-        assertEquals(TokenType.IO_NUMBER, t1.type());
-        assertEquals("2", t1.text());
-        assertEquals(TokenType.LESS, l.nextToken().type());
+        final Lexer list = this.lexer("2<file");
+        final Token tokfirst = list.nextToken();
+        assertEquals(TokenType.IO_NUMBER, tokfirst.type());
+        assertEquals("2", tokfirst.text());
+        assertEquals(TokenType.LESS, list.nextToken().type());
     }
 
     @Test
     void digitsThenSpaceIsWordNotIoNumber() {
-        final Lexer l = this.lexer("42 ");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("42", t.text());
+        final Lexer list = this.lexer("42 ");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("42", tokn.text());
     }
 
     @Test
     void singleQuoteLiteralInsideDoubleQuote() {
-        final Lexer l = this.lexer("\"a'b\"");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("\"a'b\"", t.text());
+        final Lexer list = this.lexer("\"a'b\"");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("\"a'b\"", tokn.text());
     }
 
     @Test
     void backslashNewlineLineContinuation() {
-        final Lexer l = this.lexer("ab\\\ncd");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("abcd", t.text());
+        final Lexer list = this.lexer("ab\\\ncd");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("abcd", tokn.text());
     }
 
     @Test
     void dollarParenStaysInWord() {
-        final Lexer l = this.lexer("$(echo hi)");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("$(echo hi)", t.text());
+        final Lexer list = this.lexer("$(echo hi)");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("$(echo hi)", tokn.text());
     }
 
     @Test
     void dollarDoubleParenArithStaysInWord() {
-        final Lexer l = this.lexer("$((1+2*3))");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("$((1+2*3))", t.text());
+        final Lexer list = this.lexer("$((1+2*3))");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("$((1+2*3))", tokn.text());
     }
 
     @Test
     void dollarParenWithNestedParensStaysInWord() {
-        final Lexer l = this.lexer("$(echo $((1+2)))");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("$(echo $((1+2)))", t.text());
+        final Lexer list = this.lexer("$(echo $((1+2)))");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("$(echo $((1+2)))", tokn.text());
     }
 
     @Test
     void dollarBraceStaysInWord() {
-        final Lexer l = this.lexer("${VAR}");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("${VAR}", t.text());
+        final Lexer list = this.lexer("${VAR}");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("${VAR}", tokn.text());
     }
 
     @Test
     void dollarBraceWithNestedBraceStaysInWord() {
-        final Lexer l = this.lexer("${a:-${b}}");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("${a:-${b}}", t.text());
+        final Lexer list = this.lexer("${a:-${b}}");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("${a:-${b}}", tokn.text());
     }
 
     @Test
     void backtickStaysInWord() {
-        final Lexer l = this.lexer("`echo hi`");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("`echo hi`", t.text());
+        final Lexer list = this.lexer("`echo hi`");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("`echo hi`", tokn.text());
     }
 
     @Test
     void backtickWithBackslashEscape() {
-        final Lexer l = this.lexer("`echo \\`hi\\``");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("`echo \\`hi\\``", t.text());
+        final Lexer list = this.lexer("`echo \\`hi\\``");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("`echo \\`hi\\``", tokn.text());
     }
 
     @Test
     void wordWithDollarParenAndTrailingText() {
-        final Lexer l = this.lexer("a$(echo b)c");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("a$(echo b)c", t.text());
+        final Lexer list = this.lexer("a$(echo b)c");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("a$(echo b)c", tokn.text());
     }
 
     @Test
     void wordWithBacktickAndTrailingText() {
-        final Lexer l = this.lexer("a`b`c");
-        final Token t = l.nextToken();
-        assertEquals(TokenType.WORD, t.type());
-        assertEquals("a`b`c", t.text());
+        final Lexer list = this.lexer("a`b`c");
+        final Token tokn = list.nextToken();
+        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals("a`b`c", tokn.text());
     }
 
     @Test
     void readHereDocContentSkipsLeadingNewline() {
-        final Lexer l = this.lexer("\nhello\nEOF\n");
-        assertEquals("hello", l.readHereDocContent("EOF", false));
+        final Lexer list = this.lexer("\nhello\nEOF\n");
+        assertEquals("hello", list.readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentEmptyBody() {
-        final Lexer l = this.lexer("EOF\n");
-        assertEquals("", l.readHereDocContent("EOF", false));
+        final Lexer list = this.lexer("EOF\n");
+        assertEquals("", list.readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentMultipleLines() {
-        final Lexer l = this.lexer("\nfirst\nsecond\nthird\nEOF\n");
-        assertEquals("first\nsecond\nthird", l.readHereDocContent("EOF", false));
+        final Lexer list = this.lexer("\nfirst\nsecond\nthird\nEOF\n");
+        assertEquals("first\nsecond\nthird", list.readHereDocContent("EOF", false));
     }
 
     private Lexer lexer(String input) {
@@ -428,10 +428,10 @@ class LexerTest {
     }
 
     private void assertOperator(String op, TokenType expected) {
-        final Lexer l = this.lexer(op);
-        final Token t = l.nextToken();
-        assertEquals(expected, t.type(), String.format("Operator %s", op));
-        assertEquals(op, t.text(), String.format("Operator text %s", op));
+        final Lexer list = this.lexer(op);
+        final Token tokn = list.nextToken();
+        assertEquals(expected, tokn.type(), String.format("Operator %s", op));
+        assertEquals(op, tokn.text(), String.format("Operator text %s", op));
     }
 
 }

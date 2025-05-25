@@ -134,9 +134,9 @@ class PosixTests {
     }
 
     private int run(String script) throws IOException {
-        final File f = this.tempDir.resolve("t.sh").toFile();
-        Files.writeString(f.toPath(), script);
-        return Main.runScript(f.getAbsolutePath(), List.of(f.getAbsolutePath()));
+        final File file = this.tempDir.resolve("t.sh").toFile();
+        Files.writeString(file.toPath(), script);
+        return Main.runScript(file.getAbsolutePath(), List.of(file.getAbsolutePath()));
     }
 
 }
