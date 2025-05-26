@@ -19,117 +19,117 @@ class PosixTests {
     Path tempDir;
 
     @Test
-    void trueExitZero() throws IOException  {
+    void trueExitZero() throws IOException {
         assertEquals(0, this.run("true\n"));
     }
 
     @Test
-    void falseExitOne() throws IOException  {
+    void falseExitOne() throws IOException {
         assertEquals(1, this.run("false\n"));
     }
 
     @Test
-    void exit42() throws IOException  {
+    void exit42() throws IOException {
         assertEquals(42, this.run("exit 42\n"));
     }
 
     @Test
-    void exitZero() throws IOException  {
+    void exitZero() throws IOException {
         assertEquals(0, this.run("exit 0\n"));
     }
 
     @Test
-    void exitOne() throws IOException  {
+    void exitOne() throws IOException {
         assertEquals(1, this.run("exit 1\n"));
     }
 
     @Test
-    void echoHello() throws IOException  {
+    void echoHello() throws IOException {
         assertEquals(0, this.run("echo hello\n"));
     }
 
     @Test
-    void echoArgs() throws IOException  {
+    void echoArgs() throws IOException {
         assertEquals(0, this.run("echo a b c\n"));
     }
 
     @Test
-    void pipeline() throws IOException  {
+    void pipeline() throws IOException {
         assertEquals(0, this.run("echo hello | cat\n"));
     }
 
     @Test
-    void pipelineMulti() throws IOException  {
+    void pipelineMulti() throws IOException {
         assertEquals(0, this.run("echo hello | cat | wc -c\n"));
     }
 
     @Test
-    void andIf() throws IOException  {
+    void andIf() throws IOException {
         assertEquals(0, this.run("true && echo ok\n"));
     }
 
     @Test
-    void andIfStop() throws IOException  {
+    void andIfStop() throws IOException {
         assertEquals(1, this.run("false && echo nope\n"));
     }
 
     @Test
-    void orIf() throws IOException  {
+    void orIf() throws IOException {
         assertEquals(0, this.run("false || echo ok\n"));
     }
 
     @Test
-    void orIfStop() throws IOException  {
+    void orIfStop() throws IOException {
         assertEquals(0, this.run("true || echo nope\n"));
     }
 
     @Test
-    void bangFalse() throws IOException  {
+    void bangFalse() throws IOException {
         assertEquals(0, this.run("! false\n"));
     }
 
     @Test
-    void bangTrue() throws IOException  {
+    void bangTrue() throws IOException {
         assertEquals(1, this.run("! true\n"));
     }
 
     @Test
-    void semicolon() throws IOException  {
+    void semicolon() throws IOException {
         assertEquals(1, this.run("true; false\n"));
     }
 
     @Test
-    void background() throws IOException  {
+    void background() throws IOException {
         assertEquals(0, this.run("sleep 0 &\n"));
     }
 
     @Test
-    void assignThenCmd() throws IOException  {
+    void assignThenCmd() throws IOException {
         assertEquals(0, this.run("MSG=hello echo $MSG\n"));
     }
 
     @Test
-    void assignOnly() throws IOException  {
+    void assignOnly() throws IOException {
         assertEquals(0, this.run("MSG=hello\necho $MSG\n"));
     }
 
     @Test
-    void multiAssign() throws IOException  {
+    void multiAssign() throws IOException {
         assertEquals(0, this.run("A=1 B=2\n"));
     }
 
     @Test
-    void varExpand() throws IOException  {
+    void varExpand() throws IOException {
         assertEquals(0, this.run("echo $HOME\n"));
     }
 
     @Test
-    void cmdNotFound() throws IOException  {
+    void cmdNotFound() throws IOException {
         assertEquals(127, this.run("nonexistent_cmd_xyz\n"));
     }
 
     @Test
-    void pwd() throws IOException  {
+    void pwd() throws IOException {
         assertEquals(0, this.run("pwd\n"));
     }
 
