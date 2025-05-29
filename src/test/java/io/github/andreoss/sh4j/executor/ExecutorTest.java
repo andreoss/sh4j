@@ -30,7 +30,7 @@ import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.WhileNode;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExecutorTest {
+final class ExecutorTest {
 
     @Test
     void executeSimpleEcho() {

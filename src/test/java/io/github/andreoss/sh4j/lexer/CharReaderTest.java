@@ -9,7 +9,7 @@ import java.io.Reader;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class CharReaderTest {
+final class CharReaderTest {
 
     @Test
     void peekReturnsFirstChar() {

@@ -9,7 +9,7 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ParserTest {
+final class ParserTest {
 
     @Test
     void parseSimpleCommand() {

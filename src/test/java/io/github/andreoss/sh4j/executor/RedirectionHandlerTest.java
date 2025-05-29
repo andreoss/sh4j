@@ -13,7 +13,7 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import static org.junit.jupiter.api.Assertions.*;
 
-class RedirectionHandlerTest {
+final class RedirectionHandlerTest {
 
     private final UnaryOperator<String> identityExpander = s -> s;
 

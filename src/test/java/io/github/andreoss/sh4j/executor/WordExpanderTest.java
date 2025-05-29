@@ -10,7 +10,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class WordExpanderTest {
+final class WordExpanderTest {
 
     @Test void tildeHome() {
         final Map<String, String> env = new HashMap<>();

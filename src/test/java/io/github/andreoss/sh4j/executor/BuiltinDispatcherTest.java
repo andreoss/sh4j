@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class BuiltinDispatcherTest {
+final class BuiltinDispatcherTest {
 
     private final BuiltinDispatcher d = new BuiltinDispatcher();
 

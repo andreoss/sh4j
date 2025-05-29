@@ -7,7 +7,7 @@ package io.github.andreoss.sh4j.lexer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TokenTypeTest {
+final class TokenTypeTest {
 
     @Test
     void allEnumValuesPresent() {

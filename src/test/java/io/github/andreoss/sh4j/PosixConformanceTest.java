@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
 
-class PosixConformanceTest {
+final class PosixConformanceTest {
 
     @TempDir
     java.nio.file.Path tempDir;

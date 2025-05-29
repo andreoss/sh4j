@@ -9,7 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ArithmeticEvaluatorTest {
+final class ArithmeticEvaluatorTest {
 
     private final ArithmeticEvaluator e = new ArithmeticEvaluator();
 
