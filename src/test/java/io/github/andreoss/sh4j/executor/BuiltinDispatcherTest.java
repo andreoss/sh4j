@@ -33,15 +33,15 @@ final class BuiltinDispatcherTest {
         assertFalse(this.d.isBuiltin("nope"));
     }
 
-    @Test void dispatchTrueReturns0() {
+    @Test void dispatchTrueReturnsZero() {
         assertEquals(0, this.d.dispatch("true", null, List.of(), new HashMap<>(), List.of()));
     }
 
-    @Test void dispatchFalseReturns1() {
+    @Test void dispatchFalseReturnsOne() {
         assertEquals(1, this.d.dispatch("false", null, List.of(), new HashMap<>(), List.of()));
     }
 
-    @Test void dispatchColonReturns0() {
+    @Test void dispatchColonReturnsZero() {
         assertEquals(0, this.d.dispatch(":", null, List.of(), new HashMap<>(), List.of()));
     }
 

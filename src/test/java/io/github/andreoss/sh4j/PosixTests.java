@@ -29,7 +29,7 @@ final class PosixTests {
     }
 
     @Test
-    void exit42() throws IOException {
+    void exitFortyTwo() throws IOException {
         assertEquals(42, this.run("exit 42\n"));
     }
 

@@ -44,8 +44,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void exit42() throws IOException {
-        final File str = this.writeScript("exit42.sh", "exit 42\n");
+    void exitFortyTwo() throws IOException {
+        final File str = this.writeScript("exitFortyTwo.sh", "exit 42\n");
         assertEquals(42, Main.runScript(str.getAbsolutePath()));
     }
 

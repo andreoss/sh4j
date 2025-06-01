@@ -296,7 +296,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeCommandNotFoundReturns127() {
+    void executeCommandNotFoundReturnsNotFound() {
         final ListNode list = this.parser("nonexistent_cmd_xyz_127").parse();
         final Executor executor = new Executor();
         assertEquals(127, executor.execute(list));
@@ -633,7 +633,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testCommandInterruptedException() {
+    void commandInterruptedException() {
         final ListNode list = this.parser("pwd").parse();
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
@@ -641,7 +641,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testPipelineInterruptedException() {
+    void pipelineInterruptedException() {
         final ListNode list = this.parser("pwd | cat").parse();
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
@@ -658,7 +658,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testExportNoArgs() {
+    void exportNoArgs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_EXPORT_VAR", "hello");
@@ -721,7 +721,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testHeredocExpansion() {
+    void heredocExpansion() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_HVAR", "expanded");
@@ -733,7 +733,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testRedirectTargetExpansionOutput() throws Exception {
+    void redirectTargetExpansionOutput() throws Exception {
         final java.io.File f = new java.io.File("/tmp/sh4j_redir_expand_test.txt");
         f.delete();
         final Map<String, String> env = new HashMap<>();
@@ -747,7 +747,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testRedirectTargetExpansionAppend() throws Exception {
+    void redirectTargetExpansionAppend() throws Exception {
         final java.io.File f = new java.io.File("/tmp/sh4j_redir_append_expand.txt");
         f.delete();
         final Map<String, String> env = new HashMap<>();
@@ -761,7 +761,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void testRedirectTargetExpansionInput() throws Exception {
+    void redirectTargetExpansionInput() throws Exception {
         final java.io.File file = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
         file.delete();
         try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
@@ -1596,7 +1596,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void externalReadWriteFd0() throws Exception {
+    void externalReadWriteFdZero() throws Exception {
         final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         file.deleteOnExit();
         try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
@@ -1690,7 +1690,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void externalReadWriteRedirectFd2() throws Exception {
+    void externalReadWriteRedirectFdTwo() throws Exception {
         final String path = String.format("/tmp/sh4j_rw_fd2_%s", System.nanoTime());
         new java.io.File(path).delete();
         final Executor executor = new Executor();
@@ -1964,7 +1964,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void commandNotFoundReturns127() {
+    void commandNotFoundReturnsNotFound() {
         final Executor executor = new Executor();
         assertEquals(127, executor.execute(this.parser("nonexistent_cmd_xyz_127").parse()));
     }
@@ -2347,7 +2347,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void cdToNonexistentReturns1() {
+    void cdToNonexistentReturnsOne() {
         final Executor executor = new Executor();
         assertEquals(1, executor.execute(this.parser("cd /sh4j_nonexistent_dir_xyz").parse()));
     }
@@ -2423,7 +2423,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void execBuiltinNotFoundReturns127() {
+    void execBuiltinNotFoundReturnsNotFound() {
         final Executor executor = new Executor();
         assertEquals(127, executor.execute(this.parser("exec nonexistent_cmd_xyz").parse()));
     }
@@ -2435,13 +2435,13 @@ final class ExecutorTest {
     }
 
     @Test
-    void trueBuiltinReturns0() {
+    void trueBuiltinReturnsZero() {
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("true").parse()));
     }
 
     @Test
-    void falseBuiltinReturns1() {
+    void falseBuiltinReturnsOne() {
         final Executor executor = new Executor();
         assertEquals(1, executor.execute(this.parser("false").parse()));
     }
@@ -2502,7 +2502,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void colonBuiltinReturns0() {
+    void colonBuiltinReturnsZero() {
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser(":").parse()));
     }
@@ -2517,7 +2517,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void evalBuiltinNoArgsReturns0() {
+    void evalBuiltinNoArgsReturnsZero() {
         final Executor executor = new Executor();
         assertEquals(0, executor.execute(this.parser("eval").parse()));
     }
@@ -2688,12 +2688,12 @@ final class ExecutorTest {
     }
 
     @Test
-    void shiftNonNumericReturns1() {
+    void shiftNonNumericReturnsOne() {
         assertEquals(1, new Executor().execute(this.parser("shift abc").parse()));
     }
 
     @Test
-    void shiftNegativeReturns1() {
+    void shiftNegativeReturnsOne() {
         assertEquals(1, new Executor().execute(this.parser("shift -1").parse()));
     }
 

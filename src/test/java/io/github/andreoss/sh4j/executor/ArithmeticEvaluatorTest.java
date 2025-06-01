@@ -61,12 +61,12 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void lt() {
+    void ltOperator() {
         assertEquals("1", this.e.evalArithmetic("3 < 5", this.env));
     }
 
     @Test
-    void ge() {
+    void geOperator() {
         assertEquals("1", this.e.evalArithmetic("5 >= 5", this.env));
     }
 
