@@ -2697,7 +2697,7 @@ final class ExecutorTest {
         assertEquals(1, new Executor().execute(this.parser("shift -1").parse()));
     }
 
-    private Parser parser(String input) {
+    private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }
 

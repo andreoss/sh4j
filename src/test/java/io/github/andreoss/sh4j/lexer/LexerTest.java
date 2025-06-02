@@ -423,11 +423,11 @@ final class LexerTest {
         assertEquals("first\nsecond\nthird", list.readHereDocContent("EOF", false));
     }
 
-    private Lexer lexer(String input) {
+    private Lexer lexer(final String input) {
         return new Lexer(new CharReader(input));
     }
 
-    private void assertOperator(String op, TokenType expected) {
+    private void assertOperator(final String op, final TokenType expected) {
         final Lexer list = this.lexer(op);
         final Token tokn = list.nextToken();
         assertEquals(expected, tokn.type(), String.format("Operator %s", op));

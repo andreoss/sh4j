@@ -661,7 +661,7 @@ final class ParserTest {
         assertEquals("/tmp/log", result.getTarget());
     }
 
-    private Parser parser(String input) {
+    private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }
 

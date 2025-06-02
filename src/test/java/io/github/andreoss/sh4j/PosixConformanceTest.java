@@ -86,7 +86,7 @@ final class PosixConformanceTest {
         assertEquals("line1\nline2", run("cat <<EOF\nline1\nline2\nEOF\n").trim());
     }
 
-    private String run(String script, String... args) throws Exception {
+    private String run(final String script, final String... args) throws Exception {
         final File str = this.tempDir.resolve("c.sh").toFile();
         try (FileWriter w = new FileWriter(str, StandardCharsets.UTF_8)) {
             w.write(script);

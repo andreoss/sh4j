@@ -109,7 +109,7 @@ final class CharReaderTest {
 
             @Override
 
-            public int read(char[] cbuf, int off, int len) throws IOException {
+            public int read(final char[] cbuf, final int off, final int len) throws IOException {
                 throw new IOException();
             }
 

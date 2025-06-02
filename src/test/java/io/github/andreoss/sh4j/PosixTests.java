@@ -133,7 +133,7 @@ final class PosixTests {
         assertEquals(0, this.run("pwd\n"));
     }
 
-    private int run(String script) throws IOException {
+    private int run(final String script) throws IOException {
         final File file = this.tempDir.resolve("t.sh").toFile();
         Files.writeString(file.toPath(), script);
         return Main.runScript(file.getAbsolutePath(), List.of(file.getAbsolutePath()));

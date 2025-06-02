@@ -273,7 +273,7 @@ final class IntegrationTest {
         assertEquals(127, Main.runScript(this.writeScript("notfound.sh", "nonexistent_cmd_xyz\n").getAbsolutePath()));
     }
 
-    private File writeScript(String name, String content) throws IOException {
+    private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempDir.resolve(name).toFile();
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write(content);
@@ -282,7 +282,7 @@ final class IntegrationTest {
         return script;
     }
 
-    private String runChildJvm(File script) throws Exception {
+    private String runChildJvm(final File script) throws Exception {
         final ProcessBuilder builder = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
                 System.getProperty("java.class.path"),
                 "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
