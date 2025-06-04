@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 final class IntegrationTest {
 
     @TempDir
-    Path tempDir;
+    Path tempdir;
 
     @Test
     void echoHello() throws IOException {
@@ -57,7 +57,7 @@ final class IntegrationTest {
 
     @org.junit.jupiter.api.Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
-        final File probe = this.tempDir.resolve("probe.txt").toFile();
+        final File probe = this.tempdir.resolve("probe.txt").toFile();
         try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("hello-from-cat\n");
         }
@@ -78,7 +78,7 @@ final class IntegrationTest {
         final File nativebin = new File("target/sh4j");
         org.junit.jupiter.api.Assumptions.assumeTrue(nativebin.isFile() && nativebin.canExecute(),
                 "target/sh4j native binary not built; skipping native smoke");
-        final File probe = this.tempDir.resolve("nprobe.txt").toFile();
+        final File probe = this.tempdir.resolve("nprobe.txt").toFile();
         try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("hello-native\n");
         }
@@ -102,7 +102,7 @@ final class IntegrationTest {
 
     @org.junit.jupiter.api.Test
     void childJvmCatProbe() throws Exception {
-        final File probe = this.tempDir.resolve("h_probe.txt").toFile();
+        final File probe = this.tempdir.resolve("h_probe.txt").toFile();
         try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
             w.write("child-probe\n");
         }
@@ -208,7 +208,7 @@ final class IntegrationTest {
 
     @Test
     void outputRedirection() throws IOException {
-        final File outfile = this.tempDir.resolve("out.txt").toFile();
+        final File outfile = this.tempdir.resolve("out.txt").toFile();
         final File str = this.writeScript("redir_out.sh", String.format("echo test > %s", outfile.getAbsolutePath()) + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
         assertTrue(outfile.exists());
@@ -217,7 +217,7 @@ final class IntegrationTest {
 
     @Test
     void inputRedirection() throws IOException {
-        final File infile = this.tempDir.resolve("in.txt").toFile();
+        final File infile = this.tempdir.resolve("in.txt").toFile();
         Files.writeString(infile.toPath(), "input data\n");
         final File str = this.writeScript("redir_in.sh", String.format("cat < %s", infile.getAbsolutePath()) + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
@@ -225,7 +225,7 @@ final class IntegrationTest {
 
     @Test
     void appendRedirection() throws IOException {
-        final File outfile = this.tempDir.resolve("append.txt").toFile();
+        final File outfile = this.tempdir.resolve("append.txt").toFile();
         final File str = this.writeScript("append.sh", String.format("echo line2 >> %s", outfile.getAbsolutePath()) + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
         assertTrue(outfile.exists(), "append.txt should exist");
@@ -234,7 +234,7 @@ final class IntegrationTest {
 
     @Test
     void clobberRedirection() throws IOException {
-        final File outfile = this.tempDir.resolve("clobber.txt").toFile();
+        final File outfile = this.tempdir.resolve("clobber.txt").toFile();
         final File str = this.writeScript("clobber.sh", String.format("echo test >| %s", outfile.getAbsolutePath()) + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
         assertTrue(outfile.exists());
@@ -242,13 +242,13 @@ final class IntegrationTest {
 
     @Test
     void stderrRedirect() throws IOException {
-        final File str = this.writeScript("stderr_redir.sh", "echo test 2>" + this.tempDir.resolve("stderr.txt").toFile().getAbsolutePath() + "\n");
+        final File str = this.writeScript("stderr_redir.sh", "echo test 2>" + this.tempdir.resolve("stderr.txt").toFile().getAbsolutePath() + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
     }
 
     @Test
     void variableExpansionWithRedirect() throws IOException {
-        final File outfile = this.tempDir.resolve("out2.txt").toFile();
+        final File outfile = this.tempdir.resolve("out2.txt").toFile();
         final File str = this.writeScript("varexp_redir.sh", String.format("echo $HOME > %s", outfile.getAbsolutePath()) + "\n");
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
         assertTrue(outfile.exists(), "out2.txt should exist");
@@ -274,7 +274,7 @@ final class IntegrationTest {
     }
 
     private File writeScript(final String name, final String content) throws IOException {
-        final File script = this.tempDir.resolve(name).toFile();
+        final File script = this.tempdir.resolve(name).toFile();
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write(content);
         }

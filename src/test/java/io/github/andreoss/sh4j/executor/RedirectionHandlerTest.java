@@ -15,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 final class RedirectionHandlerTest {
 
-    private final UnaryOperator<String> identityExpander = s -> s;
+    private final UnaryOperator<String> identity = s -> s;
 
     @Test
     void redirectStderrToStdout() {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identity);
         assertSame(out, result.err(), "2>&1 should make err point to out");
         assertSame(err, result.savedErr(), "savedErr should be original err for restore");
         assertNull(result.savedOut(), "stdout untouched");
@@ -33,7 +33,7 @@ final class RedirectionHandlerTest {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identity);
         assertSame(err, result.out(), "1>&2 should make out point to err");
         assertSame(out, result.savedOut(), "savedOut should be original out for restore");
     }
@@ -43,7 +43,7 @@ final class RedirectionHandlerTest {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identityExpander);
+                RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identity);
         assertSame(out, result.out());
         assertSame(err, result.err());
         assertNull(result.savedOut());

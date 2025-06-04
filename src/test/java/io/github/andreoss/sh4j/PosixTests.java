@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 final class PosixTests {
 
     @TempDir
-    Path tempDir;
+    Path tempdir;
 
     @Test
     void trueExitZero() throws IOException {
@@ -134,7 +134,7 @@ final class PosixTests {
     }
 
     private int run(final String script) throws IOException {
-        final File file = this.tempDir.resolve("t.sh").toFile();
+        final File file = this.tempdir.resolve("t.sh").toFile();
         Files.writeString(file.toPath(), script);
         return Main.runScript(file.getAbsolutePath(), List.of(file.getAbsolutePath()));
     }

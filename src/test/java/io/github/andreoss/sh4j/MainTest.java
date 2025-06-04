@@ -19,23 +19,23 @@ import static org.junit.jupiter.api.Assertions.*;
 final class MainTest {
 
     @TempDir
-    File tempDir;
+    File tempdir;
 
-    private InputStream origIn;
+    private InputStream origin;
 
     @BeforeEach
     void saveSystemIn() {
-        this.origIn = System.in;
+        this.origin = System.in;
     }
 
     @AfterEach
     void restoreSystemIn() {
-        System.setIn(this.origIn);
+        System.setIn(this.origin);
     }
 
     @Test
     void runScriptWithEcho() throws IOException {
-        final File script = new File(this.tempDir, "echo.sh");
+        final File script = new File(this.tempdir, "echo.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("echo hello\n");
         }
@@ -44,7 +44,7 @@ final class MainTest {
 
     @Test
     void runScriptWithExitZero() throws IOException {
-        final File script = new File(this.tempDir, "exit0.sh");
+        final File script = new File(this.tempdir, "exit0.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("exit 0\n");
         }
@@ -53,7 +53,7 @@ final class MainTest {
 
     @Test
     void runScriptWithExitOne() throws IOException {
-        final File script = new File(this.tempDir, "exit1.sh");
+        final File script = new File(this.tempdir, "exit1.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("exit 1\n");
         }
@@ -67,7 +67,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
-        final File script = new File(this.tempDir, "test_exit.sh");
+        final File script = new File(this.tempdir, "test_exit.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("exit 42\n");
         }
@@ -94,7 +94,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
-        final File script = new File(this.tempDir, "args.sh");
+        final File script = new File(this.tempdir, "args.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("exit $#\n");
         }
@@ -103,7 +103,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
-        final File script = new File(this.tempDir, "first.sh");
+        final File script = new File(this.tempdir, "first.sh");
         try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
             w.write("exit $1\n");
         }

@@ -11,72 +11,72 @@ import static org.junit.jupiter.api.Assertions.*;
 
 final class BuiltinDispatcherTest {
 
-    private final BuiltinDispatcher d = new BuiltinDispatcher();
+    private final BuiltinDispatcher disp = new BuiltinDispatcher();
 
     @Test
     void registryHasTrue() {
-        assertTrue(this.d.isBuiltin("true"));
+        assertTrue(this.disp.isBuiltin("true"));
     }
 
     @Test
     void registryHasFalse() {
-        assertTrue(this.d.isBuiltin("false"));
+        assertTrue(this.disp.isBuiltin("false"));
     }
 
     @Test
     void registryHasColon() {
-        assertTrue(this.d.isBuiltin(":"));
+        assertTrue(this.disp.isBuiltin(":"));
     }
 
     @Test
     void registryRejectsUnknown() {
-        assertFalse(this.d.isBuiltin("nope"));
+        assertFalse(this.disp.isBuiltin("nope"));
     }
 
     @Test void dispatchTrueReturnsZero() {
-        assertEquals(0, this.d.dispatch("true", null, List.of(), new HashMap<>(), List.of()));
+        assertEquals(0, this.disp.dispatch("true", null, List.of(), new HashMap<>(), List.of()));
     }
 
     @Test void dispatchFalseReturnsOne() {
-        assertEquals(1, this.d.dispatch("false", null, List.of(), new HashMap<>(), List.of()));
+        assertEquals(1, this.disp.dispatch("false", null, List.of(), new HashMap<>(), List.of()));
     }
 
     @Test void dispatchColonReturnsZero() {
-        assertEquals(0, this.d.dispatch(":", null, List.of(), new HashMap<>(), List.of()));
+        assertEquals(0, this.disp.dispatch(":", null, List.of(), new HashMap<>(), List.of()));
     }
 
     @Test void dispatchUnknownReturnsNull() {
-        assertNull(this.d.dispatch("nope", null, List.of(), new HashMap<>(), List.of()));
+        assertNull(this.disp.dispatch("nope", null, List.of(), new HashMap<>(), List.of()));
     }
 
     @Test
     void registryHasType() {
-        assertTrue(this.d.isBuiltin("type"));
+        assertTrue(this.disp.isBuiltin("type"));
     }
 
     @Test
     void registryHasShift() {
-        assertTrue(this.d.isBuiltin("shift"));
+        assertTrue(this.disp.isBuiltin("shift"));
     }
 
     @Test
     void registryHasUnset() {
-        assertTrue(this.d.isBuiltin("unset"));
+        assertTrue(this.disp.isBuiltin("unset"));
     }
 
     @Test
     void registryHasBreak() {
-        assertTrue(this.d.isBuiltin("break"));
+        assertTrue(this.disp.isBuiltin("break"));
     }
 
     @Test
     void registryHasContinue() {
-        assertTrue(this.d.isBuiltin("continue"));
+        assertTrue(this.disp.isBuiltin("continue"));
     }
 
     @Test void registerCustomBuiltin() {
-        this.d.register("mybuiltin", (self, args, env, assigns) -> 42);
-        assertTrue(this.d.isBuiltin("mybuiltin"));
-        assertEquals(42, this.d.dispatch("mybuiltin", null, List.of(), new HashMap<>(), List.of()));
+        this.disp.register("mybuiltin", (self, args, env, assigns) -> 42);
+        assertTrue(this.disp.isBuiltin("mybuiltin"));
+        assertEquals(42, this.disp.dispatch("mybuiltin", null, List.of(), new HashMap<>(), List.of()));
     }
 }

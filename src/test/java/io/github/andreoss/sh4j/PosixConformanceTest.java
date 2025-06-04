@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 final class PosixConformanceTest {
 
     @TempDir
-    java.nio.file.Path tempDir;
+    java.nio.file.Path tempdir;
 
     @Test
     void positionalParamCount() throws Exception {
@@ -87,7 +87,7 @@ final class PosixConformanceTest {
     }
 
     private String run(final String script, final String... args) throws Exception {
-        final File str = this.tempDir.resolve("c.sh").toFile();
+        final File str = this.tempdir.resolve("c.sh").toFile();
         try (FileWriter w = new FileWriter(str, StandardCharsets.UTF_8)) {
             w.write(script);
         }
