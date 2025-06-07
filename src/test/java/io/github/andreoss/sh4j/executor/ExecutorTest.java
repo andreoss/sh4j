@@ -689,7 +689,9 @@ final class ExecutorTest {
     @Test
     void executeElifChainFalseFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse("if false; then echo a; elif false; then echo b; else echo c; fi");
+        final ListNode list = this.parse(
+            "if false; then echo a; elif false; then echo b; else echo c; fi"
+        );
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));
@@ -699,7 +701,9 @@ final class ExecutorTest {
     @Test
     void executeElifChainSecondElifTrue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse("if false; then echo a; elif false; then echo b; elif true; then echo c; fi");
+        final ListNode list = this.parse(
+            "if false; then echo a; elif false; then echo b; elif true; then echo c; fi"
+        );
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));

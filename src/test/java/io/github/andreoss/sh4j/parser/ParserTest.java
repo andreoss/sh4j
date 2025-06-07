@@ -522,7 +522,9 @@ final class ParserTest {
 
     @Test
     void parseElifChainNestedElif() {
-        final ListNode list = this.parse("if false; then a; elif false; then b; elif true; then c; fi");
+        final ListNode list = this.parse(
+            "if false; then a; elif false; then b; elif true; then c; fi"
+        );
         assertEquals(1, list.getPipelines().size());
         assertInstanceOf(IfNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
