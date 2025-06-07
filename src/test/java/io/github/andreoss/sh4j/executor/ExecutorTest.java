@@ -4,30 +4,24 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.parser.CaseNode;
-import io.github.andreoss.sh4j.parser.ForNode;
-import io.github.andreoss.sh4j.parser.FunctionNode;
-import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
-import io.github.andreoss.sh4j.parser.Subshell;
-import io.github.andreoss.sh4j.parser.WhileNode;
 import static org.junit.jupiter.api.Assertions.*;
 
 final class ExecutorTest {
@@ -768,7 +762,7 @@ final class ExecutorTest {
     void redirectTargetExpansionInput() throws Exception {
         final java.io.File file = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
         file.delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             w.write("hello from file");
         }
         final Map<String, String> env = new HashMap<>();
@@ -1576,7 +1570,7 @@ final class ExecutorTest {
         final java.io.File dir = java.nio.file.Files.createTempDirectory("sh4j_custompath_").toFile();
         dir.deleteOnExit();
         final java.io.File bin = new java.io.File(dir, "myhello");
-        try (java.io.FileWriter w = new java.io.FileWriter(bin, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)) {
             w.write("#!/bin/sh\necho ok\n");
         }
         bin.setExecutable(true);
@@ -1603,7 +1597,7 @@ final class ExecutorTest {
     void externalReadWriteFdZero() throws Exception {
         final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         file.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(file, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             w.write("seed\n");
         }
         final Executor executor = new Executor();
@@ -1628,7 +1622,7 @@ final class ExecutorTest {
     void execNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonexec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
         nonexec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonexec, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(nonexec.toPath(), StandardCharsets.UTF_8)) {
             w.write("not a script");
         }
         nonexec.setExecutable(false);
@@ -1650,7 +1644,7 @@ final class ExecutorTest {
     void externalNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonexec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
         nonexec.deleteOnExit();
-        try (java.io.FileWriter w = new java.io.FileWriter(nonexec, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(nonexec.toPath(), StandardCharsets.UTF_8)) {
             w.write("nope");
         }
         nonexec.setExecutable(false);
@@ -1986,7 +1980,7 @@ final class ExecutorTest {
         dir.mkdirs();
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("#!/bin/sh\nexit 42\n");
         }
         script.setExecutable(true);
@@ -2011,7 +2005,7 @@ final class ExecutorTest {
         dir.mkdirs();
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd2");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("#!/bin/sh\nexit 7\n");
         }
         script.setExecutable(true);
@@ -2531,7 +2525,7 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_in.txt";
         final String outpath = "/tmp/sh4j_ext_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("hello world");
         }
         final Executor executor = new Executor();
@@ -2547,10 +2541,10 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_append_in.txt";
         final String outpath = "/tmp/sh4j_ext_append_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("second");
         }
-        try (java.io.FileWriter w = new java.io.FileWriter(outpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(outpath), StandardCharsets.UTF_8)) {
             w.write("first\n");
         }
         final Executor executor = new Executor();
@@ -2567,7 +2561,7 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
         final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("hello clobber");
         }
         final Executor executor = new Executor();
@@ -2581,7 +2575,7 @@ final class ExecutorTest {
     @Test
     void externalRedirectStdoutToStderr() throws Exception {
         final String inpath = "/tmp/sh4j_ext_12_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("hello");
         }
         final Executor executor = new Executor();
@@ -2592,7 +2586,7 @@ final class ExecutorTest {
     @Test
     void externalRedirectStderrToStdout() throws Exception {
         final String inpath = "/tmp/sh4j_ext_21_in.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(inpath, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("hello");
         }
         final Executor executor = new Executor();
@@ -2626,7 +2620,7 @@ final class ExecutorTest {
     void externalStderrAppendRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_append.txt";
         new java.io.File(path).delete();
-        try (java.io.FileWriter w = new java.io.FileWriter(path, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
             w.write("initial\n");
         }
         final Executor executor = new Executor();
@@ -2638,7 +2632,7 @@ final class ExecutorTest {
     @Test
     void externalReadWriteRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_rw.txt";
-        try (java.io.FileWriter w = new java.io.FileWriter(path, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
             w.write("hello");
         }
         final Executor executor = new Executor();

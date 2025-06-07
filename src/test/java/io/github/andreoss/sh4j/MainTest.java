@@ -4,12 +4,13 @@
  */
 package io.github.andreoss.sh4j;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ final class MainTest {
     @Test
     void runScriptWithEcho() throws IOException {
         final File script = new File(this.tempdir, "echo.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("echo hello\n");
         }
         assertEquals(0, Main.runScript(script.getAbsolutePath()));
@@ -45,7 +46,7 @@ final class MainTest {
     @Test
     void runScriptWithExitZero() throws IOException {
         final File script = new File(this.tempdir, "exit0.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("exit 0\n");
         }
         assertEquals(0, Main.runScript(script.getAbsolutePath()));
@@ -54,7 +55,7 @@ final class MainTest {
     @Test
     void runScriptWithExitOne() throws IOException {
         final File script = new File(this.tempdir, "exit1.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("exit 1\n");
         }
         assertEquals(1, Main.runScript(script.getAbsolutePath()));
@@ -68,7 +69,7 @@ final class MainTest {
     @Test
     void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
         final File script = new File(this.tempdir, "test_exit.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("exit 42\n");
         }
         assertEquals(42, Main.exitCode(new String[] {script.getAbsolutePath()}));
@@ -95,7 +96,7 @@ final class MainTest {
     @Test
     void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
         final File script = new File(this.tempdir, "args.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("exit $#\n");
         }
         assertEquals(3, Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"}));
@@ -104,7 +105,7 @@ final class MainTest {
     @Test
     void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
         final File script = new File(this.tempdir, "first.sh");
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write("exit $1\n");
         }
         assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));

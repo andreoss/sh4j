@@ -4,8 +4,8 @@
  */
 package io.github.andreoss.sh4j;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -58,7 +58,7 @@ final class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
         final File probe = this.tempdir.resolve("probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write("hello-from-cat\n");
         }
         final File script = this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -79,7 +79,7 @@ final class IntegrationTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(nativebin.isFile() && nativebin.canExecute(),
                 "target/sh4j native binary not built; skipping native smoke");
         final File probe = this.tempdir.resolve("nprobe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write("hello-native\n");
         }
         final File script = this.writeScript("ncatprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -103,7 +103,7 @@ final class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmCatProbe() throws Exception {
         final File probe = this.tempdir.resolve("h_probe.txt").toFile();
-        try (FileWriter w = new FileWriter(probe, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write("child-probe\n");
         }
         final File str = this.writeScript("h_cat.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n");
@@ -275,7 +275,7 @@ final class IntegrationTest {
 
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.resolve(name).toFile();
-        try (FileWriter w = new FileWriter(script, StandardCharsets.UTF_8)) {
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(content);
         }
         assertTrue(script.setExecutable(true));
