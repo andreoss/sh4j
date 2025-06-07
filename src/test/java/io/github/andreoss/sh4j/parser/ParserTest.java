@@ -13,7 +13,7 @@ final class ParserTest {
 
     @Test
     void parseSimpleCommand() {
-        final ListNode list = this.parser("echo hello").parse();
+        final ListNode list = this.parse("echo hello");
         assertEquals(1, list.getPipelines().size());
         
         final Pipeline pipeline = list.getPipelines().get(0);
@@ -27,7 +27,7 @@ final class ParserTest {
 
     @Test
     void parsePipeline() {
-        final ListNode list = this.parser("echo a | grep b").parse();
+        final ListNode list = this.parse("echo a | grep b");
         assertEquals(1, list.getPipelines().size());
         
         final Pipeline pipeline = list.getPipelines().get(0);
@@ -38,35 +38,35 @@ final class ParserTest {
 
     @Test
     void parseListWithSemicolon() {
-        final ListNode list = this.parser("cmd1 ; cmd2").parse();
+        final ListNode list = this.parse("cmd1 ; cmd2");
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
     }
 
     @Test
     void parseListWithAnd() {
-        final ListNode list = this.parser("cmd1 && cmd2").parse();
+        final ListNode list = this.parse("cmd1 && cmd2");
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(0));
     }
 
     @Test
     void parseListWithOr() {
-        final ListNode list = this.parser("cmd1 || cmd2").parse();
+        final ListNode list = this.parse("cmd1 || cmd2");
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.OR_IF, list.getSeparators().get(0));
     }
 
     @Test
     void parseListWithAmp() {
-        final ListNode list = this.parser("cmd1 & cmd2").parse();
+        final ListNode list = this.parse("cmd1 & cmd2");
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.AMP, list.getSeparators().get(0));
     }
 
     @Test
     void parseListWithNewlineSeparator() {
-        final ListNode list = this.parser("cmd1\ncmd2").parse();
+        final ListNode list = this.parse("cmd1\ncmd2");
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
         assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
@@ -75,7 +75,7 @@ final class ParserTest {
 
     @Test
     void parseListWithBlankLinesAndLeadingTrailingNewlines() {
-        final ListNode list = this.parser("\n\ncmd1\n\n\ncmd2\n\n").parse();
+        final ListNode list = this.parse("\n\ncmd1\n\n\ncmd2\n\n");
         assertEquals(2, list.getPipelines().size());
         assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
         assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
@@ -83,14 +83,14 @@ final class ParserTest {
 
     @Test
     void parseBang() {
-        final ListNode list = this.parser("! echo hello").parse();
+        final ListNode list = this.parse("! echo hello");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertTrue(pipeline.isBang());
     }
 
     @Test
     void parseCommandWithNoArguments() {
-        final ListNode list = this.parser("ls").parse();
+        final ListNode list = this.parse("ls");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("ls", cmd.getName());
         assertTrue(cmd.getArguments().isEmpty());
@@ -98,7 +98,7 @@ final class ParserTest {
 
     @Test
     void parseInputRedirection() {
-        final ListNode list = this.parser("cat < file.txt").parse();
+        final ListNode list = this.parse("cat < file.txt");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(0, cmd.getRedirections().get(0).getFd());
@@ -108,7 +108,7 @@ final class ParserTest {
 
     @Test
     void parseOutputRedirection() {
-        final ListNode list = this.parser("echo hello > out.txt").parse();
+        final ListNode list = this.parse("echo hello > out.txt");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(1, cmd.getRedirections().get(0).getFd());
@@ -118,7 +118,7 @@ final class ParserTest {
 
     @Test
     void parseAppendRedirection() {
-        final ListNode list = this.parser("echo hello >> out.txt").parse();
+        final ListNode list = this.parse("echo hello >> out.txt");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.APPEND, cmd.getRedirections().get(0).getType());
@@ -127,7 +127,7 @@ final class ParserTest {
 
     @Test
     void parseClobberRedirection() {
-        final ListNode list = this.parser("echo test >| file.txt").parse();
+        final ListNode list = this.parse("echo test >| file.txt");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertTrue(cmd.getRedirections().size() >= 1);
         final boolean clobber = cmd.getRedirections().stream()
@@ -137,7 +137,7 @@ final class ParserTest {
 
     @Test
     void parseCommandWithDollar() {
-        final ListNode list = this.parser("echo $VAR").parse();
+        final ListNode list = this.parse("echo $VAR");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("echo", cmd.getName());
         assertEquals("$VAR", cmd.getArguments().get(0));
@@ -145,7 +145,7 @@ final class ParserTest {
 
     @Test
     void parseMultipleCommandsWithMultipleSeparators() {
-        final ListNode list = this.parser("cmd1; cmd2 & cmd3 || cmd4 && cmd5").parse();
+        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
         assertEquals(5, list.getPipelines().size());
         assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
         assertEquals(ListNode.Separator.AMP, list.getSeparators().get(1));
@@ -155,13 +155,13 @@ final class ParserTest {
 
     @Test
     void parseEmptyPipeline() {
-        final ListNode list = this.parser("").parse();
+        final ListNode list = this.parse("");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseSubshell() {
-        final ListNode list = this.parser("(echo hello)").parse();
+        final ListNode list = this.parse("(echo hello)");
         assertEquals(1, list.getPipelines().size());
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(1, pipeline.getCommands().size());
@@ -173,14 +173,14 @@ final class ParserTest {
 
     @Test
     void parseSubshellWithMultiplePipelines() {
-        final ListNode list = this.parser("(echo a; echo b)").parse();
+        final ListNode list = this.parse("(echo a; echo b)");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, ((Subshell) pipeline.getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test
     void parseSubshellInPipeline() {
-        final ListNode list = this.parser("echo foo | (cat) | wc").parse();
+        final ListNode list = this.parse("echo foo | (cat) | wc");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(3, pipeline.getCommands().size());
         assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
@@ -190,7 +190,7 @@ final class ParserTest {
 
     @Test
     void parseGrouping() {
-        final ListNode list = this.parser("{ echo hello; }").parse();
+        final ListNode list = this.parse("{ echo hello; }");
         assertEquals(1, list.getPipelines().size());
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(1, pipeline.getCommands().size());
@@ -202,7 +202,7 @@ final class ParserTest {
 
     @Test
     void parseGroupingInPipeline() {
-        final ListNode list = this.parser("echo foo | { cat; } | wc").parse();
+        final ListNode list = this.parse("echo foo | { cat; } | wc");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(3, pipeline.getCommands().size());
         assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
@@ -212,12 +212,12 @@ final class ParserTest {
 
     @Test
     void parseExpectThrowsOnMissingWord() {
-        assertThrows(ParseException.class, () -> this.parser("echo <").parse());
+        assertThrows(ParseException.class, () -> this.parse("echo <"));
     }
 
     @Test
     void parseCommandStartingWithInputRedirect() {
-        final ListNode list = this.parser("< input.txt cat").parse();
+        final ListNode list = this.parse("< input.txt cat");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("<", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
@@ -225,7 +225,7 @@ final class ParserTest {
 
     @Test
     void parseCommandStartingWithOutputRedirect() {
-        final ListNode list = this.parser("> out.txt echo").parse();
+        final ListNode list = this.parse("> out.txt echo");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
@@ -233,7 +233,7 @@ final class ParserTest {
 
     @Test
     void parseCommandStartingWithClobberRedirect() {
-        final ListNode list = this.parser(">| file.txt echo").parse();
+        final ListNode list = this.parse(">| file.txt echo");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">|", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
@@ -241,7 +241,7 @@ final class ParserTest {
 
     @Test
     void parseCommandStartingWithAppendRedirect() {
-        final ListNode list = this.parser(">> file.txt echo").parse();
+        final ListNode list = this.parse(">> file.txt echo");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(">>", cmd.getName());
         assertEquals(2, cmd.getArguments().size());
@@ -249,7 +249,7 @@ final class ParserTest {
 
     @Test
     void parseAssignmentWordAfterCommandName() {
-        final ListNode list = this.parser("echo FOO=bar").parse();
+        final ListNode list = this.parse("echo FOO=bar");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("echo", cmd.getName());
         assertTrue(cmd.getAssignments().contains("FOO=bar"));
@@ -257,7 +257,7 @@ final class ParserTest {
 
     @Test
     void parseIoNumberRedirect() {
-        final ListNode list = this.parser("2>file").parse();
+        final ListNode list = this.parse("2>file");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals("file", cmd.getRedirections().get(0).getTarget());
@@ -265,7 +265,7 @@ final class ParserTest {
 
     @Test
     void parseDupInputRedirect() {
-        final ListNode list = this.parser("cmd <&3").parse();
+        final ListNode list = this.parse("cmd <&3");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("cmd", cmd.getName());
         assertEquals(1, cmd.getRedirections().size());
@@ -275,7 +275,7 @@ final class ParserTest {
 
     @Test
     void parseCloseInputRedirect() {
-        final ListNode list = this.parser("cmd <&-").parse();
+        final ListNode list = this.parse("cmd <&-");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
@@ -284,7 +284,7 @@ final class ParserTest {
 
     @Test
     void parseDupOutputRedirect() {
-        final ListNode list = this.parser("cmd >&2").parse();
+        final ListNode list = this.parse("cmd >&2");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.DUP_OUTPUT, cmd.getRedirections().get(0).getType());
@@ -293,7 +293,7 @@ final class ParserTest {
 
     @Test
     void parseReadWriteRedirect() {
-        final ListNode list = this.parser("cmd <>file").parse();
+        final ListNode list = this.parse("cmd <>file");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
@@ -302,7 +302,7 @@ final class ParserTest {
 
     @Test
     void parseIfThenFi() {
-        final ListNode list = this.parser("if true; then echo hi; fi").parse();
+        final ListNode list = this.parse("if true; then echo hi; fi");
         assertEquals(1, list.getPipelines().size());
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(1, pipeline.getCommands().size());
@@ -311,7 +311,7 @@ final class ParserTest {
 
     @Test
     void parseIfThenElseFi() {
-        final ListNode list = this.parser("if false; then echo a; else echo b; fi").parse();
+        final ListNode list = this.parse("if false; then echo a; else echo b; fi");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertInstanceOf(IfNode.class, pipeline.getCommands().get(0));
         final IfNode num = (IfNode) pipeline.getCommands().get(0);
@@ -320,7 +320,7 @@ final class ParserTest {
 
     @Test
     void parseForDoDone() {
-        final ListNode list = this.parser("for var in a b c; do echo $var; done").parse();
+        final ListNode list = this.parse("for var in a b c; do echo $var; done");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(1, pipeline.getCommands().size());
         assertInstanceOf(ForNode.class, pipeline.getCommands().get(0));
@@ -333,7 +333,7 @@ final class ParserTest {
 
     @Test
     void parseWhileDoDone() {
-        final ListNode list = this.parser("while true; do echo hi; done").parse();
+        final ListNode list = this.parse("while true; do echo hi; done");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertInstanceOf(WhileNode.class, pipeline.getCommands().get(0));
         final WhileNode num = (WhileNode) pipeline.getCommands().get(0);
@@ -342,7 +342,7 @@ final class ParserTest {
 
     @Test
     void parseUntilDoDone() {
-        final ListNode list = this.parser("until false; do echo hi; done").parse();
+        final ListNode list = this.parse("until false; do echo hi; done");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertInstanceOf(WhileNode.class, pipeline.getCommands().get(0));
         final WhileNode num = (WhileNode) pipeline.getCommands().get(0);
@@ -351,7 +351,7 @@ final class ParserTest {
 
     @Test
     void parseCaseSimple() {
-        final ListNode list = this.parser("case foo in pat) echo match;; esac").parse();
+        final ListNode list = this.parse("case foo in pat) echo match;; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertInstanceOf(CaseNode.class, pipeline.getCommands().get(0));
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
@@ -362,7 +362,7 @@ final class ParserTest {
 
     @Test
     void parseCasePipePattern() {
-        final ListNode list = this.parser("case foo in a|b) echo match;; esac").parse();
+        final ListNode list = this.parse("case foo in a|b) echo match;; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         assertEquals(2, num.getItems().get(0).getPatterns().size());
@@ -372,7 +372,7 @@ final class ParserTest {
 
     @Test
     void parseCaseMultipleItems() {
-        final ListNode list = this.parser("case foo in a) echo a;; b) echo b;; esac").parse();
+        final ListNode list = this.parse("case foo in a) echo a;; b) echo b;; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         assertEquals(2, num.getItems().size());
@@ -380,7 +380,7 @@ final class ParserTest {
 
     @Test
     void parseCaseEmptyBody() {
-        final ListNode list = this.parser("case foo in a);; esac").parse();
+        final ListNode list = this.parse("case foo in a);; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         assertEquals(1, num.getItems().size());
@@ -388,7 +388,7 @@ final class ParserTest {
 
     @Test
     void parseCaseParenPattern() {
-        final ListNode list = this.parser("case foo in (pat) echo match;; esac").parse();
+        final ListNode list = this.parse("case foo in (pat) echo match;; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         assertEquals("pat", num.getItems().get(0).getPatterns().get(0));
@@ -396,7 +396,7 @@ final class ParserTest {
 
     @Test
     void parseFunctionDefinition() {
-        final ListNode list = this.parser("foo() { echo bar; }").parse();
+        final ListNode list = this.parse("foo() { echo bar; }");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(0));
         final FunctionNode num = (FunctionNode) pipeline.getCommands().get(0);
@@ -405,7 +405,7 @@ final class ParserTest {
 
     @Test
     void parseFunctionSubshellBody() {
-        final ListNode list = this.parser("foo() (echo bar)").parse();
+        final ListNode list = this.parse("foo() (echo bar)");
         final Pipeline pipeline = list.getPipelines().get(0);
         final FunctionNode num = (FunctionNode) pipeline.getCommands().get(0);
         assertEquals("foo", num.getName());
@@ -414,7 +414,7 @@ final class ParserTest {
 
     @Test
     void parseIfInPipeline() {
-        final ListNode list = this.parser("true | if true; then echo hi; fi").parse();
+        final ListNode list = this.parse("true | if true; then echo hi; fi");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
         assertInstanceOf(SimpleCommand.class, pipeline.getCommands().get(0));
@@ -423,7 +423,7 @@ final class ParserTest {
 
     @Test
     void parseForInPipeline() {
-        final ListNode list = this.parser("true | for var in a; do echo $var; done").parse();
+        final ListNode list = this.parse("true | for var in a; do echo $var; done");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
         assertInstanceOf(ForNode.class, pipeline.getCommands().get(1));
@@ -431,7 +431,7 @@ final class ParserTest {
 
     @Test
     void parseWhileInPipeline() {
-        final ListNode list = this.parser("true | while false; do echo hi; done").parse();
+        final ListNode list = this.parse("true | while false; do echo hi; done");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
         assertInstanceOf(WhileNode.class, pipeline.getCommands().get(1));
@@ -439,7 +439,7 @@ final class ParserTest {
 
     @Test
     void parseCaseInPipeline() {
-        final ListNode list = this.parser("true | case foo in pat) echo hi;; esac").parse();
+        final ListNode list = this.parse("true | case foo in pat) echo hi;; esac");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
         assertInstanceOf(CaseNode.class, pipeline.getCommands().get(1));
@@ -447,7 +447,7 @@ final class ParserTest {
 
     @Test
     void parseFunctionInPipeline() {
-        final ListNode list = this.parser("true | foo() { echo bar; }").parse();
+        final ListNode list = this.parse("true | foo() { echo bar; }");
         final Pipeline pipeline = list.getPipelines().get(0);
         assertEquals(2, pipeline.getCommands().size());
         assertInstanceOf(FunctionNode.class, pipeline.getCommands().get(1));
@@ -455,47 +455,47 @@ final class ParserTest {
 
     @Test
     void parseExpectWordThrows() {
-        assertThrows(ParseException.class, () -> this.parser("if true; then echo hi").parse());
+        assertThrows(ParseException.class, () -> this.parse("if true; then echo hi"));
     }
 
     @Test
     void parseFunctionBodyWithIf() {
-        final ListNode list = this.parser("foo() if true; then echo hi; fi").parse();
+        final ListNode list = this.parse("foo() if true; then echo hi; fi");
         assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithFor() {
-        final ListNode list = this.parser("foo() for var in a; do echo $var; done").parse();
+        final ListNode list = this.parse("foo() for var in a; do echo $var; done");
         assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithWhile() {
-        final ListNode list = this.parser("foo() while false; do echo hi; done").parse();
+        final ListNode list = this.parse("foo() while false; do echo hi; done");
         assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithCase() {
-        final ListNode list = this.parser("foo() case foo in pat) echo hi;; esac").parse();
+        final ListNode list = this.parse("foo() case foo in pat) echo hi;; esac");
         assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyException() {
-        assertThrows(ParseException.class, () -> this.parser("foo() bar").parse());
+        assertThrows(ParseException.class, () -> this.parse("foo() bar"));
     }
 
     @Test
     void parseEmptyWhileCondition() {
-        final ListNode list = this.parser("while do; echo hi; done").parse();
+        final ListNode list = this.parse("while do; echo hi; done");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseAssignmentWithoutCommand() {
-        final ListNode list = this.parser("FOO=bar").parse();
+        final ListNode list = this.parse("FOO=bar");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("", cmd.getName());
         assertEquals(1, cmd.getAssignments().size());
@@ -504,7 +504,7 @@ final class ParserTest {
 
     @Test
     void parseMultipleAssignmentsThenCommand() {
-        final ListNode list = this.parser("FOO=1 BAR=2 cmd arg").parse();
+        final ListNode list = this.parse("FOO=1 BAR=2 cmd arg");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("cmd", cmd.getName());
         assertEquals(2, cmd.getAssignments().size());
@@ -513,7 +513,7 @@ final class ParserTest {
 
     @Test
     void parseInlineAssignmentMidCommand() {
-        final ListNode list = this.parser("cmd FOO=1 arg").parse();
+        final ListNode list = this.parse("cmd FOO=1 arg");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals("cmd", cmd.getName());
         assertEquals(1, cmd.getAssignments().size());
@@ -522,70 +522,70 @@ final class ParserTest {
 
     @Test
     void parseElifChainNestedElif() {
-        final ListNode list = this.parser("if false; then a; elif false; then b; elif true; then c; fi").parse();
+        final ListNode list = this.parse("if false; then a; elif false; then b; elif true; then c; fi");
         assertEquals(1, list.getPipelines().size());
         assertInstanceOf(IfNode.class, list.getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseElifChainWithElse() {
-        final ListNode list = this.parser("if false; then a; elif false; then b; else c; fi").parse();
+        final ListNode list = this.parse("if false; then a; elif false; then b; else c; fi");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseTopLevelTrailingSemicolon() {
-        final ListNode list = this.parser("echo a;").parse();
+        final ListNode list = this.parse("echo a;");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseTopLevelTrailingAmpersand() {
-        final ListNode list = this.parser("sleep 0 &").parse();
+        final ListNode list = this.parse("sleep 0 &");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseSubshellWithTrailingSemi() {
-        final ListNode list = this.parser("(echo a;)").parse();
+        final ListNode list = this.parse("(echo a;)");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseGroupingWithTrailingSemi() {
-        final ListNode list = this.parser("{ echo a; }").parse();
+        final ListNode list = this.parse("{ echo a; }");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseEmptyIfThenBody() {
-        final ListNode list = this.parser("if true; then fi").parse();
+        final ListNode list = this.parse("if true; then fi");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseEmptyForBody() {
-        final ListNode list = this.parser("for i in 1 2; do done").parse();
+        final ListNode list = this.parse("for i in 1 2; do done");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseTwoPipelinesSemiTerminatedBeforeReserved() {
         // exercises the post-separator reserved-terminator break in parseList
-        final ListNode list = this.parser("if true; then echo a; echo b; fi").parse();
+        final ListNode list = this.parse("if true; then echo a; echo b; fi");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parsePipelineEmptyPipeStage() {
         // Pipe followed by `fi` -> second stage returns null, break loop
-        final ListNode list = this.parser("if echo a | echo b; then echo c; fi").parse();
+        final ListNode list = this.parse("if echo a | echo b; then echo c; fi");
         assertEquals(1, list.getPipelines().size());
     }
 
     @Test
     void parseHereDocRedirect() {
-        final ListNode list = this.parser("cat <<EOF\nhello\nEOF\n").parse();
+        final ListNode list = this.parse("cat <<EOF\nhello\nEOF\n");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
@@ -593,21 +593,21 @@ final class ParserTest {
 
     @Test
     void parseCaseMultilineBody() {
-        final ListNode list = this.parser("case x in\n  a) echo aa;;\n  b) echo bb;;\nesac").parse();
+        final ListNode list = this.parse("case x in\n  a) echo aa;;\n  b) echo bb;;\nesac");
         assertEquals(1, list.getPipelines().size());
         assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
     void parseCaseMultilineWithBlankLinesBetweenArms() {
-        final ListNode list = this.parser("case y in\n\n  a) echo aa;;\n\n  b) echo bb;;\n\nesac").parse();
+        final ListNode list = this.parse("case y in\n\n  a) echo aa;;\n\n  b) echo bb;;\n\nesac");
         assertEquals(1, list.getPipelines().size());
         assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
     void parseHereDocStripTabs() {
-        final ListNode list = this.parser("cat <<-EOF\n\thello\nEOF\n").parse();
+        final ListNode list = this.parse("cat <<-EOF\n\thello\nEOF\n");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
@@ -615,7 +615,7 @@ final class ParserTest {
 
     @Test
     void parseSeparatorsInList() {
-        final ListNode list = this.parser("cmd1 & cmd2 && cmd3 || cmd4").parse();
+        final ListNode list = this.parse("cmd1 & cmd2 && cmd3 || cmd4");
         assertEquals(4, list.getPipelines().size());
         assertEquals(ListNode.Separator.AMP, list.getSeparators().get(0));
         assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(1));
@@ -624,17 +624,17 @@ final class ParserTest {
 
     @Test
     void parseWhileWithAmpInCondition() {
-        assertEquals(1, this.parser("while true & false; do echo hi; done").parse().getPipelines().size());
+        assertEquals(1, this.parse("while true & false; do echo hi; done").getPipelines().size());
     }
 
     @Test
     void parseWhileWithAndIfInCondition() {
-        assertEquals(1, this.parser("while true && false; do echo hi; done").parse().getPipelines().size());
+        assertEquals(1, this.parse("while true && false; do echo hi; done").getPipelines().size());
     }
 
     @Test
     void parseWhileWithOrIfInCondition() {
-        assertEquals(1, this.parser("while true || false; do echo hi; done").parse().getPipelines().size());
+        assertEquals(1, this.parse("while true || false; do echo hi; done").getPipelines().size());
     }
 
     @Test
@@ -663,6 +663,10 @@ final class ParserTest {
 
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 
 }
