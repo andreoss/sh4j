@@ -81,10 +81,8 @@ final class LexerTest {
     @Test
     void operatorsSeparatedBySpaces() {
         final Lexer list = this.lexer("&& ||");
-        final Token tokfirst = list.nextToken();
-        assertEquals(TokenType.AND_IF, tokfirst.type());
-        final Token toksecond = list.nextToken();
-        assertEquals(TokenType.OR_IF, toksecond.type());
+        assertEquals(TokenType.AND_IF, list.nextToken().type());
+        assertEquals(TokenType.OR_IF, list.nextToken().type());
     }
 
     @Test
@@ -93,15 +91,13 @@ final class LexerTest {
         final Token tokfirst = list.nextToken();
         assertEquals(TokenType.WORD, tokfirst.type());
         assertEquals("cmd", tokfirst.text());
-        final Token toksecond = list.nextToken();
-        assertEquals(TokenType.AMP, toksecond.type());
+        assertEquals(TokenType.AMP, list.nextToken().type());
     }
 
     @Test
     void operatorThenWord() {
         final Lexer list = this.lexer(">out");
-        final Token tokfirst = list.nextToken();
-        assertEquals(TokenType.GREAT, tokfirst.type());
+        assertEquals(TokenType.GREAT, list.nextToken().type());
         final Token toksecond = list.nextToken();
         assertEquals(TokenType.WORD, toksecond.type());
         assertEquals("out", toksecond.text());
@@ -126,8 +122,7 @@ final class LexerTest {
     void eofAfterTokens() {
         final Lexer list = this.lexer("a");
         list.nextToken();
-        final Token tokn = list.nextToken();
-        assertEquals(TokenType.END_OF_FILE, tokn.type());
+        assertEquals(TokenType.END_OF_FILE, list.nextToken().type());
     }
 
     @Test
@@ -156,15 +151,13 @@ final class LexerTest {
     @Test
     void numberPrefixedNameIsNotAssignment() {
         final Lexer list = this.lexer("1a=b");
-        final Token tokn = list.nextToken();
-        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals(TokenType.WORD, list.nextToken().type());
     }
 
     @Test
     void invalidVarNameCharIsNotAssignment() {
         final Lexer list = this.lexer("a@b=c");
-        final Token tokn = list.nextToken();
-        assertEquals(TokenType.WORD, tokn.type());
+        assertEquals(TokenType.WORD, list.nextToken().type());
     }
 
     @Test
@@ -212,8 +205,7 @@ final class LexerTest {
     @Test
     void backslashContinuation() {
         final Lexer list = this.lexer("a\\\nb");
-        final Token tokn = list.nextToken();
-        assertEquals("ab", tokn.text());
+        assertEquals("ab", list.nextToken().text());
     }
 
     @Test
@@ -275,21 +267,18 @@ final class LexerTest {
 
     @Test
     void assignmentWordEdgeCases() {
-        final Lexer list = this.lexer("=value");
-        assertEquals(TokenType.WORD, list.nextToken().type());
+        assertEquals(TokenType.WORD, this.lexer("=value").nextToken().type());
         assertEquals(TokenType.ASSIGNMENT_WORD, this.lexer("_=value").nextToken().type());
     }
 
     @Test
     void backslashAtEof() {
-        final Lexer list = this.lexer("a\\");
-        assertEquals("a\\", list.nextToken().text());
+        assertEquals("a\\", this.lexer("a\\").nextToken().text());
     }
 
     @Test
     void equalsAloneIsWord() {
-        final Lexer list = this.lexer("=value");
-        assertEquals(TokenType.WORD, list.nextToken().type());
+        assertEquals(TokenType.WORD, this.lexer("=value").nextToken().type());
     }
 
     @Test
@@ -407,20 +396,17 @@ final class LexerTest {
 
     @Test
     void readHereDocContentSkipsLeadingNewline() {
-        final Lexer list = this.lexer("\nhello\nEOF\n");
-        assertEquals("hello", list.readHereDocContent("EOF", false));
+        assertEquals("hello", this.lexer("\nhello\nEOF\n").readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentEmptyBody() {
-        final Lexer list = this.lexer("EOF\n");
-        assertEquals("", list.readHereDocContent("EOF", false));
+        assertEquals("", this.lexer("EOF\n").readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentMultipleLines() {
-        final Lexer list = this.lexer("\nfirst\nsecond\nthird\nEOF\n");
-        assertEquals("first\nsecond\nthird", list.readHereDocContent("EOF", false));
+        assertEquals("first\nsecond\nthird", this.lexer("\nfirst\nsecond\nthird\nEOF\n").readHereDocContent("EOF", false));
     }
 
     private Lexer lexer(final String input) {

@@ -84,8 +84,7 @@ final class ParserTest {
     @Test
     void parseBang() {
         final ListNode list = this.parse("! echo hello");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertTrue(pipeline.isBang());
+        assertTrue(list.getPipelines().get(0).isBang());
     }
 
     @Test
@@ -155,8 +154,7 @@ final class ParserTest {
 
     @Test
     void parseEmptyPipeline() {
-        final ListNode list = this.parse("");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("").getPipelines().size());
     }
 
     @Test
@@ -174,8 +172,7 @@ final class ParserTest {
     @Test
     void parseSubshellWithMultiplePipelines() {
         final ListNode list = this.parse("(echo a; echo b)");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        assertEquals(2, ((Subshell) pipeline.getCommands().get(0)).getList().getPipelines().size());
+        assertEquals(2, ((Subshell) list.getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test
@@ -460,26 +457,22 @@ final class ParserTest {
 
     @Test
     void parseFunctionBodyWithIf() {
-        final ListNode list = this.parse("foo() if true; then echo hi; fi");
-        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, this.parse("foo() if true; then echo hi; fi").getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithFor() {
-        final ListNode list = this.parse("foo() for var in a; do echo $var; done");
-        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, this.parse("foo() for var in a; do echo $var; done").getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithWhile() {
-        final ListNode list = this.parse("foo() while false; do echo hi; done");
-        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, this.parse("foo() while false; do echo hi; done").getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
     void parseFunctionBodyWithCase() {
-        final ListNode list = this.parse("foo() case foo in pat) echo hi;; esac");
-        assertInstanceOf(FunctionNode.class, list.getPipelines().get(0).getCommands().get(0));
+        assertInstanceOf(FunctionNode.class, this.parse("foo() case foo in pat) echo hi;; esac").getPipelines().get(0).getCommands().get(0));
     }
 
     @Test
@@ -489,8 +482,7 @@ final class ParserTest {
 
     @Test
     void parseEmptyWhileCondition() {
-        final ListNode list = this.parse("while do; echo hi; done");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("while do; echo hi; done").getPipelines().size());
     }
 
     @Test
@@ -531,58 +523,49 @@ final class ParserTest {
 
     @Test
     void parseElifChainWithElse() {
-        final ListNode list = this.parse("if false; then a; elif false; then b; else c; fi");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("if false; then a; elif false; then b; else c; fi").getPipelines().size());
     }
 
     @Test
     void parseTopLevelTrailingSemicolon() {
-        final ListNode list = this.parse("echo a;");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("echo a;").getPipelines().size());
     }
 
     @Test
     void parseTopLevelTrailingAmpersand() {
-        final ListNode list = this.parse("sleep 0 &");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("sleep 0 &").getPipelines().size());
     }
 
     @Test
     void parseSubshellWithTrailingSemi() {
-        final ListNode list = this.parse("(echo a;)");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("(echo a;)").getPipelines().size());
     }
 
     @Test
     void parseGroupingWithTrailingSemi() {
-        final ListNode list = this.parse("{ echo a; }");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("{ echo a; }").getPipelines().size());
     }
 
     @Test
     void parseEmptyIfThenBody() {
-        final ListNode list = this.parse("if true; then fi");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("if true; then fi").getPipelines().size());
     }
 
     @Test
     void parseEmptyForBody() {
-        final ListNode list = this.parse("for i in 1 2; do done");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("for i in 1 2; do done").getPipelines().size());
     }
 
     @Test
     void parseTwoPipelinesSemiTerminatedBeforeReserved() {
         // exercises the post-separator reserved-terminator break in parseList
-        final ListNode list = this.parse("if true; then echo a; echo b; fi");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("if true; then echo a; echo b; fi").getPipelines().size());
     }
 
     @Test
     void parsePipelineEmptyPipeStage() {
         // Pipe followed by `fi` -> second stage returns null, break loop
-        final ListNode list = this.parse("if echo a | echo b; then echo c; fi");
-        assertEquals(1, list.getPipelines().size());
+        assertEquals(1, this.parse("if echo a | echo b; then echo c; fi").getPipelines().size());
     }
 
     @Test

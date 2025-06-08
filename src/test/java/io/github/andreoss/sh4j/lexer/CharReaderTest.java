@@ -13,8 +13,7 @@ final class CharReaderTest {
 
     @Test
     void peekReturnsFirstChar() {
-        final CharReader result = new CharReader("a");
-        assertEquals('a', result.peek());
+        assertEquals('a', new CharReader("a").peek());
     }
 
     @Test
@@ -33,8 +32,7 @@ final class CharReaderTest {
 
     @Test
     void isEOFReturnsFalseWhenCharsRemain() {
-        final CharReader result = new CharReader("abc");
-        assertFalse(result.isEof());
+        assertFalse(new CharReader("abc").isEof());
     }
 
     @Test
@@ -54,8 +52,7 @@ final class CharReaderTest {
 
     @Test
     void consumeEofReturnsMinusOne() {
-        final CharReader result = new CharReader("");
-        assertEquals(-1, result.consume());
+        assertEquals(-1, new CharReader("").consume());
     }
 
     @Test
