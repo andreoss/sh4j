@@ -57,9 +57,9 @@ final class RedirectionHandlerTest {
 
     @Test
     void heredocFileRoundtrip() throws Exception {
-        final java.io.File f = RedirectionHandler.heredocFile("alpha\nbeta\n");
+        final java.io.File f = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
         assertNotNull(f);
         assertTrue(f.isFile());
-        assertEquals("alpha\nbeta\n", java.nio.file.Files.readString(f.toPath()));
+        assertEquals(String.format("alpha%nbeta%n"), java.nio.file.Files.readString(f.toPath()));
     }
 }

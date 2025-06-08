@@ -20,117 +20,117 @@ final class PosixTests {
 
     @Test
     void trueExitZero() throws IOException {
-        assertEquals(0, this.run("true\n"));
+        assertEquals(0, this.run(String.format("true%n")));
     }
 
     @Test
     void falseExitOne() throws IOException {
-        assertEquals(1, this.run("false\n"));
+        assertEquals(1, this.run(String.format("false%n")));
     }
 
     @Test
     void exitFortyTwo() throws IOException {
-        assertEquals(42, this.run("exit 42\n"));
+        assertEquals(42, this.run(String.format("exit 42%n")));
     }
 
     @Test
     void exitZero() throws IOException {
-        assertEquals(0, this.run("exit 0\n"));
+        assertEquals(0, this.run(String.format("exit 0%n")));
     }
 
     @Test
     void exitOne() throws IOException {
-        assertEquals(1, this.run("exit 1\n"));
+        assertEquals(1, this.run(String.format("exit 1%n")));
     }
 
     @Test
     void echoHello() throws IOException {
-        assertEquals(0, this.run("echo hello\n"));
+        assertEquals(0, this.run(String.format("echo hello%n")));
     }
 
     @Test
     void echoArgs() throws IOException {
-        assertEquals(0, this.run("echo a b c\n"));
+        assertEquals(0, this.run(String.format("echo a b c%n")));
     }
 
     @Test
     void pipeline() throws IOException {
-        assertEquals(0, this.run("echo hello | cat\n"));
+        assertEquals(0, this.run(String.format("echo hello | cat%n")));
     }
 
     @Test
     void pipelineMulti() throws IOException {
-        assertEquals(0, this.run("echo hello | cat | wc -c\n"));
+        assertEquals(0, this.run(String.format("echo hello | cat | wc -c%n")));
     }
 
     @Test
     void andIf() throws IOException {
-        assertEquals(0, this.run("true && echo ok\n"));
+        assertEquals(0, this.run(String.format("true && echo ok%n")));
     }
 
     @Test
     void andIfStop() throws IOException {
-        assertEquals(1, this.run("false && echo nope\n"));
+        assertEquals(1, this.run(String.format("false && echo nope%n")));
     }
 
     @Test
     void orIf() throws IOException {
-        assertEquals(0, this.run("false || echo ok\n"));
+        assertEquals(0, this.run(String.format("false || echo ok%n")));
     }
 
     @Test
     void orIfStop() throws IOException {
-        assertEquals(0, this.run("true || echo nope\n"));
+        assertEquals(0, this.run(String.format("true || echo nope%n")));
     }
 
     @Test
     void bangFalse() throws IOException {
-        assertEquals(0, this.run("! false\n"));
+        assertEquals(0, this.run(String.format("! false%n")));
     }
 
     @Test
     void bangTrue() throws IOException {
-        assertEquals(1, this.run("! true\n"));
+        assertEquals(1, this.run(String.format("! true%n")));
     }
 
     @Test
     void semicolon() throws IOException {
-        assertEquals(1, this.run("true; false\n"));
+        assertEquals(1, this.run(String.format("true; false%n")));
     }
 
     @Test
     void background() throws IOException {
-        assertEquals(0, this.run("sleep 0 &\n"));
+        assertEquals(0, this.run(String.format("sleep 0 &%n")));
     }
 
     @Test
     void assignThenCmd() throws IOException {
-        assertEquals(0, this.run("MSG=hello echo $MSG\n"));
+        assertEquals(0, this.run(String.format("MSG=hello echo $MSG%n")));
     }
 
     @Test
     void assignOnly() throws IOException {
-        assertEquals(0, this.run("MSG=hello\necho $MSG\n"));
+        assertEquals(0, this.run(String.format("MSG=hello%necho $MSG%n")));
     }
 
     @Test
     void multiAssign() throws IOException {
-        assertEquals(0, this.run("A=1 B=2\n"));
+        assertEquals(0, this.run(String.format("A=1 B=2%n")));
     }
 
     @Test
     void varExpand() throws IOException {
-        assertEquals(0, this.run("echo $HOME\n"));
+        assertEquals(0, this.run(String.format("echo $HOME%n")));
     }
 
     @Test
     void cmdNotFound() throws IOException {
-        assertEquals(127, this.run("nonexistent_cmd_xyz\n"));
+        assertEquals(127, this.run(String.format("nonexistent_cmd_xyz%n")));
     }
 
     @Test
     void pwd() throws IOException {
-        assertEquals(0, this.run("pwd\n"));
+        assertEquals(0, this.run(String.format("pwd%n")));
     }
 
     private int run(final String script) throws IOException {

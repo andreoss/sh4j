@@ -457,7 +457,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(1, executor.execute(list));
-        assertEquals("ran\n", bos.toString(StandardCharsets.UTF_8));
+        assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -467,7 +467,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));
-        assertEquals("ran\n", bos.toString(StandardCharsets.UTF_8));
+        assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -523,7 +523,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));
-        assertEquals("yes\n", bos.toString(StandardCharsets.UTF_8));
+        assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -535,7 +535,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));
-        assertEquals("c\n", bos.toString(StandardCharsets.UTF_8));
+        assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -547,7 +547,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true));
         assertEquals(0, executor.execute(list));
-        assertEquals("c\n", bos.toString(StandardCharsets.UTF_8));
+        assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -557,7 +557,7 @@ final class ExecutorTest {
 
     @Test
     void executeHereDoc() {
-        assertEquals(0, new Executor().execute(this.parse("cat << EOF\nhello\nEOF\n")));
+        assertEquals(0, new Executor().execute(this.parse(String.format("cat << EOF%nhello%nEOF%n"))));
     }
 
     @Test
@@ -567,7 +567,7 @@ final class ExecutorTest {
         env.put("TEST_HVAR", "expanded");
         final Executor executor = new Executor(env);
         executor.setCaptureStream(bos);
-        assertEquals(0, executor.execute(this.parse("cat << EOF\nhello $TEST_HVAR\nEOF\n")));
+        assertEquals(0, executor.execute(this.parse(String.format("cat << EOF%nhello $TEST_HVAR%nEOF%n"))));
         assertEquals("hello expanded", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
@@ -579,7 +579,7 @@ final class ExecutorTest {
         env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
         assertEquals(0, new Executor(env).execute(this.parse("echo hello > $TEST_FILE")));
         assertTrue(f.exists());
-        assertEquals("hello\n", new String(java.nio.file.Files.readAllBytes(f.toPath())));
+        assertEquals(String.format("hello%n"), new String(java.nio.file.Files.readAllBytes(f.toPath())));
         f.delete();
     }
 
@@ -591,7 +591,7 @@ final class ExecutorTest {
         env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
         assertEquals(0, new Executor(env).execute(this.parse("echo hello >> $TEST_FILE")));
         assertTrue(f.exists());
-        assertEquals("hello\n", new String(java.nio.file.Files.readAllBytes(f.toPath())));
+        assertEquals(String.format("hello%n"), new String(java.nio.file.Files.readAllBytes(f.toPath())));
         f.delete();
     }
 
@@ -1341,7 +1341,7 @@ final class ExecutorTest {
         dir.deleteOnExit();
         final java.io.File bin = new java.io.File(dir, "myhello");
         try (java.io.BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)) {
-            w.write("#!/bin/sh\necho ok\n");
+            w.write(String.format("#!/bin/sh%necho ok%n"));
         }
         bin.setExecutable(true);
         bin.deleteOnExit();
@@ -1365,7 +1365,7 @@ final class ExecutorTest {
         final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         file.deleteOnExit();
         try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            w.write("seed\n");
+            w.write(String.format("seed%n"));
         }
         final Executor executor = new Executor();
         executor.execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse());
@@ -1373,7 +1373,7 @@ final class ExecutorTest {
 
     @Test
     void externalHeredocDashStripsTabs() throws Exception {
-        assertEquals(0, new Executor().execute(this.parse("cat <<-EOF\n\t\thello\nEOF\n")));
+        assertEquals(0, new Executor().execute(this.parse(String.format("cat <<-EOF%n\t\thello%nEOF%n"))));
     }
 
     @Test
@@ -1463,12 +1463,12 @@ final class ExecutorTest {
 
     @Test
     void externalHereDocRedirect() throws Exception {
-        assertEquals(0, new Executor().execute(this.parse("cat <<EOF\nhello world\nEOF\n")));
+        assertEquals(0, new Executor().execute(this.parse(String.format("cat <<EOF%nhello world%nEOF%n"))));
     }
 
     @Test
     void externalHereDocDashRedirect() throws Exception {
-        assertEquals(0, new Executor().execute(this.parse("cat <<-EOF\n\thello dashed\nEOF\n")));
+        assertEquals(0, new Executor().execute(this.parse(String.format("cat <<-EOF%n\thello dashed%nEOF%n"))));
     }
 
     @Test
@@ -1667,7 +1667,7 @@ final class ExecutorTest {
 
     @Test
     void defaultIfsSet() {
-        assertEquals(" \t\n", new Executor().getVariable("IFS"));
+        assertEquals(String.format(" \t%n"), new Executor().getVariable("IFS"));
     }
 
     @Test
@@ -1690,7 +1690,7 @@ final class ExecutorTest {
         final Executor executor = new Executor(env);
         assertEquals("/custom/home", executor.getVariable("HOME"));
         assertEquals("/custom/path", executor.getVariable("PATH"));
-        assertEquals(" \t\n", executor.getVariable("IFS"));
+        assertEquals(String.format(" \t%n"), executor.getVariable("IFS"));
     }
 
     @Test
@@ -1715,7 +1715,7 @@ final class ExecutorTest {
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("#!/bin/sh\nexit 42\n");
+            w.write(String.format("#!/bin/sh%nexit 42%n"));
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
@@ -1739,7 +1739,7 @@ final class ExecutorTest {
         dir.deleteOnExit();
         final File script = new File(dir, "mycmd2");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("#!/bin/sh\nexit 7\n");
+            w.write(String.format("#!/bin/sh%nexit 7%n"));
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
@@ -1775,22 +1775,22 @@ final class ExecutorTest {
 
     @Test
     void splitFieldsDefaultIfs() {
-        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", " \t\n"));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", String.format(" \t%n")));
     }
 
     @Test
     void splitFieldsMultipleWs() {
-        assertEquals(List.of("a", "b"), WordExpander.splitFields("a   b", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("a   b", String.format(" \t%n")));
     }
 
     @Test
     void splitFieldsLeadingWs() {
-        assertEquals(List.of("a", "b"), WordExpander.splitFields("  a b", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("  a b", String.format(" \t%n")));
     }
 
     @Test
     void splitFieldsTrailingWs() {
-        assertEquals(List.of("a", "b"), WordExpander.splitFields("a b  ", " \t\n"));
+        assertEquals(List.of("a", "b"), WordExpander.splitFields("a b  ", String.format(" \t%n")));
     }
 
     @Test
@@ -1830,7 +1830,7 @@ final class ExecutorTest {
 
     @Test
     void splitFieldsEmptyValue() {
-        assertEquals(List.of(), WordExpander.splitFields("", " \t\n"));
+        assertEquals(List.of(), WordExpander.splitFields("", String.format(" \t%n")));
     }
 
     @Test
@@ -2208,7 +2208,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         assertEquals(0, executor.execute(this.parse("for i in a b; do echo $i; continue; echo after; done")));
-        assertEquals("a\nb", bos.toString(StandardCharsets.UTF_8).trim());
+        assertEquals(String.format("a%nb"), bos.toString(StandardCharsets.UTF_8).trim());
         assertFalse(bos.toString(StandardCharsets.UTF_8).contains("after"));
     }
 
@@ -2255,7 +2255,7 @@ final class ExecutorTest {
             w.write("second");
         }
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(outpath), StandardCharsets.UTF_8)) {
-            w.write("first\n");
+            w.write(String.format("first%n"));
         }
         assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + String.format(" >> %s", outpath))));
         final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim();
@@ -2325,7 +2325,7 @@ final class ExecutorTest {
         final String path = "/tmp/sh4j_ext_err_append.txt";
         new java.io.File(path).delete();
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
-            w.write("initial\n");
+            w.write(String.format("initial%n"));
         }
         final Executor executor = new Executor();
         executor.execute(this.parse(String.format("cat /nonexistent_path_xyz_456 2>> %s", path)));
@@ -2348,7 +2348,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        assertEquals(0, executor.execute(this.parse("cat <<- EOF\n\thello\nEOF\n")));
+        assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n"))));
         assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
@@ -2357,7 +2357,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        assertEquals(0, executor.execute(this.parse("cat <<- EOF\n\t\thello\nEOF\n")));
+        assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n"))));
         assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
@@ -2366,7 +2366,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        assertEquals(0, executor.execute(this.parse("cat <<- EOF\n\thello\n\tEOF\n")));
+        assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n"))));
         assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
@@ -2375,8 +2375,8 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        assertEquals(0, executor.execute(this.parse("cat <<- MARKER\n\tfirst\nsecond\n\tthird\nMARKER\n")));
-        assertEquals("first\nsecond\nthird", bos.toString(StandardCharsets.UTF_8).trim());
+        assertEquals(0, executor.execute(this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))));
+        assertEquals(String.format("first%nsecond%nthird"), bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test

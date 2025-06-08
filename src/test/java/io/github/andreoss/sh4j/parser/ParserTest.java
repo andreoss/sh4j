@@ -66,7 +66,7 @@ final class ParserTest {
 
     @Test
     void parseListWithNewlineSeparator() {
-        final ListNode list = this.parse("cmd1\ncmd2");
+        final ListNode list = this.parse(String.format("cmd1%ncmd2"));
         assertEquals(2, list.getPipelines().size());
         assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
         assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
@@ -75,7 +75,7 @@ final class ParserTest {
 
     @Test
     void parseListWithBlankLinesAndLeadingTrailingNewlines() {
-        final ListNode list = this.parse("\n\ncmd1\n\n\ncmd2\n\n");
+        final ListNode list = this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n"));
         assertEquals(2, list.getPipelines().size());
         assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
         assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
@@ -570,7 +570,7 @@ final class ParserTest {
 
     @Test
     void parseHereDocRedirect() {
-        final ListNode list = this.parse("cat <<EOF\nhello\nEOF\n");
+        final ListNode list = this.parse(String.format("cat <<EOF%nhello%nEOF%n"));
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
@@ -578,21 +578,21 @@ final class ParserTest {
 
     @Test
     void parseCaseMultilineBody() {
-        final ListNode list = this.parse("case x in\n  a) echo aa;;\n  b) echo bb;;\nesac");
+        final ListNode list = this.parse(String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac"));
         assertEquals(1, list.getPipelines().size());
         assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
     void parseCaseMultilineWithBlankLinesBetweenArms() {
-        final ListNode list = this.parse("case y in\n\n  a) echo aa;;\n\n  b) echo bb;;\n\nesac");
+        final ListNode list = this.parse(String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac"));
         assertEquals(1, list.getPipelines().size());
         assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
     }
 
     @Test
     void parseHereDocStripTabs() {
-        final ListNode list = this.parse("cat <<-EOF\n\thello\nEOF\n");
+        final ListNode list = this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"));
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         assertEquals(1, cmd.getRedirections().size());
         assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());

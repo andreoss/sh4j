@@ -72,7 +72,7 @@ final class CharReaderTest {
 
     @Test
     void newlineIncrementsLineAndResetsColumn() {
-        final CharReader result = new CharReader("\n");
+        final CharReader result = new CharReader(String.format("%n"));
         result.consume();
         assertEquals(2, result.getLine());
         assertEquals(0, result.getColumn());
@@ -80,7 +80,7 @@ final class CharReaderTest {
 
     @Test
     void multipleLines() {
-        final CharReader result = new CharReader("a\nb");
+        final CharReader result = new CharReader(String.format("a%nb"));
         assertEquals(1, result.getLine());
         assertEquals(0, result.getColumn());
         result.consume(); // 'a'

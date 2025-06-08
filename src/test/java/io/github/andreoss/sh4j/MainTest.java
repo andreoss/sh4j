@@ -38,7 +38,7 @@ final class MainTest {
     void runScriptWithEcho() throws IOException {
         final File script = new File(this.tempdir, "echo.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("echo hello\n");
+            w.write(String.format("echo hello%n"));
         }
         assertEquals(0, Main.runScript(script.getAbsolutePath()));
     }
@@ -47,7 +47,7 @@ final class MainTest {
     void runScriptWithExitZero() throws IOException {
         final File script = new File(this.tempdir, "exit0.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("exit 0\n");
+            w.write(String.format("exit 0%n"));
         }
         assertEquals(0, Main.runScript(script.getAbsolutePath()));
     }
@@ -56,7 +56,7 @@ final class MainTest {
     void runScriptWithExitOne() throws IOException {
         final File script = new File(this.tempdir, "exit1.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("exit 1\n");
+            w.write(String.format("exit 1%n"));
         }
         assertEquals(1, Main.runScript(script.getAbsolutePath()));
     }
@@ -70,7 +70,7 @@ final class MainTest {
     void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
         final File script = new File(this.tempdir, "test_exit.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("exit 42\n");
+            w.write(String.format("exit 42%n"));
         }
         assertEquals(42, Main.exitCode(new String[] {script.getAbsolutePath()}));
     }
@@ -83,13 +83,13 @@ final class MainTest {
 
     @Test
     void exitCodeNoArgsInteractiveEmptyLine() {
-        System.setIn(new ByteArrayInputStream("\n".getBytes(StandardCharsets.UTF_8)));
+        System.setIn(new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8)));
         assertEquals(0, Main.exitCode(new String[0]));
     }
 
     @Test
     void exitCodeNoArgsInteractiveWithCommand() {
-        System.setIn(new ByteArrayInputStream("echo hello\n".getBytes(StandardCharsets.UTF_8)));
+        System.setIn(new ByteArrayInputStream(String.format("echo hello%n").getBytes(StandardCharsets.UTF_8)));
         assertEquals(0, Main.exitCode(new String[0]));
     }
 
@@ -97,7 +97,7 @@ final class MainTest {
     void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
         final File script = new File(this.tempdir, "args.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("exit $#\n");
+            w.write(String.format("exit $#%n"));
         }
         assertEquals(3, Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"}));
     }
@@ -106,7 +106,7 @@ final class MainTest {
     void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
         final File script = new File(this.tempdir, "first.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write("exit $1\n");
+            w.write(String.format("exit $1%n"));
         }
         assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));
     }

@@ -37,7 +37,7 @@ final class WordExpanderTest {
     }
 
     @Test void splitFieldsDefaultIfs() {
-        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", " \t\n"));
+        assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", String.format(" \t%n")));
     }
 
     @Test void splitFieldsCustomIfs() {

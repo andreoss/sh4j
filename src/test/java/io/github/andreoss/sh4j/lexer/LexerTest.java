@@ -19,10 +19,10 @@ final class LexerTest {
 
     @Test
     void newline() {
-        final Lexer list = this.lexer("\n");
+        final Lexer list = this.lexer(String.format("%n"));
         final Token tokn = list.nextToken();
         assertEquals(TokenType.NEWLINE, tokn.type());
-        assertEquals("\n", tokn.text());
+        assertEquals(String.format("%n"), tokn.text());
     }
 
     @Test
@@ -68,7 +68,7 @@ final class LexerTest {
 
     @Test
     void multipleTokens() {
-        final Lexer list = this.lexer("echo hello\n");
+        final Lexer list = this.lexer(String.format("echo hello%n"));
         final Token tokfirst = list.nextToken();
         assertEquals(TokenType.WORD, tokfirst.type());
         assertEquals("echo", tokfirst.text());
@@ -105,7 +105,7 @@ final class LexerTest {
 
     @Test
     void consecutiveNewlines() {
-        final Lexer list = this.lexer("\n\n");
+        final Lexer list = this.lexer(String.format("%n%n"));
         assertEquals(TokenType.NEWLINE, list.nextToken().type());
         assertEquals(TokenType.NEWLINE, list.nextToken().type());
     }
@@ -204,7 +204,7 @@ final class LexerTest {
 
     @Test
     void backslashContinuation() {
-        final Lexer list = this.lexer("a\\\nb");
+        final Lexer list = this.lexer(String.format("a\\%nb"));
         assertEquals("ab", list.nextToken().text());
     }
 
@@ -234,7 +234,7 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashNewline() {
-        final Lexer list = this.lexer("\"a\\\nb\"");
+        final Lexer list = this.lexer(String.format("\"a\\%nb\""));
         final Token tokn = list.nextToken();
         assertEquals(TokenType.WORD, tokn.type());
         assertEquals("\"ab\"", tokn.text());
@@ -316,7 +316,7 @@ final class LexerTest {
 
     @Test
     void backslashNewlineLineContinuation() {
-        final Lexer list = this.lexer("ab\\\ncd");
+        final Lexer list = this.lexer(String.format("ab\\%ncd"));
         final Token tokn = list.nextToken();
         assertEquals(TokenType.WORD, tokn.type());
         assertEquals("abcd", tokn.text());
@@ -396,17 +396,17 @@ final class LexerTest {
 
     @Test
     void readHereDocContentSkipsLeadingNewline() {
-        assertEquals("hello", this.lexer("\nhello\nEOF\n").readHereDocContent("EOF", false));
+        assertEquals("hello", this.lexer(String.format("%nhello%nEOF%n")).readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentEmptyBody() {
-        assertEquals("", this.lexer("EOF\n").readHereDocContent("EOF", false));
+        assertEquals("", this.lexer(String.format("EOF%n")).readHereDocContent("EOF", false));
     }
 
     @Test
     void readHereDocContentMultipleLines() {
-        assertEquals("first\nsecond\nthird", this.lexer("\nfirst\nsecond\nthird\nEOF\n").readHereDocContent("EOF", false));
+        assertEquals(String.format("first%nsecond%nthird"), this.lexer(String.format("%nfirst%nsecond%nthird%nEOF%n")).readHereDocContent("EOF", false));
     }
 
     private Lexer lexer(final String input) {

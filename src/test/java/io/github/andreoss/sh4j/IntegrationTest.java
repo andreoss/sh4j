@@ -21,42 +21,42 @@ final class IntegrationTest {
 
     @Test
     void echoHello() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("echo.sh", "echo hello\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("echo.sh", String.format("echo hello%n")).getAbsolutePath()));
     }
 
     @Test
     void trueCommand() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("true.sh", "true\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("true.sh", String.format("true%n")).getAbsolutePath()));
     }
 
     @Test
     void falseCommand() throws IOException {
-        assertEquals(1, Main.runScript(this.writeScript("false.sh", "false\n").getAbsolutePath()));
+        assertEquals(1, Main.runScript(this.writeScript("false.sh", String.format("false%n")).getAbsolutePath()));
     }
 
     @Test
     void pwdCommand() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("pwd.sh", "pwd\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("pwd.sh", String.format("pwd%n")).getAbsolutePath()));
     }
 
     @Test
     void exitFortyTwo() throws IOException {
-        assertEquals(42, Main.runScript(this.writeScript("exitFortyTwo.sh", "exit 42\n").getAbsolutePath()));
+        assertEquals(42, Main.runScript(this.writeScript("exitFortyTwo.sh", String.format("exit 42%n")).getAbsolutePath()));
     }
 
     @Test
     void pipelineEchoCat() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("pipe.sh", "echo hello | cat\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("pipe.sh", String.format("echo hello | cat%n")).getAbsolutePath()));
     }
 
     @org.junit.jupiter.api.Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
         final File probe = this.tempdir.resolve("probe.txt").toFile();
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
-            w.write("hello-from-cat\n");
+            w.write(String.format("hello-from-cat%n"));
         }
         final ProcessBuilder builder = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
-                System.getProperty("java.class.path"), "io.github.andreoss.sh4j.Main", this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n").getAbsolutePath());
+                System.getProperty("java.class.path"), "io.github.andreoss.sh4j.Main", this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
@@ -72,10 +72,10 @@ final class IntegrationTest {
                 "target/sh4j native binary not built; skipping native smoke");
         final File probe = this.tempdir.resolve("nprobe.txt").toFile();
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
-            w.write("hello-native\n");
+            w.write(String.format("hello-native%n"));
         }
         final ProcessBuilder builder = new ProcessBuilder(nativebin.getAbsolutePath(),
-                this.writeScript("ncatprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n").getAbsolutePath());
+                this.writeScript("ncatprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
@@ -86,7 +86,7 @@ final class IntegrationTest {
 
     @org.junit.jupiter.api.Test
     void childJvmEchoPipeCat() throws Exception {
-        final String out = this.runChildJvm(this.writeScript("h_pipe.sh", "echo child-pipe | cat\n"));
+        final String out = this.runChildJvm(this.writeScript("h_pipe.sh", String.format("echo child-pipe | cat%n")));
         assertTrue(out.contains("child-pipe"), String.format("pipeline stdout missing; got: '%s", out) + "'");
     }
 
@@ -94,15 +94,15 @@ final class IntegrationTest {
     void childJvmCatProbe() throws Exception {
         final File probe = this.tempdir.resolve("h_probe.txt").toFile();
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
-            w.write("child-probe\n");
+            w.write(String.format("child-probe%n"));
         }
-        final String out = this.runChildJvm(this.writeScript("h_cat.sh", String.format("cat %s", probe.getAbsolutePath()) + "\n"));
+        final String out = this.runChildJvm(this.writeScript("h_cat.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")));
         assertTrue(out.contains("child-probe"), String.format("cat stdout missing; got: '%s", out) + "'");
     }
 
     @org.junit.jupiter.api.Test
     void childJvmForLoop() throws Exception {
-        final String out = this.runChildJvm(this.writeScript("h_for.sh", "for i in 1 2 3; do echo $i; done\n"));
+        final String out = this.runChildJvm(this.writeScript("h_for.sh", String.format("for i in 1 2 3; do echo $i; done%n")));
         assertTrue(out.contains("1") && out.contains("2") && out.contains("3"),
                 String.format("for-loop body missing; got: '%s", out) + "'");
     }
@@ -113,7 +113,7 @@ final class IntegrationTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(nativebin.isFile() && nativebin.canExecute(),
                 "target/sh4j native binary not built; skipping native pipeline smoke");
         final ProcessBuilder builder = new ProcessBuilder(nativebin.getAbsolutePath(),
-                this.writeScript("npipe.sh", "echo native-pipe | cat\n").getAbsolutePath());
+                this.writeScript("npipe.sh", String.format("echo native-pipe | cat%n")).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
@@ -124,68 +124,68 @@ final class IntegrationTest {
 
     @Test
     void pipelineMultiple() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("pipe_multi.sh", "echo hello | cat | wc -c\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("pipe_multi.sh", String.format("echo hello | cat | wc -c%n")).getAbsolutePath()));
     }
 
     @Test
     void andIfBothSucceed() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("and.sh", "true && echo ok\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("and.sh", String.format("true && echo ok%n")).getAbsolutePath()));
     }
 
     @Test
     void andIfFirstFails() throws IOException {
-        assertEquals(1, Main.runScript(this.writeScript("and_fail.sh", "false && echo not_reached\n").getAbsolutePath()));
+        assertEquals(1, Main.runScript(this.writeScript("and_fail.sh", String.format("false && echo not_reached%n")).getAbsolutePath()));
     }
 
     @Test
     void orIfFirstFails() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("or.sh", "false || echo ok\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("or.sh", String.format("false || echo ok%n")).getAbsolutePath()));
     }
 
     @Test
     void orIfFirstSucceeds() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("or_succ.sh", "true || echo not_reached\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("or_succ.sh", String.format("true || echo not_reached%n")).getAbsolutePath()));
     }
 
     @Test
     void bangInvertsExit() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("bang.sh", "! false\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("bang.sh", String.format("! false%n")).getAbsolutePath()));
     }
 
     @Test
     void bangInvertsTrueToFalse() throws IOException {
-        assertEquals(1, Main.runScript(this.writeScript("bang_true.sh", "! true\n").getAbsolutePath()));
+        assertEquals(1, Main.runScript(this.writeScript("bang_true.sh", String.format("! true%n")).getAbsolutePath()));
     }
 
     @Test
     void sequentialSemicolon() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("semi.sh", "echo a; echo b\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("semi.sh", String.format("echo a; echo b%n")).getAbsolutePath()));
     }
 
     @Test
     void backgroundAmpersand() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("bg.sh", "sleep 0 &\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("bg.sh", String.format("sleep 0 &%n")).getAbsolutePath()));
     }
 
     @Test
     void assignmentThenCommand() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("assign.sh", "FOO=hello echo $FOO\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("assign.sh", String.format("FOO=hello echo $FOO%n")).getAbsolutePath()));
     }
 
     @Test
     void assignmentOnlyPersists() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("assign_only.sh", "FOO=bar\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("assign_only.sh", String.format("FOO=bar%n")).getAbsolutePath()));
     }
 
     @Test
     void multipleAssignments() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("multi_assign.sh", "A=1 B=2\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("multi_assign.sh", String.format("A=1 B=2%n")).getAbsolutePath()));
     }
 
     @Test
     void outputRedirection() throws IOException {
         final File outfile = this.tempdir.resolve("out.txt").toFile();
-        assertEquals(0, Main.runScript(this.writeScript("redir_out.sh", String.format("echo test > %s", outfile.getAbsolutePath()) + "\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("redir_out.sh", String.format("echo test > %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         assertTrue(outfile.exists());
         assertEquals("test", Files.readString(outfile.toPath()).trim());
     }
@@ -193,14 +193,14 @@ final class IntegrationTest {
     @Test
     void inputRedirection() throws IOException {
         final File infile = this.tempdir.resolve("in.txt").toFile();
-        Files.writeString(infile.toPath(), "input data\n");
-        assertEquals(0, Main.runScript(this.writeScript("redir_in.sh", String.format("cat < %s", infile.getAbsolutePath()) + "\n").getAbsolutePath()));
+        Files.writeString(infile.toPath(), String.format("input data%n"));
+        assertEquals(0, Main.runScript(this.writeScript("redir_in.sh", String.format("cat < %s", infile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
     }
 
     @Test
     void appendRedirection() throws IOException {
         final File outfile = this.tempdir.resolve("append.txt").toFile();
-        assertEquals(0, Main.runScript(this.writeScript("append.sh", String.format("echo line2 >> %s", outfile.getAbsolutePath()) + "\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("append.sh", String.format("echo line2 >> %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         assertTrue(outfile.exists(), "append.txt should exist");
         assertEquals("line2", Files.readString(outfile.toPath()).trim());
     }
@@ -208,19 +208,19 @@ final class IntegrationTest {
     @Test
     void clobberRedirection() throws IOException {
         final File outfile = this.tempdir.resolve("clobber.txt").toFile();
-        assertEquals(0, Main.runScript(this.writeScript("clobber.sh", String.format("echo test >| %s", outfile.getAbsolutePath()) + "\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("clobber.sh", String.format("echo test >| %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         assertTrue(outfile.exists());
     }
 
     @Test
     void stderrRedirect() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("stderr_redir.sh", "echo test 2>" + this.tempdir.resolve("stderr.txt").toFile().getAbsolutePath() + "\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("stderr_redir.sh", "echo test 2>" + this.tempdir.resolve("stderr.txt").toFile().getAbsolutePath() + String.format("%n")).getAbsolutePath()));
     }
 
     @Test
     void variableExpansionWithRedirect() throws IOException {
         final File outfile = this.tempdir.resolve("out2.txt").toFile();
-        assertEquals(0, Main.runScript(this.writeScript("varexp_redir.sh", String.format("echo $HOME > %s", outfile.getAbsolutePath()) + "\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("varexp_redir.sh", String.format("echo $HOME > %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         assertTrue(outfile.exists(), "out2.txt should exist");
         assertFalse(Files.readString(outfile.toPath()).trim().isEmpty(), "content should not be empty");
     }
@@ -228,19 +228,19 @@ final class IntegrationTest {
     @Test
     void complexScript() throws IOException {
         final File str = this.writeScript("complex.sh",
-            "MSG=hello\n"
-            + "echo $MSG\n");
+            String.format("MSG=hello%n")
+            + String.format("echo $MSG%n"));
         assertEquals(0, Main.runScript(str.getAbsolutePath()));
     }
 
     @Test
     void variableExpansion() throws IOException {
-        assertEquals(0, Main.runScript(this.writeScript("varexp.sh", "echo $SHELL\n").getAbsolutePath()));
+        assertEquals(0, Main.runScript(this.writeScript("varexp.sh", String.format("echo $SHELL%n")).getAbsolutePath()));
     }
 
     @Test
     void commandNotFound() throws IOException {
-        assertEquals(127, Main.runScript(this.writeScript("notfound.sh", "nonexistent_cmd_xyz\n").getAbsolutePath()));
+        assertEquals(127, Main.runScript(this.writeScript("notfound.sh", String.format("nonexistent_cmd_xyz%n")).getAbsolutePath()));
     }
 
     private File writeScript(final String name, final String content) throws IOException {
