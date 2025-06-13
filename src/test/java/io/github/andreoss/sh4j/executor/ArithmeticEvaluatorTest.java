@@ -9,12 +9,19 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for ArithmeticEvaluator.
+ * @since 1.0
+ */
 final class ArithmeticEvaluatorTest {
 
+    /** Arith. */
     private final ArithmeticEvaluator arith = new ArithmeticEvaluator();
 
+    /** Env. */
     private final Map<String, String> env = new HashMap<>();
 
+    /** Tests addition. */
     @Test
     void add() {
         assertEquals("7", this.arith.evalArithmetic("3 + 4", this.env));
@@ -173,7 +180,6 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test void unmatchedParenStillEvalsInner() {
-        // missing closing paren — parser stops at end of input
         assertEquals("3", this.arith.evalArithmetic("(1+2", this.env));
     }
 
@@ -194,7 +200,6 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test void compoundAssignToUnsetVar() {
-        // unset var treated as 0
         assertEquals("5", this.arith.evalArithmetic("new += 5", this.env));
         assertEquals("5", this.env.get("new"));
     }
@@ -207,7 +212,6 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test void ternaryFalseEvaluatesElseOnly() {
-        // arithMute should suppress the THEN side's assignment
         this.arith.evalArithmetic("0 ? (z = 1) : (z = 2)", this.env);
         assertEquals("2", this.env.get("z"));
     }

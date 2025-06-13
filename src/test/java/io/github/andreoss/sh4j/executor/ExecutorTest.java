@@ -24,6 +24,10 @@ import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for Executor.
+ * @since 1.0
+ */
 final class ExecutorTest {
 
     @Test
@@ -1368,7 +1372,7 @@ final class ExecutorTest {
             w.write(String.format("seed%n"));
         }
         final Executor executor = new Executor();
-        executor.execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse());
+        assertEquals(0, executor.execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse()));
     }
 
     @Test
@@ -1457,7 +1461,7 @@ final class ExecutorTest {
         final String path = String.format("/tmp/sh4j_rw_fd2_%s", System.nanoTime());
         new java.io.File(path).delete();
         final Executor executor = new Executor();
-        executor.execute(this.parse(String.format("cat /nonexistent_xyz 2<>%s", path)));
+        assertNotEquals(0, executor.execute(this.parse(String.format("cat /nonexistent_xyz 2<>%s", path))));
         new java.io.File(path).delete();
     }
 
@@ -2026,7 +2030,7 @@ final class ExecutorTest {
     @Test
     void expandBracedColonQuestionDefaultMsg() {
         final Executor executor = new Executor(new HashMap<>());
-        executor.expandVariables("${x:?}", new HashMap<>());
+        assertEquals("", executor.expandVariables("${x:?}", new HashMap<>()));
     }
 
     @Test

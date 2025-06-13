@@ -9,6 +9,10 @@ import java.io.Reader;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for CharReader.
+ * @since 1.0
+ */
 final class CharReaderTest {
 
     @Test

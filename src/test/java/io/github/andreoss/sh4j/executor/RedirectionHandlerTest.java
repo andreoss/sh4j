@@ -13,8 +13,13 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for RedirectionHandler.
+ * @since 1.0
+ */
 final class RedirectionHandlerTest {
 
+    /** Identity. */
     private final UnaryOperator<String> identity = s -> s;
 
     @Test

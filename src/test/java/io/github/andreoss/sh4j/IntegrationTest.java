@@ -14,8 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for Integration.
+ * @since 1.0
+ */
 final class IntegrationTest {
 
+    /** Field. */
     @TempDir
     Path tempdir;
 

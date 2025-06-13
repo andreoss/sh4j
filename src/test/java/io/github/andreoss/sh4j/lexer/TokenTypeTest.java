@@ -7,6 +7,10 @@ package io.github.andreoss.sh4j.lexer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for TokenType.
+ * @since 1.0
+ */
 final class TokenTypeTest {
 
     @Test

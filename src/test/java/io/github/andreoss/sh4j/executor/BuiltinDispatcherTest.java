@@ -9,8 +9,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for BuiltinDispatcher.
+ * @since 1.0
+ */
 final class BuiltinDispatcherTest {
 
+    /** Disp. */
     private final BuiltinDispatcher disp = new BuiltinDispatcher();
 
     @Test

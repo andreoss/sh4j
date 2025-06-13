@@ -9,6 +9,10 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for Parser.
+ * @since 1.0
+ */
 final class ParserTest {
 
     @Test
@@ -558,13 +562,11 @@ final class ParserTest {
 
     @Test
     void parseTwoPipelinesSemiTerminatedBeforeReserved() {
-        // exercises the post-separator reserved-terminator break in parseList
         assertEquals(1, this.parse("if true; then echo a; echo b; fi").getPipelines().size());
     }
 
     @Test
     void parsePipelineEmptyPipeStage() {
-        // Pipe followed by `fi` -> second stage returns null, break loop
         assertEquals(1, this.parse("if echo a | echo b; then echo c; fi").getPipelines().size());
     }
 

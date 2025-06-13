@@ -17,11 +17,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for Main.
+ * @since 1.0
+ */
 final class MainTest {
 
+    /** Field. */
     @TempDir
     File tempdir;
 
+    /** Origin. */
     private InputStream origin;
 
     @BeforeEach

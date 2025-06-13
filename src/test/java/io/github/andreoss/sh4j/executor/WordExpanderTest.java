@@ -10,6 +10,10 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for WordExpander.
+ * @since 1.0
+ */
 final class WordExpanderTest {
 
     @Test void tildeHome() {
@@ -133,7 +137,6 @@ final class WordExpanderTest {
     }
 
     @Test void expandVariablesUnclosedArithmetic() {
-        // unclosed -> literal text preserved
         assertEquals("$((1+2", WordExpander.expandVariables("$((1+2", new HashMap<>(), new Executor(new HashMap<>())).value());
     }
 
@@ -146,8 +149,6 @@ final class WordExpanderTest {
     }
 
     @Test void expandVariablesDollarBraceWithoutClose() {
-        // ${unclosed: expandBraced sees no closing `}`, falls through to VAR_PATTERN
-        // which then matches ${unclosed (optional close) → resolves to unset var → "".
         assertEquals("", WordExpander.expandVariables("${unclosed", new HashMap<>(), new Executor(new HashMap<>())).value());
     }
 
@@ -240,7 +241,6 @@ final class WordExpanderTest {
     }
 
     @Test void splitFieldsConsecutiveIfsCreatesEmptyField() {
-        // non-whitespace IFS: consecutive separators produce empty fields per POSIX.
         final java.util.List<String> result = WordExpander.splitFields("a::b", ":");
         assertEquals(3, result.size());
         assertEquals("a", result.get(0));
