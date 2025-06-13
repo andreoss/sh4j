@@ -11,7 +11,7 @@ import java.util.function.UnaryOperator;
 import org.junit.jupiter.api.Test;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Tests for RedirectionHandler.
@@ -28,9 +28,9 @@ final class RedirectionHandlerTest {
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identity);
-        assertSame(out, result.err(), "2>&1 should make err point to out");
-        assertSame(err, result.savedErr(), "savedErr should be original err for restore");
-        assertNull(result.savedOut(), "stdout untouched");
+        Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
+        Assertions.assertSame(err, result.savedErr(), "savedErr should be original err for restore");
+        Assertions.assertNull(result.savedOut(), "stdout untouched");
     }
 
     @Test
@@ -39,8 +39,8 @@ final class RedirectionHandlerTest {
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identity);
-        assertSame(err, result.out(), "1>&2 should make out point to err");
-        assertSame(out, result.savedOut(), "savedOut should be original out for restore");
+        Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
+        Assertions.assertSame(out, result.savedOut(), "savedOut should be original out for restore");
     }
 
     @Test
@@ -49,22 +49,22 @@ final class RedirectionHandlerTest {
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identity);
-        assertSame(out, result.out());
-        assertSame(err, result.err());
-        assertNull(result.savedOut());
-        assertNull(result.savedErr());
+        Assertions.assertSame(out, result.out());
+        Assertions.assertSame(err, result.err());
+        Assertions.assertNull(result.savedOut());
+        Assertions.assertNull(result.savedErr());
     }
 
     @Test
     void heredocFileNullContent() {
-        assertNull(RedirectionHandler.heredocFile(null));
+        Assertions.assertNull(RedirectionHandler.heredocFile(null));
     }
 
     @Test
     void heredocFileRoundtrip() throws Exception {
         final java.io.File f = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
-        assertNotNull(f);
-        assertTrue(f.isFile());
-        assertEquals(String.format("alpha%nbeta%n"), java.nio.file.Files.readString(f.toPath()));
+        Assertions.assertNotNull(f);
+        Assertions.assertTrue(f.isFile());
+        Assertions.assertEquals(String.format("alpha%nbeta%n"), java.nio.file.Files.readString(f.toPath()));
     }
 }

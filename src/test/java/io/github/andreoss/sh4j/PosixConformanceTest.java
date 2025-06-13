@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Tests for PosixConformance.
@@ -24,72 +24,72 @@ final class PosixConformanceTest {
 
     @Test
     void positionalParamCount() throws Exception {
-        assertTrue(run(String.format("echo $#%n"), "a", "b", "c").trim().equals("3"));
+        Assertions.assertTrue(run(String.format("echo $#%n"), "a", "b", "c").trim().equals("3"));
     }
 
     @Test
     void positionalParamAt() throws Exception {
-        assertTrue(run(String.format("echo $@%n"), "x", "y", "z").trim().equals("x y z"));
+        Assertions.assertTrue(run(String.format("echo $@%n"), "x", "y", "z").trim().equals("x y z"));
     }
 
     @Test
     void positionalFirstParam() throws Exception {
-        assertTrue(this.run(String.format("echo $1%n"), "hello").trim().equals("hello"));
+        Assertions.assertTrue(this.run(String.format("echo $1%n"), "hello").trim().equals("hello"));
     }
 
     @Test
     void paramDefaultWhenUnset() throws Exception {
-        assertTrue(run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim().equals("fallback"));
+        Assertions.assertTrue(run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim().equals("fallback"));
     }
 
     @Test
     void paramLengthOfVar() throws Exception {
-        assertTrue(run(String.format("V=hello; echo ${#V}%n")).trim().equals("5"));
+        Assertions.assertTrue(run(String.format("V=hello; echo ${#V}%n")).trim().equals("5"));
     }
 
     @Test
     void arithmeticPrecedence() throws Exception {
-        assertTrue(run(String.format("echo $((1 + 2 * 3))%n")).trim().equals("7"));
+        Assertions.assertTrue(run(String.format("echo $((1 + 2 * 3))%n")).trim().equals("7"));
     }
 
     @Test
     void arithmeticParens() throws Exception {
-        assertTrue(run(String.format("echo $(((1 + 2) * 3))%n")).trim().equals("9"));
+        Assertions.assertTrue(run(String.format("echo $(((1 + 2) * 3))%n")).trim().equals("9"));
     }
 
     @Test
     void commandSubstitutionDollarParen() throws Exception {
-        assertTrue(run(String.format("echo a$(echo b)c%n")).trim().equals("abc"));
+        Assertions.assertTrue(run(String.format("echo a$(echo b)c%n")).trim().equals("abc"));
     }
 
     @Test
     void backtickSubstitution() throws Exception {
-        assertTrue(run(String.format("echo a`echo b`c%n")).trim().equals("abc"));
+        Assertions.assertTrue(run(String.format("echo a`echo b`c%n")).trim().equals("abc"));
     }
 
     @Test
     void ifThenElse() throws Exception {
-        assertTrue(run(String.format("if true; then echo yes; else echo no; fi%n")).trim().equals("yes"));
+        Assertions.assertTrue(run(String.format("if true; then echo yes; else echo no; fi%n")).trim().equals("yes"));
     }
 
     @Test
     void forLoopBody() throws Exception {
-        assertEquals(String.format("a%nb%nc"), run(String.format("for i in a b c; do echo $i; done%n")).trim());
+        Assertions.assertEquals(String.format("a%nb%nc"), run(String.format("for i in a b c; do echo $i; done%n")).trim());
     }
 
     @Test
     void caseExact() throws Exception {
-        assertTrue(run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim().equals("YES"));
+        Assertions.assertTrue(run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim().equals("YES"));
     }
 
     @Test
     void echoWithDoubleQuotes() throws Exception {
-        assertTrue(run(String.format("echo \"hello world\"%n")).trim().equals("hello world"));
+        Assertions.assertTrue(run(String.format("echo \"hello world\"%n")).trim().equals("hello world"));
     }
 
     @Test
     void hereDocContent() throws Exception {
-        assertEquals(String.format("line1%nline2"), run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim());
+        Assertions.assertEquals(String.format("line1%nline2"), run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim());
     }
 
     private String run(final String script, final String... args) throws Exception {

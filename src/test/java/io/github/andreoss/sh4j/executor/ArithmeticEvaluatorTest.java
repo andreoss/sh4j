@@ -7,7 +7,7 @@ package io.github.andreoss.sh4j.executor;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Tests for ArithmeticEvaluator.
@@ -24,199 +24,199 @@ final class ArithmeticEvaluatorTest {
     /** Tests addition. */
     @Test
     void add() {
-        assertEquals("7", this.arith.evalArithmetic("3 + 4", this.env));
+        Assertions.assertEquals("7", this.arith.evalArithmetic("3 + 4", this.env));
     }
 
     @Test
     void sub() {
-        assertEquals("3", this.arith.evalArithmetic("7 - 4", this.env));
+        Assertions.assertEquals("3", this.arith.evalArithmetic("7 - 4", this.env));
     }
 
     @Test
     void mul() {
-        assertEquals("12", this.arith.evalArithmetic("3 * 4", this.env));
+        Assertions.assertEquals("12", this.arith.evalArithmetic("3 * 4", this.env));
     }
 
     @Test
     void div() {
-        assertEquals("2", this.arith.evalArithmetic("9 / 4", this.env));
+        Assertions.assertEquals("2", this.arith.evalArithmetic("9 / 4", this.env));
     }
 
     @Test
     void mod() {
-        assertEquals("1", this.arith.evalArithmetic("9 % 4", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("9 % 4", this.env));
     }
 
     @Test
     void precedence() {
-        assertEquals("14", this.arith.evalArithmetic("2 + 3 * 4", this.env));
+        Assertions.assertEquals("14", this.arith.evalArithmetic("2 + 3 * 4", this.env));
     }
 
     @Test
     void parens() {
-        assertEquals("20", this.arith.evalArithmetic("(2 + 3) * 4", this.env));
+        Assertions.assertEquals("20", this.arith.evalArithmetic("(2 + 3) * 4", this.env));
     }
 
     @Test
     void shiftLeft() {
-        assertEquals("32", this.arith.evalArithmetic("4 << 3", this.env));
+        Assertions.assertEquals("32", this.arith.evalArithmetic("4 << 3", this.env));
     }
 
     @Test
     void shiftRight() {
-        assertEquals("4", this.arith.evalArithmetic("32 >> 3", this.env));
+        Assertions.assertEquals("4", this.arith.evalArithmetic("32 >> 3", this.env));
     }
 
     @Test
     void ltOperator() {
-        assertEquals("1", this.arith.evalArithmetic("3 < 5", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("3 < 5", this.env));
     }
 
     @Test
     void geOperator() {
-        assertEquals("1", this.arith.evalArithmetic("5 >= 5", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("5 >= 5", this.env));
     }
 
     @Test
     void eqEq() {
-        assertEquals("1", this.arith.evalArithmetic("5 == 5", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("5 == 5", this.env));
     }
 
     @Test
     void neq() {
-        assertEquals("1", this.arith.evalArithmetic("5 != 4", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("5 != 4", this.env));
     }
 
     @Test
     void bitAnd() {
-        assertEquals("4", this.arith.evalArithmetic("12 & 6", this.env));
+        Assertions.assertEquals("4", this.arith.evalArithmetic("12 & 6", this.env));
     }
 
     @Test
     void bitOr() {
-        assertEquals("14", this.arith.evalArithmetic("12 | 6", this.env));
+        Assertions.assertEquals("14", this.arith.evalArithmetic("12 | 6", this.env));
     }
 
     @Test
     void bitXor() {
-        assertEquals("10", this.arith.evalArithmetic("12 ^ 6", this.env));
+        Assertions.assertEquals("10", this.arith.evalArithmetic("12 ^ 6", this.env));
     }
 
     @Test
     void logicalAnd() {
-        assertEquals("1", this.arith.evalArithmetic("1 && 2", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("1 && 2", this.env));
     }
 
     @Test
     void logicalOr() {
-        assertEquals("1", this.arith.evalArithmetic("0 || 5", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("0 || 5", this.env));
     }
 
     @Test
     void unaryNot() {
-        assertEquals("1", this.arith.evalArithmetic("!0", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("!0", this.env));
     }
 
     @Test
     void unaryBitNot() {
-        assertEquals("-1", this.arith.evalArithmetic("~0", this.env));
+        Assertions.assertEquals("-1", this.arith.evalArithmetic("~0", this.env));
     }
 
     @Test
     void ternaryTrue() {
-        assertEquals("10", this.arith.evalArithmetic("1 ? 10 : 20", this.env));
+        Assertions.assertEquals("10", this.arith.evalArithmetic("1 ? 10 : 20", this.env));
     }
 
     @Test
     void ternaryFalse() {
-        assertEquals("20", this.arith.evalArithmetic("0 ? 10 : 20", this.env));
+        Assertions.assertEquals("20", this.arith.evalArithmetic("0 ? 10 : 20", this.env));
     }
 
     @Test void assign() {
-        assertEquals("5", this.arith.evalArithmetic("x = 5", this.env));
-        assertEquals("5", this.env.get("x"));
+        Assertions.assertEquals("5", this.arith.evalArithmetic("x = 5", this.env));
+        Assertions.assertEquals("5", this.env.get("x"));
     }
 
     @Test void plusAssign() {
         this.env.put("y", "10");
-        assertEquals("13", this.arith.evalArithmetic("y += 3", this.env));
-        assertEquals("13", this.env.get("y"));
+        Assertions.assertEquals("13", this.arith.evalArithmetic("y += 3", this.env));
+        Assertions.assertEquals("13", this.env.get("y"));
     }
 
     @Test void shortCircuitAndSuppressesAssignment() {
         this.arith.evalArithmetic("0 && (z = 99)", this.env);
-        assertNull(this.env.get("z"));
+        Assertions.assertNull(this.env.get("z"));
     }
 
     @Test void shortCircuitOrSuppressesAssignment() {
         this.arith.evalArithmetic("1 || (q = 99)", this.env);
-        assertNull(this.env.get("q"));
+        Assertions.assertNull(this.env.get("q"));
     }
 
     @Test void varNameResolvesToEnvValue() {
         this.env.put("v", "7");
-        assertEquals("9", this.arith.evalArithmetic("v + 2", this.env));
+        Assertions.assertEquals("9", this.arith.evalArithmetic("v + 2", this.env));
     }
 
     @Test void nonNumericVarResolvesToZero() {
         this.env.put("v", "abc");
-        assertEquals("2", this.arith.evalArithmetic("v + 2", this.env));
+        Assertions.assertEquals("2", this.arith.evalArithmetic("v + 2", this.env));
     }
 
     @Test void divByZeroIsZero() {
-        assertEquals("0", this.arith.evalArithmetic("5 / 0", this.env));
+        Assertions.assertEquals("0", this.arith.evalArithmetic("5 / 0", this.env));
     }
 
     @Test void modByZeroIsZero() {
-        assertEquals("0", this.arith.evalArithmetic("5 % 0", this.env));
+        Assertions.assertEquals("0", this.arith.evalArithmetic("5 % 0", this.env));
     }
 
     @Test void emptyExprIsZero() {
-        assertEquals("0", this.arith.evalArithmetic("", this.env));
+        Assertions.assertEquals("0", this.arith.evalArithmetic("", this.env));
     }
 
     @Test void whitespaceOnlyIsZero() {
-        assertEquals("0", this.arith.evalArithmetic("   ", this.env));
+        Assertions.assertEquals("0", this.arith.evalArithmetic("   ", this.env));
     }
 
     @Test void unmatchedParenStillEvalsInner() {
-        assertEquals("3", this.arith.evalArithmetic("(1+2", this.env));
+        Assertions.assertEquals("3", this.arith.evalArithmetic("(1+2", this.env));
     }
 
     @Test void leadingPlus() {
-        assertEquals("5", this.arith.evalArithmetic("+5", this.env));
+        Assertions.assertEquals("5", this.arith.evalArithmetic("+5", this.env));
     }
 
     @Test void doubleNegation() {
-        assertEquals("5", this.arith.evalArithmetic("--5", this.env));
+        Assertions.assertEquals("5", this.arith.evalArithmetic("--5", this.env));
     }
 
     @Test void doubleBitwiseNot() {
-        assertEquals("5", this.arith.evalArithmetic("~~5", this.env));
+        Assertions.assertEquals("5", this.arith.evalArithmetic("~~5", this.env));
     }
 
     @Test void doubleLogicalNot() {
-        assertEquals("1", this.arith.evalArithmetic("!!5", this.env));
+        Assertions.assertEquals("1", this.arith.evalArithmetic("!!5", this.env));
     }
 
     @Test void compoundAssignToUnsetVar() {
-        assertEquals("5", this.arith.evalArithmetic("new += 5", this.env));
-        assertEquals("5", this.env.get("new"));
+        Assertions.assertEquals("5", this.arith.evalArithmetic("new += 5", this.env));
+        Assertions.assertEquals("5", this.env.get("new"));
     }
 
     @Test void chainedAssignmentRightAssoc() {
-        assertEquals("7", this.arith.evalArithmetic("a = b = c = 7", this.env));
-        assertEquals("7", this.env.get("a"));
-        assertEquals("7", this.env.get("b"));
-        assertEquals("7", this.env.get("c"));
+        Assertions.assertEquals("7", this.arith.evalArithmetic("a = b = c = 7", this.env));
+        Assertions.assertEquals("7", this.env.get("a"));
+        Assertions.assertEquals("7", this.env.get("b"));
+        Assertions.assertEquals("7", this.env.get("c"));
     }
 
     @Test void ternaryFalseEvaluatesElseOnly() {
         this.arith.evalArithmetic("0 ? (z = 1) : (z = 2)", this.env);
-        assertEquals("2", this.env.get("z"));
+        Assertions.assertEquals("2", this.env.get("z"));
     }
 
     @Test void numericLiteralWithLeadingZeros() {
-        assertEquals("42", this.arith.evalArithmetic("042", this.env));
+        Assertions.assertEquals("42", this.arith.evalArithmetic("042", this.env));
     }
 }
