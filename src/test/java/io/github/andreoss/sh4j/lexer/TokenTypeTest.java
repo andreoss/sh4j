@@ -4,8 +4,8 @@
  */
 package io.github.andreoss.sh4j.lexer;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TokenType.

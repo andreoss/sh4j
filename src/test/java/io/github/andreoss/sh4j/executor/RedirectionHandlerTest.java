@@ -8,10 +8,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.UnaryOperator;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
-import org.junit.jupiter.api.Assertions;
 
 /**
  * Tests for RedirectionHandler.

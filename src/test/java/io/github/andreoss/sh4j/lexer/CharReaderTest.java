@@ -6,8 +6,8 @@ package io.github.andreoss.sh4j.lexer;
 
 import java.io.IOException;
 import java.io.Reader;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for CharReader.

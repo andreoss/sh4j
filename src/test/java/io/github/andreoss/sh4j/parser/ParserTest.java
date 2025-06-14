@@ -4,10 +4,10 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
-import org.junit.jupiter.api.Assertions;
 
 /**
  * Tests for Parser.
