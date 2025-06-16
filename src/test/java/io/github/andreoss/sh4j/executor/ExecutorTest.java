@@ -30,6 +30,39 @@ import io.github.andreoss.sh4j.parser.SimpleCommand;
  */
 final class ExecutorTest {
 
+    /** PATH_KEY constant. */
+    private static final String PATH_KEY = "PATH";
+    /** SCRIPT_KEY constant. */
+    private static final String SCRIPT_KEY = "script";
+    /** IFS_TAB_NL constant. */
+    private static final String IFS_TAB_NL = " \t%n";
+    /** USER_DIR_PROP constant. */
+    private static final String USER_DIR_PROP = "user.dir";
+    /** TMP_DIR constant. */
+    private static final String TMP_DIR = "/tmp";
+    /** CAT_INPUT_FMT constant. */
+    private static final String CAT_INPUT_FMT = "cat < %s";
+    /** TRUE_CMD constant. */
+    private static final String TRUE_CMD = "true";
+    /** FALSE_CMD constant. */
+    private static final String FALSE_CMD = "false";
+    /** HELLO constant. */
+    private static final String HELLO = "hello";
+    /** A_B_C constant. */
+    private static final String A_B_C = "a b c";
+    /** HOME_KEY constant. */
+    private static final String HOME_KEY = "HOME";
+    /** PWD_KEY constant. */
+    private static final String PWD_KEY = "PWD";
+    /** VAR_DEFAULT_EXPR constant. */
+    private static final String VAR_DEFAULT_EXPR = "${var:-default}";
+    /** VAR_NAME constant. */
+    private static final String VAR_NAME = "var";
+    /** VALUE constant. */
+    private static final String VALUE = "value";
+    /** HELLO_WORLD constant. */
+    private static final String HELLO_WORLD = "hello world";
+
     @Test
     void executeSimpleEcho() {
         Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello")));
@@ -42,12 +75,12 @@ final class ExecutorTest {
 
     @Test
     void executeTrue() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
     void executeFalse() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("false")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
     }
 
     @Test
@@ -508,7 +541,7 @@ final class ExecutorTest {
     void exportNoArgs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
-        env.put("TEST_EXPORT_VAR", "hello");
+        env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
         final Executor executor = new Executor(env);
         executor.setOutputStream(new PrintStream(bos, true));
         Assertions.assertEquals(0, executor.execute(this.parse("export")));
@@ -627,14 +660,14 @@ final class ExecutorTest {
     @Test
     void expandDollarQuestion() {
         final Executor executor = new Executor();
-        executor.execute(this.parse("false"));
+        executor.execute(this.parse(ExecutorTest.FALSE_CMD));
         Assertions.assertEquals("1", executor.expandVariables("$?", new HashMap<>()));
     }
 
     @Test
     void expandDollarQuestionAfterSuccess() {
         final Executor executor = new Executor();
-        executor.execute(this.parse("true"));
+        executor.execute(this.parse(ExecutorTest.TRUE_CMD));
         Assertions.assertEquals("0", executor.expandVariables("$?", new HashMap<>()));
     }
 
@@ -646,14 +679,14 @@ final class ExecutorTest {
     @Test
     void expandDollarQuestionBraced() {
         final Executor executor = new Executor();
-        executor.execute(this.parse("false"));
+        executor.execute(this.parse(ExecutorTest.FALSE_CMD));
         Assertions.assertEquals("1", executor.expandVariables("${?}", new HashMap<>()));
     }
 
     @Test
     void expandDollarQuestionInString() {
         final Executor executor = new Executor();
-        executor.execute(this.parse("false"));
+        executor.execute(this.parse(ExecutorTest.FALSE_CMD));
         Assertions.assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
     }
 
@@ -664,12 +697,12 @@ final class ExecutorTest {
 
     @Test
     void expandDollarAt() {
-        Assertions.assertEquals("a b c", new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$@", new HashMap<>()));
+        Assertions.assertEquals(ExecutorTest.A_B_C, new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$@", new HashMap<>()));
     }
 
     @Test
     void expandDollarStar() {
-        Assertions.assertEquals("a b c", new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$*", new HashMap<>()));
+        Assertions.assertEquals(ExecutorTest.A_B_C, new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$*", new HashMap<>()));
     }
 
     @Test
@@ -725,7 +758,7 @@ final class ExecutorTest {
     void expandTildeToHome() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("HOME", "/home/testuser");
+        env.put(ExecutorTest.HOME_KEY, "/home/testuser");
         Assertions.assertEquals("/home/testuser", WordExpander.expandTilde("~", env));
     }
 
@@ -733,14 +766,14 @@ final class ExecutorTest {
     void expandTildeWithPath() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("HOME", "/home/testuser");
+        env.put(ExecutorTest.HOME_KEY, "/home/testuser");
         Assertions.assertEquals("/home/testuser/file.txt", WordExpander.expandTilde("~/file.txt", env));
     }
 
     @Test
     void expandTildePlus() {
         final Map<String, String> env = new HashMap<>();
-        env.put("PWD", "/current/dir");
+        env.put(ExecutorTest.PWD_KEY, "/current/dir");
         Assertions.assertEquals("/current/dir", WordExpander.expandTilde("~+", env));
     }
 
@@ -751,23 +784,23 @@ final class ExecutorTest {
 
     @Test
     void expandVarDefault() {
-        Assertions.assertEquals("default", new Executor().expandVariables("${var:-default}", new HashMap<>()));
+        Assertions.assertEquals("default", new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, new HashMap<>()));
     }
 
     @Test
     void expandVarDefaultSet() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "actual");
-        Assertions.assertEquals("actual", executor.expandVariables("${var:-default}", env));
+        env.put(ExecutorTest.VAR_NAME, "actual");
+        Assertions.assertEquals("actual", executor.expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env));
     }
 
     @Test
     void expandVarDefaultEmpty() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "");
-        Assertions.assertEquals("default", executor.expandVariables("${var:-default}", env));
+        env.put(ExecutorTest.VAR_NAME, "");
+        Assertions.assertEquals("default", executor.expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env));
     }
 
     @Test
@@ -779,15 +812,15 @@ final class ExecutorTest {
     void expandVarDefaultNullOnlySetSkips() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "value");
-        Assertions.assertEquals("value", executor.expandVariables("${var-default}", env));
+        env.put(ExecutorTest.VAR_NAME, ExecutorTest.VALUE);
+        Assertions.assertEquals(ExecutorTest.VALUE, executor.expandVariables("${var-default}", env));
     }
 
     @Test
     void expandVarDefaultNullOnlyEmptySkips() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "");
+        env.put(ExecutorTest.VAR_NAME, "");
         Assertions.assertEquals("", executor.expandVariables("${var-default}", env));
     }
 
@@ -796,14 +829,14 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("assigned", executor.expandVariables("${var:=assigned}", env));
-        Assertions.assertEquals("assigned", env.get("var"));
+        Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAlternate() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "x");
+        env.put(ExecutorTest.VAR_NAME, "x");
         Assertions.assertEquals("alt", executor.expandVariables("${var:+alt}", env));
     }
 
@@ -817,23 +850,23 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("assigned", executor.expandVariables("${var=assigned}", env));
-        Assertions.assertEquals("assigned", env.get("var"));
+        Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAssignNullOnlySetSkips() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "existing");
+        env.put(ExecutorTest.VAR_NAME, "existing");
         Assertions.assertEquals("existing", executor.expandVariables("${var=assigned}", env));
-        Assertions.assertEquals("existing", env.get("var"));
+        Assertions.assertEquals("existing", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAlternateNullOnly() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "x");
+        env.put(ExecutorTest.VAR_NAME, "x");
         Assertions.assertEquals("alt", executor.expandVariables("${var+alt}", env));
     }
 
@@ -846,7 +879,7 @@ final class ExecutorTest {
     void expandVarLength() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "hello");
+        env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
         Assertions.assertEquals("5", executor.expandVariables("${#var}", env));
     }
 
@@ -859,7 +892,7 @@ final class ExecutorTest {
     void expandVarSuffixShort() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "file.txt");
+        env.put(ExecutorTest.VAR_NAME, "file.txt");
         Assertions.assertEquals("file", executor.expandVariables("${var%.*}", env));
     }
 
@@ -867,7 +900,7 @@ final class ExecutorTest {
     void expandVarSuffixLong() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "a.b.c.txt");
+        env.put(ExecutorTest.VAR_NAME, "a.b.c.txt");
         Assertions.assertEquals("a", executor.expandVariables("${var%%.*}", env));
     }
 
@@ -875,7 +908,7 @@ final class ExecutorTest {
     void expandVarPrefixShort() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "foo/bar/baz");
+        env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
         Assertions.assertEquals("bar/baz", executor.expandVariables("${var#*/}", env));
     }
 
@@ -883,7 +916,7 @@ final class ExecutorTest {
     void expandVarPrefixLong() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "foo/bar/baz");
+        env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
         Assertions.assertEquals("baz", executor.expandVariables("${var##*/}", env));
     }
 
@@ -891,13 +924,13 @@ final class ExecutorTest {
     void expandVarPatternNoMatch() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("var", "hello");
-        Assertions.assertEquals("hello", executor.expandVariables("${var%x}", env));
+        env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
+        Assertions.assertEquals(ExecutorTest.HELLO, executor.expandVariables("${var%x}", env));
     }
 
     @Test
     void commandSubstitutionEcho() {
-        Assertions.assertEquals("hello", new Executor().expandVariables("$(echo hello)", new HashMap<>()));
+        Assertions.assertEquals(ExecutorTest.HELLO, new Executor().expandVariables("$(echo hello)", new HashMap<>()));
     }
 
     @Test
@@ -907,7 +940,7 @@ final class ExecutorTest {
 
     @Test
     void backtickSubstitution() {
-        Assertions.assertEquals("hello", new Executor().expandVariables("`echo hello`", new HashMap<>()));
+        Assertions.assertEquals(ExecutorTest.HELLO, new Executor().expandVariables("`echo hello`", new HashMap<>()));
     }
 
     @Test
@@ -922,7 +955,7 @@ final class ExecutorTest {
 
     @Test
     void normaliseBackticksNoChange() {
-        Assertions.assertEquals("hello world", WordExpander.normaliseBackticks("hello world"));
+        Assertions.assertEquals(ExecutorTest.HELLO_WORLD, WordExpander.normaliseBackticks(ExecutorTest.HELLO_WORLD));
     }
 
     @Test
@@ -957,7 +990,7 @@ final class ExecutorTest {
 
     @Test
     void normaliseBackticksSkipsDollarBrace() {
-        Assertions.assertEquals("${var:-default}", WordExpander.normaliseBackticks("${var:-default}"));
+        Assertions.assertEquals(ExecutorTest.VAR_DEFAULT_EXPR, WordExpander.normaliseBackticks(ExecutorTest.VAR_DEFAULT_EXPR));
     }
 
     @Test
@@ -1350,7 +1383,7 @@ final class ExecutorTest {
         bin.setExecutable(true);
         bin.deleteOnExit();
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", dir.getAbsolutePath());
+        env.put(ExecutorTest.PATH_KEY, dir.getAbsolutePath());
         Assertions.assertEquals(0, new Executor(env).execute(this.parse("myhello")));
     }
 
@@ -1477,7 +1510,7 @@ final class ExecutorTest {
 
     @Test
     void shiftLargerThanPositionalCount() {
-        Assertions.assertEquals(0, new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b"))).execute(this.parse("shift 100")));
+        Assertions.assertEquals(0, new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b"))).execute(this.parse("shift 100")));
     }
 
     @Test
@@ -1487,7 +1520,7 @@ final class ExecutorTest {
 
     @Test
     void positionalParamIndexOutOfRangeIsEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b"))).expandVariables("$9", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b"))).expandVariables("$9", new HashMap<>()));
     }
 
     @Test
@@ -1520,19 +1553,19 @@ final class ExecutorTest {
 
     @Test
     void expandBracedMultiDigitPositionalOutOfRange() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"))).expandVariables("${10}", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c"))).expandVariables("${10}", new HashMap<>()));
     }
 
     @Test
     void expandBracedMultiDigitPositionalInRange() {
-        Assertions.assertEquals("b", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c"))).expandVariables("${2}", new HashMap<>()));
+        Assertions.assertEquals("b", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c"))).expandVariables("${2}", new HashMap<>()));
     }
 
     @Test
     void expandBracedLeadingHashVar() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("x", "hello");
+        env.put("x", ExecutorTest.HELLO);
         Assertions.assertEquals("5", executor.expandVariables("${#x}", env));
     }
 
@@ -1553,15 +1586,15 @@ final class ExecutorTest {
 
     @Test
     void specialParamAtStarWithPositionals() {
-        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script", "a", "b", "c")));
+        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")));
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("a b c", executor.expandVariables("$@", env));
-        Assertions.assertEquals("a b c", executor.expandVariables("$*", env));
+        Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
+        Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
     }
 
     @Test
     void specialParamAtStarEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList("script"))).expandVariables("$@", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY))).expandVariables("$@", new HashMap<>()));
     }
 
     @Test
@@ -1575,7 +1608,7 @@ final class ExecutorTest {
     @Test
     void resolveCommandPathNullReturnsNull() {
         final Map<String, String> empty = new HashMap<>();
-        empty.put("PATH", "");
+        empty.put(ExecutorTest.PATH_KEY, "");
         final Executor executor = new Executor(empty);
         executor.expandVariables("", empty);
         Assertions.assertEquals(127, executor.execute(this.parse("nonexistent_xyz_zzz_cmd_abc")));
@@ -1584,8 +1617,8 @@ final class ExecutorTest {
     @Test
     void resolveCommandWithEmptyDirInPath() {
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", ":/usr/bin");
-        Assertions.assertEquals(0, new Executor(env).execute(this.parse("true")));
+        env.put(ExecutorTest.PATH_KEY, ":/usr/bin");
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
@@ -1620,7 +1653,7 @@ final class ExecutorTest {
     void exportArgWithEquals() {
         final Executor executor = new Executor(new HashMap<>());
         Assertions.assertEquals(0, executor.execute(this.parse("export FOO=hello")));
-        Assertions.assertEquals("hello", executor.getVariable("FOO"));
+        Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("FOO"));
     }
 
     @Test
@@ -1635,8 +1668,8 @@ final class ExecutorTest {
     void expandBracedQuestionWhenSet() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("x", "value");
-        Assertions.assertEquals("value", executor.expandVariables("${x?msg}", env));
+        env.put("x", ExecutorTest.VALUE);
+        Assertions.assertEquals(ExecutorTest.VALUE, executor.expandVariables("${x?msg}", env));
     }
 
     @Test
@@ -1651,7 +1684,7 @@ final class ExecutorTest {
     void expandBracedUnknownOperatorFallsThrough() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        env.put("x", "value");
+        env.put("x", ExecutorTest.VALUE);
         Assertions.assertEquals("value@weird}", executor.expandVariables("${x@weird}", env));
     }
 
@@ -1671,35 +1704,35 @@ final class ExecutorTest {
 
     @Test
     void defaultIfsSet() {
-        Assertions.assertEquals(String.format(" \t%n"), new Executor().getVariable("IFS"));
+        Assertions.assertEquals(String.format(ExecutorTest.IFS_TAB_NL), new Executor().getVariable("IFS"));
     }
 
     @Test
     void defaultHomeSet() {
-        Assertions.assertEquals(System.getProperty("user.home"), new Executor().getVariable("HOME"));
+        Assertions.assertEquals(System.getProperty("user.home"), new Executor().getVariable(ExecutorTest.HOME_KEY));
     }
 
     @Test
     void defaultPathSet() {
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", "");
-        Assertions.assertEquals("/usr/local/bin:/usr/bin:/bin", new Executor(env).getVariable("PATH"));
+        env.put(ExecutorTest.PATH_KEY, "");
+        Assertions.assertEquals("/usr/local/bin:/usr/bin:/bin", new Executor(env).getVariable(ExecutorTest.PATH_KEY));
     }
 
     @Test
     void defaultsDoNotOverrideExistingEnv() {
         final Map<String, String> env = new HashMap<>();
-        env.put("HOME", "/custom/home");
-        env.put("PATH", "/custom/path");
+        env.put(ExecutorTest.HOME_KEY, "/custom/home");
+        env.put(ExecutorTest.PATH_KEY, "/custom/path");
         final Executor executor = new Executor(env);
-        Assertions.assertEquals("/custom/home", executor.getVariable("HOME"));
-        Assertions.assertEquals("/custom/path", executor.getVariable("PATH"));
-        Assertions.assertEquals(String.format(" \t%n"), executor.getVariable("IFS"));
+        Assertions.assertEquals("/custom/home", executor.getVariable(ExecutorTest.HOME_KEY));
+        Assertions.assertEquals("/custom/path", executor.getVariable(ExecutorTest.PATH_KEY));
+        Assertions.assertEquals(String.format(ExecutorTest.IFS_TAB_NL), executor.getVariable("IFS"));
     }
 
     @Test
     void commandFoundInPath() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
@@ -1723,7 +1756,7 @@ final class ExecutorTest {
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", dir.getAbsolutePath());
+        env.put(ExecutorTest.PATH_KEY, dir.getAbsolutePath());
         final Executor executor = new Executor(env);
         dir.delete();
         Assertions.assertEquals(42, executor.execute(this.parse("mycmd")));
@@ -1732,7 +1765,7 @@ final class ExecutorTest {
     @Test
     void commandNotFoundEmptyPath() {
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", "");
+        env.put(ExecutorTest.PATH_KEY, "");
         Assertions.assertEquals(127, new Executor(env).execute(this.parse("somecmd")));
     }
 
@@ -1747,7 +1780,7 @@ final class ExecutorTest {
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
-        env.put("PATH", String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath()));
+        env.put(ExecutorTest.PATH_KEY, String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath()));
         final Executor executor = new Executor(env);
         dir.delete();
         Assertions.assertEquals(7, executor.execute(this.parse("mycmd2")));
@@ -1774,27 +1807,27 @@ final class ExecutorTest {
     void exportThenVariableExpands() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("export MSG=hello; echo $MSG")));
-        Assertions.assertEquals("hello", executor.getVariable("MSG"));
+        Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("MSG"));
     }
 
     @Test
     void splitFieldsDefaultIfs() {
-        Assertions.assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", String.format(" \t%n")));
+        Assertions.assertEquals(List.of("a", "b", "c"), WordExpander.splitFields(ExecutorTest.A_B_C, String.format(ExecutorTest.IFS_TAB_NL)));
     }
 
     @Test
     void splitFieldsMultipleWs() {
-        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("a   b", String.format(" \t%n")));
+        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("a   b", String.format(ExecutorTest.IFS_TAB_NL)));
     }
 
     @Test
     void splitFieldsLeadingWs() {
-        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("  a b", String.format(" \t%n")));
+        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("  a b", String.format(ExecutorTest.IFS_TAB_NL)));
     }
 
     @Test
     void splitFieldsTrailingWs() {
-        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("a b  ", String.format(" \t%n")));
+        Assertions.assertEquals(List.of("a", "b"), WordExpander.splitFields("a b  ", String.format(ExecutorTest.IFS_TAB_NL)));
     }
 
     @Test
@@ -1819,22 +1852,22 @@ final class ExecutorTest {
 
     @Test
     void splitFieldsNoDelim() {
-        Assertions.assertEquals(List.of("hello"), WordExpander.splitFields("hello", ":"));
+        Assertions.assertEquals(List.of(ExecutorTest.HELLO), WordExpander.splitFields(ExecutorTest.HELLO, ":"));
     }
 
     @Test
     void splitFieldsEmptyIfs() {
-        Assertions.assertEquals(List.of("hello world"), WordExpander.splitFields("hello world", ""));
+        Assertions.assertEquals(List.of(ExecutorTest.HELLO_WORLD), WordExpander.splitFields(ExecutorTest.HELLO_WORLD, ""));
     }
 
     @Test
     void splitFieldsNullIfs() {
-        Assertions.assertEquals(List.of("hello"), WordExpander.splitFields("hello", null));
+        Assertions.assertEquals(List.of(ExecutorTest.HELLO), WordExpander.splitFields(ExecutorTest.HELLO, null));
     }
 
     @Test
     void splitFieldsEmptyValue() {
-        Assertions.assertEquals(List.of(), WordExpander.splitFields("", String.format(" \t%n")));
+        Assertions.assertEquals(List.of(), WordExpander.splitFields("", String.format(ExecutorTest.IFS_TAB_NL)));
     }
 
     @Test
@@ -1864,7 +1897,7 @@ final class ExecutorTest {
 
     @Test
     void isQuotedNoQuotes() {
-        Assertions.assertFalse(WordExpander.isQuoted("hello"));
+        Assertions.assertFalse(WordExpander.isQuoted(ExecutorTest.HELLO));
     }
 
     @Test
@@ -1874,17 +1907,17 @@ final class ExecutorTest {
 
     @Test
     void removeQuotesNoop() {
-        Assertions.assertEquals("hello", WordExpander.removeQuotes("hello"));
+        Assertions.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes(ExecutorTest.HELLO));
     }
 
     @Test
     void removeQuotesDouble() {
-        Assertions.assertEquals("hello world", WordExpander.removeQuotes("\"hello world\""));
+        Assertions.assertEquals(ExecutorTest.HELLO_WORLD, WordExpander.removeQuotes("\"hello world\""));
     }
 
     @Test
     void removeQuotesSingle() {
-        Assertions.assertEquals("hello", WordExpander.removeQuotes("'hello'"));
+        Assertions.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes("'hello'"));
     }
 
     @Test
@@ -1909,7 +1942,7 @@ final class ExecutorTest {
 
     @Test
     void removeQuotesBackslashOutside() {
-        Assertions.assertEquals("hello world", WordExpander.removeQuotes("hello\\ world"));
+        Assertions.assertEquals(ExecutorTest.HELLO_WORLD, WordExpander.removeQuotes("hello\\ world"));
     }
 
     @Test
@@ -1984,7 +2017,7 @@ final class ExecutorTest {
 
     @Test
     void pathnameExpandNoGlob() {
-        Assertions.assertEquals(List.of("hello"), WordExpander.pathnameExpand(List.of("hello")));
+        Assertions.assertEquals(List.of(ExecutorTest.HELLO), WordExpander.pathnameExpand(List.of(ExecutorTest.HELLO)));
     }
 
     @Test
@@ -2024,7 +2057,7 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonQuestionSet() {
-        Assertions.assertEquals("value", new Executor(new HashMap<>()).expandVariables("${x:?not used}", new HashMap<>(Map.of("x", "value"))));
+        Assertions.assertEquals(ExecutorTest.VALUE, new Executor(new HashMap<>()).expandVariables("${x:?not used}", new HashMap<>(Map.of("x", ExecutorTest.VALUE))));
     }
 
     @Test
@@ -2044,27 +2077,27 @@ final class ExecutorTest {
 
     @Test
     void cdToDirectory() throws Exception {
-        final String saved = System.getProperty("user.dir");
+        final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Executor executor = new Executor();
             Assertions.assertEquals(0, executor.execute(this.parse("cd /tmp")));
-            Assertions.assertEquals("/tmp", executor.getVariable("PWD"));
+            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable(ExecutorTest.PWD_KEY));
         } finally {
-            System.setProperty("user.dir", saved);
+            System.setProperty(ExecutorTest.USER_DIR_PROP, saved);
         }
     }
 
     @Test
     void cdToHome() throws Exception {
-        final String saved = System.getProperty("user.dir");
+        final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
-            env.put("HOME", "/tmp");
+            env.put(ExecutorTest.HOME_KEY, ExecutorTest.TMP_DIR);
             final Executor executor = new Executor(env);
             Assertions.assertEquals(0, executor.execute(this.parse("cd")));
-            Assertions.assertEquals("/tmp", executor.getVariable("PWD"));
+            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable(ExecutorTest.PWD_KEY));
         } finally {
-            System.setProperty("user.dir", saved);
+            System.setProperty(ExecutorTest.USER_DIR_PROP, saved);
         }
     }
 
@@ -2075,34 +2108,34 @@ final class ExecutorTest {
 
     @Test
     void cdMinus() throws Exception {
-        final String saved = System.getProperty("user.dir");
+        final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
-            env.put("PWD", "/tmp");
+            env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
             env.put("OLDPWD", "/");
             final Executor executor = new Executor(env);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             executor.setCaptureStream(bos);
             Assertions.assertEquals(0, executor.execute(this.parse("cd -")));
-            Assertions.assertEquals("/", executor.getVariable("PWD"));
-            Assertions.assertEquals("/tmp", executor.getVariable("OLDPWD"));
+            Assertions.assertEquals("/", executor.getVariable(ExecutorTest.PWD_KEY));
+            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
             Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
         } finally {
-            System.setProperty("user.dir", saved);
+            System.setProperty(ExecutorTest.USER_DIR_PROP, saved);
         }
     }
 
     @Test
     void cdWithExpandedVar() throws Exception {
-        final String saved = System.getProperty("user.dir");
+        final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
-            env.put("MYDIR", "/tmp");
+            env.put("MYDIR", ExecutorTest.TMP_DIR);
             final Executor executor = new Executor(env);
             Assertions.assertEquals(0, executor.execute(this.parse("cd $MYDIR")));
-            Assertions.assertEquals("/tmp", executor.getVariable("PWD"));
+            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable(ExecutorTest.PWD_KEY));
         } finally {
-            System.setProperty("user.dir", saved);
+            System.setProperty(ExecutorTest.USER_DIR_PROP, saved);
         }
     }
 
@@ -2153,18 +2186,18 @@ final class ExecutorTest {
 
     @Test
     void trueBuiltinReturnsZero() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
     void falseBuiltinReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("false")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
     }
 
     @Test
     void unsetRemovesVariable() {
         final Map<String, String> env = new HashMap<>();
-        env.put("MYVAR", "value");
+        env.put("MYVAR", ExecutorTest.VALUE);
         final Executor executor = new Executor(env);
         Assertions.assertEquals(0, executor.execute(this.parse("unset MYVAR")));
         Assertions.assertNull(executor.getVariable("MYVAR"));
@@ -2227,7 +2260,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("eval echo hello world")));
-        Assertions.assertEquals("hello world", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO_WORLD, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
@@ -2241,11 +2274,11 @@ final class ExecutorTest {
         final String outpath = "/tmp/sh4j_ext_out.txt";
         new java.io.File(outpath).delete();
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
-            w.write("hello world");
+            w.write(ExecutorTest.HELLO_WORLD);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + String.format(" > %s", outpath))));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" > %s", outpath))));
         Assertions.assertTrue(new java.io.File(outpath).exists());
-        Assertions.assertEquals("hello world", java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO_WORLD, java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim());
         new java.io.File(inpath).delete();
         new java.io.File(outpath).delete();
     }
@@ -2261,7 +2294,7 @@ final class ExecutorTest {
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(outpath), StandardCharsets.UTF_8)) {
             w.write(String.format("first%n"));
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + String.format(" >> %s", outpath))));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >> %s", outpath))));
         final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim();
         Assertions.assertTrue(content.startsWith("first"));
         Assertions.assertTrue(content.contains("second"));
@@ -2277,7 +2310,7 @@ final class ExecutorTest {
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
             w.write("hello clobber");
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + String.format(" >| %s", outpath))));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >| %s", outpath))));
         Assertions.assertTrue(new java.io.File(outpath).exists());
         Assertions.assertEquals("hello clobber", java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim());
         new java.io.File(inpath).delete();
@@ -2288,9 +2321,9 @@ final class ExecutorTest {
     void externalRedirectStdoutToStderr() throws Exception {
         final String inpath = "/tmp/sh4j_ext_12_in.txt";
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
-            w.write("hello");
+            w.write(ExecutorTest.HELLO);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + " 1>&2")));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 1>&2")));
         new java.io.File(inpath).delete();
     }
 
@@ -2298,9 +2331,9 @@ final class ExecutorTest {
     void externalRedirectStderrToStdout() throws Exception {
         final String inpath = "/tmp/sh4j_ext_21_in.txt";
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
-            w.write("hello");
+            w.write(ExecutorTest.HELLO);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat < %s", inpath) + " 2>&1")));
+        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 2>&1")));
         new java.io.File(inpath).delete();
     }
 
@@ -2341,7 +2374,7 @@ final class ExecutorTest {
     void externalReadWriteRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_rw.txt";
         try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
-            w.write("hello");
+            w.write(ExecutorTest.HELLO);
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("cat <> %s", path))));
         new java.io.File(path).delete();
@@ -2353,7 +2386,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n"))));
-        Assertions.assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
@@ -2362,7 +2395,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n"))));
-        Assertions.assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
@@ -2371,7 +2404,7 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n"))));
-        Assertions.assertEquals("hello", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test

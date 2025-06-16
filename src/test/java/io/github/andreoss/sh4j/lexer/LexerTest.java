@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
  */
 final class LexerTest {
 
+    /** ECHO_CMD constant. */
+    private static final String ECHO_CMD = "echo";
+
     @Test
     void eofOnEmptyInput() {
         final Lexer list = this.lexer("");
@@ -56,10 +59,10 @@ final class LexerTest {
 
     @Test
     void simpleWord() {
-        final Lexer list = this.lexer("echo");
+        final Lexer list = this.lexer(LexerTest.ECHO_CMD);
         final Token tokn = list.nextToken();
         Assertions.assertEquals(TokenType.WORD, tokn.type());
-        Assertions.assertEquals("echo", tokn.text());
+        Assertions.assertEquals(LexerTest.ECHO_CMD, tokn.text());
     }
 
     @Test
@@ -75,7 +78,7 @@ final class LexerTest {
         final Lexer list = this.lexer(String.format("echo hello%n"));
         final Token tokfirst = list.nextToken();
         Assertions.assertEquals(TokenType.WORD, tokfirst.type());
-        Assertions.assertEquals("echo", tokfirst.text());
+        Assertions.assertEquals(LexerTest.ECHO_CMD, tokfirst.text());
         final Token toksecond = list.nextToken();
         Assertions.assertEquals(TokenType.WORD, toksecond.type());
         Assertions.assertEquals("hello", toksecond.text());
@@ -169,7 +172,7 @@ final class LexerTest {
         final Lexer list = this.lexer("echo(");
         final Token tokfirst = list.nextToken();
         Assertions.assertEquals(TokenType.WORD, tokfirst.type());
-        Assertions.assertEquals("echo", tokfirst.text());
+        Assertions.assertEquals(LexerTest.ECHO_CMD, tokfirst.text());
         Assertions.assertEquals(TokenType.LPAREN, list.nextToken().type());
     }
 
@@ -178,7 +181,7 @@ final class LexerTest {
         final Lexer list = this.lexer("echo)");
         final Token tokfirst = list.nextToken();
         Assertions.assertEquals(TokenType.WORD, tokfirst.type());
-        Assertions.assertEquals("echo", tokfirst.text());
+        Assertions.assertEquals(LexerTest.ECHO_CMD, tokfirst.text());
         Assertions.assertEquals(TokenType.RPAREN, list.nextToken().type());
     }
 

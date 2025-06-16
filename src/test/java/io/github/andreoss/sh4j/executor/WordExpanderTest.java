@@ -16,6 +16,9 @@ import org.junit.jupiter.api.Test;
  */
 final class WordExpanderTest {
 
+    /** ABC constant. */
+    private static final String ABC = "abc";
+
     @Test void tildeHome() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/user");
@@ -29,7 +32,7 @@ final class WordExpanderTest {
     }
 
     @Test void tildeNoOpWhenNoLeadingTilde() {
-        Assertions.assertEquals("abc", WordExpander.expandTilde("abc", new HashMap<>()));
+        Assertions.assertEquals(WordExpanderTest.ABC, WordExpander.expandTilde(WordExpanderTest.ABC, new HashMap<>()));
     }
 
     @Test void normaliseBackticksBasic() {
@@ -80,7 +83,7 @@ final class WordExpanderTest {
 
     @Test
     void removeQuotesUnquoted() {
-        Assertions.assertEquals("abc", WordExpander.removeQuotes("abc"));
+        Assertions.assertEquals(WordExpanderTest.ABC, WordExpander.removeQuotes(WordExpanderTest.ABC));
     }
 
     @Test
@@ -100,11 +103,11 @@ final class WordExpanderTest {
 
     @Test
     void containsGlobCharsNone() {
-        Assertions.assertFalse(WordExpander.containsGlobChars("abc"));
+        Assertions.assertFalse(WordExpander.containsGlobChars(WordExpanderTest.ABC));
     }
 
     @Test void pathnameExpandNoGlob() {
-        Assertions.assertEquals(List.of("abc"), WordExpander.pathnameExpand(List.of("abc")));
+        Assertions.assertEquals(List.of(WordExpanderTest.ABC), WordExpander.pathnameExpand(List.of(WordExpanderTest.ABC)));
     }
 
     @Test void pathnameExpandNoMatchKeepsPattern() {
@@ -262,12 +265,12 @@ final class WordExpanderTest {
 
     @Test
     void globMatchesStar() {
-        Assertions.assertTrue(WordExpander.globMatches("a*", "abc"));
+        Assertions.assertTrue(WordExpander.globMatches("a*", WordExpanderTest.ABC));
     }
 
     @Test
     void globMatchesQuestion() {
-        Assertions.assertTrue(WordExpander.globMatches("a?c", "abc"));
+        Assertions.assertTrue(WordExpander.globMatches("a?c", WordExpanderTest.ABC));
     }
 
     @Test

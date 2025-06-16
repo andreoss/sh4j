@@ -15,6 +15,9 @@ import io.github.andreoss.sh4j.lexer.Lexer;
  */
 final class ParserTest {
 
+    /** ECHO_CMD constant. */
+    private static final String ECHO_CMD = "echo";
+
     @Test
     void parseSimpleCommand() {
         final ListNode list = this.parse("echo hello");
@@ -24,7 +27,7 @@ final class ParserTest {
         Assertions.assertEquals(1, pipeline.getCommands().size());
         
         final SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
-        Assertions.assertEquals("echo", cmd.getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertEquals(1, cmd.getArguments().size());
         Assertions.assertEquals("hello", cmd.getArguments().get(0));
     }
@@ -36,7 +39,7 @@ final class ParserTest {
         
         final Pipeline pipeline = list.getPipelines().get(0);
         Assertions.assertEquals(2, pipeline.getCommands().size());
-        Assertions.assertEquals("echo", ((SimpleCommand) pipeline.getCommands().get(0)).getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) pipeline.getCommands().get(0)).getName());
         Assertions.assertEquals("grep", ((SimpleCommand) pipeline.getCommands().get(1)).getName());
     }
 
@@ -142,7 +145,7 @@ final class ParserTest {
     void parseCommandWithDollar() {
         final ListNode list = this.parse("echo $VAR");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-        Assertions.assertEquals("echo", cmd.getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertEquals("$VAR", cmd.getArguments().get(0));
     }
 
@@ -170,7 +173,7 @@ final class ParserTest {
         Assertions.assertInstanceOf(Subshell.class, pipeline.getCommands().get(0));
         final Subshell sub = (Subshell) pipeline.getCommands().get(0);
         Assertions.assertEquals(1, sub.getList().getPipelines().size());
-        Assertions.assertEquals("echo", ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName());
     }
 
     @Test
@@ -198,7 +201,7 @@ final class ParserTest {
         Assertions.assertInstanceOf(Grouping.class, pipeline.getCommands().get(0));
         final Grouping glob = (Grouping) pipeline.getCommands().get(0);
         Assertions.assertEquals(1, glob.getList().getPipelines().size());
-        Assertions.assertEquals("echo", ((SimpleCommand) glob.getList().getPipelines().get(0).getCommands().get(0)).getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) glob.getList().getPipelines().get(0).getCommands().get(0)).getName());
     }
 
     @Test
@@ -252,7 +255,7 @@ final class ParserTest {
     void parseAssignmentWordAfterCommandName() {
         final ListNode list = this.parse("echo FOO=bar");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-        Assertions.assertEquals("echo", cmd.getName());
+        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertTrue(cmd.getAssignments().contains("FOO=bar"));
     }
 
