@@ -29,7 +29,11 @@ final class RedirectionHandlerTest {
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identity);
         Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
-        Assertions.assertSame(err, result.savedErr(), "savedErr should be original err for restore");
+        Assertions.assertSame(
+            err,
+            result.savedErr(),
+            "savedErr should be original err for restore"
+        );
         Assertions.assertNull(result.savedOut(), "stdout untouched");
     }
 
@@ -40,7 +44,11 @@ final class RedirectionHandlerTest {
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identity);
         Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
-        Assertions.assertSame(out, result.savedOut(), "savedOut should be original out for restore");
+        Assertions.assertSame(
+            out,
+            result.savedOut(),
+            "savedOut should be original out for restore"
+        );
     }
 
     @Test
@@ -65,6 +73,9 @@ final class RedirectionHandlerTest {
         final java.io.File f = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
         Assertions.assertNotNull(f);
         Assertions.assertTrue(f.isFile());
-        Assertions.assertEquals(String.format("alpha%nbeta%n"), java.nio.file.Files.readString(f.toPath()));
+        Assertions.assertEquals(
+            String.format("alpha%nbeta%n"),
+            java.nio.file.Files.readString(f.toPath())
+        );
     }
 }

@@ -39,15 +39,24 @@ final class BuiltinDispatcherTest {
     }
 
     @Test void dispatchTrueReturnsZero() {
-        Assertions.assertEquals(0, this.disp.dispatch("true", null, List.of(), new HashMap<>(), List.of()));
+        Assertions.assertEquals(
+            0,
+            this.disp.dispatch("true", null, List.of(), new HashMap<>(), List.of())
+        );
     }
 
     @Test void dispatchFalseReturnsOne() {
-        Assertions.assertEquals(1, this.disp.dispatch("false", null, List.of(), new HashMap<>(), List.of()));
+        Assertions.assertEquals(
+            1,
+            this.disp.dispatch("false", null, List.of(), new HashMap<>(), List.of())
+        );
     }
 
     @Test void dispatchColonReturnsZero() {
-        Assertions.assertEquals(0, this.disp.dispatch(":", null, List.of(), new HashMap<>(), List.of()));
+        Assertions.assertEquals(
+            0,
+            this.disp.dispatch(":", null, List.of(), new HashMap<>(), List.of())
+        );
     }
 
     @Test void dispatchUnknownReturnsNull() {
@@ -82,6 +91,9 @@ final class BuiltinDispatcherTest {
     @Test void registerCustomBuiltin() {
         this.disp.register("mybuiltin", (self, args, env, assigns) -> 42);
         Assertions.assertTrue(this.disp.isBuiltin("mybuiltin"));
-        Assertions.assertEquals(42, this.disp.dispatch("mybuiltin", null, List.of(), new HashMap<>(), List.of()));
+        Assertions.assertEquals(
+            42,
+            this.disp.dispatch("mybuiltin", null, List.of(), new HashMap<>(), List.of())
+        );
     }
 }

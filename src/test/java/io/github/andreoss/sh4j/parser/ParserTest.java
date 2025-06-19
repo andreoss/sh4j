@@ -39,7 +39,10 @@ final class ParserTest {
         
         final Pipeline pipeline = list.getPipelines().get(0);
         Assertions.assertEquals(2, pipeline.getCommands().size());
-        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) pipeline.getCommands().get(0)).getName());
+        Assertions.assertEquals(
+            ParserTest.ECHO_CMD,
+            ((SimpleCommand) pipeline.getCommands().get(0)).getName()
+        );
         Assertions.assertEquals("grep", ((SimpleCommand) pipeline.getCommands().get(1)).getName());
     }
 
@@ -76,16 +79,28 @@ final class ParserTest {
         final ListNode list = this.parse(String.format("cmd1%ncmd2"));
         Assertions.assertEquals(2, list.getPipelines().size());
         Assertions.assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
-        Assertions.assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
-        Assertions.assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
+        Assertions.assertEquals(
+            "cmd1",
+            ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName()
+        );
+        Assertions.assertEquals(
+            "cmd2",
+            ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName()
+        );
     }
 
     @Test
     void parseListWithBlankLinesAndLeadingTrailingNewlines() {
         final ListNode list = this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n"));
         Assertions.assertEquals(2, list.getPipelines().size());
-        Assertions.assertEquals("cmd1", ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName());
-        Assertions.assertEquals("cmd2", ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName());
+        Assertions.assertEquals(
+            "cmd1",
+            ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName()
+        );
+        Assertions.assertEquals(
+            "cmd2",
+            ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName()
+        );
     }
 
     @Test
@@ -173,7 +188,10 @@ final class ParserTest {
         Assertions.assertInstanceOf(Subshell.class, pipeline.getCommands().get(0));
         final Subshell sub = (Subshell) pipeline.getCommands().get(0);
         Assertions.assertEquals(1, sub.getList().getPipelines().size());
-        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName());
+        Assertions.assertEquals(
+            ParserTest.ECHO_CMD,
+            ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName()
+        );
     }
 
     @Test
@@ -201,7 +219,10 @@ final class ParserTest {
         Assertions.assertInstanceOf(Grouping.class, pipeline.getCommands().get(0));
         final Grouping glob = (Grouping) pipeline.getCommands().get(0);
         Assertions.assertEquals(1, glob.getList().getPipelines().size());
-        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) glob.getList().getPipelines().get(0).getCommands().get(0)).getName());
+        Assertions.assertEquals(
+            ParserTest.ECHO_CMD,
+            ((SimpleCommand) glob.getList().getPipelines().get(0).getCommands().get(0)).getName()
+        );
     }
 
     @Test
@@ -464,7 +485,10 @@ final class ParserTest {
 
     @Test
     void parseFunctionBodyWithIf() {
-        Assertions.assertInstanceOf(FunctionNode.class, this.parse("foo() if true; then echo hi; fi").getPipelines().get(0).getCommands().get(0));
+        Assertions.assertInstanceOf(
+            FunctionNode.class,
+            this.parse("foo() if true; then echo hi; fi").getPipelines().get(0).getCommands().get(0)
+        );
     }
 
     @Test
@@ -530,7 +554,10 @@ final class ParserTest {
 
     @Test
     void parseElifChainWithElse() {
-        Assertions.assertEquals(1, this.parse("if false; then a; elif false; then b; else c; fi").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("if false; then a; elif false; then b; else c; fi").getPipelines().size()
+        );
     }
 
     @Test
@@ -565,12 +592,18 @@ final class ParserTest {
 
     @Test
     void parseTwoPipelinesSemiTerminatedBeforeReserved() {
-        Assertions.assertEquals(1, this.parse("if true; then echo a; echo b; fi").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("if true; then echo a; echo b; fi").getPipelines().size()
+        );
     }
 
     @Test
     void parsePipelineEmptyPipeStage() {
-        Assertions.assertEquals(1, this.parse("if echo a | echo b; then echo c; fi").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("if echo a | echo b; then echo c; fi").getPipelines().size()
+        );
     }
 
     @Test
@@ -585,14 +618,20 @@ final class ParserTest {
     void parseCaseMultilineBody() {
         final ListNode list = this.parse(String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac"));
         Assertions.assertEquals(1, list.getPipelines().size());
-        Assertions.assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
+        Assertions.assertEquals(
+            2,
+            ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size()
+        );
     }
 
     @Test
     void parseCaseMultilineWithBlankLinesBetweenArms() {
         final ListNode list = this.parse(String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac"));
         Assertions.assertEquals(1, list.getPipelines().size());
-        Assertions.assertEquals(2, ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size());
+        Assertions.assertEquals(
+            2,
+            ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size()
+        );
     }
 
     @Test
@@ -614,17 +653,26 @@ final class ParserTest {
 
     @Test
     void parseWhileWithAmpInCondition() {
-        Assertions.assertEquals(1, this.parse("while true & false; do echo hi; done").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("while true & false; do echo hi; done").getPipelines().size()
+        );
     }
 
     @Test
     void parseWhileWithAndIfInCondition() {
-        Assertions.assertEquals(1, this.parse("while true && false; do echo hi; done").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("while true && false; do echo hi; done").getPipelines().size()
+        );
     }
 
     @Test
     void parseWhileWithOrIfInCondition() {
-        Assertions.assertEquals(1, this.parse("while true || false; do echo hi; done").getPipelines().size());
+        Assertions.assertEquals(
+            1,
+            this.parse("while true || false; do echo hi; done").getPipelines().size()
+        );
     }
 
     @Test

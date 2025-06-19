@@ -275,7 +275,10 @@ final class LexerTest {
     @Test
     void assignmentWordEdgeCases() {
         Assertions.assertEquals(TokenType.WORD, this.lexer("=value").nextToken().type());
-        Assertions.assertEquals(TokenType.ASSIGNMENT_WORD, this.lexer("_=value").nextToken().type());
+        Assertions.assertEquals(
+            TokenType.ASSIGNMENT_WORD,
+            this.lexer("_=value").nextToken().type()
+        );
     }
 
     @Test
@@ -403,12 +406,18 @@ final class LexerTest {
 
     @Test
     void readHereDocContentSkipsLeadingNewline() {
-        Assertions.assertEquals("hello", this.lexer(String.format("%nhello%nEOF%n")).readHereDocContent("EOF", false));
+        Assertions.assertEquals(
+            "hello",
+            this.lexer(String.format("%nhello%nEOF%n")).readHereDocContent("EOF", false)
+        );
     }
 
     @Test
     void readHereDocContentEmptyBody() {
-        Assertions.assertEquals("", this.lexer(String.format("EOF%n")).readHereDocContent("EOF", false));
+        Assertions.assertEquals(
+            "",
+            this.lexer(String.format("EOF%n")).readHereDocContent("EOF", false)
+        );
     }
 
     @Test

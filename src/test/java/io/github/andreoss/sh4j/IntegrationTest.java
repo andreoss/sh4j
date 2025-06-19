@@ -31,17 +31,26 @@ final class IntegrationTest {
 
     @Test
     void trueCommand() throws IOException {
-        Assertions.assertEquals(0, Main.runScript(this.writeScript("true.sh", String.format("true%n")).getAbsolutePath()));
+        Assertions.assertEquals(
+            0,
+            Main.runScript(this.writeScript("true.sh", String.format("true%n")).getAbsolutePath())
+        );
     }
 
     @Test
     void falseCommand() throws IOException {
-        Assertions.assertEquals(1, Main.runScript(this.writeScript("false.sh", String.format("false%n")).getAbsolutePath()));
+        Assertions.assertEquals(
+            1,
+            Main.runScript(this.writeScript("false.sh", String.format("false%n")).getAbsolutePath())
+        );
     }
 
     @Test
     void pwdCommand() throws IOException {
-        Assertions.assertEquals(0, Main.runScript(this.writeScript("pwd.sh", String.format("pwd%n")).getAbsolutePath()));
+        Assertions.assertEquals(
+            0,
+            Main.runScript(this.writeScript("pwd.sh", String.format("pwd%n")).getAbsolutePath())
+        );
     }
 
     @Test
@@ -65,7 +74,11 @@ final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
-        Assertions.assertEquals(0, proc.waitFor(), String.format("sh4j exit code; output: %s", out));
+        Assertions.assertEquals(
+            0,
+            proc.waitFor(),
+            String.format("sh4j exit code; output: %s", out)
+        );
         Assertions.assertTrue(out.contains("hello-from-cat"),
                 String.format("external cat stdout must reach test; got: '%s", out) + "'");
     }
@@ -84,7 +97,11 @@ final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
-        Assertions.assertEquals(0, proc.waitFor(), String.format("native sh4j exit code; output: %s", out));
+        Assertions.assertEquals(
+            0,
+            proc.waitFor(),
+            String.format("native sh4j exit code; output: %s", out)
+        );
         Assertions.assertTrue(out.contains("hello-native"),
                 String.format("native sh4j must propagate external cat stdout; got: '%s", out) + "'");
     }
@@ -92,7 +109,10 @@ final class IntegrationTest {
     @org.junit.jupiter.api.Test
     void childJvmEchoPipeCat() throws Exception {
         final String out = this.runChildJvm(this.writeScript("h_pipe.sh", String.format("echo child-pipe | cat%n")));
-        Assertions.assertTrue(out.contains("child-pipe"), String.format("pipeline stdout missing; got: '%s", out) + "'");
+        Assertions.assertTrue(
+            out.contains("child-pipe"),
+            String.format("pipeline stdout missing; got: '%s", out) + "'"
+        );
     }
 
     @org.junit.jupiter.api.Test
@@ -102,7 +122,10 @@ final class IntegrationTest {
             w.write(String.format("child-probe%n"));
         }
         final String out = this.runChildJvm(this.writeScript("h_cat.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")));
-        Assertions.assertTrue(out.contains("child-probe"), String.format("cat stdout missing; got: '%s", out) + "'");
+        Assertions.assertTrue(
+            out.contains("child-probe"),
+            String.format("cat stdout missing; got: '%s", out) + "'"
+        );
     }
 
     @org.junit.jupiter.api.Test
@@ -122,7 +145,11 @@ final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
-        Assertions.assertEquals(0, proc.waitFor(), String.format("native sh4j pipeline exit code; output: %s", out));
+        Assertions.assertEquals(
+            0,
+            proc.waitFor(),
+            String.format("native sh4j pipeline exit code; output: %s", out)
+        );
         Assertions.assertTrue(out.contains("native-pipe"),
                 String.format("native sh4j pipeline must propagate stdout; got: '%s", out) + "'");
     }
@@ -227,7 +254,10 @@ final class IntegrationTest {
         final File outfile = this.tempdir.resolve("out2.txt").toFile();
         Assertions.assertEquals(0, Main.runScript(this.writeScript("varexp_redir.sh", String.format("echo $HOME > %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
-        Assertions.assertFalse(Files.readString(outfile.toPath()).trim().isEmpty(), "content should not be empty");
+        Assertions.assertFalse(
+            Files.readString(outfile.toPath()).trim().isEmpty(),
+            "content should not be empty"
+        );
     }
 
     @Test
@@ -264,7 +294,11 @@ final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes());
-        Assertions.assertEquals(0, proc.waitFor(), String.format("child sh4j exit code; output: %s", out));
+        Assertions.assertEquals(
+            0,
+            proc.waitFor(),
+            String.format("child sh4j exit code; output: %s", out)
+        );
         return out;
     }
 

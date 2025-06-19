@@ -105,7 +105,10 @@ final class MainTest {
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit $#%n"));
         }
-        Assertions.assertEquals(3, Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"}));
+        Assertions.assertEquals(
+            3,
+            Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"})
+        );
     }
 
     @Test

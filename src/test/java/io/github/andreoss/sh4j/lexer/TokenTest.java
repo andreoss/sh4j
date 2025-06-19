@@ -33,7 +33,10 @@ final class TokenTest {
 
     @Test
     void tokenEquality() {
-        Assertions.assertEquals(new Token(TokenType.WORD, "x", 1, 0), new Token(TokenType.WORD, "x", 1, 0));
+        Assertions.assertEquals(
+            new Token(TokenType.WORD, "x", 1, 0),
+            new Token(TokenType.WORD, "x", 1, 0)
+        );
     }
 
     @Test

@@ -32,7 +32,10 @@ final class WordExpanderTest {
     }
 
     @Test void tildeNoOpWhenNoLeadingTilde() {
-        Assertions.assertEquals(WordExpanderTest.ABC, WordExpander.expandTilde(WordExpanderTest.ABC, new HashMap<>()));
+        Assertions.assertEquals(
+            WordExpanderTest.ABC,
+            WordExpander.expandTilde(WordExpanderTest.ABC, new HashMap<>())
+        );
     }
 
     @Test void normaliseBackticksBasic() {
@@ -44,7 +47,10 @@ final class WordExpanderTest {
     }
 
     @Test void splitFieldsDefaultIfs() {
-        Assertions.assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a b c", String.format(" \t%n")));
+        Assertions.assertEquals(
+            List.of("a", "b", "c"),
+            WordExpander.splitFields("a b c", String.format(" \t%n"))
+        );
     }
 
     @Test void splitFieldsCustomIfs() {
@@ -83,7 +89,10 @@ final class WordExpanderTest {
 
     @Test
     void removeQuotesUnquoted() {
-        Assertions.assertEquals(WordExpanderTest.ABC, WordExpander.removeQuotes(WordExpanderTest.ABC));
+        Assertions.assertEquals(
+            WordExpanderTest.ABC,
+            WordExpander.removeQuotes(WordExpanderTest.ABC)
+        );
     }
 
     @Test
@@ -107,11 +116,17 @@ final class WordExpanderTest {
     }
 
     @Test void pathnameExpandNoGlob() {
-        Assertions.assertEquals(List.of(WordExpanderTest.ABC), WordExpander.pathnameExpand(List.of(WordExpanderTest.ABC)));
+        Assertions.assertEquals(
+            List.of(WordExpanderTest.ABC),
+            WordExpander.pathnameExpand(List.of(WordExpanderTest.ABC))
+        );
     }
 
     @Test void pathnameExpandNoMatchKeepsPattern() {
-        Assertions.assertEquals(List.of("__no_match_xyz__"), WordExpander.pathnameExpand(List.of("__no_match_xyz__")));
+        Assertions.assertEquals(
+            List.of("__no_match_xyz__"),
+            WordExpander.pathnameExpand(List.of("__no_match_xyz__"))
+        );
     }
 
     @Test void expandVariablesParityPlainText() {
@@ -159,14 +174,20 @@ final class WordExpanderTest {
         final Executor exe = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
         env.put("X", "hi");
-        Assertions.assertEquals("hi-suffix", WordExpander.expandVariables("$X-suffix", env, exe).value());
+        Assertions.assertEquals(
+            "hi-suffix",
+            WordExpander.expandVariables("$X-suffix", env, exe).value()
+        );
     }
 
     @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
         final Executor excp = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
         Assertions.assertTrue(WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error());
-        Assertions.assertFalse(WordExpander.expandVariables("plain", env, excp).error(), "flag should be consumed by previous wrapper call");
+        Assertions.assertFalse(
+            WordExpander.expandVariables("plain", env, excp).error(),
+            "flag should be consumed by previous wrapper call"
+        );
     }
 
     @Test void expandBracedColonDashUnsetReturnsDefault() {
@@ -201,7 +222,11 @@ final class WordExpanderTest {
         final Executor exe = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
         env.put("x", "");
-        Assertions.assertEquals("", WordExpander.expandBraced("x-fallback", env, exe).value(), "set-but-empty: no fallback");
+        Assertions.assertEquals(
+            "",
+            WordExpander.expandBraced("x-fallback", env, exe).value(),
+            "set-but-empty: no fallback"
+        );
     }
 
     @Test void expandBracedPlusSet() {

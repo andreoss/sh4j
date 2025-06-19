@@ -74,7 +74,10 @@ final class PosixConformanceTest {
 
     @Test
     void forLoopBody() throws Exception {
-        Assertions.assertEquals(String.format("a%nb%nc"), run(String.format("for i in a b c; do echo $i; done%n")).trim());
+        Assertions.assertEquals(
+            String.format("a%nb%nc"),
+            run(String.format("for i in a b c; do echo $i; done%n")).trim()
+        );
     }
 
     @Test
@@ -89,7 +92,10 @@ final class PosixConformanceTest {
 
     @Test
     void hereDocContent() throws Exception {
-        Assertions.assertEquals(String.format("line1%nline2"), run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim());
+        Assertions.assertEquals(
+            String.format("line1%nline2"),
+            run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim()
+        );
     }
 
     private String run(final String script, final String... args) throws Exception {
