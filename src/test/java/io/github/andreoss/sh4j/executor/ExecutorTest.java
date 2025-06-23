@@ -173,7 +173,9 @@ final class ExecutorTest {
     void executeBackgroundSetsLastBgPid() {
         final Executor executor = new Executor();
         executor.execute(this.parse("echo hello &"));
-        Assertions.assertTrue(executor.getLastBgPid() > 0, "lastBgPid should be > 0 after & command");
+        Assertions.assertTrue(
+            executor.getLastBgPid() > 0, "lastBgPid should be > 0 after & command"
+        );
     }
 
     @Test
@@ -623,7 +625,9 @@ final class ExecutorTest {
         final Executor executor = new Executor(env);
         executor.setOutputStream(new PrintStream(bos, true));
         Assertions.assertEquals(0, executor.execute(this.parse("export")));
-        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello"));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello")
+        );
     }
 
     @Test
@@ -2705,7 +2709,9 @@ final class ExecutorTest {
         }
         final Executor executor = new Executor();
         executor.execute(this.parse(String.format("cat /nonexistent_path_xyz_456 2>> %s", path)));
-        Assertions.assertTrue(java.nio.file.Files.readString(java.nio.file.Path.of(path)).contains("initial"));
+        Assertions.assertTrue(
+            java.nio.file.Files.readString(java.nio.file.Path.of(path)).contains("initial")
+        );
         new java.io.File(path).delete();
     }
 
@@ -2776,7 +2782,9 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { true; }; type myfunc")));
-        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("myfunc is a function"));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("myfunc is a function")
+        );
     }
 
     @Test

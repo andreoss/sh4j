@@ -183,7 +183,9 @@ final class WordExpanderTest {
     @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
         final Executor excp = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertTrue(WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error());
+        Assertions.assertTrue(
+            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error()
+        );
         Assertions.assertFalse(
             WordExpander.expandVariables("plain", env, excp).error(),
             "flag should be consumed by previous wrapper call"

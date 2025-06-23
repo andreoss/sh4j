@@ -41,6 +41,8 @@ final class TokenTest {
 
     @Test
     void tokenToString() {
-        Assertions.assertTrue(new Token(TokenType.NEWLINE, String.format("%n"), 1, 0).toString().contains("NEWLINE"));
+        Assertions.assertTrue(
+            new Token(TokenType.NEWLINE, String.format("%n"), 1, 0).toString().contains("NEWLINE")
+        );
     }
 }

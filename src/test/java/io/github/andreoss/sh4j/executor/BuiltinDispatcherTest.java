@@ -60,7 +60,9 @@ final class BuiltinDispatcherTest {
     }
 
     @Test void dispatchUnknownReturnsNull() {
-        Assertions.assertNull(this.disp.dispatch("nope", null, List.of(), new HashMap<>(), List.of()));
+        Assertions.assertNull(
+            this.disp.dispatch("nope", null, List.of(), new HashMap<>(), List.of())
+        );
     }
 
     @Test

@@ -29,7 +29,9 @@ final class PosixConformanceTest {
 
     @Test
     void positionalParamAt() throws Exception {
-        Assertions.assertTrue(run(String.format("echo $@%n"), "x", "y", "z").trim().equals("x y z"));
+        Assertions.assertTrue(
+            run(String.format("echo $@%n"), "x", "y", "z").trim().equals("x y z")
+        );
     }
 
     @Test
@@ -39,7 +41,9 @@ final class PosixConformanceTest {
 
     @Test
     void paramDefaultWhenUnset() throws Exception {
-        Assertions.assertTrue(run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim().equals("fallback"));
+        Assertions.assertTrue(
+            run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim().equals("fallback")
+        );
     }
 
     @Test
@@ -69,7 +73,9 @@ final class PosixConformanceTest {
 
     @Test
     void ifThenElse() throws Exception {
-        Assertions.assertTrue(run(String.format("if true; then echo yes; else echo no; fi%n")).trim().equals("yes"));
+        Assertions.assertTrue(
+            run(String.format("if true; then echo yes; else echo no; fi%n")).trim().equals("yes")
+        );
     }
 
     @Test
@@ -87,7 +93,9 @@ final class PosixConformanceTest {
 
     @Test
     void echoWithDoubleQuotes() throws Exception {
-        Assertions.assertTrue(run(String.format("echo \"hello world\"%n")).trim().equals("hello world"));
+        Assertions.assertTrue(
+            run(String.format("echo \"hello world\"%n")).trim().equals("hello world")
+        );
     }
 
     @Test
