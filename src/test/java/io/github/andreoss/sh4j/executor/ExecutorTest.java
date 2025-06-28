@@ -32,34 +32,49 @@ final class ExecutorTest {
 
     /** PATH_KEY constant. */
     private static final String PATH_KEY = "PATH";
+
     /** SCRIPT_KEY constant. */
     private static final String SCRIPT_KEY = "script";
+
     /** IFS_TAB_NL constant. */
     private static final String IFS_TAB_NL = " \t%n";
+
     /** USER_DIR_PROP constant. */
     private static final String USER_DIR_PROP = "user.dir";
+
     /** TMP_DIR constant. */
     private static final String TMP_DIR = "/tmp";
+
     /** CAT_INPUT_FMT constant. */
     private static final String CAT_INPUT_FMT = "cat < %s";
+
     /** TRUE_CMD constant. */
     private static final String TRUE_CMD = "true";
+
     /** FALSE_CMD constant. */
     private static final String FALSE_CMD = "false";
+
     /** HELLO constant. */
     private static final String HELLO = "hello";
+
     /** A_B_C constant. */
     private static final String A_B_C = "a b c";
+
     /** HOME_KEY constant. */
     private static final String HOME_KEY = "HOME";
+
     /** PWD_KEY constant. */
     private static final String PWD_KEY = "PWD";
+
     /** VAR_DEFAULT_EXPR constant. */
     private static final String VAR_DEFAULT_EXPR = "${var:-default}";
+
     /** VAR_NAME constant. */
     private static final String VAR_NAME = "var";
+
     /** VALUE constant. */
     private static final String VALUE = "value";
+
     /** HELLO_WORLD constant. */
     private static final String HELLO_WORLD = "hello world";
 
