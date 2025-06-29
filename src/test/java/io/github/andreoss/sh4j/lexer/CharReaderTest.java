@@ -35,7 +35,7 @@ final class CharReaderTest {
     }
 
     @Test
-    void isEOFReturnsFalseWhenCharsRemain() {
+    void isEofReturnsFalseWhenCharsRemain() {
         Assertions.assertFalse(new CharReader("abc").isEof());
     }
 
@@ -87,13 +87,13 @@ final class CharReaderTest {
         final CharReader result = new CharReader(String.format("a%nb"));
         Assertions.assertEquals(1, result.getLine());
         Assertions.assertEquals(0, result.getColumn());
-        result.consume(); // 'a'
+        result.consume();
         Assertions.assertEquals(1, result.getLine());
         Assertions.assertEquals(1, result.getColumn());
-        result.consume(); // '\n'
+        result.consume();
         Assertions.assertEquals(2, result.getLine());
         Assertions.assertEquals(0, result.getColumn());
-        result.consume(); // 'b'
+        result.consume();
         Assertions.assertEquals(2, result.getLine());
         Assertions.assertEquals(1, result.getColumn());
     }
@@ -115,13 +115,14 @@ final class CharReaderTest {
             }
 
             @Override
-
-            public void close() {}
+            public void close() {
+                // intentional no-op
+            }
         };
-        final CharReader r = new CharReader(broken);
-        Assertions.assertTrue(r.isEof());
-        Assertions.assertEquals(-1, r.peek());
-        Assertions.assertEquals(-1, r.consume());
+        final CharReader reader = new CharReader(broken);
+        Assertions.assertTrue(reader.isEof());
+        Assertions.assertEquals(-1, reader.peek());
+        Assertions.assertEquals(-1, reader.consume());
     }
 
     @Test

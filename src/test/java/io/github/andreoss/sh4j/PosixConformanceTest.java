@@ -111,18 +111,19 @@ final class PosixConformanceTest {
         try (BufferedWriter w = Files.newBufferedWriter(str.toPath(), StandardCharsets.UTF_8)) {
             w.write(script);
         }
-        final java.util.List<String> cmd = new java.util.ArrayList<>();
+        final java.util.List<String> cmd = new java.util.ArrayList<>(7);
         cmd.add(System.getProperty("java.home") + "/bin/java");
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
         cmd.add(str.getAbsolutePath());
-        for (final String arr : args) cmd.add(arr);
+        for (final String arr : args) {
+            cmd.add(arr);
+        }
         final ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         proc.waitFor();
         return new String(proc.getInputStream().readAllBytes());
     }
-
 }

@@ -22,10 +22,8 @@ final class ParserTest {
     void parseSimpleCommand() {
         final ListNode list = this.parse("echo hello");
         Assertions.assertEquals(1, list.getPipelines().size());
-        
         final Pipeline pipeline = list.getPipelines().get(0);
         Assertions.assertEquals(1, pipeline.getCommands().size());
-        
         final SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
         Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertEquals(1, cmd.getArguments().size());
@@ -36,7 +34,6 @@ final class ParserTest {
     void parsePipeline() {
         final ListNode list = this.parse("echo a | grep b");
         Assertions.assertEquals(1, list.getPipelines().size());
-        
         final Pipeline pipeline = list.getPipelines().get(0);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertEquals(
@@ -706,5 +703,4 @@ final class ParserTest {
     private ListNode parse(final String input) {
         return this.parser(input).parse();
     }
-
 }

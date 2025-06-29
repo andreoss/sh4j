@@ -255,7 +255,7 @@ final class IntegrationTest {
         Assertions.assertEquals(0, Main.runScript(this.writeScript("varexp_redir.sh", String.format("echo $HOME > %s", outfile.getAbsolutePath()) + String.format("%n")).getAbsolutePath()));
         Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
         Assertions.assertFalse(
-            Files.readString(outfile.toPath()).trim().isEmpty(),
+            Files.readString(outfile.toPath()).isBlank(),
             "content should not be empty"
         );
     }
@@ -301,5 +301,4 @@ final class IntegrationTest {
         );
         return out;
     }
-
 }

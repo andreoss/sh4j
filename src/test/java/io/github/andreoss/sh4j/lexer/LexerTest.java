@@ -429,11 +429,10 @@ final class LexerTest {
         return new Lexer(new CharReader(input));
     }
 
-    private void assertOperator(final String op, final TokenType expected) {
-        final Lexer list = this.lexer(op);
+    private void assertOperator(final String oper, final TokenType expected) {
+        final Lexer list = this.lexer(oper);
         final Token tokn = list.nextToken();
-        Assertions.assertEquals(expected, tokn.type(), String.format("Operator %s", op));
-        Assertions.assertEquals(op, tokn.text(), String.format("Operator text %s", op));
+        Assertions.assertEquals(expected, tokn.type(), String.format("Operator %s", oper));
+        Assertions.assertEquals(oper, tokn.text(), String.format("Operator text %s", oper));
     }
-
 }

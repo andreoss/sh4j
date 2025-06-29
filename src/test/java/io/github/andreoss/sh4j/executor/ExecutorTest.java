@@ -242,7 +242,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeBuiltinStdoutRedirectIOException() throws Exception {
+    void executeBuiltinStdoutRedirectIoException() throws Exception {
         Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo hello >/dev/null/no_such_path_xyz"))
@@ -250,7 +250,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeBuiltinStderrRedirectIOException() throws Exception {
+    void executeBuiltinStderrRedirectIoException() throws Exception {
         Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo hello 2>/dev/null/no_such_stderr_xyz"))
@@ -258,7 +258,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeBuiltinStdoutAppendIOException() throws Exception {
+    void executeBuiltinStdoutAppendIoException() throws Exception {
         Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo hello >>/dev/null/no_such_append_xyz"))
@@ -266,7 +266,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeBuiltinStderrAppendIOException() throws Exception {
+    void executeBuiltinStderrAppendIoException() throws Exception {
         Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo hello 2>>/dev/null/no_such_eappend_xyz"))
@@ -716,38 +716,38 @@ final class ExecutorTest {
 
     @Test
     void redirectTargetExpansionOutput() throws Exception {
-        final java.io.File f = new java.io.File("/tmp/sh4j_redir_expand_test.txt");
-        f.delete();
+        final java.io.File file = new java.io.File("/tmp/sh4j_redir_expand_test.txt");
+        file.delete();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
         Assertions.assertEquals(
             0,
             new Executor(env).execute(this.parse("echo hello > $TEST_FILE"))
         );
-        Assertions.assertTrue(f.exists());
+        Assertions.assertTrue(file.exists());
         Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(f.toPath()))
+            new String(java.nio.file.Files.readAllBytes(file.toPath()))
         );
-        f.delete();
+        file.delete();
     }
 
     @Test
     void redirectTargetExpansionAppend() throws Exception {
-        final java.io.File f = new java.io.File("/tmp/sh4j_redir_append_expand.txt");
-        f.delete();
+        final java.io.File file = new java.io.File("/tmp/sh4j_redir_append_expand.txt");
+        file.delete();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
         Assertions.assertEquals(
             0,
             new Executor(env).execute(this.parse("echo hello >> $TEST_FILE"))
         );
-        Assertions.assertTrue(f.exists());
+        Assertions.assertTrue(file.exists());
         Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(f.toPath()))
+            new String(java.nio.file.Files.readAllBytes(file.toPath()))
         );
-        f.delete();
+        file.delete();
     }
 
     @Test
@@ -874,7 +874,6 @@ final class ExecutorTest {
 
     @Test
     void expandTildeToHome() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/home/testuser");
         Assertions.assertEquals("/home/testuser", WordExpander.expandTilde("~", env));
@@ -882,7 +881,6 @@ final class ExecutorTest {
 
     @Test
     void expandTildeWithPath() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/home/testuser");
         Assertions.assertEquals(
@@ -1739,7 +1737,7 @@ final class ExecutorTest {
 
     @Test
     void shiftLargerThanPositionalCount() {
-        Assertions.assertEquals(0, new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b"))).execute(this.parse("shift 100")));
+        Assertions.assertEquals(0, new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")).execute(this.parse("shift 100")));
     }
 
     @Test
@@ -1749,7 +1747,7 @@ final class ExecutorTest {
 
     @Test
     void positionalParamIndexOutOfRangeIsEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b"))).expandVariables("$9", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")).expandVariables("$9", new HashMap<>()));
     }
 
     @Test
@@ -1764,7 +1762,7 @@ final class ExecutorTest {
         executor.setCaptureStream(bos);
         executor.execute(this.parse("c=true; while $c; do c=false; continue; echo unreached; done"));
         Assertions.assertTrue(
-            bos.toString(StandardCharsets.UTF_8).trim().isEmpty(),
+            bos.toString(StandardCharsets.UTF_8).isBlank(),
             String.format("continue should skip body, got: %s", bos)
         );
     }
@@ -1788,12 +1786,12 @@ final class ExecutorTest {
 
     @Test
     void expandBracedMultiDigitPositionalOutOfRange() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c"))).expandVariables("${10}", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")).expandVariables("${10}", new HashMap<>()));
     }
 
     @Test
     void expandBracedMultiDigitPositionalInRange() {
-        Assertions.assertEquals("b", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c"))).expandVariables("${2}", new HashMap<>()));
+        Assertions.assertEquals("b", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")).expandVariables("${2}", new HashMap<>()));
     }
 
     @Test
@@ -1824,7 +1822,7 @@ final class ExecutorTest {
 
     @Test
     void specialParamAtStarWithPositionals() {
-        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")));
+        final Executor executor = new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c"));
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
@@ -1832,7 +1830,7 @@ final class ExecutorTest {
 
     @Test
     void specialParamAtStarEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), new ArrayList<>(java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY))).expandVariables("$@", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY)).expandVariables("$@", new HashMap<>()));
     }
 
     @Test
@@ -2819,5 +2817,4 @@ final class ExecutorTest {
     private ListNode parse(final String input) {
         return this.parser(input).parse();
     }
-
 }

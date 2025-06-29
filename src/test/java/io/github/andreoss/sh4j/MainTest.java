@@ -124,6 +124,7 @@ final class MainTest {
     void exitCodeNoArgsInteractiveIoException() {
         System.setIn(new InputStream() {
 
+            @Override
             public int read() throws IOException {
                 throw new IOException();
             }

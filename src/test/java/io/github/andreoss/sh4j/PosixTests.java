@@ -143,5 +143,4 @@ final class PosixTests {
         Files.writeString(file.toPath(), script);
         return Main.runScript(file.getAbsolutePath(), List.of(file.getAbsolutePath()));
     }
-
 }
