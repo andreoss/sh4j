@@ -607,17 +607,15 @@ final class ExecutorTest {
     @Test
     void commandInterruptedException() {
         final ListNode list = this.parse("pwd");
-        final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, executor.execute(list));
+        Assertions.assertEquals(1, new Executor().execute(list));
     }
 
     @Test
     void pipelineInterruptedException() {
         final ListNode list = this.parse("pwd | cat");
-        final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, executor.execute(list));
+        Assertions.assertEquals(1, new Executor().execute(list));
     }
 
     @Test
@@ -911,23 +909,21 @@ final class ExecutorTest {
 
     @Test
     void expandVarDefaultSet() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "actual");
         Assertions.assertEquals(
             "actual",
-            executor.expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
+            new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
         );
     }
 
     @Test
     void expandVarDefaultEmpty() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "");
         Assertions.assertEquals(
             "default",
-            executor.expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
+            new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
         );
     }
 
@@ -941,37 +937,33 @@ final class ExecutorTest {
 
     @Test
     void expandVarDefaultNullOnlySetSkips() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.VALUE);
         Assertions.assertEquals(
             ExecutorTest.VALUE,
-            executor.expandVariables("${var-default}", env)
+            new Executor().expandVariables("${var-default}", env)
         );
     }
 
     @Test
     void expandVarDefaultNullOnlyEmptySkips() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "");
-        Assertions.assertEquals("", executor.expandVariables("${var-default}", env));
+        Assertions.assertEquals("", new Executor().expandVariables("${var-default}", env));
     }
 
     @Test
     void expandVarAssignDefault() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("assigned", executor.expandVariables("${var:=assigned}", env));
+        Assertions.assertEquals("assigned", new Executor().expandVariables("${var:=assigned}", env));
         Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAlternate() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "x");
-        Assertions.assertEquals("alt", executor.expandVariables("${var:+alt}", env));
+        Assertions.assertEquals("alt", new Executor().expandVariables("${var:+alt}", env));
     }
 
     @Test
@@ -981,27 +973,24 @@ final class ExecutorTest {
 
     @Test
     void expandVarAssignNullOnly() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("assigned", executor.expandVariables("${var=assigned}", env));
+        Assertions.assertEquals("assigned", new Executor().expandVariables("${var=assigned}", env));
         Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAssignNullOnlySetSkips() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "existing");
-        Assertions.assertEquals("existing", executor.expandVariables("${var=assigned}", env));
+        Assertions.assertEquals("existing", new Executor().expandVariables("${var=assigned}", env));
         Assertions.assertEquals("existing", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
     void expandVarAlternateNullOnly() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "x");
-        Assertions.assertEquals("alt", executor.expandVariables("${var+alt}", env));
+        Assertions.assertEquals("alt", new Executor().expandVariables("${var+alt}", env));
     }
 
     @Test
@@ -1011,10 +1000,9 @@ final class ExecutorTest {
 
     @Test
     void expandVarLength() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
-        Assertions.assertEquals("5", executor.expandVariables("${#var}", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("${#var}", env));
     }
 
     @Test
@@ -1024,42 +1012,37 @@ final class ExecutorTest {
 
     @Test
     void expandVarSuffixShort() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "file.txt");
-        Assertions.assertEquals("file", executor.expandVariables("${var%.*}", env));
+        Assertions.assertEquals("file", new Executor().expandVariables("${var%.*}", env));
     }
 
     @Test
     void expandVarSuffixLong() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "a.b.c.txt");
-        Assertions.assertEquals("a", executor.expandVariables("${var%%.*}", env));
+        Assertions.assertEquals("a", new Executor().expandVariables("${var%%.*}", env));
     }
 
     @Test
     void expandVarPrefixShort() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
-        Assertions.assertEquals("bar/baz", executor.expandVariables("${var#*/}", env));
+        Assertions.assertEquals("bar/baz", new Executor().expandVariables("${var#*/}", env));
     }
 
     @Test
     void expandVarPrefixLong() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
-        Assertions.assertEquals("baz", executor.expandVariables("${var##*/}", env));
+        Assertions.assertEquals("baz", new Executor().expandVariables("${var##*/}", env));
     }
 
     @Test
     void expandVarPatternNoMatch() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
-        Assertions.assertEquals(ExecutorTest.HELLO, executor.expandVariables("${var%x}", env));
+        Assertions.assertEquals(ExecutorTest.HELLO, new Executor().expandVariables("${var%x}", env));
     }
 
     @Test
@@ -1296,10 +1279,9 @@ final class ExecutorTest {
 
     @Test
     void arithmeticVar() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("15", executor.expandVariables("$((x + 5))", env));
+        Assertions.assertEquals("15", new Executor().expandVariables("$((x + 5))", env));
     }
 
     @Test
@@ -1474,27 +1456,24 @@ final class ExecutorTest {
 
     @Test
     void arithmeticAssign() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("5", executor.expandVariables("$((x = 5))", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("$((x = 5))", env));
         Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
     void arithmeticPlusAssign() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("13", executor.expandVariables("$((x += 3))", env));
+        Assertions.assertEquals("13", new Executor().expandVariables("$((x += 3))", env));
         Assertions.assertEquals("13", env.get("x"));
     }
 
     @Test
     void arithmeticMinusAssign() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("7", executor.expandVariables("$((x -= 3))", env));
+        Assertions.assertEquals("7", new Executor().expandVariables("$((x -= 3))", env));
         Assertions.assertEquals("7", env.get("x"));
     }
 
@@ -1534,9 +1513,8 @@ final class ExecutorTest {
 
     @Test
     void arithmeticAssignRightAssoc() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("7", executor.expandVariables("$((a = b = 7))", env));
+        Assertions.assertEquals("7", new Executor().expandVariables("$((a = b = 7))", env));
         Assertions.assertEquals("7", env.get("a"));
         Assertions.assertEquals("7", env.get("b"));
     }
@@ -1613,10 +1591,9 @@ final class ExecutorTest {
         try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("seed%n"));
         }
-        final Executor executor = new Executor();
         Assertions.assertEquals(
             0,
-            executor.execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse())
+            new Executor().execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse())
         );
     }
 
@@ -1675,35 +1652,31 @@ final class ExecutorTest {
 
     @Test
     void arithmeticAssignDivByZero() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("0", executor.expandVariables("$((x /= 0))", env));
+        Assertions.assertEquals("0", new Executor().expandVariables("$((x /= 0))", env));
         Assertions.assertEquals("0", env.get("x"));
     }
 
     @Test
     void arithmeticAssignModByZero() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("0", executor.expandVariables("$((x %= 0))", env));
+        Assertions.assertEquals("0", new Executor().expandVariables("$((x %= 0))", env));
     }
 
     @Test
     void arithmeticAssignNonNumericEnvTreatedAsZero() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abc");
-        Assertions.assertEquals("5", executor.expandVariables("$((x += 5))", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("$((x += 5))", env));
         Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
     void arithmeticAssignWithUnderscoreName() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("42", executor.expandVariables("$((_foo = 42))", env));
+        Assertions.assertEquals("42", new Executor().expandVariables("$((_foo = 42))", env));
         Assertions.assertEquals("42", env.get("_foo"));
     }
 
@@ -1711,10 +1684,9 @@ final class ExecutorTest {
     void externalReadWriteRedirectFdTwo() throws Exception {
         final String path = String.format("/tmp/sh4j_rw_fd2_%s", System.nanoTime());
         new java.io.File(path).delete();
-        final Executor executor = new Executor();
         Assertions.assertNotEquals(
             0,
-            executor.execute(this.parse(String.format("cat /nonexistent_xyz 2<>%s", path)))
+            new Executor().execute(this.parse(String.format("cat /nonexistent_xyz 2<>%s", path)))
         );
         new java.io.File(path).delete();
     }
@@ -1796,10 +1768,9 @@ final class ExecutorTest {
 
     @Test
     void expandBracedLeadingHashVar() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.HELLO);
-        Assertions.assertEquals("5", executor.expandVariables("${#x}", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("${#x}", env));
     }
 
     @Test
@@ -1835,10 +1806,9 @@ final class ExecutorTest {
 
     @Test
     void arithmeticFactorNonNumericEnvAsZero() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abc");
-        Assertions.assertEquals("1", executor.expandVariables("$((x + 1))", env));
+        Assertions.assertEquals("1", new Executor().expandVariables("$((x + 1))", env));
     }
 
     @Test
@@ -1900,34 +1870,30 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonEqWhenSet() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "set");
-        Assertions.assertEquals("set", executor.expandVariables("${x:=default}", env));
+        Assertions.assertEquals("set", new Executor().expandVariables("${x:=default}", env));
     }
 
     @Test
     void expandBracedQuestionWhenSet() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assertions.assertEquals(ExecutorTest.VALUE, executor.expandVariables("${x?msg}", env));
+        Assertions.assertEquals(ExecutorTest.VALUE, new Executor().expandVariables("${x?msg}", env));
     }
 
     @Test
     void expandBracedPrefixHashNoMatch() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abcdef");
-        Assertions.assertEquals("abcdef", executor.expandVariables("${x#zzz}", env));
+        Assertions.assertEquals("abcdef", new Executor().expandVariables("${x#zzz}", env));
     }
 
     @Test
     void expandBracedUnknownOperatorFallsThrough() {
-        final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assertions.assertEquals("value@weird}", executor.expandVariables("${x@weird}", env));
+        Assertions.assertEquals("value@weird}", new Executor().expandVariables("${x@weird}", env));
     }
 
     @Test
@@ -2379,8 +2345,7 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonQuestionDefaultMsg() {
-        final Executor executor = new Executor(new HashMap<>());
-        Assertions.assertEquals("", executor.expandVariables("${x:?}", new HashMap<>()));
+        Assertions.assertEquals("", new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>()));
     }
 
     @Test

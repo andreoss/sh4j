@@ -102,8 +102,7 @@ final class ParserTest {
 
     @Test
     void parseBang() {
-        final ListNode list = this.parse("! echo hello");
-        Assertions.assertTrue(list.getPipelines().get(0).isBang());
+        Assertions.assertTrue(this.parse("! echo hello").getPipelines().get(0).isBang());
     }
 
     @Test
@@ -193,8 +192,7 @@ final class ParserTest {
 
     @Test
     void parseSubshellWithMultiplePipelines() {
-        final ListNode list = this.parse("(echo a; echo b)");
-        Assertions.assertEquals(2, ((Subshell) list.getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
+        Assertions.assertEquals(2, ((Subshell) this.parse("(echo a; echo b)").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test

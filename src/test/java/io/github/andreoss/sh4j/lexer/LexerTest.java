@@ -157,14 +157,12 @@ final class LexerTest {
 
     @Test
     void numberPrefixedNameIsNotAssignment() {
-        final Lexer list = this.lexer("1a=b");
-        Assertions.assertEquals(TokenType.WORD, list.nextToken().type());
+        Assertions.assertEquals(TokenType.WORD, this.lexer("1a=b").nextToken().type());
     }
 
     @Test
     void invalidVarNameCharIsNotAssignment() {
-        final Lexer list = this.lexer("a@b=c");
-        Assertions.assertEquals(TokenType.WORD, list.nextToken().type());
+        Assertions.assertEquals(TokenType.WORD, this.lexer("a@b=c").nextToken().type());
     }
 
     @Test
@@ -211,8 +209,7 @@ final class LexerTest {
 
     @Test
     void backslashContinuation() {
-        final Lexer list = this.lexer(String.format("a\\%nb"));
-        Assertions.assertEquals("ab", list.nextToken().text());
+        Assertions.assertEquals("ab", this.lexer(String.format("a\\%nb")).nextToken().text());
     }
 
     @Test
