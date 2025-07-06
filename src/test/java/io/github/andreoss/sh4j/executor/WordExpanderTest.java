@@ -130,7 +130,11 @@ final class WordExpanderTest {
     }
 
     @Test void expandVariablesParityPlainText() {
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables("hello world", new HashMap<>(), new Executor(new HashMap<>()));
+        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
+            "hello world",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        );
         Assertions.assertEquals("hello world", result.value());
         Assertions.assertFalse(result.error());
     }
@@ -139,35 +143,78 @@ final class WordExpanderTest {
         final Executor excp = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
         env.put("MSG", "world");
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables("hello $MSG", env, excp);
+        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
+            "hello $MSG",
+            env,
+            excp
+        );
         Assertions.assertEquals("hello world", result.value());
         Assertions.assertFalse(result.error());
     }
 
     @Test void expandVariablesParityArithmetic() {
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables("$((3 + 4))", new HashMap<>(), new Executor(new HashMap<>()));
+        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
+            "$((3 + 4))",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        );
         Assertions.assertEquals("7", result.value());
         Assertions.assertFalse(result.error());
     }
 
     @Test void expandVariablesParityColonQuestionUnsetSetsError() {
-        Assertions.assertTrue(WordExpander.expandVariables("${UNSET_VAR_FOR_PARITY:?required}", new HashMap<>(), new Executor(new HashMap<>())).error(), "expected error flag set on :? for unset var");
+        Assertions.assertTrue(
+            WordExpander.expandVariables(
+                "${UNSET_VAR_FOR_PARITY:?required}",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).error(),
+            "expected error flag set on :? for unset var"
+        );
     }
 
     @Test void expandVariablesUnclosedArithmetic() {
-        Assertions.assertEquals("$((1+2", WordExpander.expandVariables("$((1+2", new HashMap<>(), new Executor(new HashMap<>())).value());
+        Assertions.assertEquals(
+            "$((1+2",
+            WordExpander.expandVariables(
+                "$((1+2",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).value()
+        );
     }
 
     @Test void expandVariablesUnclosedCmdSub() {
-        Assertions.assertEquals("$(unclosed", WordExpander.expandVariables("$(unclosed", new HashMap<>(), new Executor(new HashMap<>())).value());
+        Assertions.assertEquals(
+            "$(unclosed",
+            WordExpander.expandVariables(
+                "$(unclosed",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).value()
+        );
     }
 
     @Test void expandVariablesDollarAtEnd() {
-        Assertions.assertEquals("trailing$", WordExpander.expandVariables("trailing$", new HashMap<>(), new Executor(new HashMap<>())).value());
+        Assertions.assertEquals(
+            "trailing$",
+            WordExpander.expandVariables(
+                "trailing$",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).value()
+        );
     }
 
     @Test void expandVariablesDollarBraceWithoutClose() {
-        Assertions.assertEquals("", WordExpander.expandVariables("${unclosed", new HashMap<>(), new Executor(new HashMap<>())).value());
+        Assertions.assertEquals(
+            "",
+            WordExpander.expandVariables(
+                "${unclosed",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).value()
+        );
     }
 
     @Test void expandVariablesDollarLetterPlainVar() {
@@ -193,7 +240,11 @@ final class WordExpanderTest {
     }
 
     @Test void expandBracedColonDashUnsetReturnsDefault() {
-        final WordExpander.ExpansionResult result = WordExpander.expandBraced("x:-fallback", new HashMap<>(), new Executor(new HashMap<>()));
+        final WordExpander.ExpansionResult result = WordExpander.expandBraced(
+            "x:-fallback",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        );
         Assertions.assertEquals("fallback", result.value());
         Assertions.assertFalse(result.error());
     }
@@ -206,7 +257,13 @@ final class WordExpanderTest {
     }
 
     @Test void expandBracedColonQuestionUnsetSetsError() {
-        Assertions.assertTrue(WordExpander.expandBraced("x:?required", new HashMap<>(), new Executor(new HashMap<>())).error());
+        Assertions.assertTrue(
+            WordExpander.expandBraced(
+                "x:?required",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).error()
+        );
     }
 
     @Test void expandBracedHashLength() {
@@ -217,7 +274,14 @@ final class WordExpanderTest {
     }
 
     @Test void expandBracedDashWithoutColonUnset() {
-        Assertions.assertEquals("fallback", WordExpander.expandBraced("x-fallback", new HashMap<>(), new Executor(new HashMap<>())).value());
+        Assertions.assertEquals(
+            "fallback",
+            WordExpander.expandBraced(
+                "x-fallback",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).value()
+        );
     }
 
     @Test void expandBracedDashWithoutColonSetEmpty() {
@@ -246,7 +310,13 @@ final class WordExpanderTest {
     }
 
     @Test void expandBracedQuestionWithoutColonUnsetSetsError() {
-        Assertions.assertTrue(WordExpander.expandBraced("x?required", new HashMap<>(), new Executor(new HashMap<>())).error());
+        Assertions.assertTrue(
+            WordExpander.expandBraced(
+                "x?required",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            ).error()
+        );
     }
 
     @Test void expandBracedEqualsWithoutColonUnsetAssigns() {

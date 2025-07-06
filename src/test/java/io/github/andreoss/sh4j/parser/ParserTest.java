@@ -192,7 +192,12 @@ final class ParserTest {
 
     @Test
     void parseSubshellWithMultiplePipelines() {
-        Assertions.assertEquals(2, ((Subshell) this.parse("(echo a; echo b)").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
+        Assertions.assertEquals(
+            2,
+            (
+                (Subshell) this.parse("(echo a; echo b)").getPipelines().get(0).getCommands().get(0)
+            ).getList().getPipelines().size()
+        );
     }
 
     @Test
@@ -488,17 +493,32 @@ final class ParserTest {
 
     @Test
     void parseFunctionBodyWithFor() {
-        Assertions.assertInstanceOf(FunctionNode.class, this.parse("foo() for var in a; do echo $var; done").getPipelines().get(0).getCommands().get(0));
+        Assertions.assertInstanceOf(
+            FunctionNode.class,
+            this.parse(
+                "foo() for var in a; do echo $var; done"
+            ).getPipelines().get(0).getCommands().get(0)
+        );
     }
 
     @Test
     void parseFunctionBodyWithWhile() {
-        Assertions.assertInstanceOf(FunctionNode.class, this.parse("foo() while false; do echo hi; done").getPipelines().get(0).getCommands().get(0));
+        Assertions.assertInstanceOf(
+            FunctionNode.class,
+            this.parse(
+                "foo() while false; do echo hi; done"
+            ).getPipelines().get(0).getCommands().get(0)
+        );
     }
 
     @Test
     void parseFunctionBodyWithCase() {
-        Assertions.assertInstanceOf(FunctionNode.class, this.parse("foo() case foo in pat) echo hi;; esac").getPipelines().get(0).getCommands().get(0));
+        Assertions.assertInstanceOf(
+            FunctionNode.class,
+            this.parse(
+                "foo() case foo in pat) echo hi;; esac"
+            ).getPipelines().get(0).getCommands().get(0)
+        );
     }
 
     @Test
@@ -611,7 +631,9 @@ final class ParserTest {
 
     @Test
     void parseCaseMultilineBody() {
-        final ListNode list = this.parse(String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac"));
+        final ListNode list = this.parse(
+            String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
+        );
         Assertions.assertEquals(1, list.getPipelines().size());
         Assertions.assertEquals(
             2,
@@ -621,7 +643,9 @@ final class ParserTest {
 
     @Test
     void parseCaseMultilineWithBlankLinesBetweenArms() {
-        final ListNode list = this.parse(String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac"));
+        final ListNode list = this.parse(
+            String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
+        );
         Assertions.assertEquals(1, list.getPipelines().size());
         Assertions.assertEquals(
             2,

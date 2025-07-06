@@ -27,7 +27,12 @@ final class RedirectionHandlerTest {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")), out, err, this.identity);
+                RedirectionHandler.redirectOutputForBuiltin(
+                    List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+                    out,
+                    err,
+                    this.identity
+                );
         Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
         Assertions.assertSame(
             err,
@@ -42,7 +47,12 @@ final class RedirectionHandlerTest {
         final PrintStream out = new PrintStream(new ByteArrayOutputStream());
         final PrintStream err = new PrintStream(new ByteArrayOutputStream());
         final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")), out, err, this.identity);
+                RedirectionHandler.redirectOutputForBuiltin(
+                    List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+                    out,
+                    err,
+                    this.identity
+                );
         Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
         Assertions.assertSame(
             out,

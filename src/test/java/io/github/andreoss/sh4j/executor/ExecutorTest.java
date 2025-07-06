@@ -416,10 +416,15 @@ final class ExecutorTest {
     @Test
     void executePipelineWithFailingCommand() {
         final Executor executor = new Executor();
-        final int code = executor.execute(this.parse("echo hello | nonexistent_cmd_xyz_fail | echo done"));
+        final int code = executor.execute(
+            this.parse("echo hello | nonexistent_cmd_xyz_fail | echo done")
+        );
         Assertions.assertTrue(code == 127 || code == 126,
                 "Pipeline with missing middle stage must exit with POSIX "
-                        + String.format("command-not-found(127) or not-executable(126); got %s", code));
+                        + String.format(
+                            "command-not-found(127) or not-executable(126); got %s",
+                            code
+                        ));
     }
 
     @Test
@@ -752,7 +757,12 @@ final class ExecutorTest {
     void redirectTargetExpansionInput() throws Exception {
         final java.io.File file = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
         file.delete();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                file.toPath(),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write("hello from file");
         }
         final Map<String, String> env = new HashMap<>();
@@ -808,37 +818,79 @@ final class ExecutorTest {
 
     @Test
     void expandDollarHash() {
-        Assertions.assertEquals("3", new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$#", new HashMap<>()));
+        Assertions.assertEquals(
+            "3",
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "a", "b", "c")
+            ).expandVariables("$#", new HashMap<>())
+        );
     }
 
     @Test
     void expandDollarAt() {
-        Assertions.assertEquals(ExecutorTest.A_B_C, new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$@", new HashMap<>()));
+        Assertions.assertEquals(
+            ExecutorTest.A_B_C,
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "a", "b", "c")
+            ).expandVariables("$@", new HashMap<>())
+        );
     }
 
     @Test
     void expandDollarStar() {
-        Assertions.assertEquals(ExecutorTest.A_B_C, new Executor(new HashMap<>(), List.of("sh", "a", "b", "c")).expandVariables("$*", new HashMap<>()));
+        Assertions.assertEquals(
+            ExecutorTest.A_B_C,
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "a", "b", "c")
+            ).expandVariables("$*", new HashMap<>())
+        );
     }
 
     @Test
     void expandDollarZero() {
-        Assertions.assertEquals("my_script", new Executor(new HashMap<>(), List.of("my_script")).expandVariables("$0", new HashMap<>()));
+        Assertions.assertEquals(
+            "my_script",
+            new Executor(
+                new HashMap<>(),
+                List.of("my_script")
+            ).expandVariables("$0", new HashMap<>())
+        );
     }
 
     @Test
     void expandDollarOne() {
-        Assertions.assertEquals("first", new Executor(new HashMap<>(), List.of("sh", "first", "second")).expandVariables("$1", new HashMap<>()));
+        Assertions.assertEquals(
+            "first",
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "first", "second")
+            ).expandVariables("$1", new HashMap<>())
+        );
     }
 
     @Test
     void expandDollarNine() {
-        Assertions.assertEquals("i", new Executor(new HashMap<>(), List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i")).expandVariables("$9", new HashMap<>()));
+        Assertions.assertEquals(
+            "i",
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i")
+            ).expandVariables("$9", new HashMap<>())
+        );
     }
 
     @Test
     void expandBracedMultiDigit() {
-        Assertions.assertEquals("j", new Executor(new HashMap<>(), List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j")).expandVariables("${10}", new HashMap<>()));
+        Assertions.assertEquals(
+            "j",
+            new Executor(
+                new HashMap<>(),
+                List.of("sh", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+            ).expandVariables("${10}", new HashMap<>())
+        );
     }
 
     @Test
@@ -955,7 +1007,10 @@ final class ExecutorTest {
     @Test
     void expandVarAssignDefault() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("assigned", new Executor().expandVariables("${var:=assigned}", env));
+        Assertions.assertEquals(
+            "assigned",
+            new Executor().expandVariables("${var:=assigned}", env)
+        );
         Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
@@ -1042,7 +1097,10 @@ final class ExecutorTest {
     void expandVarPatternNoMatch() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
-        Assertions.assertEquals(ExecutorTest.HELLO, new Executor().expandVariables("${var%x}", env));
+        Assertions.assertEquals(
+            ExecutorTest.HELLO,
+            new Executor().expandVariables("${var%x}", env)
+        );
     }
 
     @Test
@@ -1561,10 +1619,14 @@ final class ExecutorTest {
 
     @Test
     void resolveCommandWithCustomPathDirInPath() throws Exception {
-        final java.io.File dir = java.nio.file.Files.createTempDirectory("sh4j_custompath_").toFile();
+        final java.io.File dir = java.nio.file.Files.createTempDirectory(
+            "sh4j_custompath_"
+        ).toFile();
         dir.deleteOnExit();
         final java.io.File bin = new java.io.File(dir, "myhello");
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)
+        ) {
             w.write(String.format("#!/bin/sh%necho ok%n"));
         }
         bin.setExecutable(true);
@@ -1588,7 +1650,12 @@ final class ExecutorTest {
     void externalReadWriteFdZero() throws Exception {
         final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
         file.deleteOnExit();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                file.toPath(),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(String.format("seed%n"));
         }
         Assertions.assertEquals(
@@ -1616,12 +1683,19 @@ final class ExecutorTest {
     void execNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonexec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
         nonexec.deleteOnExit();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(nonexec.toPath(), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                nonexec.toPath(),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write("not a script");
         }
         nonexec.setExecutable(false);
         final Executor executor = new Executor();
-        final int code = executor.execute(this.parser(String.format("exec %s", nonexec.getAbsolutePath())).parse());
+        final int code = executor.execute(
+            this.parser(String.format("exec %s", nonexec.getAbsolutePath())).parse()
+        );
         Assertions.assertTrue(code != 0, String.format("non-executable should fail; got %s", code));
     }
 
@@ -1638,7 +1712,12 @@ final class ExecutorTest {
     void externalNonExecutableFileTriggersIoException() throws Exception {
         final java.io.File nonexec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
         nonexec.deleteOnExit();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(nonexec.toPath(), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                nonexec.toPath(),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write("nope");
         }
         nonexec.setExecutable(false);
@@ -1709,7 +1788,13 @@ final class ExecutorTest {
 
     @Test
     void shiftLargerThanPositionalCount() {
-        Assertions.assertEquals(0, new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")).execute(this.parse("shift 100")));
+        Assertions.assertEquals(
+            0,
+            new Executor(
+                new HashMap<>(),
+                java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")
+            ).execute(this.parse("shift 100"))
+        );
     }
 
     @Test
@@ -1719,7 +1804,13 @@ final class ExecutorTest {
 
     @Test
     void positionalParamIndexOutOfRangeIsEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")).expandVariables("$9", new HashMap<>()));
+        Assertions.assertEquals(
+            "",
+            new Executor(
+                new HashMap<>(),
+                java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b")
+            ).expandVariables("$9", new HashMap<>())
+        );
     }
 
     @Test
@@ -1732,7 +1823,9 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        executor.execute(this.parse("c=true; while $c; do c=false; continue; echo unreached; done"));
+        executor.execute(
+            this.parse("c=true; while $c; do c=false; continue; echo unreached; done")
+        );
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).isBlank(),
             String.format("continue should skip body, got: %s", bos)
@@ -1758,12 +1851,24 @@ final class ExecutorTest {
 
     @Test
     void expandBracedMultiDigitPositionalOutOfRange() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")).expandVariables("${10}", new HashMap<>()));
+        Assertions.assertEquals(
+            "",
+            new Executor(
+                new HashMap<>(),
+                java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+            ).expandVariables("${10}", new HashMap<>())
+        );
     }
 
     @Test
     void expandBracedMultiDigitPositionalInRange() {
-        Assertions.assertEquals("b", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")).expandVariables("${2}", new HashMap<>()));
+        Assertions.assertEquals(
+            "b",
+            new Executor(
+                new HashMap<>(),
+                java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+            ).expandVariables("${2}", new HashMap<>())
+        );
     }
 
     @Test
@@ -1793,7 +1898,10 @@ final class ExecutorTest {
 
     @Test
     void specialParamAtStarWithPositionals() {
-        final Executor executor = new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c"));
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            java.util.List.of(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+        );
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
@@ -1801,7 +1909,13 @@ final class ExecutorTest {
 
     @Test
     void specialParamAtStarEmpty() {
-        Assertions.assertEquals("", new Executor(new HashMap<>(), java.util.List.of(ExecutorTest.SCRIPT_KEY)).expandVariables("$@", new HashMap<>()));
+        Assertions.assertEquals(
+            "",
+            new Executor(
+                new HashMap<>(),
+                java.util.List.of(ExecutorTest.SCRIPT_KEY)
+            ).expandVariables("$@", new HashMap<>())
+        );
     }
 
     @Test
@@ -1879,7 +1993,10 @@ final class ExecutorTest {
     void expandBracedQuestionWhenSet() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assertions.assertEquals(ExecutorTest.VALUE, new Executor().expandVariables("${x?msg}", env));
+        Assertions.assertEquals(
+            ExecutorTest.VALUE,
+            new Executor().expandVariables("${x?msg}", env)
+        );
     }
 
     @Test
@@ -2006,7 +2123,10 @@ final class ExecutorTest {
         }
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
-        env.put(ExecutorTest.PATH_KEY, String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath()));
+        env.put(
+            ExecutorTest.PATH_KEY,
+            String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath())
+        );
         final Executor executor = new Executor(env);
         dir.delete();
         Assertions.assertEquals(7, executor.execute(this.parse("mycmd2")));
@@ -2340,12 +2460,20 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonQuestionSet() {
-        Assertions.assertEquals(ExecutorTest.VALUE, new Executor(new HashMap<>()).expandVariables("${x:?not used}", new HashMap<>(Map.of("x", ExecutorTest.VALUE))));
+        Assertions.assertEquals(
+            ExecutorTest.VALUE,
+            new Executor(
+                new HashMap<>()
+            ).expandVariables("${x:?not used}", new HashMap<>(Map.of("x", ExecutorTest.VALUE)))
+        );
     }
 
     @Test
     void expandBracedColonQuestionDefaultMsg() {
-        Assertions.assertEquals("", new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>()));
+        Assertions.assertEquals(
+            "",
+            new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>())
+        );
     }
 
     @Test
@@ -2509,7 +2637,10 @@ final class ExecutorTest {
     @Test
     void shiftRemovesPositionalParam() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(List.of("sh", "a", "b", "c")));
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            new ArrayList<>(List.of("sh", "a", "b", "c"))
+        );
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("shift; echo $#")));
         Assertions.assertEquals("2", bos.toString(StandardCharsets.UTF_8).trim());
@@ -2518,7 +2649,10 @@ final class ExecutorTest {
     @Test
     void shiftWithCount() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final Executor executor = new Executor(new HashMap<>(), new ArrayList<>(List.of("sh", "a", "b", "c")));
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            new ArrayList<>(List.of("sh", "a", "b", "c"))
+        );
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("shift 2; echo $#")));
         Assertions.assertEquals("1", bos.toString(StandardCharsets.UTF_8).trim());
@@ -2588,7 +2722,12 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_in.txt";
         final String outpath = "/tmp/sh4j_ext_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(ExecutorTest.HELLO_WORLD);
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" > %s", outpath))));
@@ -2606,14 +2745,26 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_append_in.txt";
         final String outpath = "/tmp/sh4j_ext_append_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write("second");
         }
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(outpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(outpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(String.format("first%n"));
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >> %s", outpath))));
-        final String content = java.nio.file.Files.readString(java.nio.file.Path.of(outpath)).trim();
+        final String content = java.nio.file.Files.readString(
+            java.nio.file.Path.of(outpath)
+        ).trim();
         Assertions.assertTrue(content.startsWith("first"));
         Assertions.assertTrue(content.contains("second"));
         new java.io.File(inpath).delete();
@@ -2625,7 +2776,12 @@ final class ExecutorTest {
         final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
         final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
         new java.io.File(outpath).delete();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write("hello clobber");
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >| %s", outpath))));
@@ -2641,7 +2797,12 @@ final class ExecutorTest {
     @Test
     void externalRedirectStdoutToStderr() throws Exception {
         final String inpath = "/tmp/sh4j_ext_12_in.txt";
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(ExecutorTest.HELLO);
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 1>&2")));
@@ -2651,7 +2812,12 @@ final class ExecutorTest {
     @Test
     void externalRedirectStderrToStdout() throws Exception {
         final String inpath = "/tmp/sh4j_ext_21_in.txt";
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(inpath), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(ExecutorTest.HELLO);
         }
         Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 2>&1")));
@@ -2682,7 +2848,12 @@ final class ExecutorTest {
     void externalStderrAppendRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_append.txt";
         new java.io.File(path).delete();
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(path),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(String.format("initial%n"));
         }
         final Executor executor = new Executor();
@@ -2696,7 +2867,12 @@ final class ExecutorTest {
     @Test
     void externalReadWriteRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_rw.txt";
-        try (java.io.BufferedWriter w = Files.newBufferedWriter(java.nio.file.Path.of(path), StandardCharsets.UTF_8)) {
+        try (
+            java.io.BufferedWriter w = Files.newBufferedWriter(
+                java.nio.file.Path.of(path),
+                StandardCharsets.UTF_8
+            )
+        ) {
             w.write(ExecutorTest.HELLO);
         }
         Assertions.assertEquals(
@@ -2747,7 +2923,12 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assertions.assertEquals(0, executor.execute(this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))));
+        Assertions.assertEquals(
+            0,
+            executor.execute(
+                this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))
+            )
+        );
         Assertions.assertEquals(
             String.format("first%nsecond%nthird"),
             bos.toString(StandardCharsets.UTF_8).trim()

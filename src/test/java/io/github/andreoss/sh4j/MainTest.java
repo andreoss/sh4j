@@ -89,13 +89,17 @@ final class MainTest {
 
     @Test
     void exitCodeNoArgsInteractiveEmptyLine() {
-        System.setIn(new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8)));
+        System.setIn(
+            new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8))
+        );
         Assertions.assertEquals(0, Main.exitCode(new String[0]));
     }
 
     @Test
     void exitCodeNoArgsInteractiveWithCommand() {
-        System.setIn(new ByteArrayInputStream(String.format("echo hello%n").getBytes(StandardCharsets.UTF_8)));
+        System.setIn(
+            new ByteArrayInputStream(String.format("echo hello%n").getBytes(StandardCharsets.UTF_8))
+        );
         Assertions.assertEquals(0, Main.exitCode(new String[0]));
     }
 

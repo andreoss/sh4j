@@ -419,7 +419,12 @@ final class LexerTest {
 
     @Test
     void readHereDocContentMultipleLines() {
-        Assertions.assertEquals(String.format("first%nsecond%nthird"), this.lexer(String.format("%nfirst%nsecond%nthird%nEOF%n")).readHereDocContent("EOF", false));
+        Assertions.assertEquals(
+            String.format("first%nsecond%nthird"),
+            this.lexer(
+                String.format("%nfirst%nsecond%nthird%nEOF%n")
+            ).readHereDocContent("EOF", false)
+        );
     }
 
     private Lexer lexer(final String input) {

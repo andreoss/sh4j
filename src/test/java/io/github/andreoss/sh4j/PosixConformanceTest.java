@@ -88,7 +88,11 @@ final class PosixConformanceTest {
 
     @Test
     void caseExact() throws Exception {
-        Assertions.assertTrue(run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim().equals("YES"));
+        Assertions.assertTrue(
+            run(
+                String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")
+            ).trim().equals("YES")
+        );
     }
 
     @Test
