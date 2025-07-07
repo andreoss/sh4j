@@ -586,7 +586,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final ListNode list = this.parse("while exit $?; do echo ran; exit 1; done");
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(1, executor.execute(list));
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -596,7 +596,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final ListNode list = this.parse("exit 1; until exit $?; do echo ran; exit 0; done");
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(0, executor.execute(list));
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -641,7 +641,7 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
         final Executor executor = new Executor(env);
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(0, executor.execute(this.parse("export")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello")
@@ -661,7 +661,7 @@ final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final ListNode list = this.parse("if false; then echo no; elif true; then echo yes; fi");
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(0, executor.execute(list));
         Assertions.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -673,7 +673,7 @@ final class ExecutorTest {
             "if false; then echo a; elif false; then echo b; else echo c; fi"
         );
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(0, executor.execute(list));
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -685,7 +685,7 @@ final class ExecutorTest {
             "if false; then echo a; elif false; then echo b; elif true; then echo c; fi"
         );
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true));
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assertions.assertEquals(0, executor.execute(list));
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -730,7 +730,7 @@ final class ExecutorTest {
         Assertions.assertTrue(file.exists());
         Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(file.toPath()))
+            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
         file.delete();
     }
@@ -748,7 +748,7 @@ final class ExecutorTest {
         Assertions.assertTrue(file.exists());
         Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(file.toPath()))
+            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
         file.delete();
     }
@@ -2480,7 +2480,7 @@ final class ExecutorTest {
     void expandBracedColonQuestionErrorStream() {
         final Executor executor = new Executor(new HashMap<>());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setErrorStream(new PrintStream(bos, true));
+        executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         executor.expandVariables("${x:?my error}", new HashMap<>());
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),

@@ -88,7 +88,7 @@ final class IntegrationTest {
                 System.getProperty("java.class.path"), "io.github.andreoss.sh4j.Main", this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes());
+        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         Assertions.assertEquals(
             0,
             proc.waitFor(),
@@ -114,7 +114,7 @@ final class IntegrationTest {
                 ).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes());
+        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         Assertions.assertEquals(
             0,
             proc.waitFor(),
@@ -177,7 +177,7 @@ final class IntegrationTest {
                 ).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes());
+        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         Assertions.assertEquals(
             0,
             proc.waitFor(),
@@ -470,7 +470,7 @@ final class IntegrationTest {
                 "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes());
+        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         Assertions.assertEquals(
             0,
             proc.waitFor(),

@@ -128,6 +128,6 @@ final class PosixConformanceTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         proc.waitFor();
-        return new String(proc.getInputStream().readAllBytes());
+        return new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 }
