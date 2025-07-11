@@ -25,8 +25,16 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStderrToStdout() {
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(
                     List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
@@ -45,8 +53,16 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStdoutToStderr() {
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(
                     List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
@@ -64,8 +80,16 @@ final class RedirectionHandlerTest {
 
     @Test
     void noRedirsLeavesStreamsUnchanged() {
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap result =
                 RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identity);
         Assertions.assertSame(out, result.out());

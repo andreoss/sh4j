@@ -116,7 +116,7 @@ final class PosixConformanceTest {
             w.write(script);
         }
         final java.util.List<String> cmd = new java.util.ArrayList<>(7);
-        cmd.add(System.getProperty("java.home") + "/bin/java");
+        cmd.add(String.format("%s/bin/java", System.getProperty("java.home")));
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");

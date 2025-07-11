@@ -84,7 +84,7 @@ final class IntegrationTest {
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
         }
-        final ProcessBuilder builder = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
+        final ProcessBuilder builder = new ProcessBuilder(String.format("%s/bin/java", System.getProperty("java.home")), "-cp",
                 System.getProperty("java.class.path"), "io.github.andreoss.sh4j.Main", this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")).getAbsolutePath());
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -95,7 +95,7 @@ final class IntegrationTest {
             String.format("sh4j exit code; output: %s", out)
         );
         Assertions.assertTrue(out.contains("hello-from-cat"),
-                String.format("external cat stdout must reach test; got: '%s", out) + "'");
+                String.format("external cat stdout must reach test; got: '%s'", out));
     }
 
     @org.junit.jupiter.api.Test
@@ -134,8 +134,7 @@ final class IntegrationTest {
         );
         Assertions.assertTrue(
             out.contains("child-pipe"),
-            String.format("pipeline stdout missing; got: '%s", out) + "'"
-        );
+            String.format("pipeline stdout missing; got: '%s'", out)        );
     }
 
     @org.junit.jupiter.api.Test
@@ -152,8 +151,7 @@ final class IntegrationTest {
         );
         Assertions.assertTrue(
             out.contains("child-probe"),
-            String.format("cat stdout missing; got: '%s", out) + "'"
-        );
+            String.format("cat stdout missing; got: '%s'", out)        );
     }
 
     @org.junit.jupiter.api.Test
@@ -162,7 +160,7 @@ final class IntegrationTest {
             this.writeScript("h_for.sh", String.format("for i in 1 2 3; do echo $i; done%n"))
         );
         Assertions.assertTrue(out.contains("1") && out.contains("2") && out.contains("3"),
-                String.format("for-loop body missing; got: '%s", out) + "'");
+                String.format("for-loop body missing; got: '%s'", out));
     }
 
     @org.junit.jupiter.api.Test
@@ -184,7 +182,7 @@ final class IntegrationTest {
             String.format("native sh4j pipeline exit code; output: %s", out)
         );
         Assertions.assertTrue(out.contains("native-pipe"),
-                String.format("native sh4j pipeline must propagate stdout; got: '%s", out) + "'");
+                String.format("native sh4j pipeline must propagate stdout; got: '%s'", out));
     }
 
     @Test
@@ -465,7 +463,7 @@ final class IntegrationTest {
     }
 
     private String runChildJvm(final File script) throws Exception {
-        final ProcessBuilder builder = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-cp",
+        final ProcessBuilder builder = new ProcessBuilder(String.format("%s/bin/java", System.getProperty("java.home")), "-cp",
                 System.getProperty("java.class.path"),
                 "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
         builder.redirectErrorStream(true);

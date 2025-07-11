@@ -2805,7 +2805,10 @@ final class ExecutorTest {
         ) {
             w.write(ExecutorTest.HELLO);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 1>&2")));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse(String.format("cat < %s 1>&2", inpath)))
+        );
         new java.io.File(inpath).delete();
     }
 
@@ -2820,7 +2823,10 @@ final class ExecutorTest {
         ) {
             w.write(ExecutorTest.HELLO);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + " 2>&1")));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse(String.format("cat < %s 2>&1", inpath)))
+        );
         new java.io.File(inpath).delete();
     }
 
