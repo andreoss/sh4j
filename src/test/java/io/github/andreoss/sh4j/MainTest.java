@@ -126,13 +126,14 @@ final class MainTest {
 
     @Test
     void exitCodeNoArgsInteractiveIoException() {
-        System.setIn(new InputStream() {
-
-            @Override
-            public int read() throws IOException {
-                throw new IOException();
+        System.setIn(
+            new InputStream() {
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
             }
-        });
+        );
         Assertions.assertEquals(0, Main.exitCode(new String[0]));
     }
 }

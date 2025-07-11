@@ -84,8 +84,16 @@ final class IntegrationTest {
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
         }
-        final ProcessBuilder builder = new ProcessBuilder(String.format("%s/bin/java", System.getProperty("java.home")), "-cp",
-                System.getProperty("java.class.path"), "io.github.andreoss.sh4j.Main", this.writeScript("catprobe.sh", String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")).getAbsolutePath());
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            this.writeScript(
+                "catprobe.sh",
+                String.format("cat %s%n", probe.getAbsolutePath())
+            ).getAbsolutePath()
+        );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
@@ -94,24 +102,30 @@ final class IntegrationTest {
             proc.waitFor(),
             String.format("sh4j exit code; output: %s", out)
         );
-        Assertions.assertTrue(out.contains("hello-from-cat"),
-                String.format("external cat stdout must reach test; got: '%s'", out));
+        Assertions.assertTrue(
+            out.contains("hello-from-cat"),
+            String.format("external cat stdout must reach test; got: '%s'", out)
+        );
     }
 
     @org.junit.jupiter.api.Test
     void nativeBinaryCatProbeSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.jupiter.api.Assumptions.assumeTrue(nativebin.isFile() && nativebin.canExecute(),
-                "target/sh4j native binary not built; skipping native smoke");
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native smoke"
+        );
         final File probe = this.tempdir.resolve("nprobe.txt").toFile();
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-native%n"));
         }
-        final ProcessBuilder builder = new ProcessBuilder(nativebin.getAbsolutePath(),
-                this.writeScript(
-                    "ncatprobe.sh",
-                    String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")
-                ).getAbsolutePath());
+        final ProcessBuilder builder = new ProcessBuilder(
+            nativebin.getAbsolutePath(),
+            this.writeScript(
+                "ncatprobe.sh",
+                String.format("cat %s%n", probe.getAbsolutePath())
+            ).getAbsolutePath()
+        );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
@@ -120,11 +134,10 @@ final class IntegrationTest {
             proc.waitFor(),
             String.format("native sh4j exit code; output: %s", out)
         );
-        Assertions.assertTrue(out.contains("hello-native"),
-                String.format(
-                    "native sh4j must propagate external cat stdout; got: '%s",
-                    out
-                ) + "'");
+        Assertions.assertTrue(
+            out.contains("hello-native"),
+            String.format("native sh4j must propagate external cat stdout; got: '%s'", out)
+        );
     }
 
     @org.junit.jupiter.api.Test
@@ -134,7 +147,8 @@ final class IntegrationTest {
         );
         Assertions.assertTrue(
             out.contains("child-pipe"),
-            String.format("pipeline stdout missing; got: '%s'", out)        );
+            String.format("pipeline stdout missing; got: '%s'", out)
+        );
     }
 
     @org.junit.jupiter.api.Test
@@ -146,12 +160,13 @@ final class IntegrationTest {
         final String out = this.runChildJvm(
             this.writeScript(
                 "h_cat.sh",
-                String.format("cat %s", probe.getAbsolutePath()) + String.format("%n")
+                String.format("cat %s%n", probe.getAbsolutePath())
             )
         );
         Assertions.assertTrue(
             out.contains("child-probe"),
-            String.format("cat stdout missing; got: '%s'", out)        );
+            String.format("cat stdout missing; got: '%s'", out)
+        );
     }
 
     @org.junit.jupiter.api.Test
@@ -159,20 +174,26 @@ final class IntegrationTest {
         final String out = this.runChildJvm(
             this.writeScript("h_for.sh", String.format("for i in 1 2 3; do echo $i; done%n"))
         );
-        Assertions.assertTrue(out.contains("1") && out.contains("2") && out.contains("3"),
-                String.format("for-loop body missing; got: '%s'", out));
+        Assertions.assertTrue(
+            out.contains("1") && out.contains("2") && out.contains("3"),
+            String.format("for-loop body missing; got: '%s'", out)
+        );
     }
 
     @org.junit.jupiter.api.Test
     void nativeBinaryPipelineSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.jupiter.api.Assumptions.assumeTrue(nativebin.isFile() && nativebin.canExecute(),
-                "target/sh4j native binary not built; skipping native pipeline smoke");
-        final ProcessBuilder builder = new ProcessBuilder(nativebin.getAbsolutePath(),
-                this.writeScript(
-                    "npipe.sh",
-                    String.format("echo native-pipe | cat%n")
-                ).getAbsolutePath());
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native pipeline smoke"
+        );
+        final ProcessBuilder builder = new ProcessBuilder(
+            nativebin.getAbsolutePath(),
+            this.writeScript(
+                "npipe.sh",
+                String.format("echo native-pipe | cat%n")
+            ).getAbsolutePath()
+        );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
@@ -181,8 +202,10 @@ final class IntegrationTest {
             proc.waitFor(),
             String.format("native sh4j pipeline exit code; output: %s", out)
         );
-        Assertions.assertTrue(out.contains("native-pipe"),
-                String.format("native sh4j pipeline must propagate stdout; got: '%s'", out));
+        Assertions.assertTrue(
+            out.contains("native-pipe"),
+            String.format("native sh4j pipeline must propagate stdout; got: '%s'", out)
+        );
     }
 
     @Test
@@ -424,9 +447,10 @@ final class IntegrationTest {
 
     @Test
     void complexScript() throws IOException {
-        final File str = this.writeScript("complex.sh",
-            String.format("MSG=hello%n")
-            + String.format("echo $MSG%n"));
+        final File str = this.writeScript(
+            "complex.sh",
+            String.format("MSG=hello%necho $MSG%n")
+        );
         Assertions.assertEquals(0, Main.runScript(str.getAbsolutePath()));
     }
 
@@ -463,9 +487,13 @@ final class IntegrationTest {
     }
 
     private String runChildJvm(final File script) throws Exception {
-        final ProcessBuilder builder = new ProcessBuilder(String.format("%s/bin/java", System.getProperty("java.home")), "-cp",
-                System.getProperty("java.class.path"),
-                "io.github.andreoss.sh4j.Main", script.getAbsolutePath());
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            script.getAbsolutePath()
+        );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);

@@ -419,12 +419,13 @@ final class ExecutorTest {
         final int code = executor.execute(
             this.parse("echo hello | nonexistent_cmd_xyz_fail | echo done")
         );
-        Assertions.assertTrue(code == 127 || code == 126,
-                "Pipeline with missing middle stage must exit with POSIX "
-                        + String.format(
-                            "command-not-found(127) or not-executable(126); got %s",
-                            code
-                        ));
+        Assertions.assertTrue(
+            code == 127 || code == 126,
+            String.format(
+                "Pipeline with missing middle stage must exit with POSIX command-not-found(127) or not-executable(126); got %s",
+                code
+            )
+        );
     }
 
     @Test
