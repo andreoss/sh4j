@@ -218,7 +218,10 @@ final class ExecutorTest {
 
     @Test
     void executeBuiltinStderrRedirectToFile() throws Exception {
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format("echo hello 2>%s", "/tmp/sh4j_stderr_test"))));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse("echo hello 2>/tmp/sh4j_stderr_test"))
+        );
     }
 
     @Test
@@ -1661,7 +1664,7 @@ final class ExecutorTest {
         }
         Assertions.assertEquals(
             0,
-            new Executor().execute(this.parser(String.format("cat <>%s", file.getAbsolutePath())).parse())
+            new Executor().execute(this.parse(String.format("cat <>%s", file.getAbsolutePath())))
         );
     }
 
@@ -2731,7 +2734,10 @@ final class ExecutorTest {
         ) {
             w.write(ExecutorTest.HELLO_WORLD);
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" > %s", outpath))));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse(String.format("cat < %s > %s", inpath, outpath)))
+        );
         Assertions.assertTrue(new java.io.File(outpath).exists());
         Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
@@ -2762,7 +2768,10 @@ final class ExecutorTest {
         ) {
             w.write(String.format("first%n"));
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >> %s", outpath))));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse(String.format("cat < %s >> %s", inpath, outpath)))
+        );
         final String content = java.nio.file.Files.readString(
             java.nio.file.Path.of(outpath)
         ).trim();
@@ -2785,7 +2794,10 @@ final class ExecutorTest {
         ) {
             w.write("hello clobber");
         }
-        Assertions.assertEquals(0, new Executor().execute(this.parse(String.format(ExecutorTest.CAT_INPUT_FMT, inpath) + String.format(" >| %s", outpath))));
+        Assertions.assertEquals(
+            0,
+            new Executor().execute(this.parse(String.format("cat < %s >| %s", inpath, outpath)))
+        );
         Assertions.assertTrue(new java.io.File(outpath).exists());
         Assertions.assertEquals(
             "hello clobber",

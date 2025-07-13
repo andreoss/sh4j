@@ -4,9 +4,9 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import org.junit.jupiter.api.Assertions;
@@ -35,13 +35,12 @@ final class RedirectionHandlerTest {
             true,
             StandardCharsets.UTF_8
         );
-        final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(
-                    List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
-                    out,
-                    err,
-                    this.identity
-                );
+        final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
+            List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+            out,
+            err,
+            this.identity
+        );
         Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
         Assertions.assertSame(
             err,
@@ -63,13 +62,12 @@ final class RedirectionHandlerTest {
             true,
             StandardCharsets.UTF_8
         );
-        final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(
-                    List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
-                    out,
-                    err,
-                    this.identity
-                );
+        final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
+            List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+            out,
+            err,
+            this.identity
+        );
         Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
         Assertions.assertSame(
             out,
@@ -90,8 +88,12 @@ final class RedirectionHandlerTest {
             true,
             StandardCharsets.UTF_8
         );
-        final RedirectionHandler.StreamSwap result =
-                RedirectionHandler.redirectOutputForBuiltin(List.of(), out, err, this.identity);
+        final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
+            List.of(),
+            out,
+            err,
+            this.identity
+        );
         Assertions.assertSame(out, result.out());
         Assertions.assertSame(err, result.err());
         Assertions.assertNull(result.savedOut());

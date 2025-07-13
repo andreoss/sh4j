@@ -121,9 +121,7 @@ final class PosixConformanceTest {
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
         cmd.add(str.getAbsolutePath());
-        for (final String arr : args) {
-            cmd.add(arr);
-        }
+        cmd.addAll(java.util.Arrays.asList(args));
         final ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
