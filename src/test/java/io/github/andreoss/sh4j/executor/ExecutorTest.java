@@ -45,8 +45,6 @@ final class ExecutorTest {
     /** TMP_DIR constant. */
     private static final String TMP_DIR = "/tmp";
 
-    /** CAT_INPUT_FMT constant. */
-    private static final String CAT_INPUT_FMT = "cat < %s";
 
     /** TRUE_CMD constant. */
     private static final String TRUE_CMD = "true";

@@ -415,9 +415,10 @@ final class IntegrationTest {
             Main.runScript(
                 this.writeScript(
                     "stderr_redir.sh",
-                    "echo test 2>" + this.tempdir.resolve(
-                        "stderr.txt"
-                    ).toFile().getAbsolutePath() + String.format("%n")
+                    String.format(
+                        "echo test 2>%s%n",
+                        this.tempdir.resolve("stderr.txt").toFile().getAbsolutePath()
+                    )
                 ).getAbsolutePath()
             )
         );
