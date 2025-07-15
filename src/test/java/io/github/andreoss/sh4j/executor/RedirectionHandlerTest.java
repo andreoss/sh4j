@@ -20,9 +20,6 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
  */
 final class RedirectionHandlerTest {
 
-    /** Identity. */
-    private final UnaryOperator<String> identity = s -> s;
-
     @Test
     void redirectStderrToStdout() {
         final PrintStream out = new PrintStream(
@@ -39,7 +36,7 @@ final class RedirectionHandlerTest {
             List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
             out,
             err,
-            this.identity
+            UnaryOperator.identity()
         );
         Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
         Assertions.assertSame(
@@ -66,7 +63,7 @@ final class RedirectionHandlerTest {
             List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
             out,
             err,
-            this.identity
+            UnaryOperator.identity()
         );
         Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
         Assertions.assertSame(
@@ -92,7 +89,7 @@ final class RedirectionHandlerTest {
             List.of(),
             out,
             err,
-            this.identity
+            UnaryOperator.identity()
         );
         Assertions.assertSame(out, result.out());
         Assertions.assertSame(err, result.err());
