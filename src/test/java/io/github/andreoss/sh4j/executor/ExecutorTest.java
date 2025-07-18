@@ -291,10 +291,9 @@ final class ExecutorTest {
 
     @Test
     void executeVariableWithEmptyValue() {
-        final ListNode list = this.parse("echo $EMPTY_VAR");
         final Map<String, String> env = new HashMap<>();
         env.put("EMPTY_VAR", "");
-        Assertions.assertEquals(0, new Executor(env).execute(list));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("echo $EMPTY_VAR")));
     }
 
     @Test
@@ -586,20 +585,24 @@ final class ExecutorTest {
     @Test
     void executeWhileBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse("while exit $?; do echo ran; exit 1; done");
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assertions.assertEquals(1, executor.execute(list));
+        Assertions.assertEquals(
+            1,
+            executor.execute(this.parse("while exit $?; do echo ran; exit 1; done"))
+        );
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
     void executeUntilBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse("exit 1; until exit $?; do echo ran; exit 0; done");
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assertions.assertEquals(0, executor.execute(list));
+        Assertions.assertEquals(
+            0,
+            executor.execute(this.parse("exit 1; until exit $?; do echo ran; exit 0; done"))
+        );
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
@@ -613,24 +616,21 @@ final class ExecutorTest {
 
     @Test
     void commandInterruptedException() {
-        final ListNode list = this.parse("pwd");
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, new Executor().execute(list));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("pwd")));
     }
 
     @Test
     void pipelineInterruptedException() {
-        final ListNode list = this.parse("pwd | cat");
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, new Executor().execute(list));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("pwd | cat")));
     }
 
     @Test
     void waitForBackgroundJobsInterrupted() {
-        final ListNode list = this.parse("sleep 1 &");
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
-        executor.execute(list);
+        executor.execute(this.parse("sleep 1 &"));
         Assertions.assertTrue(
             Thread.interrupted(),
             "InterruptedException catch should re-set interrupt flag"
@@ -661,34 +661,42 @@ final class ExecutorTest {
     @Test
     void executeElifWhenIfFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse("if false; then echo no; elif true; then echo yes; fi");
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assertions.assertEquals(0, executor.execute(list));
+        Assertions.assertEquals(
+            0,
+            executor.execute(this.parse("if false; then echo no; elif true; then echo yes; fi"))
+        );
         Assertions.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
     void executeElifChainFalseFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse(
-            "if false; then echo a; elif false; then echo b; else echo c; fi"
-        );
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assertions.assertEquals(0, executor.execute(list));
+        Assertions.assertEquals(
+            0,
+            executor.execute(
+                this.parse("if false; then echo a; elif false; then echo b; else echo c; fi")
+            )
+        );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
     @Test
     void executeElifChainSecondElifTrue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ListNode list = this.parse(
-            "if false; then echo a; elif false; then echo b; elif true; then echo c; fi"
-        );
         final Executor executor = new Executor();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assertions.assertEquals(0, executor.execute(list));
+        Assertions.assertEquals(
+            0,
+            executor.execute(
+                this.parse(
+                    "if false; then echo a; elif false; then echo b; elif true; then echo c; fi"
+                )
+            )
+        );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
     }
 
@@ -2102,9 +2110,8 @@ final class ExecutorTest {
         script.setExecutable(true);
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, dir.getAbsolutePath());
-        final Executor executor = new Executor(env);
         dir.delete();
-        Assertions.assertEquals(42, executor.execute(this.parse("mycmd")));
+        Assertions.assertEquals(42, new Executor(env).execute(this.parse("mycmd")));
     }
 
     @Test
@@ -2129,9 +2136,8 @@ final class ExecutorTest {
             ExecutorTest.PATH_KEY,
             String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath())
         );
-        final Executor executor = new Executor(env);
         dir.delete();
-        Assertions.assertEquals(7, executor.execute(this.parse("mycmd2")));
+        Assertions.assertEquals(7, new Executor(env).execute(this.parse("mycmd2")));
     }
 
     @Test
