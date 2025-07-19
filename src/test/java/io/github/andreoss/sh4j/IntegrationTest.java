@@ -448,11 +448,13 @@ final class IntegrationTest {
 
     @Test
     void complexScript() throws IOException {
-        final File str = this.writeScript(
-            "complex.sh",
-            String.format("MSG=hello%necho $MSG%n")
+        Assertions.assertEquals(
+            0,
+            Main.runScript(
+                this.writeScript("complex.sh", String.format("MSG=hello%necho $MSG%n"))
+                    .getAbsolutePath()
+            )
         );
-        Assertions.assertEquals(0, Main.runScript(str.getAbsolutePath()));
     }
 
     @Test

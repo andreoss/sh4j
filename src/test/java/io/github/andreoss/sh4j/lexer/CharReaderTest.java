@@ -100,26 +100,28 @@ final class CharReaderTest {
 
     @Test
     void ioExceptionTreatedAsEof() {
-        final Reader broken = new Reader() {
+        final CharReader reader = new CharReader(
+            new Reader() {
 
-            @Override
+                @Override
 
-            public int read() throws IOException {
-                throw new IOException();
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+
+                public int read(final char[] cbuf, final int off, final int len)
+                    throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public void close() {
+                    // intentional no-op
+                }
             }
-
-            @Override
-
-            public int read(final char[] cbuf, final int off, final int len) throws IOException {
-                throw new IOException();
-            }
-
-            @Override
-            public void close() {
-                // intentional no-op
-            }
-        };
-        final CharReader reader = new CharReader(broken);
+        );
         Assertions.assertTrue(reader.isEof());
         Assertions.assertEquals(-1, reader.peek());
         Assertions.assertEquals(-1, reader.consume());
