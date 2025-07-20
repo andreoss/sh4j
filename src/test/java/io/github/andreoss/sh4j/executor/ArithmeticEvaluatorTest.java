@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ArithmeticEvaluatorTest {
 
-
-
     /** Tests addition. */
     @Test
     void add() {

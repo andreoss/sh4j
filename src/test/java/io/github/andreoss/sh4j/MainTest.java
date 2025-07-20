@@ -25,7 +25,7 @@ final class MainTest {
 
     /** Field. */
     @TempDir
-    File tempdir;
+    private File tempdir;
 
     /** Origin. */
     private InputStream origin;

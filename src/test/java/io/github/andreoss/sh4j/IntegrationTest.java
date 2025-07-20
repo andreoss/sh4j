@@ -22,7 +22,7 @@ final class IntegrationTest {
 
     /** Field. */
     @TempDir
-    Path tempdir;
+    private Path tempdir;
 
     @Test
     void echoHello() throws IOException {

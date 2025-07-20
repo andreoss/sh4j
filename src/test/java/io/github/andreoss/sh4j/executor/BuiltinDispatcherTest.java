@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
  */
 final class BuiltinDispatcherTest {
 
-
     @Test
     void registryHasTrue() {
         Assertions.assertTrue(new BuiltinDispatcher().isBuiltin("true"));
