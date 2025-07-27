@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
  * Tests for ArithmeticEvaluator.
  * @since 1.0
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class ArithmeticEvaluatorTest {
 
     /** Tests addition. */

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
  * Tests for Lexer.
  * @since 1.0
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class LexerTest {
 
     /** ECHO_CMD constant. */

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
  * Tests for CharReader.
  * @since 1.0
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class CharReaderTest {
 
     @Test

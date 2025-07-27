@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
  * Tests for BuiltinDispatcher.
  * @since 1.0
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class BuiltinDispatcherTest {
 
     @Test

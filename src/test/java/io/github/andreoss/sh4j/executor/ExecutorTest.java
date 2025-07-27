@@ -27,7 +27,10 @@ import io.github.andreoss.sh4j.parser.SimpleCommand;
 /**
  * Tests for Executor.
  * @since 1.0
+ * @checkstyle MethodCountCheck (500 lines)
+ * @checkstyle FileLength (3000 lines)
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
 final class ExecutorTest {
 
     /** PATH_KEY constant. */

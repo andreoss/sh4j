@@ -144,6 +144,7 @@
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                         <exclude>checkstyle:.*/src/main/java/.*</exclude>
                         <exclude>pmd:.*/src/main/java/.*</exclude>
+                        <exclude>checkstyle:.*ExecutorTest\.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
  * Tests for PosixConformance.
  * @since 1.0
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class PosixConformanceTest {
 
     /** Field. */
