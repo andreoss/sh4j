@@ -124,6 +124,12 @@ public class Executor implements BuiltinContext {
         if (path == null || path.isEmpty()) {
             this.environment.put("PATH", DEFAULT_PATH);
         }
+        this.environment.putIfAbsent(
+            "PPID",
+            Long.toString(
+                ProcessHandle.current().parent().orElse(ProcessHandle.current()).pid()
+            )
+        );
     }
 
     /**

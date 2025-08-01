@@ -1912,6 +1912,32 @@ final class ExecutorTest {
     }
 
     @Test
+    void ppidIsSetToParentProcessIdOnInit() {
+        final String ppid = new Executor().getVariable("PPID");
+        Assertions.assertNotNull(ppid);
+        final long parsed = Long.parseLong(ppid);
+        Assertions.assertTrue(parsed > 0L, "PPID should be a positive PID");
+        final long expected = ProcessHandle.current()
+            .parent().orElse(ProcessHandle.current()).pid();
+        Assertions.assertEquals(expected, parsed);
+    }
+
+    @Test
+    void ppidPreservedAcrossSubshellExecutor() {
+        final Executor parent = new Executor();
+        final String parentppid = parent.getVariable("PPID");
+        final Executor sub = new Executor(parent.environmentMap(), java.util.List.of("sub"));
+        Assertions.assertEquals(parentppid, sub.getVariable("PPID"));
+    }
+
+    @Test
+    void ppidExpandsAsParameter() {
+        final Executor executor = new Executor();
+        final String expanded = executor.expandVariables("$PPID", executor.environmentMap());
+        Assertions.assertTrue(expanded.matches("\\d+"), "$PPID should expand to digits");
+    }
+
+    @Test
     void specialParamAtStarWithPositionals() {
         final Executor executor = new Executor(
             new HashMap<>(),
