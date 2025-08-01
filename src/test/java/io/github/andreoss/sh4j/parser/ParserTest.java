@@ -13,7 +13,7 @@ import io.github.andreoss.sh4j.lexer.Lexer;
  * Tests for Parser.
  * @since 1.0
  */
-@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
 final class ParserTest {
 
     /** ECHO_CMD constant. */

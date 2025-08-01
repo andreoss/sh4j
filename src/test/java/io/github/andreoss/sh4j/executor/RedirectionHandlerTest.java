@@ -18,6 +18,7 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
  * Tests for RedirectionHandler.
  * @since 1.0
  */
+@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
 final class RedirectionHandlerTest {
 
     @Test

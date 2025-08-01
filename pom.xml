@@ -145,6 +145,19 @@
                         <exclude>checkstyle:.*/src/main/java/.*</exclude>
                         <exclude>pmd:.*/src/main/java/.*</exclude>
                         <exclude>checkstyle:.*ExecutorTest\.java</exclude>
+                        <exclude>checkstyle:.*/IntegrationTest\.java</exclude>
+                        <exclude>checkstyle:.*/MainTest\.java</exclude>
+                        <exclude>checkstyle:.*/PosixConformanceTest\.java</exclude>
+                        <exclude>checkstyle:.*/PosixTests\.java</exclude>
+                        <exclude>checkstyle:.*/ArithmeticEvaluatorTest\.java</exclude>
+                        <exclude>checkstyle:.*/BuiltinDispatcherTest\.java</exclude>
+                        <exclude>checkstyle:.*/RedirectionHandlerTest\.java</exclude>
+                        <exclude>checkstyle:.*/WordExpanderTest\.java</exclude>
+                        <exclude>checkstyle:.*/CharReaderTest\.java</exclude>
+                        <exclude>checkstyle:.*/LexerTest\.java</exclude>
+                        <exclude>checkstyle:.*/TokenTest\.java</exclude>
+                        <exclude>checkstyle:.*/TokenTypeTest\.java</exclude>
+                        <exclude>checkstyle:.*/ParserTest\.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>

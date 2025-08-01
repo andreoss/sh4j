@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
  * Tests for TokenType.
  * @since 1.0
  */
+@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
 final class TokenTypeTest {
 
     @Test

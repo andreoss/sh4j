@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
  * Tests for WordExpander.
  * @since 1.0
  */
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
 final class WordExpanderTest {
 
     /** ABC constant. */

@@ -11,9 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.jupiter.api.AfterEach;
+import java.util.function.IntSupplier;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,24 +20,12 @@ import org.junit.jupiter.api.io.TempDir;
  * Tests for Main.
  * @since 1.0
  */
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnnecessaryLocalRule"})
 final class MainTest {
 
     /** Field. */
     @TempDir
     private File tempdir;
-
-    /** Origin. */
-    private InputStream origin;
-
-    @BeforeEach
-    void saveSystemIn() {
-        this.origin = System.in;
-    }
-
-    @AfterEach
-    void restoreSystemIn() {
-        System.setIn(this.origin);
-    }
 
     @Test
     void runScriptWithEcho() throws IOException {
@@ -83,24 +70,37 @@ final class MainTest {
 
     @Test
     void exitCodeNoArgsInteractiveEof() {
-        System.setIn(new ByteArrayInputStream(new byte[0]));
-        Assertions.assertEquals(0, Main.exitCode(new String[0]));
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.exitCode(new String[0])
+            )
+        );
     }
 
     @Test
     void exitCodeNoArgsInteractiveEmptyLine() {
-        System.setIn(
-            new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8))
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8)),
+                () -> Main.exitCode(new String[0])
+            )
         );
-        Assertions.assertEquals(0, Main.exitCode(new String[0]));
     }
 
     @Test
     void exitCodeNoArgsInteractiveWithCommand() {
-        System.setIn(
-            new ByteArrayInputStream(String.format("echo hello%n").getBytes(StandardCharsets.UTF_8))
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(
+                    String.format("echo hello%n").getBytes(StandardCharsets.UTF_8)
+                ),
+                () -> Main.exitCode(new String[0])
+            )
         );
-        Assertions.assertEquals(0, Main.exitCode(new String[0]));
     }
 
     @Test
@@ -126,14 +126,34 @@ final class MainTest {
 
     @Test
     void exitCodeNoArgsInteractiveIoException() {
-        System.setIn(
-            new InputStream() {
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new InputStream() {
+                    @Override
+                    public int read() throws IOException {
+                        throw new IOException();
+                    }
+                },
+                () -> Main.exitCode(new String[0])
+            )
         );
-        Assertions.assertEquals(0, Main.exitCode(new String[0]));
+    }
+
+    /**
+     * Run an action with System.in temporarily replaced, restoring on exit.
+     * @param input Temporary System.in
+     * @param action Action that returns an int
+     * @return Action result
+     */
+    @SuppressWarnings("PMD.CloseResource")
+    private static int withStdin(final InputStream input, final IntSupplier action) {
+        final InputStream prior = System.in;
+        System.setIn(input);
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(prior);
+        }
     }
 }

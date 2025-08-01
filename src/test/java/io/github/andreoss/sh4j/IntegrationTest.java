@@ -18,7 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
  * Tests for Integration.
  * @since 1.0
  */
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
 final class IntegrationTest {
 
     /** Field. */

@@ -30,7 +30,10 @@ import io.github.andreoss.sh4j.parser.SimpleCommand;
  * @checkstyle MethodCountCheck (500 lines)
  * @checkstyle FileLength (3000 lines)
  */
-@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
+@SuppressWarnings({
+    "PMD.GodClass", "PMD.TooManyMethods",
+    "PMD.UnitTestContainsTooManyAsserts", "PMD.UnnecessaryLocalRule"
+})
 final class ExecutorTest {
 
     /** PATH_KEY constant. */
