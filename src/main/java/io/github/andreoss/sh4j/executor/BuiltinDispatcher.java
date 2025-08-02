@@ -56,6 +56,7 @@ final class BuiltinDispatcher {
         this.register("exit", BuiltinDispatcher::doExit);
         this.register("type", BuiltinDispatcher::doType);
         this.register("command", BuiltinDispatcher::doCommand);
+        this.register("wait", BuiltinDispatcher::doWait);
         this.register("shift", BuiltinDispatcher::doShift);
     }
 
@@ -517,6 +518,45 @@ final class BuiltinDispatcher {
                 self.outStream().println(name + " is " + resolved);
             } else {
                 self.outStream().println(resolved);
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Implementation of {@code wait [PID...]}.
+     * POSIX 2.14: without args, waits for all background jobs (exit 0).
+     * With PID, waits for that bg job if known (exit 0), else returns 127
+     * (POSIX "unknown process" status).
+     * @param self    Builtin context
+     * @param args    Args after the command name (PIDs)
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 127 when a named PID is not a known bg job
+     */
+    private static int doWait(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        int code = 0;
+        if (args.isEmpty()) {
+            self.waitForBackgroundJobs();
+        } else {
+            final int known = self.lastBackgroundPid();
+            for (final String arg : args) {
+                final String expanded = self.expandVariables(arg, env);
+                try {
+                    final int pid = Integer.parseInt(expanded);
+                    if (pid == known && known > 0) {
+                        self.waitForBackgroundJobs();
+                    } else {
+                        code = 127;
+                    }
+                } catch (final NumberFormatException ex) {
+                    code = 127;
+                }
             }
         }
         return code;

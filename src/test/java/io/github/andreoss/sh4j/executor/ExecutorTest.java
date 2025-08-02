@@ -2586,6 +2586,30 @@ final class ExecutorTest {
     }
 
     @Test
+    void waitNoArgsReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("wait")));
+    }
+
+    @Test
+    void waitOnKnownBgPidReturnsZero() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 &")));
+        final int pid = executor.lastBackgroundPid();
+        Assertions.assertEquals(
+            0,
+            executor.execute(this.parse(String.format("wait %d", pid)))
+        );
+    }
+
+    @Test
+    void waitOnUnknownPidReturns127() {
+        Assertions.assertEquals(
+            127,
+            new Executor().execute(this.parse("wait 999999"))
+        );
+    }
+
+    @Test
     void commandDashVOnMissingReturnsOne() {
         Assertions.assertEquals(
             1,

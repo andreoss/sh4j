@@ -236,7 +236,17 @@ public class Executor implements BuiltinContext {
         this.lastBgPid = (int) bgThread.getId();
     }
 
-    private void waitForBackgroundJobs() {
+    @Override
+    public int lastBackgroundPid() {
+        return this.lastBgPid;
+    }
+
+    @Override
+    public void waitForBackgroundJobs() {
+        this.joinBackgroundJobs();
+    }
+
+    private void joinBackgroundJobs() {
         boolean interrupted = false;
         for (final Thread thr : this.backgroundThreads) {
             if (!interrupted) {

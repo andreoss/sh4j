@@ -117,4 +117,16 @@ interface BuiltinContext {
      * @return The list's exit status
      */
     int execute(ListNode list);
+
+    /**
+     * Waits for all background jobs spawned by this executor to complete.
+     * Used by the {@code wait} built-in.
+     */
+    void waitForBackgroundJobs();
+
+    /**
+     * @return The PID (thread ID) of the most recently spawned background
+     *     job, or 0 when no background job has run yet
+     */
+    int lastBackgroundPid();
 }
