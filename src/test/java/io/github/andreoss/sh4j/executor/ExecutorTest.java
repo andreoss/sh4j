@@ -2554,6 +2554,46 @@ final class ExecutorTest {
     }
 
     @Test
+    void commandDashVOnBuiltinPrintsName() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("command -v echo")));
+        Assertions.assertEquals(
+            ExecutorTest.HELLO.replace(ExecutorTest.HELLO, "echo"),
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
+    }
+
+    @Test
+    void commandDashUppervOnBuiltinDescribes() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("command -V true")));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("shell built-in")
+        );
+    }
+
+    @Test
+    void commandWithoutFlagsRunsCommand() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("command echo hi")));
+        Assertions.assertEquals("hi", bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    @Test
+    void commandDashVOnMissingReturnsOne() {
+        Assertions.assertEquals(
+            1,
+            new Executor().execute(this.parse("command -v sh4j_no_such_cmd_xyz"))
+        );
+    }
+
+    @Test
     void pwdPhysicalFlagResolvesSymlinks() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();

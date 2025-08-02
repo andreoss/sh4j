@@ -55,6 +55,7 @@ final class BuiltinDispatcher {
         this.register("exec", BuiltinDispatcher::doExec);
         this.register("exit", BuiltinDispatcher::doExit);
         this.register("type", BuiltinDispatcher::doType);
+        this.register("command", BuiltinDispatcher::doCommand);
         this.register("shift", BuiltinDispatcher::doShift);
     }
 
@@ -429,6 +430,93 @@ final class BuiltinDispatcher {
                 } else {
                     self.outStream().println(expanded + " is " + resolved);
                 }
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Implementation of {@code command [-v|-V|-p] name [args...]}.
+     * POSIX 2.14. {@code -v} prints location of NAME; {@code -V}
+     * prints a verbose description; without flags, invokes NAME
+     * bypassing function lookup. {@code -p} (default-PATH) is
+     * accepted but treated as a no-op (the configured PATH is used).
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return Resolved command exit code (1 if NAME not found with -v/-V)
+     */
+    private static int doCommand(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        int code = 0;
+        int idx = 0;
+        boolean verbose = false;
+        boolean locate = false;
+        while (idx < args.size() && args.get(idx).startsWith("-")) {
+            final String flag = args.get(idx);
+            if ("-v".equals(flag)) {
+                locate = true;
+            } else if ("-V".equals(flag)) {
+                verbose = true;
+            }
+            idx += 1;
+        }
+        if (idx >= args.size()) {
+            code = locate || verbose ? 1 : 0;
+        } else {
+            final String name = self.expandVariables(args.get(idx), env);
+            if (locate || verbose) {
+                code = describeCommand(self, name, verbose);
+            } else {
+                final StringBuilder line = new StringBuilder(name);
+                for (int i = idx + 1; i < args.size(); i += 1) {
+                    line.append(' ').append(args.get(i));
+                }
+                final ListNode ast = new Parser(
+                    new Lexer(new CharReader(line.toString()))
+                ).parse();
+                code = self.execute(ast);
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Helper for {@code command -v} / {@code command -V}.
+     * @param self    Builtin context
+     * @param name    Command name
+     * @param verbose true for -V (descriptive), false for -v (location)
+     * @return 0 if found, 1 if not
+     */
+    private static int describeCommand(
+        final BuiltinContext self, final String name, final boolean verbose
+    ) {
+        int code = 0;
+        if (Executor.isBuiltin(name)) {
+            if (verbose) {
+                self.outStream().println(name + " is a shell built-in");
+            } else {
+                self.outStream().println(name);
+            }
+        } else if (self.functionsMap().containsKey(name)) {
+            if (verbose) {
+                self.outStream().println(name + " is a function");
+            } else {
+                self.outStream().println(name);
+            }
+        } else {
+            final String resolved = self.resolveCommand(name);
+            if (resolved == null) {
+                code = 1;
+            } else if (verbose) {
+                self.outStream().println(name + " is " + resolved);
+            } else {
+                self.outStream().println(resolved);
             }
         }
         return code;
