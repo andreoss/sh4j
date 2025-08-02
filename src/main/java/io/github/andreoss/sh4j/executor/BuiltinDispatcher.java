@@ -49,6 +49,7 @@ final class BuiltinDispatcher {
         this.register("unset", BuiltinDispatcher::doUnset);
         this.register("export", BuiltinDispatcher::doExport);
         this.register("cd", BuiltinDispatcher::doCd);
+        this.register("pwd", BuiltinDispatcher::doPwd);
         this.register("echo", BuiltinDispatcher::doEcho);
         this.register("eval", BuiltinDispatcher::doEval);
         this.register("exec", BuiltinDispatcher::doExec);
@@ -181,6 +182,49 @@ final class BuiltinDispatcher {
             } else {
                 code = 1;
             }
+        }
+        return code;
+    }
+
+    /**
+     * pwd built-in. POSIX 2.14: writes the current working directory.
+     * {@code -L} (default) prefers the {@code PWD} env value; {@code -P}
+     * resolves symlinks via {@link java.nio.file.Path#toRealPath}.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on IO error
+     */
+    private static int doPwd(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        boolean physical = false;
+        for (final String arg : args) {
+            if ("-P".equals(arg)) {
+                physical = true;
+            } else if ("-L".equals(arg)) {
+                physical = false;
+            }
+        }
+        final Map<String, String> environment = self.environmentMap();
+        final String logical = environment.getOrDefault(
+            "PWD", System.getProperty("user.dir", "/")
+        );
+        int code = 0;
+        if (physical) {
+            try {
+                self.outStream().println(
+                    java.nio.file.Path.of(logical).toRealPath().toString()
+                );
+            } catch (final IOException ex) {
+                code = 1;
+            }
+        } else {
+            self.outStream().println(logical);
         }
         return code;
     }

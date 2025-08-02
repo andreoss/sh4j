@@ -622,13 +622,13 @@ final class ExecutorTest {
     @Test
     void commandInterruptedException() {
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, new Executor().execute(this.parse("pwd")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("ls")));
     }
 
     @Test
     void pipelineInterruptedException() {
         Thread.currentThread().interrupt();
-        Assertions.assertEquals(1, new Executor().execute(this.parse("pwd | cat")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("ls | cat")));
     }
 
     @Test
@@ -2525,6 +2525,43 @@ final class ExecutorTest {
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),
             "error message should go to injected stream"
         );
+    }
+
+    @Test
+    void pwdPrintsCurrentDirectory() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd")));
+        Assertions.assertEquals(
+            ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
+        );
+    }
+
+    @Test
+    void pwdLogicalFlagPrintsPwdEnv() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd -L")));
+        Assertions.assertEquals(
+            ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
+        );
+    }
+
+    @Test
+    void pwdPhysicalFlagResolvesSymlinks() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd -P")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).startsWith("/"));
     }
 
     @Test
