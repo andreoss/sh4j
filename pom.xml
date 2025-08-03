@@ -96,10 +96,50 @@
                     <configuration>
                         <rules>
                             <rule>
+                                <element>PACKAGE</element>
+                                <includes>
+                                    <include>io.github.andreoss.sh4j</include>
+                                </includes>
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.94</minimum>
+                                        <minimum>0.99</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                            <rule>
+                                <element>PACKAGE</element>
+                                <includes>
+                                    <include>io.github.andreoss.sh4j.lexer</include>
+                                </includes>
+                                <limits>
+                                    <limit>
+                                        <counter>INSTRUCTION</counter>
+                                        <minimum>0.99</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                            <rule>
+                                <element>PACKAGE</element>
+                                <includes>
+                                    <include>io.github.andreoss.sh4j.parser</include>
+                                </includes>
+                                <limits>
+                                    <limit>
+                                        <counter>INSTRUCTION</counter>
+                                        <minimum>0.99</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                            <rule>
+                                <element>PACKAGE</element>
+                                <includes>
+                                    <include>io.github.andreoss.sh4j.executor</include>
+                                </includes>
+                                <limits>
+                                    <limit>
+                                        <counter>INSTRUCTION</counter>
+                                        <minimum>0.95</minimum>
                                     </limit>
                                 </limits>
                             </rule>
