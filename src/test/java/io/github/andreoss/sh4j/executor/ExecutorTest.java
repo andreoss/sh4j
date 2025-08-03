@@ -2586,6 +2586,41 @@ final class ExecutorTest {
     }
 
     @Test
+    void umaskNoArgsPrintsDefault() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        Assertions.assertEquals("0022", bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    @Test
+    void umaskSetThenReadEchoesValue() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("umask 077")));
+        Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        Assertions.assertEquals("0077", bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    @Test
+    void umaskDashSPrintsSymbolic() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("umask -S")));
+        Assertions.assertEquals(
+            "u=rwx,g=rx,o=rx", bos.toString(StandardCharsets.UTF_8).trim()
+        );
+    }
+
+    @Test
+    void umaskNonOctalReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("umask zzz")));
+    }
+
+    @Test
     void killDashLListsSignals() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();

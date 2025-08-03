@@ -59,6 +59,7 @@ final class BuiltinDispatcher {
         this.register("wait", BuiltinDispatcher::doWait);
         this.register("hash", BuiltinDispatcher::doHash);
         this.register("kill", BuiltinDispatcher::doKill);
+        this.register("umask", BuiltinDispatcher::doUmask);
         this.register("shift", BuiltinDispatcher::doShift);
     }
 
@@ -523,6 +524,97 @@ final class BuiltinDispatcher {
             }
         }
         return code;
+    }
+
+    /**
+     * Implementation of {@code umask [-S] [mode]}.
+     * POSIX 2.14. JDK has no portable umask call, so the value is
+     * tracked in the environment under the {@code SH4J_UMASK} key but
+     * is NOT actually enforced on file creations (documented stub).
+     * Without args, prints the current mask. With a mode, sets it
+     * (octal only — symbolic mode is rejected with exit 1). {@code -S}
+     * formats the mask symbolically (POSIX 2.14 "Symbolic Output").
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on parse error
+     */
+    private static int doUmask(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final Map<String, String> environment = self.environmentMap();
+        final String current = environment.getOrDefault("SH4J_UMASK", "0022");
+        int code = 0;
+        boolean symbolic = false;
+        int idx = 0;
+        if (!args.isEmpty() && "-S".equals(args.get(0))) {
+            symbolic = true;
+            idx = 1;
+        }
+        if (idx >= args.size()) {
+            if (symbolic) {
+                self.outStream().println(umaskSymbolic(current));
+            } else {
+                self.outStream().println(current);
+            }
+        } else {
+            final String mode = self.expandVariables(args.get(idx), env);
+            try {
+                final int value = Integer.parseInt(mode, 8);
+                environment.put("SH4J_UMASK", String.format("%04o", value));
+            } catch (final NumberFormatException ex) {
+                code = 1;
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Formats an octal umask string as POSIX symbolic mode.
+     * @param mask Octal 4-digit umask (e.g. "0022")
+     * @return Symbolic representation (e.g. "u=rwx,g=rx,o=rx")
+     */
+    private static String umaskSymbolic(final String mask) {
+        final int value;
+        try {
+            value = Integer.parseInt(mask, 8);
+        } catch (final NumberFormatException ex) {
+            return "u=,g=,o=";
+        }
+        final int allBits = 7;
+        final int user = allBits & ~((value >> 6) & allBits);
+        final int group = allBits & ~((value >> 3) & allBits);
+        final int other = allBits & ~(value & allBits);
+        return String.format(
+            "u=%s,g=%s,o=%s",
+            umaskBitsToString(user), umaskBitsToString(group), umaskBitsToString(other)
+        );
+    }
+
+    /**
+     * Maps a 3-bit permission triple to {@code rwx} chars.
+     * @param bits 0..7
+     * @return Permission string
+     */
+    private static String umaskBitsToString(final int bits) {
+        final StringBuilder out = new StringBuilder(3);
+        final int rbit = 4;
+        final int wbit = 2;
+        final int xbit = 1;
+        if ((bits & rbit) != 0) {
+            out.append('r');
+        }
+        if ((bits & wbit) != 0) {
+            out.append('w');
+        }
+        if ((bits & xbit) != 0) {
+            out.append('x');
+        }
+        return out.toString();
     }
 
     /**
