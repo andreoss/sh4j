@@ -58,6 +58,7 @@ final class BuiltinDispatcher {
         this.register("command", BuiltinDispatcher::doCommand);
         this.register("wait", BuiltinDispatcher::doWait);
         this.register("hash", BuiltinDispatcher::doHash);
+        this.register("kill", BuiltinDispatcher::doKill);
         this.register("shift", BuiltinDispatcher::doShift);
     }
 
@@ -520,6 +521,81 @@ final class BuiltinDispatcher {
             } else {
                 self.outStream().println(resolved);
             }
+        }
+        return code;
+    }
+
+    /**
+     * Implementation of {@code kill [-s SIG | -SIG] PID... | -l}.
+     * POSIX 2.14. JDK constraint: ProcessHandle only supports TERM
+     * (destroy) and KILL (destroyForcibly); other signals are
+     * accepted at the command line but mapped to TERM (which is the
+     * POSIX default) and a soft warning is not emitted.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on usage error, 127 if any PID cannot be signalled
+     */
+    private static int doKill(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        int code = 0;
+        if (args.isEmpty()) {
+            code = 1;
+        } else if ("-l".equals(args.get(0))) {
+            self.outStream().println("HUP INT QUIT KILL TERM");
+        } else {
+            boolean forcibly = false;
+            int idx = 0;
+            if ("-s".equals(args.get(0)) && args.size() >= 2) {
+                forcibly = "KILL".equals(args.get(1)) || "9".equals(args.get(1));
+                idx = 2;
+            } else if (args.get(0).startsWith("-") && args.get(0).length() > 1) {
+                final String sig = args.get(0).substring(1);
+                forcibly = "KILL".equals(sig) || "9".equals(sig);
+                idx = 1;
+            }
+            if (idx >= args.size()) {
+                code = 1;
+            }
+            while (idx < args.size() && code == 0) {
+                code = signalOne(
+                    self.expandVariables(args.get(idx), env), forcibly
+                );
+                idx += 1;
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Helper for {@link #doKill}: send a signal to a single PID.
+     * @param pidStr   Decimal PID
+     * @param forcibly true for SIGKILL, false for SIGTERM
+     * @return 0 on success, 127 if no such process or non-numeric PID
+     */
+    private static int signalOne(final String pidStr, final boolean forcibly) {
+        int code;
+        try {
+            final long pid = Long.parseLong(pidStr);
+            final java.util.Optional<ProcessHandle> handle = ProcessHandle.of(pid);
+            if (handle.isPresent()) {
+                final boolean sent;
+                if (forcibly) {
+                    sent = handle.get().destroyForcibly();
+                } else {
+                    sent = handle.get().destroy();
+                }
+                code = sent ? 0 : 127;
+            } else {
+                code = 127;
+            }
+        } catch (final NumberFormatException ex) {
+            code = 127;
         }
         return code;
     }

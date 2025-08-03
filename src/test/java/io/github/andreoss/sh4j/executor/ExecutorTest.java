@@ -2586,6 +2586,38 @@ final class ExecutorTest {
     }
 
     @Test
+    void killDashLListsSignals() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("kill -l")));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("TERM")
+        );
+    }
+
+    @Test
+    void killNoArgsReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("kill")));
+    }
+
+    @Test
+    void killUnknownPidReturns127() {
+        Assertions.assertEquals(
+            127,
+            new Executor().execute(this.parse("kill 999999999"))
+        );
+    }
+
+    @Test
+    void killDashSWithNonNumericPidReturns127() {
+        Assertions.assertEquals(
+            127,
+            new Executor().execute(this.parse("kill -s TERM notapid"))
+        );
+    }
+
+    @Test
     void hashNoArgsReturnsZero() {
         Assertions.assertEquals(0, new Executor().execute(this.parse("hash")));
     }
