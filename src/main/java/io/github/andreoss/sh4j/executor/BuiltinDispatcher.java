@@ -57,6 +57,7 @@ final class BuiltinDispatcher {
         this.register("type", BuiltinDispatcher::doType);
         this.register("command", BuiltinDispatcher::doCommand);
         this.register("wait", BuiltinDispatcher::doWait);
+        this.register("hash", BuiltinDispatcher::doHash);
         this.register("shift", BuiltinDispatcher::doShift);
     }
 
@@ -518,6 +519,39 @@ final class BuiltinDispatcher {
                 self.outStream().println(name + " is " + resolved);
             } else {
                 self.outStream().println(resolved);
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Implementation of {@code hash [-r] [name...]}.
+     * POSIX 2.14. sh4j has no command-lookup cache, so:
+     *   - {@code hash} with no args prints nothing and returns 0
+     *     (cache is empty by definition)
+     *   - {@code hash -r} returns 0 (no-op)
+     *   - {@code hash NAME ...} verifies each NAME resolves on PATH;
+     *     returns 0 if all do, 127 if any cannot be found
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 127 when a named utility is not found
+     */
+    private static int doHash(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        int code = 0;
+        for (final String arg : args) {
+            if ("-r".equals(arg)) {
+                continue;
+            }
+            final String name = self.expandVariables(arg, env);
+            if (!Executor.isBuiltin(name) && self.resolveCommand(name) == null) {
+                code = 127;
             }
         }
         return code;

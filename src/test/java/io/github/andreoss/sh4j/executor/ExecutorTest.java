@@ -2586,6 +2586,29 @@ final class ExecutorTest {
     }
 
     @Test
+    void hashNoArgsReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash")));
+    }
+
+    @Test
+    void hashDashRReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash -r")));
+    }
+
+    @Test
+    void hashWithKnownBuiltinReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash echo")));
+    }
+
+    @Test
+    void hashWithUnknownNameReturns127() {
+        Assertions.assertEquals(
+            127,
+            new Executor().execute(this.parse("hash sh4j_no_such_cmd_xyz"))
+        );
+    }
+
+    @Test
     void waitNoArgsReturnsZero() {
         Assertions.assertEquals(0, new Executor().execute(this.parse("wait")));
     }
