@@ -776,6 +776,11 @@ public class Executor implements BuiltinContext {
     }
 
     @Override
+    public InputStream stdin() {
+        return System.in;
+    }
+
+    @Override
     public boolean wordExpansionErrorOccurred() {
         return this.wordExpansionError;
     }

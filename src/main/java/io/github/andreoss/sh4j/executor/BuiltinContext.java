@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
@@ -86,6 +87,11 @@ interface BuiltinContext {
      * @return The stdout stream the executor writes built-in output to
      */
     PrintStream outStream();
+
+    /**
+     * @return The stdin stream the executor reads from
+     */
+    InputStream stdin();
 
     /**
      * Resolves a command name to its absolute path via PATH.
