@@ -4,8 +4,10 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +63,7 @@ final class BuiltinDispatcher {
         this.register("kill", BuiltinDispatcher::doKill);
         this.register("umask", BuiltinDispatcher::doUmask);
         this.register("shift", BuiltinDispatcher::doShift);
+        this.register("read", BuiltinDispatcher::doRead);
     }
 
     /**
@@ -795,5 +798,161 @@ final class BuiltinDispatcher {
             }
         }
         return code;
+    }
+
+    /**
+     * Implementation of {@code read [-r] var...}.
+     * POSIX 2.14: reads one line from stdin, splits by IFS into variables.
+     * The last variable receives all remaining fields.
+     * If no variables are given, stores the line in {@code REPLY}.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for variable lookup
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on EOF
+     */
+    private static int doRead(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        boolean raw = false;
+        int idx = 0;
+        if (!args.isEmpty() && "-r".equals(args.get(0))) {
+            raw = true;
+            idx = 1;
+        }
+        final List<String> names = args.subList(idx, args.size());
+        final BufferedReader reader = new BufferedReader(
+            new InputStreamReader(self.stdin())
+        );
+        try {
+            final String line = reader.readLine();
+            if (line == null) {
+                return 1;
+            }
+            final String processed;
+            if (raw) {
+                processed = line;
+            } else {
+                processed = processReadEscapes(line);
+            }
+            final Map<String, String> environment = self.environmentMap();
+            if (names.isEmpty()) {
+                environment.put("REPLY", processed);
+                return 0;
+            }
+            final String ifs = env.getOrDefault("IFS", DEFAULT_IFS);
+            final char firstIfs = ifs.charAt(0);
+            final List<String> fields = splitReadFields(processed, ifs, firstIfs);
+            for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
+                final String name = names.get(vdx);
+                if (vdx == names.size() - 1) {
+                    environment.put(name, joinReadFields(fields, vdx, ifs, firstIfs));
+                } else if (vdx < fields.size()) {
+                    environment.put(name, fields.get(vdx));
+                } else {
+                    environment.put(name, "");
+                }
+            }
+            return 0;
+        } catch (final IOException ex) {
+            return 1;
+        }
+    }
+
+    /**
+     * Processes backslash escapes in a read line (non-raw mode).
+     * Backslash-newline is removed; backslash before any other char
+     * preserves that char literally.
+     * @param line The raw input line
+     * @return The processed line
+     */
+    private static String processReadEscapes(final String line) {
+        final StringBuilder out = new StringBuilder(line.length());
+        boolean escaped = false;
+        for (int idx = 0; idx < line.length(); idx = idx + 1) {
+            final char ch = line.charAt(idx);
+            if (escaped) {
+                if (ch == '\n') {
+                    out.append('\n');
+                } else {
+                    out.append(ch);
+                }
+                escaped = false;
+            } else if (ch == '\\') {
+                escaped = true;
+            } else {
+                out.append(ch);
+            }
+        }
+        if (escaped) {
+            out.append('\\');
+        }
+        return out.toString();
+    }
+
+    /**
+     * Splits a read line into fields per POSIX read semantics.
+     * Leading IFS whitespace is stripped; remaining fields separated
+     * by IFS whitespace; the first non-whitespace IFS char in the
+     * original string also acts as a delimiter.
+     * @param line     The processed input line
+     * @param ifs      The IFS string
+     * @param firstIfs The first IFS char (the delimiter char)
+     * @return Split fields
+     */
+    private static List<String> splitReadFields(
+        final String line, final String ifs, final char firstIfs
+    ) {
+        final List<String> fields = new ArrayList<>();
+        int pos = 0;
+        while (pos < line.length() && ifs.indexOf(line.charAt(pos)) >= 0
+            && (line.charAt(pos) == ' ' || line.charAt(pos) == '\t')) {
+            pos = pos + 1;
+        }
+        final StringBuilder current = new StringBuilder();
+        while (pos < line.length()) {
+            final char ch = line.charAt(pos);
+            if (ch == firstIfs && firstIfs != ' ' && firstIfs != '\t') {
+                fields.add(current.toString());
+                current.setLength(0);
+            } else if (ifs.indexOf(ch) >= 0) {
+                fields.add(current.toString());
+                current.setLength(0);
+                while (pos + 1 < line.length()
+                    && ifs.indexOf(line.charAt(pos + 1)) >= 0) {
+                    pos = pos + 1;
+                }
+            } else {
+                current.append(ch);
+            }
+            pos = pos + 1;
+        }
+        fields.add(current.toString());
+        return fields;
+    }
+
+    /**
+     * Joins remaining fields starting at {@code start} using IFS.
+     * @param fields  All split fields
+     * @param start   Index of first field to join
+     * @param ifs     IFS string for delimiter
+     * @param firstIfs The first IFS char
+     * @return Joined string
+     */
+    private static String joinReadFields(
+        final List<String> fields, final int start,
+        final String ifs, final char firstIfs
+    ) {
+        final StringBuilder out = new StringBuilder();
+        for (int idx = start; idx < fields.size(); idx = idx + 1) {
+            if (idx > start) {
+                out.append(firstIfs);
+            }
+            out.append(fields.get(idx));
+        }
+        return out.toString();
     }
 }
