@@ -73,6 +73,8 @@ public class Executor implements BuiltinContext {
     private PrintStream out;
     /** Live stderr used by built-ins. */
     private PrintStream err;
+    /** Live stdin used by built-ins (read, etc.). */
+    private InputStream in;
     /** Flag set by {@link WordExpander} on expansion failure. */
     private boolean wordExpansionError;
 
@@ -112,6 +114,7 @@ public class Executor implements BuiltinContext {
         this.lastBgPid = 0;
         this.out = System.out;
         this.err = System.err;
+        this.in = System.in;
         this.wordExpansionError = false;
         this.setDefaults();
     }
@@ -164,6 +167,14 @@ public class Executor implements BuiltinContext {
      */
     public void setErrorStream(final PrintStream errStream) {
         this.err = errStream;
+    }
+
+    /**
+     * Overrides the executor's stdin.
+     * @param inputStream The new live stdin
+     */
+    public void setInputStream(final InputStream inputStream) {
+        this.in = inputStream;
     }
 
     @Override
@@ -777,7 +788,7 @@ public class Executor implements BuiltinContext {
 
     @Override
     public InputStream stdin() {
-        return System.in;
+        return this.in;
     }
 
     @Override

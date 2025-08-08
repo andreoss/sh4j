@@ -5,6 +5,7 @@
 package io.github.andreoss.sh4j.executor;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -3199,6 +3200,64 @@ final class ExecutorTest {
     @Test
     void shiftNegativeReturnsOne() {
         Assertions.assertEquals(1, new Executor().execute(this.parse("shift -1")));
+    }
+
+    @Test
+    void readWithOneVar() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("hello\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+        Assertions.assertEquals("hello", executor.getVariable("var"));
+    }
+
+    @Test
+    void readWithMultipleVars() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("a b c\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read x y z")));
+        Assertions.assertEquals("a", executor.getVariable("x"));
+        Assertions.assertEquals("b", executor.getVariable("y"));
+        Assertions.assertEquals("c", executor.getVariable("z"));
+    }
+
+    @Test
+    void readLastVarGetsRemainingFields() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("a b c d\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read x y")));
+        Assertions.assertEquals("a", executor.getVariable("x"));
+        Assertions.assertEquals("b c d", executor.getVariable("y"));
+    }
+
+    @Test
+    void readReplyWhenNoVar() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("hello world\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read")));
+        Assertions.assertEquals("hello world", executor.getVariable("REPLY"));
+    }
+
+    @Test
+    void readEofReturnsOne() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream(new byte[0]));
+        Assertions.assertEquals(1, executor.execute(this.parse("read var")));
+    }
+
+    @Test
+    void readRawModePreservesBackslash() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("a\\tb\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read -r var")));
+        Assertions.assertEquals("a\\tb", executor.getVariable("var"));
+    }
+
+    @Test
+    void readBackslashWithoutRawRemovesEscape() {
+        final Executor executor = new Executor();
+        executor.setInputStream(new ByteArrayInputStream("a\\tb\n".getBytes()));
+        Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+        Assertions.assertEquals("atb", executor.getVariable("var"));
     }
 
     private Parser parser(final String input) {
