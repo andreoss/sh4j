@@ -3260,6 +3260,36 @@ final class ExecutorTest {
         Assertions.assertEquals("atb", executor.getVariable("var"));
     }
 
+    @Test
+    void aliasExpandsToBuiltin() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "echo hello");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void aliasExpandsWithArgs() {
+        final Executor executor = new Executor();
+        executor.aliases().put("greet", "echo hello");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("greet world")));
+        Assertions.assertEquals("hello world\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void aliasDoesNotAffectOtherCommands() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "echo hi");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("echo hello")));
+        Assertions.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }

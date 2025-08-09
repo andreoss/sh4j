@@ -77,6 +77,8 @@ public class Executor implements BuiltinContext {
     private InputStream in;
     /** Flag set by {@link WordExpander} on expansion failure. */
     private boolean wordExpansionError;
+    /** Alias table (alias name → replacement text). */
+    private Map<String, String> aliases;
 
     /**
      * Builds an executor seeded with the current process environment.
@@ -115,6 +117,7 @@ public class Executor implements BuiltinContext {
         this.out = System.out;
         this.err = System.err;
         this.in = System.in;
+        this.aliases = new HashMap<>();
         this.wordExpansionError = false;
         this.setDefaults();
     }
@@ -482,6 +485,17 @@ public class Executor implements BuiltinContext {
     private int runNamedCommand(
         final SimpleCommand cmd, final String name, final Map<String, String> cmdEnv
     ) {
+        final String alias = this.aliases.get(name);
+        if (alias != null) {
+            final StringBuilder line = new StringBuilder(alias);
+            for (final String arg : cmd.getArguments()) {
+                line.append(' ').append(arg);
+            }
+            final ListNode ast = new Parser(
+                new Lexer(new CharReader(line.toString()))
+            ).parse();
+            return this.execute(ast);
+        }
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             cmd.getRedirections(), this.out, this.err,
             text -> this.expandVariables(text, this.environment)
@@ -779,6 +793,11 @@ public class Executor implements BuiltinContext {
     @Override
     public Map<String, FunctionNode> functionsMap() {
         return this.functions;
+    }
+
+    @Override
+    public Map<String, String> aliases() {
+        return this.aliases;
     }
 
     @Override

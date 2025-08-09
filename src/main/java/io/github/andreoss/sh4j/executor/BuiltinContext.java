@@ -84,6 +84,11 @@ interface BuiltinContext {
     Map<String, FunctionNode> functionsMap();
 
     /**
+     * @return The live alias table (name → replacement text)
+     */
+    Map<String, String> aliases();
+
+    /**
      * @return The stdout stream the executor writes built-in output to
      */
     PrintStream outStream();
