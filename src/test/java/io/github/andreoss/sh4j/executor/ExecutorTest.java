@@ -3290,6 +3290,54 @@ final class ExecutorTest {
         Assertions.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
     }
 
+    @Test
+    void aliasBuiltinSetAndExpand() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        executor.aliases().put("ll", "echo hello");
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void aliasBuiltinSetViaEq() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("alias ll='echo hello'")));
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void aliasBuiltinPrintAll() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        executor.aliases().put("ll", "ls -l");
+        Assertions.assertEquals(0, executor.execute(this.parse("alias")));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("ll='ls -l'")
+        );
+    }
+
+    @Test
+    void aliasBuiltinPrintOne() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        executor.aliases().put("ll", "ls -l");
+        Assertions.assertEquals(0, executor.execute(this.parse("alias ll")));
+        Assertions.assertEquals("ll='ls -l'\n", bos.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void aliasBuiltinUndefinedReturnsOne() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(1, executor.execute(this.parse("alias nonexistent")));
+    }
+
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }

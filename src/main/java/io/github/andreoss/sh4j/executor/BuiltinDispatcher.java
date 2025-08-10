@@ -64,6 +64,7 @@ final class BuiltinDispatcher {
         this.register("umask", BuiltinDispatcher::doUmask);
         this.register("shift", BuiltinDispatcher::doShift);
         this.register("read", BuiltinDispatcher::doRead);
+        this.register("alias", BuiltinDispatcher::doAlias);
     }
 
     /**
@@ -875,11 +876,7 @@ final class BuiltinDispatcher {
         for (int idx = 0; idx < line.length(); idx = idx + 1) {
             final char ch = line.charAt(idx);
             if (escaped) {
-                if (ch == '\n') {
-                    out.append('\n');
-                } else {
-                    out.append(ch);
-                }
+                out.append(ch);
                 escaped = false;
             } else if (ch == '\\') {
                 escaped = true;
@@ -954,5 +951,73 @@ final class BuiltinDispatcher {
             out.append(fields.get(idx));
         }
         return out.toString();
+    }
+
+    /**
+     * Implementation of {@code alias [name[=value]...]}.
+     * POSIX 2.14: without args, prints all aliases.
+     * With name=value, sets an alias. With plain name, prints that alias.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 if any named alias is undefined
+     */
+    private static int doAlias(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final Map<String, String> aliases = self.aliases();
+        int code = 0;
+        final boolean hasArgs = !args.isEmpty() || !assigns.isEmpty();
+        if (!hasArgs) {
+            for (final Map.Entry<String, String> entry : aliases.entrySet()) {
+                self.outStream().println(
+                    entry.getKey() + "='" + entry.getValue() + "'"
+                );
+            }
+        } else {
+            for (final String arg : args) {
+                code = applyAliasArg(self, aliases, arg, code);
+            }
+            for (final String assign : assigns) {
+                code = applyAliasArg(self, aliases, assign, code);
+            }
+        }
+        return code;
+    }
+
+    /**
+     * Processes a single alias argument (name or name=value).
+     * @param self    Builtin context (for printing)
+     * @param aliases The alias table
+     * @param arg     The argument text
+     * @param code    Current exit code
+     * @return Updated exit code
+     */
+    private static int applyAliasArg(
+        final BuiltinContext self, final Map<String, String> aliases,
+        final String arg, final int code
+    ) {
+        int result = code;
+        final int eqIdx = arg.indexOf('=');
+        if (eqIdx >= 0) {
+            String value = arg.substring(eqIdx + 1);
+            if (value.length() >= 2
+                && ((value.startsWith("'") && value.endsWith("'"))
+                || (value.startsWith("\"") && value.endsWith("\"")))) {
+                value = value.substring(1, value.length() - 1);
+            }
+            aliases.put(arg.substring(0, eqIdx), value);
+        } else if (aliases.containsKey(arg)) {
+            self.outStream().println(
+                arg + "='" + aliases.get(arg) + "'"
+            );
+        } else {
+            result = 1;
+        }
+        return result;
     }
 }
