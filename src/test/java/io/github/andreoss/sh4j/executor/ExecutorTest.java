@@ -3338,6 +3338,31 @@ final class ExecutorTest {
         Assertions.assertEquals(1, executor.execute(this.parse("alias nonexistent")));
     }
 
+    @Test
+    void unaliasRemovesOne() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        Assertions.assertEquals(0, executor.execute(this.parse("unalias ll")));
+        Assertions.assertFalse(executor.aliases().containsKey("ll"));
+        Assertions.assertTrue(executor.aliases().containsKey("gg"));
+    }
+
+    @Test
+    void unaliasAllRemovesAll() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        Assertions.assertEquals(0, executor.execute(this.parse("unalias -a")));
+        Assertions.assertTrue(executor.aliases().isEmpty());
+    }
+
+    @Test
+    void unaliasUnknownReturnsOne() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(1, executor.execute(this.parse("unalias nonexistent")));
+    }
+
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }

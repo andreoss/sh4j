@@ -65,6 +65,7 @@ final class BuiltinDispatcher {
         this.register("shift", BuiltinDispatcher::doShift);
         this.register("read", BuiltinDispatcher::doRead);
         this.register("alias", BuiltinDispatcher::doAlias);
+        this.register("unalias", BuiltinDispatcher::doUnalias);
     }
 
     /**
@@ -1019,5 +1020,43 @@ final class BuiltinDispatcher {
             result = 1;
         }
         return result;
+    }
+
+    /**
+     * Implementation of {@code unalias [-a] name...}.
+     * POSIX 2.14: removes named aliases, or all aliases with -a.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 if any named alias doesn't exist
+     */
+    private static int doUnalias(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final Map<String, String> aliases = self.aliases();
+        int code = 0;
+        boolean all = false;
+        int idx = 0;
+        if (!args.isEmpty() && "-a".equals(args.get(0))) {
+            all = true;
+            idx = 1;
+        }
+        if (all) {
+            aliases.clear();
+        } else {
+            for (; idx < args.size(); idx = idx + 1) {
+                final String name = args.get(idx);
+                if (aliases.containsKey(name)) {
+                    aliases.remove(name);
+                } else {
+                    code = 1;
+                }
+            }
+        }
+        return code;
     }
 }
