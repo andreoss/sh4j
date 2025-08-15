@@ -3363,6 +3363,59 @@ final class ExecutorTest {
         Assertions.assertEquals(1, executor.execute(this.parse("unalias nonexistent")));
     }
 
+    @Test
+    void getoptsParsesSimpleFlag() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, List.of("sh", "-a", "file"));
+        Assertions.assertEquals(
+            0, executor.execute(this.parse("getopts ab: opt"))
+        );
+        Assertions.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals("", executor.getVariable("OPTARG"));
+    }
+
+    @Test
+    void getoptsParsesFlagWithArg() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, List.of("sh", "-b", "val", "file"));
+        Assertions.assertEquals(
+            0, executor.execute(this.parse("getopts ab: opt"))
+        );
+        Assertions.assertEquals("b", executor.getVariable("opt"));
+        Assertions.assertEquals("val", executor.getVariable("OPTARG"));
+    }
+
+    @Test
+    void getoptsReturnsOneWhenDone() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, List.of("sh", "file"));
+        Assertions.assertEquals(
+            1, executor.execute(this.parse("getopts ab: opt"))
+        );
+    }
+
+    @Test
+    void getoptsParsesMultipleFlags() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, List.of("sh", "-a", "-b", "val", "file"));
+        Assertions.assertEquals(
+            0, executor.execute(this.parse("getopts ab: opt"))
+        );
+        Assertions.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals(
+            0, executor.execute(this.parse("getopts ab: opt"))
+        );
+        Assertions.assertEquals("b", executor.getVariable("opt"));
+        Assertions.assertEquals("val", executor.getVariable("OPTARG"));
+        Assertions.assertEquals(
+            1, executor.execute(this.parse("getopts ab: opt"))
+        );
+    }
+
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }

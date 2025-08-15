@@ -66,6 +66,7 @@ final class BuiltinDispatcher {
         this.register("read", BuiltinDispatcher::doRead);
         this.register("alias", BuiltinDispatcher::doAlias);
         this.register("unalias", BuiltinDispatcher::doUnalias);
+        this.register("getopts", BuiltinDispatcher::doGetopts);
     }
 
     /**
@@ -1058,5 +1059,135 @@ final class BuiltinDispatcher {
             }
         }
         return code;
+    }
+
+    /**
+     * Implementation of {@code getopts optstring var [args...]}.
+     * POSIX 2.14: parses option characters from positional parameters
+     * (or optional args). Uses OPTIND/OPTARG/OPTERR env vars for state.
+     * @param self    Builtin context
+     * @param args    Args: optstring, var, optional positional replacement
+     * @param env     Environment for OPTIND/OPTARG access
+     * @param assigns Inline assignments (unused)
+     * @return 0 if an option was found, 1 if all options processed
+     */
+    private static int doGetopts(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        if (args.size() < 2) {
+            return 1;
+        }
+        final String optstring = args.get(0);
+        final String varName = args.get(1);
+        final List<String> pargs;
+        final boolean usePositional;
+        if (args.size() > 2) {
+            pargs = args.subList(2, args.size());
+            usePositional = false;
+        } else {
+            final List<String> pos = self.positionalParamsList();
+            pargs = pos.subList(1, pos.size());
+            usePositional = true;
+        }
+        final Map<String, String> environment = self.environmentMap();
+        int optind;
+        try {
+            optind = Integer.parseInt(environment.getOrDefault("OPTIND", "1"));
+        } catch (final NumberFormatException ex) {
+            optind = 1;
+        }
+        if (optind < 1) {
+            optind = 1;
+        }
+        if (optind > pargs.size()) {
+            environment.put(varName, "?");
+            environment.put("OPTIND", String.valueOf(pargs.size() + 1));
+            return 1;
+        }
+        final String current = pargs.get(optind - 1);
+        if ("--".equals(current)) {
+            environment.put("OPTIND", String.valueOf(optind + 1));
+            environment.put(varName, "?");
+            return 1;
+        }
+        if (current.length() < 2 || current.charAt(0) != '-') {
+            environment.put(varName, "?");
+            return 1;
+        }
+        int optpos = environment.containsKey("OPTIND_POS")
+            ? Integer.parseInt(environment.get("OPTIND_POS")) : 1;
+        if (optpos >= current.length()) {
+            optind = optind + 1;
+            optpos = 1;
+            environment.put("OPTIND", String.valueOf(optind));
+            if (optind > pargs.size()) {
+                environment.put(varName, "?");
+                environment.remove("OPTIND_POS");
+                return 1;
+            }
+            final String next = pargs.get(optind - 1);
+            if (next.length() < 2 || next.charAt(0) != '-') {
+                environment.put(varName, "?");
+                environment.remove("OPTIND_POS");
+                return 1;
+            }
+            environment.put("OPTIND_POS", String.valueOf(1));
+            optpos = 1;
+        }
+        final char optchar = current.charAt(optpos);
+        environment.put("OPTIND_POS", String.valueOf(optpos + 1));
+        final int optIdx = optstring.indexOf(optchar);
+        if (optIdx < 0) {
+            if (optstring.length() > 0 && optstring.charAt(0) == ':') {
+                environment.put(varName, "?");
+                environment.put("OPTARG", String.valueOf(optchar));
+            } else {
+                self.errStream().println(
+                    "sh: illegal option -- " + optchar
+                );
+                environment.put(varName, "?");
+                environment.put("OPTARG", String.valueOf(optchar));
+            }
+            return 0;
+        }
+        final boolean takesArg = optIdx + 1 < optstring.length()
+            && optstring.charAt(optIdx + 1) == ':';
+        if (takesArg) {
+            environment.put("OPTIND", String.valueOf(optind + 1));
+            if (optpos + 1 < current.length()) {
+                environment.put(
+                    "OPTARG", current.substring(optpos + 1)
+                );
+            } else if (optind < pargs.size()) {
+                environment.put(
+                    "OPTARG", pargs.get(optind)
+                );
+                environment.put("OPTIND", String.valueOf(optind + 2));
+            } else {
+                if (optstring.length() > 0 && optstring.charAt(0) == ':') {
+                    environment.put(varName, ":");
+                } else {
+                    self.errStream().println(
+                        "sh: option requires an argument -- " + optchar
+                    );
+                    environment.put(varName, "?");
+                }
+                environment.put("OPTARG", "");
+                environment.remove("OPTIND_POS");
+                return 0;
+            }
+            environment.remove("OPTIND_POS");
+        } else {
+            environment.put("OPTARG", "");
+        }
+        environment.put(varName, String.valueOf(optchar));
+        if (!takesArg && optpos + 1 >= current.length()) {
+            environment.put("OPTIND", String.valueOf(optind + 1));
+            environment.remove("OPTIND_POS");
+        }
+        return 0;
     }
 }
