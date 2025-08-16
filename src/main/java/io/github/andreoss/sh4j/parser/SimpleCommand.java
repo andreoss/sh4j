@@ -22,6 +22,8 @@ public final class SimpleCommand extends Node {
     private final List<Redirection> redirections;
     /** Inline {@code KEY=VALUE} assignments in source order. */
     private final List<String> assignments;
+    /** 1-based source line number where this command starts. */
+    private int lineNumber;
 
     /**
      * Creates a simple-command node.
@@ -33,6 +35,7 @@ public final class SimpleCommand extends Node {
         this.arguments = new ArrayList<>();
         this.redirections = new ArrayList<>();
         this.assignments = new ArrayList<>();
+        this.lineNumber = 1;
     }
 
     /**
@@ -40,6 +43,21 @@ public final class SimpleCommand extends Node {
      */
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * @return 1-based source line number
+     */
+    public int getLineNumber() {
+        return this.lineNumber;
+    }
+
+    /**
+     * Sets the source line number.
+     * @param line 1-based line number
+     */
+    public void setLineNumber(final int line) {
+        this.lineNumber = line;
     }
 
     /**
@@ -85,5 +103,20 @@ public final class SimpleCommand extends Node {
      */
     public void addAssignment(final String assignment) {
         this.assignments.add(assignment);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder out = new StringBuilder();
+        if (this.name != null) {
+            out.append(this.name);
+        }
+        for (final String arg : this.arguments) {
+            if (out.length() > 0) {
+                out.append(' ');
+            }
+            out.append(arg);
+        }
+        return out.toString();
     }
 }

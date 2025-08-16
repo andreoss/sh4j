@@ -67,6 +67,12 @@ final class BuiltinDispatcher {
         this.register("alias", BuiltinDispatcher::doAlias);
         this.register("unalias", BuiltinDispatcher::doUnalias);
         this.register("getopts", BuiltinDispatcher::doGetopts);
+        this.register("jobs", BuiltinDispatcher::doJobs);
+        this.register("bg", BuiltinDispatcher::doBg);
+        this.register("fg", BuiltinDispatcher::doFg);
+        this.register("fc", BuiltinDispatcher::doFc);
+        this.register("set", BuiltinDispatcher::doSet);
+        this.register("readonly", BuiltinDispatcher::doReadonly);
     }
 
     /**
@@ -282,8 +288,8 @@ final class BuiltinDispatcher {
         for (int idx = start; idx < args.size(); idx = idx + 1) {
             final String arg = args.get(idx);
             final WordExpander.ExpansionResult res = WordExpander.expandVariables(arg, env, self);
-            error = error || res.error();
-            final String expanded = res.value();
+            error = error || res.error;
+            final String expanded = res.value;
             if (WordExpander.isQuoted(arg)) {
                 if (!firstField) {
                     self.outStream().print(" ");
@@ -404,11 +410,11 @@ final class BuiltinDispatcher {
             final WordExpander.ExpansionResult res = WordExpander.expandVariables(
                 args.get(0), env, self
             );
-            if (res.error()) {
+            if (res.error) {
                 code = 1;
             } else {
                 try {
-                    code = Integer.parseInt(res.value());
+                    code = Integer.parseInt(res.value);
                 } catch (final NumberFormatException ex) {
                     code = 1;
                 }
@@ -1187,6 +1193,390 @@ final class BuiltinDispatcher {
         if (!takesArg && optpos + 1 >= current.length()) {
             environment.put("OPTIND", String.valueOf(optind + 1));
             environment.remove("OPTIND_POS");
+        }
+        return 0;
+    }
+
+    /**
+     * Parses a job id that may be specified as {@code %n} or as a bare
+     * decimal number.
+     * @param arg The argument string
+     * @return The integer job id, or -1 when the input is not valid
+     */
+    private static int parseJobId(final String arg) {
+        final String digits;
+        if (arg.startsWith("%")) {
+            digits = arg.substring(1);
+        } else {
+            digits = arg;
+        }
+        try {
+            return Integer.parseInt(digits);
+        } catch (final NumberFormatException ex) {
+            return -1;
+        }
+    }
+
+    /**
+     * Implementation of {@code jobs [%n...]}.
+     * POSIX 2.14: without args, lists all background jobs with their
+     * state and command line.
+     * @param self    Builtin context
+     * @param args    Args after the command name (optional job ids)
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0
+     */
+    private static int doJobs(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final JobManager mgr = self.jobManager();
+        final List<JobManager.Job> all;
+        if (args.isEmpty()) {
+            all = mgr.listJobs();
+        } else {
+            all = new ArrayList<>();
+            for (final String arg : args) {
+                final int id = parseJobId(arg);
+                if (id > 0) {
+                    final JobManager.Job job = mgr.getJob(id);
+                    if (job != null) {
+                        all.add(job);
+                    }
+                }
+            }
+        }
+        for (final JobManager.Job job : all) {
+            final String state;
+            switch (job.state) {
+                case RUNNING:
+                    state = "Running";
+                    break;
+                case DONE:
+                    state = "Done";
+                    break;
+                default:
+                    state = "Stopped";
+                    break;
+            }
+            self.outStream().printf("[%d] %s %s%n", job.id, state, job.command);
+        }
+        return 0;
+    }
+
+    /**
+     * Implementation of {@code bg [%n...]}.
+     * POSIX 2.14: resumes suspended jobs in the background. Without args,
+     * operates on the most recent job. Prints a confirmation line.
+     * @param self    Builtin context
+     * @param args    Args after the command name (optional job ids)
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 if no matching job
+     */
+    private static int doBg(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final JobManager mgr = self.jobManager();
+        final List<Integer> ids = new ArrayList<>();
+        if (args.isEmpty()) {
+            final List<JobManager.Job> all = mgr.listJobs();
+            if (all.isEmpty()) {
+                self.errStream().println("sh: bg: no current job");
+                return 1;
+            }
+            ids.add(all.get(all.size() - 1).id);
+        } else {
+            for (final String arg : args) {
+                final int id = parseJobId(arg);
+                if (id <= 0 || mgr.getJob(id) == null) {
+                    self.errStream().println("sh: bg: " + arg + ": no such job");
+                    return 1;
+                }
+                ids.add(id);
+            }
+        }
+        for (final int id : ids) {
+            final JobManager.Job job = mgr.getJob(id);
+            if (job != null && job.state == JobManager.State.STOPPED) {
+                job.state = JobManager.State.RUNNING;
+            }
+            self.outStream().printf("[%d] %s%n", id, job != null ? job.command : "");
+        }
+        return 0;
+    }
+
+    /**
+     * Implementation of {@code fg [%n]}.
+     * POSIX 2.14: brings a background job to the foreground, waiting for
+     * it to complete. Without args, operates on the most recent job.
+     * @param self    Builtin context
+     * @param args    Args after the command name (optional job id)
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return The job's exit code, or 1 on error
+     */
+    private static int doFg(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final JobManager mgr = self.jobManager();
+        final int id;
+        if (args.isEmpty()) {
+            final List<JobManager.Job> all = mgr.listJobs();
+            if (all.isEmpty()) {
+                self.errStream().println("sh: fg: no current job");
+                return 1;
+            }
+            id = all.get(all.size() - 1).id;
+        } else {
+            id = parseJobId(args.get(0));
+            if (id <= 0) {
+                self.errStream().println("sh: fg: " + args.get(0) + ": no such job");
+                return 1;
+            }
+        }
+        final JobManager.Job job = mgr.getJob(id);
+        if (job == null) {
+            self.errStream().printf("sh: fg: %d: no such job%n", id);
+            return 1;
+        }
+        self.outStream().println(job.command);
+        return mgr.waitForJob(id);
+    }
+
+    /**
+     * Implementation of {@code fc [-l] [-n] [-s pat=rep] [first [last]]}.
+     * POSIX 2.14: lists or re-executes history entries.
+     * {@code -l} lists entries (default), {@code -n} suppresses numbers,
+     * {@code -s pat=rep} substitutes and re-executes the last command.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for variable lookup
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on error
+     */
+    private static int doFc(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        boolean listMode = true;
+        boolean noNumbers = false;
+        String substitute = null;
+        int idx = 0;
+        while (idx < args.size() && args.get(idx).startsWith("-")
+            && !args.get(idx).matches("-\\d+")) {
+            final String flag = args.get(idx);
+            for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
+                final char ch = flag.charAt(fidx);
+                if (ch == 'l') {
+                    listMode = true;
+                } else if (ch == 'n') {
+                    noNumbers = true;
+                } else if (ch == 'e') {
+                    idx = idx + 1;
+                    if (idx >= args.size()) {
+                        self.errStream().println("sh: fc: -e requires argument");
+                        return 1;
+                    }
+                } else if (ch == 's') {
+                    listMode = false;
+                    if (idx + 1 < args.size() && args.get(idx + 1).contains("=")) {
+                        substitute = args.get(idx + 1);
+                        idx = idx + 2;
+                    } else if (!assigns.isEmpty()) {
+                        substitute = assigns.get(0);
+                    } else {
+                        self.errStream().println("sh: fc: -s requires pat=rep");
+                        return 1;
+                    }
+                    fidx = flag.length();
+                } else {
+                    self.errStream().println("sh: fc: unknown option -" + ch);
+                    return 1;
+                }
+            }
+            idx = idx + 1;
+        }
+        final CommandHistory hist = self.history();
+        if (hist.size() == 0) {
+            self.errStream().println("sh: fc: history is empty");
+            return 1;
+        }
+        int first;
+        if (idx < args.size()) {
+            first = parseFcNumber(args.get(idx));
+            idx = idx + 1;
+        } else {
+            first = hist.lastNumber() - 15;
+            if (first < 1) {
+                first = 1;
+            }
+        }
+        final int last;
+        if (idx < args.size()) {
+            last = parseFcNumber(args.get(idx));
+        } else {
+            last = hist.lastNumber();
+        }
+        if (substitute != null) {
+            return fcSubstitute(self, hist, substitute, first, env);
+        }
+        if (listMode) {
+            return fcList(self, hist, first, last, noNumbers);
+        }
+        return 0;
+    }
+
+    /**
+     * Parses an {@code fc} range argument (number or negative for relative).
+     * @param arg The argument string
+     * @return The resolved history number, or -1 on parse error
+     */
+    private static int parseFcNumber(final String arg) {
+        try {
+            return Integer.parseInt(arg);
+        } catch (final NumberFormatException ex) {
+            return -1;
+        }
+    }
+
+    /**
+     * Lists history entries in the given range.
+     * @param self      Builtin context for output
+     * @param hist      The command history
+     * @param first     Start of range
+     * @param last      End of range
+     * @param noNumbers True to suppress history numbers
+     * @return 0
+     */
+    private static int fcList(
+        final BuiltinContext self, final CommandHistory hist,
+        final int first, final int last, final boolean noNumbers
+    ) {
+        final List<CommandHistory.Entry> entries = hist.list(first, last);
+        for (final CommandHistory.Entry entry : entries) {
+            if (noNumbers) {
+                self.outStream().println("\t" + entry.command());
+            } else {
+                self.outStream().printf("%d\t%s%n", entry.number(), entry.command());
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Substitutes a pattern in a history command and re-executes it.
+     * @param self      Builtin context for execution
+     * @param hist      The command history
+     * @param pattern   The substitution pattern (old=new)
+     * @param number    History number to operate on
+     * @param env       Environment for variable lookup
+     * @return 0 on success, 1 on error
+     */
+    private static int fcSubstitute(
+        final BuiltinContext self, final CommandHistory hist,
+        final String pattern, final int number, final Map<String, String> env
+    ) {
+        final int eqIdx = pattern.indexOf('=');
+        if (eqIdx < 0) {
+            self.errStream().println("sh: fc: invalid substitution pattern");
+            return 1;
+        }
+        final String oldStr = pattern.substring(0, eqIdx);
+        final String newStr = pattern.substring(eqIdx + 1);
+        final String cmd = hist.get(number);
+        if (cmd == null) {
+            self.errStream().printf("sh: fc: %d: no such history entry%n", number);
+            return 1;
+        }
+        final String replaced = cmd.replace(oldStr, newStr);
+        self.outStream().println(replaced);
+        final ListNode ast = new Parser(
+            new Lexer(new CharReader(replaced))
+        ).parse();
+        return self.execute(ast);
+    }
+
+    /**
+     * Implementation of {@code set [-efux] [--] [arg...]}.
+     * POSIX 2.14: sets shell options and positional parameters.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0
+     */
+    private static int doSet(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        String flags = self.shellFlags();
+        int idx = 0;
+        while (idx < args.size() && args.get(idx).startsWith("-")
+            && !"--".equals(args.get(idx))) {
+            final String flag = args.get(idx);
+            for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
+                final char ch = flag.charAt(fidx);
+                if (flags.indexOf(ch) < 0) {
+                    flags = flags + ch;
+                }
+            }
+            idx = idx + 1;
+        }
+        if (idx < args.size() && "--".equals(args.get(idx))) {
+            idx = idx + 1;
+        }
+        self.setShellFlags(flags);
+        if (idx < args.size()) {
+            self.setPositionalParams(args.subList(idx, args.size()));
+        }
+        return 0;
+    }
+
+    /**
+     * Implementation of {@code readonly [-p] [name[=value]...]}.
+     * POSIX 2.14: marks variables as read-only.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for variable lookup
+     * @param assigns Inline assignments (unused)
+     * @return 0 on success, 1 on error
+     */
+    private static int doReadonly(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        if (args.isEmpty()) {
+            return 0;
+        }
+        if ("-p".equals(args.get(0))) {
+            return 0;
+        }
+        for (final String arg : args) {
+            final int eqIdx = arg.indexOf('=');
+            if (eqIdx >= 0) {
+                final String name = arg.substring(0, eqIdx);
+                final String value = arg.substring(eqIdx + 1);
+                env.put(name, value);
+                env.put(name + "_READONLY", "1");
+            } else {
+                env.put(arg + "_READONLY", "1");
+            }
         }
         return 0;
     }

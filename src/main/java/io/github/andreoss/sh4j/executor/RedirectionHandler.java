@@ -44,17 +44,35 @@ public final class RedirectionHandler {
     /**
      * The new and saved stdout/stderr pair returned by
      * {@link #redirectOutputForBuiltin(List, PrintStream, PrintStream, UnaryOperator)}.
-     * @param out      The new live stdout
-     * @param err      The new live stderr
-     * @param savedOut The pre-call stdout (null when not swapped)
-     * @param savedErr The pre-call stderr (null when not swapped)
      */
-    public record StreamSwap(
-        PrintStream out,
-        PrintStream err,
-        PrintStream savedOut,
-        PrintStream savedErr
-    ) {
+    public static final class StreamSwap {
+        /** The new live stdout. */
+        public final PrintStream out;
+        /** The new live stderr. */
+        public final PrintStream err;
+        /** The pre-call stdout (null when not swapped). */
+        public final PrintStream savedOut;
+        /** The pre-call stderr (null when not swapped). */
+        public final PrintStream savedErr;
+
+        /**
+         * Creates a stream swap record.
+         * @param out      The new live stdout
+         * @param err      The new live stderr
+         * @param savedOut The pre-call stdout (null when not swapped)
+         * @param savedErr The pre-call stderr (null when not swapped)
+         */
+        public StreamSwap(
+            final PrintStream out,
+            final PrintStream err,
+            final PrintStream savedOut,
+            final PrintStream savedErr
+        ) {
+            this.out = out;
+            this.err = err;
+            this.savedOut = savedOut;
+            this.savedErr = savedErr;
+        }
     }
 
     /**

@@ -6,101 +6,101 @@ package io.github.andreoss.sh4j.lexer;
 
 import java.io.IOException;
 import java.io.Reader;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for CharReader.
  * @since 1.0
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
-final class CharReaderTest {
+public final class CharReaderTest {
 
     @Test
-    void peekReturnsFirstChar() {
-        Assertions.assertEquals('a', new CharReader("a").peek());
+    public void peekReturnsFirstChar() {
+        Assert.assertEquals('a', new CharReader("a").peek());
     }
 
     @Test
-    void consumeReturnsCharsInOrder() {
+    public void consumeReturnsCharsInOrder() {
         final CharReader result = new CharReader("ab");
-        Assertions.assertEquals('a', result.consume());
-        Assertions.assertEquals('b', result.consume());
+        Assert.assertEquals('a', result.consume());
+        Assert.assertEquals('b', result.consume());
     }
 
     @Test
-    void consumeAdvancesPosition() {
+    public void consumeAdvancesPosition() {
         final CharReader result = new CharReader("ab");
         result.consume();
-        Assertions.assertEquals('b', result.peek());
+        Assert.assertEquals('b', result.peek());
     }
 
     @Test
-    void isEofReturnsFalseWhenCharsRemain() {
-        Assertions.assertFalse(new CharReader("abc").isEof());
+    public void isEofReturnsFalseWhenCharsRemain() {
+        Assert.assertFalse(new CharReader("abc").isEof());
     }
 
     @Test
-    void eofOnEmptyString() {
+    public void eofOnEmptyString() {
         final CharReader result = new CharReader("");
-        Assertions.assertTrue(result.isEof());
-        Assertions.assertEquals(-1, result.peek());
+        Assert.assertTrue(result.isEof());
+        Assert.assertEquals(-1, result.peek());
     }
 
     @Test
-    void eofAfterFullConsume() {
+    public void eofAfterFullConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        Assertions.assertTrue(result.isEof());
-        Assertions.assertEquals(-1, result.peek());
+        Assert.assertTrue(result.isEof());
+        Assert.assertEquals(-1, result.peek());
     }
 
     @Test
-    void consumeEofReturnsMinusOne() {
-        Assertions.assertEquals(-1, new CharReader("").consume());
+    public void consumeEofReturnsMinusOne() {
+        Assert.assertEquals(-1, new CharReader("").consume());
     }
 
     @Test
-    void lineColumnInitialValues() {
+    public void lineColumnInitialValues() {
         final CharReader result = new CharReader("a");
-        Assertions.assertEquals(1, result.getLine());
-        Assertions.assertEquals(0, result.getColumn());
+        Assert.assertEquals(1, result.getLine());
+        Assert.assertEquals(0, result.getColumn());
     }
 
     @Test
-    void lineColumnAfterConsume() {
+    public void lineColumnAfterConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        Assertions.assertEquals(1, result.getLine());
-        Assertions.assertEquals(1, result.getColumn());
+        Assert.assertEquals(1, result.getLine());
+        Assert.assertEquals(1, result.getColumn());
     }
 
     @Test
-    void newlineIncrementsLineAndResetsColumn() {
+    public void newlineIncrementsLineAndResetsColumn() {
         final CharReader result = new CharReader(String.format("%n"));
         result.consume();
-        Assertions.assertEquals(2, result.getLine());
-        Assertions.assertEquals(0, result.getColumn());
+        Assert.assertEquals(2, result.getLine());
+        Assert.assertEquals(0, result.getColumn());
     }
 
     @Test
-    void multipleLines() {
+    public void multipleLines() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        Assertions.assertEquals(1, result.getLine());
-        Assertions.assertEquals(0, result.getColumn());
+        Assert.assertEquals(1, result.getLine());
+        Assert.assertEquals(0, result.getColumn());
         result.consume();
-        Assertions.assertEquals(1, result.getLine());
-        Assertions.assertEquals(1, result.getColumn());
+        Assert.assertEquals(1, result.getLine());
+        Assert.assertEquals(1, result.getColumn());
         result.consume();
-        Assertions.assertEquals(2, result.getLine());
-        Assertions.assertEquals(0, result.getColumn());
+        Assert.assertEquals(2, result.getLine());
+        Assert.assertEquals(0, result.getColumn());
         result.consume();
-        Assertions.assertEquals(2, result.getLine());
-        Assertions.assertEquals(1, result.getColumn());
+        Assert.assertEquals(2, result.getLine());
+        Assert.assertEquals(1, result.getColumn());
     }
 
     @Test
-    void ioExceptionTreatedAsEof() {
+    public void ioExceptionTreatedAsEof() {
         final CharReader reader = new CharReader(
             new Reader() {
 
@@ -123,18 +123,18 @@ final class CharReaderTest {
                 }
             }
         );
-        Assertions.assertTrue(reader.isEof());
-        Assertions.assertEquals(-1, reader.peek());
-        Assertions.assertEquals(-1, reader.consume());
+        Assert.assertTrue(reader.isEof());
+        Assert.assertEquals(-1, reader.peek());
+        Assert.assertEquals(-1, reader.consume());
     }
 
     @Test
-    void eofStaysEofOnMultipleCalls() {
+    public void eofStaysEofOnMultipleCalls() {
         final CharReader result = new CharReader("");
-        Assertions.assertTrue(result.isEof());
-        Assertions.assertEquals(-1, result.peek());
-        Assertions.assertEquals(-1, result.consume());
-        Assertions.assertTrue(result.isEof());
-        Assertions.assertEquals(-1, result.peek());
+        Assert.assertTrue(result.isEof());
+        Assert.assertEquals(-1, result.peek());
+        Assert.assertEquals(-1, result.consume());
+        Assert.assertTrue(result.isEof());
+        Assert.assertEquals(-1, result.peek());
     }
 }

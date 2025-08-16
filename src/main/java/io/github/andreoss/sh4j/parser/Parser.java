@@ -5,6 +5,8 @@
 package io.github.andreoss.sh4j.parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -182,7 +184,7 @@ public final class Parser {
     }
 
     private Pipeline parsePipeline() {
-        return this.parsePipeline(Set.of());
+        return this.parsePipeline(new HashSet<String>());
     }
 
     private Pipeline parsePipeline(final Set<String> reservedTerminators) {
@@ -380,7 +382,7 @@ public final class Parser {
 
     private ListNode parseListUntilReserved(final String... reservedWordTerminators) {
         final ListNode list = new ListNode();
-        final Set<String> reserved = Set.of(reservedWordTerminators);
+        final Set<String> reserved = new HashSet<>(Arrays.asList(reservedWordTerminators));
         if (!this.isReservedWord(reservedWordTerminators)) {
             boolean done = false;
             while (!done) {
@@ -454,8 +456,10 @@ public final class Parser {
             cmd = new SimpleCommand("");
         } else {
             final String name = this.current.text();
+            final int line = this.current.line();
             this.consume();
             cmd = new SimpleCommand(name);
+            cmd.setLineNumber(line);
         }
         return cmd;
     }
@@ -467,10 +471,13 @@ public final class Parser {
             this.consume();
         }
         if (this.check(TokenType.WORD)) {
-            final SimpleCommand named = new SimpleCommand(this.current.text());
+            final String name = this.current.text();
+            final int line = this.current.line();
+            this.consume();
+            final SimpleCommand named = new SimpleCommand(name);
+            named.setLineNumber(line);
             named.getAssignments().addAll(cmd.getAssignments());
             cmd = named;
-            this.consume();
         }
         return cmd;
     }

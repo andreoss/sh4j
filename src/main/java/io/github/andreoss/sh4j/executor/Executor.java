@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,12 +80,14 @@ public class Executor implements BuiltinContext {
     private boolean wordExpansionError;
     /** Alias table (alias name → replacement text). */
     private Map<String, String> aliases;
+    /** Command history for fc built-in. */
+    private final CommandHistory history;
 
     /**
      * Builds an executor seeded with the current process environment.
      */
     public Executor() {
-        this(System.getenv(), List.of("sh"));
+        this(System.getenv(), Arrays.asList("sh"));
     }
 
     /**
@@ -92,7 +95,7 @@ public class Executor implements BuiltinContext {
      * @param environment Environment variables (copied, not aliased)
      */
     public Executor(final Map<String, String> environment) {
-        this(environment, List.of("sh"));
+        this(environment, Arrays.asList("sh"));
     }
 
     /**
@@ -119,6 +122,7 @@ public class Executor implements BuiltinContext {
         this.in = System.in;
         this.aliases = new HashMap<>();
         this.wordExpansionError = false;
+        this.history = new CommandHistory();
         this.setDefaults();
     }
 
@@ -228,7 +232,10 @@ public class Executor implements BuiltinContext {
             } else {
                 final int exitCode = this.executePipeline(pipeline);
                 this.lastExitCode = exitCode;
+                this.history.add(pipelineToString(pipeline));
                 if (!shouldContinue(sep, exitCode)) {
+                    stopped = true;
+                } else if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0) {
                     stopped = true;
                 }
             }
@@ -266,7 +273,10 @@ public class Executor implements BuiltinContext {
     private static String pipelineToString(final Pipeline pipeline) {
         final StringBuilder line = new StringBuilder();
         for (final Node node : pipeline.getCommands()) {
-            if (!line.isEmpty()) {
+            if (node == null) {
+                continue;
+            }
+            if (line.length() > 0) {
                 line.append(" | ");
             }
             line.append(node.toString());
@@ -309,21 +319,30 @@ public class Executor implements BuiltinContext {
 
     private int executeNode(final Node node) {
         final int code;
-        if (node instanceof SimpleCommand cmd) {
+        if (node instanceof SimpleCommand) {
+            final SimpleCommand cmd = (SimpleCommand) node;
+            this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
             code = this.executeCommand(cmd);
-        } else if (node instanceof Subshell sub) {
+        } else if (node instanceof Subshell) {
+            final Subshell sub = (Subshell) node;
             code = new Executor(new HashMap<>(this.environment)).execute(sub.getList());
-        } else if (node instanceof Grouping group) {
+        } else if (node instanceof Grouping) {
+            final Grouping group = (Grouping) node;
             code = this.execute(group.getList());
-        } else if (node instanceof IfNode ifNode) {
+        } else if (node instanceof IfNode) {
+            final IfNode ifNode = (IfNode) node;
             code = this.runIf(ifNode);
-        } else if (node instanceof ForNode forNode) {
+        } else if (node instanceof ForNode) {
+            final ForNode forNode = (ForNode) node;
             code = this.runFor(forNode);
-        } else if (node instanceof WhileNode whileNode) {
+        } else if (node instanceof WhileNode) {
+            final WhileNode whileNode = (WhileNode) node;
             code = this.runWhile(whileNode);
-        } else if (node instanceof CaseNode caseNode) {
+        } else if (node instanceof CaseNode) {
+            final CaseNode caseNode = (CaseNode) node;
             code = this.runCase(caseNode);
-        } else if (node instanceof FunctionNode fnNode) {
+        } else if (node instanceof FunctionNode) {
+            final FunctionNode fnNode = (FunctionNode) node;
             this.functions.put(fnNode.getName(), fnNode);
             code = 0;
         } else {
@@ -409,7 +428,9 @@ public class Executor implements BuiltinContext {
         final List<Node> commands = pipeline.getCommands();
         final List<ProcessBuilder> builders = new ArrayList<>();
         for (final Node node : commands) {
-            if (node instanceof SimpleCommand cmd) {
+            if (node instanceof SimpleCommand) {
+                final SimpleCommand cmd = (SimpleCommand) node;
+                this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
                 String resolved = this.resolveCommand(cmd.getName());
                 if (resolved == null) {
                     resolved = cmd.getName();
@@ -499,18 +520,18 @@ public class Executor implements BuiltinContext {
             cmd.getRedirections(), this.out, this.err,
             text -> this.expandVariables(text, this.environment)
         );
-        this.out = swap.out();
-        this.err = swap.err();
+        this.out = swap.out;
+        this.err = swap.err;
         final Integer builtinResult = this.dispatcher.dispatch(
             name, this, cmd.getArguments(), cmdEnv, cmd.getAssignments()
         );
-        if (swap.savedOut() != null) {
+        if (swap.savedOut != null) {
             this.out.close();
-            this.out = swap.savedOut();
+            this.out = swap.savedOut;
         }
-        if (swap.savedErr() != null) {
+        if (swap.savedErr != null) {
             this.err.close();
-            this.err = swap.savedErr();
+            this.err = swap.savedErr;
         }
         final int code;
         if (builtinResult != null) {
@@ -628,15 +649,23 @@ public class Executor implements BuiltinContext {
 
     @Override
     public String getSpecialParam(final char name) {
-        return switch (name) {
-            case '?' -> String.valueOf(this.lastExitCode);
-            case '-' -> this.shellFlags;
-            case '$' -> String.valueOf(ProcessHandle.current().pid());
-            case '!' -> String.valueOf(this.lastBgPid);
-            case '#' -> String.valueOf(this.positionalParams.size() - 1);
-            case '@', '*' -> this.positionalParamsJoined();
-            default -> this.positionalParamForDigit(name);
-        };
+        switch (name) {
+            case '?':
+                return String.valueOf(this.lastExitCode);
+            case '-':
+                return this.shellFlags;
+            case '$':
+                return String.valueOf(ProcessHandle.current().pid());
+            case '!':
+                return String.valueOf(this.lastBgPid);
+            case '#':
+                return String.valueOf(this.positionalParams.size() - 1);
+            case '@':
+            case '*':
+                return this.positionalParamsJoined();
+            default:
+                return this.positionalParamForDigit(name);
+        }
     }
 
     private String positionalParamsJoined() {
@@ -805,6 +834,11 @@ public class Executor implements BuiltinContext {
     }
 
     @Override
+    public CommandHistory history() {
+        return this.history;
+    }
+
+    @Override
     public PrintStream outStream() {
         return this.out;
     }
@@ -832,5 +866,22 @@ public class Executor implements BuiltinContext {
     @Override
     public PrintStream errStream() {
         return this.err;
+    }
+
+    @Override
+    public String shellFlags() {
+        return this.shellFlags;
+    }
+
+    @Override
+    public void setShellFlags(final String flags) {
+        this.shellFlags = flags;
+    }
+
+    @Override
+    public void setPositionalParams(final List<String> params) {
+        this.positionalParams.clear();
+        this.positionalParams.add(this.positionalParams.get(0));
+        this.positionalParams.addAll(params);
     }
 }

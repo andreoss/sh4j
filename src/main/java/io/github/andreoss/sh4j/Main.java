@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.executor.Executor;
@@ -69,7 +70,7 @@ public final class Main {
      * @return The script's exit status
      */
     static int runScript(final String filename) {
-        return runScript(filename, List.of(filename));
+        return runScript(filename, Arrays.asList(filename));
     }
 
     /**
@@ -104,25 +105,120 @@ public final class Main {
      * @return Always 0; failures are surfaced via the prompt
      */
     static int interactive() {
+        return interactive(System.getenv("ENV"));
+    }
+
+    /**
+     * Runs the interactive REPL with a specific ENV startup file.
+     * @param envFile The ENV startup file path (may be null)
+     * @return Always 0; failures are surfaced via the prompt
+     */
+    static int interactive(final String envFile) {
         final Executor executor = new Executor();
+        if (envFile != null && !envFile.isEmpty()) {
+            runStartupFile(executor, envFile);
+        }
         final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         boolean running = true;
+        boolean needMore = false;
+        final StringBuilder buffer = new StringBuilder();
         while (running) {
-            System.out.print("$ ");
+            final String ps1 = executor.getVariable("PS1");
+            final String ps2 = executor.getVariable("PS2");
+            final String prompt = needMore
+                ? (ps2 != null ? ps2 : "> ")
+                : (ps1 != null ? ps1 : "$ ");
+            System.out.print(prompt);
             try {
                 final String line = reader.readLine();
                 if (line == null) {
                     running = false;
+                } else if (needMore) {
+                    buffer.append(line).append('\n');
+                    if (!isIncomplete(buffer.toString())) {
+                        needMore = false;
+                        executeLine(executor, buffer.toString());
+                        buffer.setLength(0);
+                    }
                 } else if (!line.trim().isEmpty()) {
-                    final Lexer lexer = new Lexer(new CharReader(line));
-                    final Parser parser = new Parser(lexer);
-                    final ListNode ast = parser.parse();
-                    executor.execute(ast);
+                    if (isIncomplete(line)) {
+                        needMore = true;
+                        buffer.setLength(0);
+                        buffer.append(line).append('\n');
+                    } else {
+                        executeLine(executor, line);
+                    }
                 }
             } catch (final IOException ex) {
                 running = false;
             }
         }
         return 0;
+    }
+
+    /**
+     * Executes a single command line in the interactive shell.
+     * @param executor The shell executor
+     * @param line The command line to execute
+     */
+    static void executeLine(final Executor executor, final String line) {
+        try {
+            final Lexer lexer = new Lexer(new CharReader(line));
+            final Parser parser = new Parser(lexer);
+            final ListNode ast = parser.parse();
+            executor.execute(ast);
+        } catch (final Exception ex) {
+            System.err.println("sh: parse error: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Checks if a command string is incomplete (needs more input).
+     * @param input The command text accumulated so far
+     * @return True when the input appears to be an incomplete command
+     */
+    static boolean isIncomplete(final String input) {
+        int singleQuotes = 0;
+        int doubleQuotes = 0;
+        boolean escaped = false;
+        for (int idx = 0; idx < input.length(); idx = idx + 1) {
+            final char ch = input.charAt(idx);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (ch == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (ch == '\'' && doubleQuotes % 2 == 0) {
+                singleQuotes = singleQuotes + 1;
+            } else if (ch == '"' && singleQuotes % 2 == 0) {
+                doubleQuotes = doubleQuotes + 1;
+            }
+        }
+        return singleQuotes % 2 != 0 || doubleQuotes % 2 != 0 || escaped;
+    }
+
+    /**
+     * Executes the ENV startup file if it exists.
+     * @param executor The executor to run the file with
+     * @param envFile  The path to the startup file
+     */
+    static void runStartupFile(final Executor executor, final String envFile) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(envFile))) {
+            final StringBuilder content = new StringBuilder();
+            String line = reader.readLine();
+            while (line != null) {
+                content.append(line).append('\n');
+                line = reader.readLine();
+            }
+            final Lexer lexer = new Lexer(new CharReader(content.toString()));
+            final Parser parser = new Parser(lexer);
+            final ListNode ast = parser.parse();
+            executor.execute(ast);
+        } catch (final IOException ex) {
+            System.err.println("sh: " + envFile + ": cannot open");
+        }
     }
 }

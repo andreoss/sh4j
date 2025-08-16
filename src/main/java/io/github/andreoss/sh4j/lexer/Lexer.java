@@ -125,18 +125,29 @@ public final class Lexer {
         final int chr = this.reader.peek();
         final int line = this.reader.getLine();
         final int col = this.reader.getColumn();
-        return switch (chr) {
-            case '&' -> this.tryAmpersand(line, col);
-            case '|' -> this.tryPipe(line, col);
-            case ';' -> this.trySemi(line, col);
-            case '<' -> this.tryLess(line, col);
-            case '>' -> this.tryGreater(line, col);
-            case '(' -> this.singleCharOp(TokenType.LPAREN, line, col);
-            case ')' -> this.singleCharOp(TokenType.RPAREN, line, col);
-            case '{' -> this.singleCharOp(TokenType.LBRACE, line, col);
-            case '}' -> this.singleCharOp(TokenType.RBRACE, line, col);
-            default -> null;
-        };
+        final Token result;
+        if (chr == '&') {
+            result = this.tryAmpersand(line, col);
+        } else if (chr == '|') {
+            result = this.tryPipe(line, col);
+        } else if (chr == ';') {
+            result = this.trySemi(line, col);
+        } else if (chr == '<') {
+            result = this.tryLess(line, col);
+        } else if (chr == '>') {
+            result = this.tryGreater(line, col);
+        } else if (chr == '(') {
+            result = this.singleCharOp(TokenType.LPAREN, line, col);
+        } else if (chr == ')') {
+            result = this.singleCharOp(TokenType.RPAREN, line, col);
+        } else if (chr == '{') {
+            result = this.singleCharOp(TokenType.LBRACE, line, col);
+        } else if (chr == '}') {
+            result = this.singleCharOp(TokenType.RBRACE, line, col);
+        } else {
+            result = null;
+        }
+        return result;
     }
 
     private Token singleCharOp(final TokenType type, final int line, final int col) {

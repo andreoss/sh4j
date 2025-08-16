@@ -9,6 +9,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +47,22 @@ public final class WordExpander {
     /**
      * The result of a word expansion: the produced text and whether a
      * sub-expansion (e.g. {@code ${var:?}}) flagged an error.
-     * @param value The expanded text
-     * @param error True when at least one sub-expansion failed
      */
-    public record ExpansionResult(String value, boolean error) {
+    public static final class ExpansionResult {
+        /** The expanded text. */
+        public final String value;
+        /** True when at least one sub-expansion failed. */
+        public final boolean error;
+
+        /**
+         * Creates an expansion result.
+         * @param value The expanded text
+         * @param error True when at least one sub-expansion failed
+         */
+        public ExpansionResult(final String value, final boolean error) {
+            this.value = value;
+            this.error = error;
+        }
     }
 
     /**
@@ -739,7 +752,7 @@ public final class WordExpander {
      */
     public static List<String> splitFields(final String value, final String ifs) {
         if (ifs == null || ifs.isEmpty()) {
-            return List.of(value);
+            return Arrays.asList(value);
         }
         final StringBuilder wsBuf = new StringBuilder();
         final StringBuilder nwsBuf = new StringBuilder();
@@ -907,7 +920,7 @@ public final class WordExpander {
         final String[] files = cwd.list();
         final List<String> matches;
         if (files == null) {
-            matches = List.of();
+            matches = new ArrayList<>();
         } else {
             final PathMatcher matcher =
                 FileSystems.getDefault().getPathMatcher("glob:" + pattern);

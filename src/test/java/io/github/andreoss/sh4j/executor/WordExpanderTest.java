@@ -4,143 +4,143 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for WordExpander.
  * @since 1.0
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
-final class WordExpanderTest {
+public final class WordExpanderTest {
 
     /** ABC constant. */
     private static final String ABC = "abc";
 
-    @Test void tildeHome() {
+    @Test public void tildeHome() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/user");
-        Assertions.assertEquals("/home/user/x", WordExpander.expandTilde("~/x", env));
+        Assert.assertEquals("/home/user/x", WordExpander.expandTilde("~/x", env));
     }
 
-    @Test void tildePlusUsesPwd() {
+    @Test public void tildePlusUsesPwd() {
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", "/cur");
-        Assertions.assertEquals("/cur/y", WordExpander.expandTilde("~+/y", env));
+        Assert.assertEquals("/cur/y", WordExpander.expandTilde("~+/y", env));
     }
 
-    @Test void tildeNoOpWhenNoLeadingTilde() {
-        Assertions.assertEquals(
+    @Test public void tildeNoOpWhenNoLeadingTilde() {
+        Assert.assertEquals(
             WordExpanderTest.ABC,
             WordExpander.expandTilde(WordExpanderTest.ABC, new HashMap<>())
         );
     }
 
-    @Test void normaliseBackticksBasic() {
-        Assertions.assertEquals("$(echo x)", WordExpander.normaliseBackticks("`echo x`"));
+    @Test public void normaliseBackticksBasic() {
+        Assert.assertEquals("$(echo x)", WordExpander.normaliseBackticks("`echo x`"));
     }
 
-    @Test void normaliseBackticksDollarParenPassthrough() {
-        Assertions.assertEquals("$(cmd)", WordExpander.normaliseBackticks("$(cmd)"));
+    @Test public void normaliseBackticksDollarParenPassthrough() {
+        Assert.assertEquals("$(cmd)", WordExpander.normaliseBackticks("$(cmd)"));
     }
 
-    @Test void splitFieldsDefaultIfs() {
-        Assertions.assertEquals(
-            List.of("a", "b", "c"),
+    @Test public void splitFieldsDefaultIfs() {
+        Assert.assertEquals(
+            Arrays.asList("a", "b", "c"),
             WordExpander.splitFields("a b c", String.format(" \t%n"))
         );
     }
 
-    @Test void splitFieldsCustomIfs() {
-        Assertions.assertEquals(List.of("a", "b", "c"), WordExpander.splitFields("a:b:c", ":"));
+    @Test public void splitFieldsCustomIfs() {
+        Assert.assertEquals(Arrays.asList("a", "b", "c"), WordExpander.splitFields("a:b:c", ":"));
     }
 
     @Test
-    void isQuotedDouble() {
-        Assertions.assertTrue(WordExpander.isQuoted("\"x\""));
+    public void isQuotedDouble() {
+        Assert.assertTrue(WordExpander.isQuoted("\"x\""));
     }
 
     @Test
-    void isQuotedSingle() {
-        Assertions.assertTrue(WordExpander.isQuoted("'x'"));
+    public void isQuotedSingle() {
+        Assert.assertTrue(WordExpander.isQuoted("'x'"));
     }
 
     @Test
-    void isQuotedFalseMixed() {
-        Assertions.assertFalse(WordExpander.isQuoted("\"x'"));
+    public void isQuotedFalseMixed() {
+        Assert.assertFalse(WordExpander.isQuoted("\"x'"));
     }
 
     @Test
-    void isQuotedFalseShort() {
-        Assertions.assertFalse(WordExpander.isQuoted("x"));
+    public void isQuotedFalseShort() {
+        Assert.assertFalse(WordExpander.isQuoted("x"));
     }
 
     @Test
-    void removeQuotesDouble() {
-        Assertions.assertEquals("hello", WordExpander.removeQuotes("\"hello\""));
+    public void removeQuotesDouble() {
+        Assert.assertEquals("hello", WordExpander.removeQuotes("\"hello\""));
     }
 
     @Test
-    void removeQuotesSingle() {
-        Assertions.assertEquals("hello", WordExpander.removeQuotes("'hello'"));
+    public void removeQuotesSingle() {
+        Assert.assertEquals("hello", WordExpander.removeQuotes("'hello'"));
     }
 
     @Test
-    void removeQuotesUnquoted() {
-        Assertions.assertEquals(
+    public void removeQuotesUnquoted() {
+        Assert.assertEquals(
             WordExpanderTest.ABC,
             WordExpander.removeQuotes(WordExpanderTest.ABC)
         );
     }
 
     @Test
-    void containsGlobCharsStar() {
-        Assertions.assertTrue(WordExpander.containsGlobChars("a*b"));
+    public void containsGlobCharsStar() {
+        Assert.assertTrue(WordExpander.containsGlobChars("a*b"));
     }
 
     @Test
-    void containsGlobCharsQuestion() {
-        Assertions.assertTrue(WordExpander.containsGlobChars("a?b"));
+    public void containsGlobCharsQuestion() {
+        Assert.assertTrue(WordExpander.containsGlobChars("a?b"));
     }
 
     @Test
-    void containsGlobCharsBracket() {
-        Assertions.assertTrue(WordExpander.containsGlobChars("a[b"));
+    public void containsGlobCharsBracket() {
+        Assert.assertTrue(WordExpander.containsGlobChars("a[b"));
     }
 
     @Test
-    void containsGlobCharsNone() {
-        Assertions.assertFalse(WordExpander.containsGlobChars(WordExpanderTest.ABC));
+    public void containsGlobCharsNone() {
+        Assert.assertFalse(WordExpander.containsGlobChars(WordExpanderTest.ABC));
     }
 
-    @Test void pathnameExpandNoGlob() {
-        Assertions.assertEquals(
-            List.of(WordExpanderTest.ABC),
-            WordExpander.pathnameExpand(List.of(WordExpanderTest.ABC))
+    @Test public void pathnameExpandNoGlob() {
+        Assert.assertEquals(
+            Arrays.asList(WordExpanderTest.ABC),
+            WordExpander.pathnameExpand(Arrays.asList(WordExpanderTest.ABC))
         );
     }
 
-    @Test void pathnameExpandNoMatchKeepsPattern() {
-        Assertions.assertEquals(
-            List.of("__no_match_xyz__"),
-            WordExpander.pathnameExpand(List.of("__no_match_xyz__"))
+    @Test public void pathnameExpandNoMatchKeepsPattern() {
+        Assert.assertEquals(
+            Arrays.asList("__no_match_xyz__"),
+            WordExpander.pathnameExpand(Arrays.asList("__no_match_xyz__"))
         );
     }
 
-    @Test void expandVariablesParityPlainText() {
+    @Test public void expandVariablesParityPlainText() {
         final WordExpander.ExpansionResult result = WordExpander.expandVariables(
             "hello world",
             new HashMap<>(),
             new Executor(new HashMap<>())
         );
-        Assertions.assertEquals("hello world", result.value());
-        Assertions.assertFalse(result.error());
+        Assert.assertEquals("hello world", result.value);
+        Assert.assertFalse(result.error);
     }
 
-    @Test void expandVariablesParityVarSubstitution() {
+    @Test public void expandVariablesParityVarSubstitution() {
         final Map<String, String> env = new HashMap<>();
         env.put("MSG", "world");
         final WordExpander.ExpansionResult result = WordExpander.expandVariables(
@@ -148,249 +148,249 @@ final class WordExpanderTest {
             env,
             new Executor(new HashMap<>())
         );
-        Assertions.assertEquals("hello world", result.value());
-        Assertions.assertFalse(result.error());
+        Assert.assertEquals("hello world", result.value);
+        Assert.assertFalse(result.error);
     }
 
-    @Test void expandVariablesParityArithmetic() {
+    @Test public void expandVariablesParityArithmetic() {
         final WordExpander.ExpansionResult result = WordExpander.expandVariables(
             "$((3 + 4))",
             new HashMap<>(),
             new Executor(new HashMap<>())
         );
-        Assertions.assertEquals("7", result.value());
-        Assertions.assertFalse(result.error());
+        Assert.assertEquals("7", result.value);
+        Assert.assertFalse(result.error);
     }
 
-    @Test void expandVariablesParityColonQuestionUnsetSetsError() {
-        Assertions.assertTrue(
+    @Test public void expandVariablesParityColonQuestionUnsetSetsError() {
+        Assert.assertTrue(
+            "expected error flag set on :? for unset var",
             WordExpander.expandVariables(
                 "${UNSET_VAR_FOR_PARITY:?required}",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error(),
-            "expected error flag set on :? for unset var"
+            ).error
         );
     }
 
-    @Test void expandVariablesUnclosedArithmetic() {
-        Assertions.assertEquals(
+    @Test public void expandVariablesUnclosedArithmetic() {
+        Assert.assertEquals(
             "$((1+2",
             WordExpander.expandVariables(
                 "$((1+2",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value()
+            ).value
         );
     }
 
-    @Test void expandVariablesUnclosedCmdSub() {
-        Assertions.assertEquals(
+    @Test public void expandVariablesUnclosedCmdSub() {
+        Assert.assertEquals(
             "$(unclosed",
             WordExpander.expandVariables(
                 "$(unclosed",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value()
+            ).value
         );
     }
 
-    @Test void expandVariablesDollarAtEnd() {
-        Assertions.assertEquals(
+    @Test public void expandVariablesDollarAtEnd() {
+        Assert.assertEquals(
             "trailing$",
             WordExpander.expandVariables(
                 "trailing$",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value()
+            ).value
         );
     }
 
-    @Test void expandVariablesDollarBraceWithoutClose() {
-        Assertions.assertEquals(
+    @Test public void expandVariablesDollarBraceWithoutClose() {
+        Assert.assertEquals(
             "",
             WordExpander.expandVariables(
                 "${unclosed",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value()
+            ).value
         );
     }
 
-    @Test void expandVariablesDollarLetterPlainVar() {
+    @Test public void expandVariablesDollarLetterPlainVar() {
         final Map<String, String> env = new HashMap<>();
         env.put("X", "hi");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "hi-suffix",
-            WordExpander.expandVariables("$X-suffix", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandVariables("$X-suffix", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandVariablesParityErrorFlagConsumedAfterRead() {
+    @Test public void expandVariablesParityErrorFlagConsumedAfterRead() {
         final Executor excp = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertTrue(
-            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error()
+        Assert.assertTrue(
+            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error
         );
-        Assertions.assertFalse(
-            WordExpander.expandVariables("plain", env, excp).error(),
-            "flag should be consumed by previous wrapper call"
+        Assert.assertFalse(
+            "flag should be consumed by previous wrapper call",
+            WordExpander.expandVariables("plain", env, excp).error
         );
     }
 
-    @Test void expandBracedColonDashUnsetReturnsDefault() {
+    @Test public void expandBracedColonDashUnsetReturnsDefault() {
         final WordExpander.ExpansionResult result = WordExpander.expandBraced(
             "x:-fallback",
             new HashMap<>(),
             new Executor(new HashMap<>())
         );
-        Assertions.assertEquals("fallback", result.value());
-        Assertions.assertFalse(result.error());
+        Assert.assertEquals("fallback", result.value);
+        Assert.assertFalse(result.error);
     }
 
-    @Test void expandBracedColonEqUnsetAssigns() {
+    @Test public void expandBracedColonEqUnsetAssigns() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "42",
-            WordExpander.expandBraced("x:=42", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("x:=42", env, new Executor(new HashMap<>())).value
         );
-        Assertions.assertEquals("42", env.get("x"));
+        Assert.assertEquals("42", env.get("x"));
     }
 
-    @Test void expandBracedColonQuestionUnsetSetsError() {
-        Assertions.assertTrue(
+    @Test public void expandBracedColonQuestionUnsetSetsError() {
+        Assert.assertTrue(
             WordExpander.expandBraced(
                 "x:?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error()
+            ).error
         );
     }
 
-    @Test void expandBracedHashLength() {
+    @Test public void expandBracedHashLength() {
         final Map<String, String> env = new HashMap<>();
         env.put("v", "hello");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "5",
-            WordExpander.expandBraced("#v", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("#v", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandBracedDashWithoutColonUnset() {
-        Assertions.assertEquals(
+    @Test public void expandBracedDashWithoutColonUnset() {
+        Assert.assertEquals(
             "fallback",
             WordExpander.expandBraced(
                 "x-fallback",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value()
+            ).value
         );
     }
 
-    @Test void expandBracedDashWithoutColonSetEmpty() {
+    @Test public void expandBracedDashWithoutColonSetEmpty() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "");
-        Assertions.assertEquals(
+        Assert.assertEquals(
+            "set-but-empty: no fallback",
             "",
-            WordExpander.expandBraced("x-fallback", env, new Executor(new HashMap<>())).value(),
-            "set-but-empty: no fallback"
+            WordExpander.expandBraced("x-fallback", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandBracedPlusSet() {
+    @Test public void expandBracedPlusSet() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "word",
-            WordExpander.expandBraced("x+word", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("x+word", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandBracedColonPlusSetNonEmpty() {
+    @Test public void expandBracedColonPlusSetNonEmpty() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "v");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "word",
-            WordExpander.expandBraced("x:+word", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("x:+word", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandBracedQuestionWithoutColonUnsetSetsError() {
-        Assertions.assertTrue(
+    @Test public void expandBracedQuestionWithoutColonUnsetSetsError() {
+        Assert.assertTrue(
             WordExpander.expandBraced(
                 "x?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error()
+            ).error
         );
     }
 
-    @Test void expandBracedEqualsWithoutColonUnsetAssigns() {
+    @Test public void expandBracedEqualsWithoutColonUnsetAssigns() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "42",
-            WordExpander.expandBraced("x=42", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("x=42", env, new Executor(new HashMap<>())).value
         );
-        Assertions.assertEquals("42", env.get("x"));
+        Assert.assertEquals("42", env.get("x"));
     }
 
-    @Test void expandBracedHashHashLongestPrefix() {
+    @Test public void expandBracedHashHashLongestPrefix() {
         final Map<String, String> env = new HashMap<>();
         env.put("f", "a/b/c/d");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "d",
-            WordExpander.expandBraced("f##*/", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("f##*/", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void expandBracedPercentPercentLongestSuffix() {
+    @Test public void expandBracedPercentPercentLongestSuffix() {
         final Map<String, String> env = new HashMap<>();
         env.put("f", "a.b.c");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "a",
-            WordExpander.expandBraced("f%%.*", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("f%%.*", env, new Executor(new HashMap<>())).value
         );
     }
 
-    @Test void splitFieldsConsecutiveIfsCreatesEmptyField() {
+    @Test public void splitFieldsConsecutiveIfsCreatesEmptyField() {
         final java.util.List<String> result = WordExpander.splitFields("a::b", ":");
-        Assertions.assertEquals(3, result.size());
-        Assertions.assertEquals("a", result.get(0));
-        Assertions.assertEquals("", result.get(1));
-        Assertions.assertEquals("b", result.get(2));
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals("a", result.get(0));
+        Assert.assertEquals("", result.get(1));
+        Assert.assertEquals("b", result.get(2));
     }
 
-    @Test void globMatchesEmptyPattern() {
-        Assertions.assertTrue(WordExpander.globMatches("", ""));
-        Assertions.assertFalse(WordExpander.globMatches("", "anything"));
+    @Test public void globMatchesEmptyPattern() {
+        Assert.assertTrue(WordExpander.globMatches("", ""));
+        Assert.assertFalse(WordExpander.globMatches("", "anything"));
     }
 
-    @Test void expandBracedPercentSuffix() {
+    @Test public void expandBracedPercentSuffix() {
         final Map<String, String> env = new HashMap<>();
         env.put("f", "a.txt");
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "a",
-            WordExpander.expandBraced("f%.txt", env, new Executor(new HashMap<>())).value()
+            WordExpander.expandBraced("f%.txt", env, new Executor(new HashMap<>())).value
         );
     }
 
     @Test
-    void globMatchesStar() {
-        Assertions.assertTrue(WordExpander.globMatches("a*", WordExpanderTest.ABC));
+    public void globMatchesStar() {
+        Assert.assertTrue(WordExpander.globMatches("a*", WordExpanderTest.ABC));
     }
 
     @Test
-    void globMatchesQuestion() {
-        Assertions.assertTrue(WordExpander.globMatches("a?c", WordExpanderTest.ABC));
+    public void globMatchesQuestion() {
+        Assert.assertTrue(WordExpander.globMatches("a?c", WordExpanderTest.ABC));
     }
 
     @Test
-    void globMatchesCharClass() {
-        Assertions.assertTrue(WordExpander.globMatches("[abc]", "b"));
+    public void globMatchesCharClass() {
+        Assert.assertTrue(WordExpander.globMatches("[abc]", "b"));
     }
 
     @Test
-    void globMatchesNoMatch() {
-        Assertions.assertFalse(WordExpander.globMatches("a*", "xyz"));
+    public void globMatchesNoMatch() {
+        Assert.assertFalse(WordExpander.globMatches("a*", "xyz"));
     }
 }

@@ -7,10 +7,10 @@ package io.github.andreoss.sh4j.executor;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Arrays;
 import java.util.function.UnaryOperator;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 
@@ -19,10 +19,10 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
  * @since 1.0
  */
 @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
-final class RedirectionHandlerTest {
+public final class RedirectionHandlerTest {
 
     @Test
-    void redirectStderrToStdout() {
+    public void redirectStderrToStdout() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -34,22 +34,22 @@ final class RedirectionHandlerTest {
             StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
-            List.of(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+            Arrays.asList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
             out,
             err,
             UnaryOperator.identity()
         );
-        Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
-        Assertions.assertSame(
+        Assert.assertSame("2>&1 should make err point to out", out, result.err);
+        Assert.assertSame(
+            "savedErr should be original err for restore",
             err,
-            result.savedErr(),
-            "savedErr should be original err for restore"
+            result.savedErr
         );
-        Assertions.assertNull(result.savedOut(), "stdout untouched");
+        Assert.assertNull("stdout untouched", result.savedOut);
     }
 
     @Test
-    void redirectStdoutToStderr() {
+    public void redirectStdoutToStderr() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -61,21 +61,21 @@ final class RedirectionHandlerTest {
             StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
-            List.of(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+            Arrays.asList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
             out,
             err,
             UnaryOperator.identity()
         );
-        Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
-        Assertions.assertSame(
+        Assert.assertSame("1>&2 should make out point to err", err, result.out);
+        Assert.assertSame(
+            "savedOut should be original out for restore",
             out,
-            result.savedOut(),
-            "savedOut should be original out for restore"
+            result.savedOut
         );
     }
 
     @Test
-    void noRedirsLeavesStreamsUnchanged() {
+    public void noRedirsLeavesStreamsUnchanged() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -87,30 +87,30 @@ final class RedirectionHandlerTest {
             StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
-            List.of(),
+            Arrays.<Redirection>asList(),
             out,
             err,
             UnaryOperator.identity()
         );
-        Assertions.assertSame(out, result.out());
-        Assertions.assertSame(err, result.err());
-        Assertions.assertNull(result.savedOut());
-        Assertions.assertNull(result.savedErr());
+        Assert.assertSame(out, result.out);
+        Assert.assertSame(err, result.err);
+        Assert.assertNull(result.savedOut);
+        Assert.assertNull(result.savedErr);
     }
 
     @Test
-    void heredocFileNullContent() {
-        Assertions.assertNull(RedirectionHandler.heredocFile(null));
+    public void heredocFileNullContent() {
+        Assert.assertNull(RedirectionHandler.heredocFile(null));
     }
 
     @Test
-    void heredocFileRoundtrip() throws Exception {
+    public void heredocFileRoundtrip() throws Exception {
         final java.io.File file = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
-        Assertions.assertNotNull(file);
-        Assertions.assertTrue(file.isFile());
-        Assertions.assertEquals(
+        Assert.assertNotNull(file);
+        Assert.assertTrue(file.isFile());
+        Assert.assertEquals(
             String.format("alpha%nbeta%n"),
-            java.nio.file.Files.readString(file.toPath())
+            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 }

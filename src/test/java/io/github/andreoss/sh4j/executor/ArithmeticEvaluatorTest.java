@@ -6,315 +6,315 @@ package io.github.andreoss.sh4j.executor;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for ArithmeticEvaluator.
  * @since 1.0
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
-final class ArithmeticEvaluatorTest {
+public final class ArithmeticEvaluatorTest {
 
     /** Tests addition. */
     @Test
-    void add() {
-        Assertions.assertEquals(
+    public void add() {
+        Assert.assertEquals(
             "7",
             new ArithmeticEvaluator().evalArithmetic("3 + 4", new HashMap<>())
         );
     }
 
     @Test
-    void sub() {
-        Assertions.assertEquals(
+    public void sub() {
+        Assert.assertEquals(
             "3",
             new ArithmeticEvaluator().evalArithmetic("7 - 4", new HashMap<>())
         );
     }
 
     @Test
-    void mul() {
-        Assertions.assertEquals(
+    public void mul() {
+        Assert.assertEquals(
             "12",
             new ArithmeticEvaluator().evalArithmetic("3 * 4", new HashMap<>())
         );
     }
 
     @Test
-    void div() {
-        Assertions.assertEquals(
+    public void div() {
+        Assert.assertEquals(
             "2",
             new ArithmeticEvaluator().evalArithmetic("9 / 4", new HashMap<>())
         );
     }
 
     @Test
-    void mod() {
-        Assertions.assertEquals(
+    public void mod() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("9 % 4", new HashMap<>())
         );
     }
 
     @Test
-    void precedence() {
-        Assertions.assertEquals(
+    public void precedence() {
+        Assert.assertEquals(
             "14",
             new ArithmeticEvaluator().evalArithmetic("2 + 3 * 4", new HashMap<>())
         );
     }
 
     @Test
-    void parens() {
-        Assertions.assertEquals(
+    public void parens() {
+        Assert.assertEquals(
             "20",
             new ArithmeticEvaluator().evalArithmetic("(2 + 3) * 4", new HashMap<>())
         );
     }
 
     @Test
-    void shiftLeft() {
-        Assertions.assertEquals(
+    public void shiftLeft() {
+        Assert.assertEquals(
             "32",
             new ArithmeticEvaluator().evalArithmetic("4 << 3", new HashMap<>())
         );
     }
 
     @Test
-    void shiftRight() {
-        Assertions.assertEquals(
+    public void shiftRight() {
+        Assert.assertEquals(
             "4",
             new ArithmeticEvaluator().evalArithmetic("32 >> 3", new HashMap<>())
         );
     }
 
     @Test
-    void ltOperator() {
-        Assertions.assertEquals(
+    public void ltOperator() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("3 < 5", new HashMap<>())
         );
     }
 
     @Test
-    void geOperator() {
-        Assertions.assertEquals(
+    public void geOperator() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("5 >= 5", new HashMap<>())
         );
     }
 
     @Test
-    void eqEq() {
-        Assertions.assertEquals(
+    public void eqEq() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("5 == 5", new HashMap<>())
         );
     }
 
     @Test
-    void neq() {
-        Assertions.assertEquals(
+    public void neq() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("5 != 4", new HashMap<>())
         );
     }
 
     @Test
-    void bitAnd() {
-        Assertions.assertEquals(
+    public void bitAnd() {
+        Assert.assertEquals(
             "4",
             new ArithmeticEvaluator().evalArithmetic("12 & 6", new HashMap<>())
         );
     }
 
     @Test
-    void bitOr() {
-        Assertions.assertEquals(
+    public void bitOr() {
+        Assert.assertEquals(
             "14",
             new ArithmeticEvaluator().evalArithmetic("12 | 6", new HashMap<>())
         );
     }
 
     @Test
-    void bitXor() {
-        Assertions.assertEquals(
+    public void bitXor() {
+        Assert.assertEquals(
             "10",
             new ArithmeticEvaluator().evalArithmetic("12 ^ 6", new HashMap<>())
         );
     }
 
     @Test
-    void logicalAnd() {
-        Assertions.assertEquals(
+    public void logicalAnd() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("1 && 2", new HashMap<>())
         );
     }
 
     @Test
-    void logicalOr() {
-        Assertions.assertEquals(
+    public void logicalOr() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("0 || 5", new HashMap<>())
         );
     }
 
     @Test
-    void unaryNot() {
-        Assertions.assertEquals(
+    public void unaryNot() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("!0", new HashMap<>())
         );
     }
 
     @Test
-    void unaryBitNot() {
-        Assertions.assertEquals(
+    public void unaryBitNot() {
+        Assert.assertEquals(
             "-1",
             new ArithmeticEvaluator().evalArithmetic("~0", new HashMap<>())
         );
     }
 
     @Test
-    void ternaryTrue() {
-        Assertions.assertEquals(
+    public void ternaryTrue() {
+        Assert.assertEquals(
             "10",
             new ArithmeticEvaluator().evalArithmetic("1 ? 10 : 20", new HashMap<>())
         );
     }
 
     @Test
-    void ternaryFalse() {
-        Assertions.assertEquals(
+    public void ternaryFalse() {
+        Assert.assertEquals(
             "20",
             new ArithmeticEvaluator().evalArithmetic("0 ? 10 : 20", new HashMap<>())
         );
     }
 
-    @Test void assign() {
+    @Test public void assign() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("x = 5", env));
-        Assertions.assertEquals("5", env.get("x"));
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("x = 5", env));
+        Assert.assertEquals("5", env.get("x"));
     }
 
-    @Test void plusAssign() {
+    @Test public void plusAssign() {
         final Map<String, String> env = new HashMap<>();
         env.put("y", "10");
-        Assertions.assertEquals("13", new ArithmeticEvaluator().evalArithmetic("y += 3", env));
-        Assertions.assertEquals("13", env.get("y"));
+        Assert.assertEquals("13", new ArithmeticEvaluator().evalArithmetic("y += 3", env));
+        Assert.assertEquals("13", env.get("y"));
     }
 
-    @Test void shortCircuitAndSuppressesAssignment() {
+    @Test public void shortCircuitAndSuppressesAssignment() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("0 && (z = 99)", env);
-        Assertions.assertNull(env.get("z"));
+        Assert.assertNull(env.get("z"));
     }
 
-    @Test void shortCircuitOrSuppressesAssignment() {
+    @Test public void shortCircuitOrSuppressesAssignment() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("1 || (q = 99)", env);
-        Assertions.assertNull(env.get("q"));
+        Assert.assertNull(env.get("q"));
     }
 
-    @Test void varNameResolvesToEnvValue() {
+    @Test public void varNameResolvesToEnvValue() {
         final Map<String, String> env = new HashMap<>();
         env.put("v", "7");
-        Assertions.assertEquals("9", new ArithmeticEvaluator().evalArithmetic("v + 2", env));
+        Assert.assertEquals("9", new ArithmeticEvaluator().evalArithmetic("v + 2", env));
     }
 
-    @Test void nonNumericVarResolvesToZero() {
+    @Test public void nonNumericVarResolvesToZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("v", "abc");
-        Assertions.assertEquals("2", new ArithmeticEvaluator().evalArithmetic("v + 2", env));
+        Assert.assertEquals("2", new ArithmeticEvaluator().evalArithmetic("v + 2", env));
     }
 
-    @Test void divByZeroIsZero() {
-        Assertions.assertEquals(
+    @Test public void divByZeroIsZero() {
+        Assert.assertEquals(
             "0",
             new ArithmeticEvaluator().evalArithmetic("5 / 0", new HashMap<>())
         );
     }
 
-    @Test void modByZeroIsZero() {
-        Assertions.assertEquals(
+    @Test public void modByZeroIsZero() {
+        Assert.assertEquals(
             "0",
             new ArithmeticEvaluator().evalArithmetic("5 % 0", new HashMap<>())
         );
     }
 
-    @Test void emptyExprIsZero() {
-        Assertions.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("", new HashMap<>()));
+    @Test public void emptyExprIsZero() {
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("", new HashMap<>()));
     }
 
-    @Test void whitespaceOnlyIsZero() {
-        Assertions.assertEquals(
+    @Test public void whitespaceOnlyIsZero() {
+        Assert.assertEquals(
             "0",
             new ArithmeticEvaluator().evalArithmetic("   ", new HashMap<>())
         );
     }
 
-    @Test void unmatchedParenStillEvalsInner() {
-        Assertions.assertEquals(
+    @Test public void unmatchedParenStillEvalsInner() {
+        Assert.assertEquals(
             "3",
             new ArithmeticEvaluator().evalArithmetic("(1+2", new HashMap<>())
         );
     }
 
-    @Test void leadingPlus() {
-        Assertions.assertEquals(
+    @Test public void leadingPlus() {
+        Assert.assertEquals(
             "5",
             new ArithmeticEvaluator().evalArithmetic("+5", new HashMap<>())
         );
     }
 
-    @Test void doubleNegation() {
-        Assertions.assertEquals(
+    @Test public void doubleNegation() {
+        Assert.assertEquals(
             "5",
             new ArithmeticEvaluator().evalArithmetic("--5", new HashMap<>())
         );
     }
 
-    @Test void doubleBitwiseNot() {
-        Assertions.assertEquals(
+    @Test public void doubleBitwiseNot() {
+        Assert.assertEquals(
             "5",
             new ArithmeticEvaluator().evalArithmetic("~~5", new HashMap<>())
         );
     }
 
-    @Test void doubleLogicalNot() {
-        Assertions.assertEquals(
+    @Test public void doubleLogicalNot() {
+        Assert.assertEquals(
             "1",
             new ArithmeticEvaluator().evalArithmetic("!!5", new HashMap<>())
         );
     }
 
-    @Test void compoundAssignToUnsetVar() {
+    @Test public void compoundAssignToUnsetVar() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("new += 5", env));
-        Assertions.assertEquals("5", env.get("new"));
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("new += 5", env));
+        Assert.assertEquals("5", env.get("new"));
     }
 
-    @Test void chainedAssignmentRightAssoc() {
+    @Test public void chainedAssignmentRightAssoc() {
         final Map<String, String> env = new HashMap<>();
-        Assertions.assertEquals(
+        Assert.assertEquals(
             "7",
             new ArithmeticEvaluator().evalArithmetic("a = b = c = 7", env)
         );
-        Assertions.assertEquals("7", env.get("a"));
-        Assertions.assertEquals("7", env.get("b"));
-        Assertions.assertEquals("7", env.get("c"));
+        Assert.assertEquals("7", env.get("a"));
+        Assert.assertEquals("7", env.get("b"));
+        Assert.assertEquals("7", env.get("c"));
     }
 
-    @Test void ternaryFalseEvaluatesElseOnly() {
+    @Test public void ternaryFalseEvaluatesElseOnly() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("0 ? (z = 1) : (z = 2)", env);
-        Assertions.assertEquals("2", env.get("z"));
+        Assert.assertEquals("2", env.get("z"));
     }
 
-    @Test void numericLiteralWithLeadingZeros() {
-        Assertions.assertEquals(
+    @Test public void numericLiteralWithLeadingZeros() {
+        Assert.assertEquals(
             "42",
             new ArithmeticEvaluator().evalArithmetic("042", new HashMap<>())
         );

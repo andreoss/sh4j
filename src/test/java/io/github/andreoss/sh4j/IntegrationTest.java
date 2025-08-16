@@ -5,29 +5,30 @@
 package io.github.andreoss.sh4j;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for Integration.
  * @since 1.0
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
-final class IntegrationTest {
+public final class IntegrationTest {
 
-    /** Field. */
-    @TempDir
-    private Path tempdir;
+    @Rule
+    public TemporaryFolder tempdir = new TemporaryFolder();
 
     @Test
-    void echoHello() throws IOException {
-        Assertions.assertEquals(
+    public void echoHello() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("echo.sh", String.format("echo hello%n")).getAbsolutePath()
@@ -36,32 +37,32 @@ final class IntegrationTest {
     }
 
     @Test
-    void trueCommand() throws IOException {
-        Assertions.assertEquals(
+    public void trueCommand() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(this.writeScript("true.sh", String.format("true%n")).getAbsolutePath())
         );
     }
 
     @Test
-    void falseCommand() throws IOException {
-        Assertions.assertEquals(
+    public void falseCommand() throws IOException {
+        Assert.assertEquals(
             1,
             Main.runScript(this.writeScript("false.sh", String.format("false%n")).getAbsolutePath())
         );
     }
 
     @Test
-    void pwdCommand() throws IOException {
-        Assertions.assertEquals(
+    public void pwdCommand() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(this.writeScript("pwd.sh", String.format("pwd%n")).getAbsolutePath())
         );
     }
 
     @Test
-    void exitFortyTwo() throws IOException {
-        Assertions.assertEquals(
+    public void exitFortyTwo() throws IOException {
+        Assert.assertEquals(
             42,
             Main.runScript(
                 this.writeScript("exitFortyTwo.sh", String.format("exit 42%n")).getAbsolutePath()
@@ -70,8 +71,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void pipelineEchoCat() throws IOException {
-        Assertions.assertEquals(
+    public void pipelineEchoCat() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("pipe.sh", String.format("echo hello | cat%n")).getAbsolutePath()
@@ -79,9 +80,9 @@ final class IntegrationTest {
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void childJvmCatFileProducesVisibleStdout() throws Exception {
-        final File probe = this.tempdir.resolve("probe.txt").toFile();
+    @Test
+    public void childJvmCatFileProducesVisibleStdout() throws Exception {
+        final File probe = this.tempdir.newFile("probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
         }
@@ -97,26 +98,27 @@ final class IntegrationTest {
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertEquals(
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        final int exitCode = proc.waitFor();
+        Assert.assertEquals(
+            String.format("sh4j exit code; output: %s", out),
             0,
-            proc.waitFor(),
-            String.format("sh4j exit code; output: %s", out)
+            exitCode
         );
-        Assertions.assertTrue(
-            out.contains("hello-from-cat"),
-            String.format("external cat stdout must reach test; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("external cat stdout must reach test; got: '%s'", out),
+            out.contains("hello-from-cat")
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void nativeBinaryCatProbeSmoke() throws Exception {
+    @Test
+    public void nativeBinaryCatProbeSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-            nativebin.isFile() && nativebin.canExecute(),
-            "target/sh4j native binary not built; skipping native smoke"
+        org.junit.Assume.assumeTrue(
+            "target/sh4j native binary not built; skipping native smoke",
+            nativebin.isFile() && nativebin.canExecute()
         );
-        final File probe = this.tempdir.resolve("nprobe.txt").toFile();
+        final File probe = this.tempdir.newFile("nprobe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-native%n"));
         }
@@ -129,32 +131,33 @@ final class IntegrationTest {
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertEquals(
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        final int exitCode = proc.waitFor();
+        Assert.assertEquals(
+            String.format("native sh4j exit code; output: %s", out),
             0,
-            proc.waitFor(),
-            String.format("native sh4j exit code; output: %s", out)
+            exitCode
         );
-        Assertions.assertTrue(
-            out.contains("hello-native"),
-            String.format("native sh4j must propagate external cat stdout; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("native sh4j must propagate external cat stdout; got: '%s'", out),
+            out.contains("hello-native")
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void childJvmEchoPipeCat() throws Exception {
+    @Test
+    public void childJvmEchoPipeCat() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("h_pipe.sh", String.format("echo child-pipe | cat%n"))
         );
-        Assertions.assertTrue(
-            out.contains("child-pipe"),
-            String.format("pipeline stdout missing; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("pipeline stdout missing; got: '%s'", out),
+            out.contains("child-pipe")
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void childJvmCatProbe() throws Exception {
-        final File probe = this.tempdir.resolve("h_probe.txt").toFile();
+    @Test
+    public void childJvmCatProbe() throws Exception {
+        final File probe = this.tempdir.newFile("h_probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("child-probe%n"));
         }
@@ -164,29 +167,29 @@ final class IntegrationTest {
                 String.format("cat %s%n", probe.getAbsolutePath())
             )
         );
-        Assertions.assertTrue(
-            out.contains("child-probe"),
-            String.format("cat stdout missing; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("cat stdout missing; got: '%s'", out),
+            out.contains("child-probe")
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void childJvmForLoop() throws Exception {
+    @Test
+    public void childJvmForLoop() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("h_for.sh", String.format("for i in 1 2 3; do echo $i; done%n"))
         );
-        Assertions.assertTrue(
-            out.contains("1") && out.contains("2") && out.contains("3"),
-            String.format("for-loop body missing; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("for-loop body missing; got: '%s'", out),
+            out.contains("1") && out.contains("2") && out.contains("3")
         );
     }
 
-    @org.junit.jupiter.api.Test
-    void nativeBinaryPipelineSmoke() throws Exception {
+    @Test
+    public void nativeBinaryPipelineSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-            nativebin.isFile() && nativebin.canExecute(),
-            "target/sh4j native binary not built; skipping native pipeline smoke"
+        org.junit.Assume.assumeTrue(
+            "target/sh4j native binary not built; skipping native pipeline smoke",
+            nativebin.isFile() && nativebin.canExecute()
         );
         final ProcessBuilder builder = new ProcessBuilder(
             nativebin.getAbsolutePath(),
@@ -197,21 +200,22 @@ final class IntegrationTest {
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertEquals(
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        final int exitCode = proc.waitFor();
+        Assert.assertEquals(
+            String.format("native sh4j pipeline exit code; output: %s", out),
             0,
-            proc.waitFor(),
-            String.format("native sh4j pipeline exit code; output: %s", out)
+            exitCode
         );
-        Assertions.assertTrue(
-            out.contains("native-pipe"),
-            String.format("native sh4j pipeline must propagate stdout; got: '%s'", out)
+        Assert.assertTrue(
+            String.format("native sh4j pipeline must propagate stdout; got: '%s'", out),
+            out.contains("native-pipe")
         );
     }
 
     @Test
-    void pipelineMultiple() throws IOException {
-        Assertions.assertEquals(
+    public void pipelineMultiple() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -223,8 +227,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void andIfBothSucceed() throws IOException {
-        Assertions.assertEquals(
+    public void andIfBothSucceed() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("and.sh", String.format("true && echo ok%n")).getAbsolutePath()
@@ -233,8 +237,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void andIfFirstFails() throws IOException {
-        Assertions.assertEquals(
+    public void andIfFirstFails() throws IOException {
+        Assert.assertEquals(
             1,
             Main.runScript(
                 this.writeScript(
@@ -246,8 +250,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void orIfFirstFails() throws IOException {
-        Assertions.assertEquals(
+    public void orIfFirstFails() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("or.sh", String.format("false || echo ok%n")).getAbsolutePath()
@@ -256,8 +260,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void orIfFirstSucceeds() throws IOException {
-        Assertions.assertEquals(
+    public void orIfFirstSucceeds() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -269,8 +273,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void bangInvertsExit() throws IOException {
-        Assertions.assertEquals(
+    public void bangInvertsExit() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("bang.sh", String.format("! false%n")).getAbsolutePath()
@@ -279,8 +283,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void bangInvertsTrueToFalse() throws IOException {
-        Assertions.assertEquals(
+    public void bangInvertsTrueToFalse() throws IOException {
+        Assert.assertEquals(
             1,
             Main.runScript(
                 this.writeScript("bang_true.sh", String.format("! true%n")).getAbsolutePath()
@@ -289,8 +293,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void sequentialSemicolon() throws IOException {
-        Assertions.assertEquals(
+    public void sequentialSemicolon() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("semi.sh", String.format("echo a; echo b%n")).getAbsolutePath()
@@ -299,8 +303,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void backgroundAmpersand() throws IOException {
-        Assertions.assertEquals(
+    public void backgroundAmpersand() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("bg.sh", String.format("sleep 0 &%n")).getAbsolutePath()
@@ -309,8 +313,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void assignmentThenCommand() throws IOException {
-        Assertions.assertEquals(
+    public void assignmentThenCommand() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -322,8 +326,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void assignmentOnlyPersists() throws IOException {
-        Assertions.assertEquals(
+    public void assignmentOnlyPersists() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("assign_only.sh", String.format("FOO=bar%n")).getAbsolutePath()
@@ -332,8 +336,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void multipleAssignments() throws IOException {
-        Assertions.assertEquals(
+    public void multipleAssignments() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("multi_assign.sh", String.format("A=1 B=2%n")).getAbsolutePath()
@@ -342,9 +346,9 @@ final class IntegrationTest {
     }
 
     @Test
-    void outputRedirection() throws IOException {
-        final File outfile = this.tempdir.resolve("out.txt").toFile();
-        Assertions.assertEquals(
+    public void outputRedirection() throws IOException {
+        final File outfile = this.tempdir.newFile("out.txt");
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -353,15 +357,18 @@ final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assertions.assertTrue(outfile.exists());
-        Assertions.assertEquals("test", Files.readString(outfile.toPath()).trim());
+        Assert.assertTrue(outfile.exists());
+        Assert.assertEquals(
+            "test",
+            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
+        );
     }
 
     @Test
-    void inputRedirection() throws IOException {
-        final File infile = this.tempdir.resolve("in.txt").toFile();
+    public void inputRedirection() throws IOException {
+        final File infile = this.tempdir.newFile("in.txt");
         Files.writeString(infile.toPath(), String.format("input data%n"));
-        Assertions.assertEquals(
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -373,9 +380,9 @@ final class IntegrationTest {
     }
 
     @Test
-    void appendRedirection() throws IOException {
-        final File outfile = this.tempdir.resolve("append.txt").toFile();
-        Assertions.assertEquals(
+    public void appendRedirection() throws IOException {
+        final File outfile = this.tempdir.newFile("append.txt");
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -387,14 +394,17 @@ final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assertions.assertTrue(outfile.exists(), "append.txt should exist");
-        Assertions.assertEquals("line2", Files.readString(outfile.toPath()).trim());
+        Assert.assertTrue("append.txt should exist", outfile.exists());
+        Assert.assertEquals(
+            "line2",
+            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
+        );
     }
 
     @Test
-    void clobberRedirection() throws IOException {
-        final File outfile = this.tempdir.resolve("clobber.txt").toFile();
-        Assertions.assertEquals(
+    public void clobberRedirection() throws IOException {
+        final File outfile = this.tempdir.newFile("clobber.txt");
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -406,19 +416,19 @@ final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assertions.assertTrue(outfile.exists());
+        Assert.assertTrue(outfile.exists());
     }
 
     @Test
-    void stderrRedirect() throws IOException {
-        Assertions.assertEquals(
+    public void stderrRedirect() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
                     "stderr_redir.sh",
                     String.format(
                         "echo test 2>%s%n",
-                        this.tempdir.resolve("stderr.txt").toFile().getAbsolutePath()
+                        this.tempdir.newFile("stderr.txt").getAbsolutePath()
                     )
                 ).getAbsolutePath()
             )
@@ -426,9 +436,9 @@ final class IntegrationTest {
     }
 
     @Test
-    void variableExpansionWithRedirect() throws IOException {
-        final File outfile = this.tempdir.resolve("out2.txt").toFile();
-        Assertions.assertEquals(
+    public void variableExpansionWithRedirect() throws IOException {
+        final File outfile = this.tempdir.newFile("out2.txt");
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -440,16 +450,16 @@ final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
-        Assertions.assertFalse(
-            Files.readString(outfile.toPath()).isBlank(),
-            "content should not be empty"
+        Assert.assertTrue("out2.txt should exist", outfile.exists());
+        Assert.assertFalse(
+            "content should not be empty",
+            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim().isEmpty()
         );
     }
 
     @Test
-    void complexScript() throws IOException {
-        Assertions.assertEquals(
+    public void complexScript() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("complex.sh", String.format("MSG=hello%necho $MSG%n"))
@@ -459,8 +469,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void variableExpansion() throws IOException {
-        Assertions.assertEquals(
+    public void variableExpansion() throws IOException {
+        Assert.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("varexp.sh", String.format("echo $SHELL%n")).getAbsolutePath()
@@ -469,8 +479,8 @@ final class IntegrationTest {
     }
 
     @Test
-    void commandNotFound() throws IOException {
-        Assertions.assertEquals(
+    public void commandNotFound() throws IOException {
+        Assert.assertEquals(
             127,
             Main.runScript(
                 this.writeScript(
@@ -482,11 +492,11 @@ final class IntegrationTest {
     }
 
     private File writeScript(final String name, final String content) throws IOException {
-        final File script = this.tempdir.resolve(name).toFile();
+        final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(content);
         }
-        Assertions.assertTrue(script.setExecutable(true));
+        Assert.assertTrue(script.setExecutable(true));
         return script;
     }
 
@@ -500,12 +510,23 @@ final class IntegrationTest {
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
-        final String out = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        Assertions.assertEquals(
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        final int exitCode = proc.waitFor();
+        Assert.assertEquals(
+            String.format("child sh4j exit code; output: %s", out),
             0,
-            proc.waitFor(),
-            String.format("child sh4j exit code; output: %s", out)
+            exitCode
         );
         return out;
+    }
+
+    private static byte[] readAllBytes(final InputStream in) throws IOException {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) != -1) {
+            bos.write(buf, 0, n);
+        }
+        return bos.toByteArray();
     }
 }

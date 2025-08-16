@@ -4,45 +4,45 @@
  */
 package io.github.andreoss.sh4j.lexer;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for Token.
  * @since 1.0
  */
 @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
-final class TokenTest {
+public final class TokenTest {
 
     @Test
-    void createsTokenWithTypeTextAndPosition() {
+    public void createsTokenWithTypeTextAndPosition() {
         final Token tokn = new Token(TokenType.WORD, "echo", 1, 0);
-        Assertions.assertEquals(TokenType.WORD, tokn.type());
-        Assertions.assertEquals("echo", tokn.text());
-        Assertions.assertEquals(1, tokn.line());
-        Assertions.assertEquals(0, tokn.column());
+        Assert.assertEquals(TokenType.WORD, tokn.type());
+        Assert.assertEquals("echo", tokn.text());
+        Assert.assertEquals(1, tokn.line());
+        Assert.assertEquals(0, tokn.column());
     }
 
     @Test
-    void createsTokenFromCharReader() {
+    public void createsTokenFromCharReader() {
         final Token tokn = Token.of(TokenType.WORD, "abc", new CharReader("abc"));
-        Assertions.assertEquals(TokenType.WORD, tokn.type());
-        Assertions.assertEquals("abc", tokn.text());
-        Assertions.assertEquals(1, tokn.line());
-        Assertions.assertEquals(0, tokn.column());
+        Assert.assertEquals(TokenType.WORD, tokn.type());
+        Assert.assertEquals("abc", tokn.text());
+        Assert.assertEquals(1, tokn.line());
+        Assert.assertEquals(0, tokn.column());
     }
 
     @Test
-    void tokenEquality() {
-        Assertions.assertEquals(
+    public void tokenEquality() {
+        Assert.assertEquals(
             new Token(TokenType.WORD, "x", 1, 0),
             new Token(TokenType.WORD, "x", 1, 0)
         );
     }
 
     @Test
-    void tokenToString() {
-        Assertions.assertTrue(
+    public void tokenToString() {
+        Assert.assertTrue(
             new Token(TokenType.NEWLINE, String.format("%n"), 1, 0).toString().contains("NEWLINE")
         );
     }

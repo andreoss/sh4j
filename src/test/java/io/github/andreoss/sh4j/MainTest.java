@@ -12,65 +12,65 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.function.IntSupplier;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for Main.
  * @since 1.0
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnnecessaryLocalRule"})
-final class MainTest {
+public final class MainTest {
 
-    /** Field. */
-    @TempDir
-    private File tempdir;
+    @Rule
+    public TemporaryFolder tempdir = new TemporaryFolder();
 
     @Test
-    void runScriptWithEcho() throws IOException {
-        final File script = new File(this.tempdir, "echo.sh");
+    public void runScriptWithEcho() throws IOException {
+        final File script = this.tempdir.newFile("echo.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("echo hello%n"));
         }
-        Assertions.assertEquals(0, Main.runScript(script.getAbsolutePath()));
+        Assert.assertEquals(0, Main.runScript(script.getAbsolutePath()));
     }
 
     @Test
-    void runScriptWithExitZero() throws IOException {
-        final File script = new File(this.tempdir, "exit0.sh");
+    public void runScriptWithExitZero() throws IOException {
+        final File script = this.tempdir.newFile("exit0.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 0%n"));
         }
-        Assertions.assertEquals(0, Main.runScript(script.getAbsolutePath()));
+        Assert.assertEquals(0, Main.runScript(script.getAbsolutePath()));
     }
 
     @Test
-    void runScriptWithExitOne() throws IOException {
-        final File script = new File(this.tempdir, "exit1.sh");
+    public void runScriptWithExitOne() throws IOException {
+        final File script = this.tempdir.newFile("exit1.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 1%n"));
         }
-        Assertions.assertEquals(1, Main.runScript(script.getAbsolutePath()));
+        Assert.assertEquals(1, Main.runScript(script.getAbsolutePath()));
     }
 
     @Test
-    void runScriptFileNotFound() {
-        Assertions.assertEquals(1, Main.runScript("/nonexistent/path/to/script.sh"));
+    public void runScriptFileNotFound() {
+        Assert.assertEquals(1, Main.runScript("/nonexistent/path/to/script.sh"));
     }
 
     @Test
-    void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
-        final File script = new File(this.tempdir, "test_exit.sh");
+    public void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
+        final File script = this.tempdir.newFile("test_exit.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 42%n"));
         }
-        Assertions.assertEquals(42, Main.exitCode(new String[] {script.getAbsolutePath()}));
+        Assert.assertEquals(42, Main.exitCode(new String[] {script.getAbsolutePath()}));
     }
 
     @Test
-    void exitCodeNoArgsInteractiveEof() {
-        Assertions.assertEquals(
+    public void exitCodeNoArgsInteractiveEof() {
+        Assert.assertEquals(
             0,
             MainTest.withStdin(
                 new ByteArrayInputStream(new byte[0]),
@@ -80,8 +80,8 @@ final class MainTest {
     }
 
     @Test
-    void exitCodeNoArgsInteractiveEmptyLine() {
-        Assertions.assertEquals(
+    public void exitCodeNoArgsInteractiveEmptyLine() {
+        Assert.assertEquals(
             0,
             MainTest.withStdin(
                 new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8)),
@@ -91,8 +91,8 @@ final class MainTest {
     }
 
     @Test
-    void exitCodeNoArgsInteractiveWithCommand() {
-        Assertions.assertEquals(
+    public void exitCodeNoArgsInteractiveWithCommand() {
+        Assert.assertEquals(
             0,
             MainTest.withStdin(
                 new ByteArrayInputStream(
@@ -104,29 +104,29 @@ final class MainTest {
     }
 
     @Test
-    void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
-        final File script = new File(this.tempdir, "args.sh");
+    public void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
+        final File script = this.tempdir.newFile("args.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit $#%n"));
         }
-        Assertions.assertEquals(
+        Assert.assertEquals(
             3,
             Main.exitCode(new String[] {script.getAbsolutePath(), "a", "b", "c"})
         );
     }
 
     @Test
-    void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
-        final File script = new File(this.tempdir, "first.sh");
+    public void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
+        final File script = this.tempdir.newFile("first.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit $1%n"));
         }
-        Assertions.assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));
+        Assert.assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));
     }
 
     @Test
-    void exitCodeNoArgsInteractiveIoException() {
-        Assertions.assertEquals(
+    public void exitCodeNoArgsInteractiveIoException() {
+        Assert.assertEquals(
             0,
             MainTest.withStdin(
                 new InputStream() {
@@ -140,12 +140,62 @@ final class MainTest {
         );
     }
 
-    /**
-     * Run an action with System.in temporarily replaced, restoring on exit.
-     * @param input Temporary System.in
-     * @param action Action that returns an int
-     * @return Action result
-     */
+    @Test
+    public void runStartupFileExecutesScript() throws IOException {
+        final File startup = this.tempdir.newFile("env.sh");
+        try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
+            w.write(String.format("export STARTUP_LOADED=yes%n"));
+        }
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.runStartupFile(executor, startup.getAbsolutePath());
+        Assert.assertEquals("yes", executor.getVariable("STARTUP_LOADED"));
+    }
+
+    @Test
+    public void runStartupFileNotFoundPrintsError() {
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        final String pathBefore = executor.getVariable("PWD");
+        Main.runStartupFile(executor, "/nonexistent/env.sh");
+        Assert.assertEquals(pathBefore, executor.getVariable("PWD"));
+    }
+
+    @Test
+    public void interactiveWithEnvFileLoadsStartup() throws IOException {
+        final File startup = this.tempdir.newFile("env.sh");
+        try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
+            w.write(String.format("export FROM_ENV=yes%n"));
+        }
+        final String saved = System.getenv("ENV");
+        try {
+            System.setProperty("ENV", startup.getAbsolutePath());
+            final io.github.andreoss.sh4j.executor.Executor executor =
+                new io.github.andreoss.sh4j.executor.Executor();
+            Main.runStartupFile(executor, startup.getAbsolutePath());
+            Assert.assertEquals("yes", executor.getVariable("FROM_ENV"));
+        } finally {
+            if (saved != null) {
+                System.setProperty("ENV", saved);
+            } else {
+                System.clearProperty("ENV");
+            }
+        }
+    }
+
+    @Test
+    public void interactiveWithEnvFileExecutesStartup() throws IOException {
+        final File startup = this.tempdir.newFile("env.sh");
+        try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
+            w.write(String.format("export STARTUP_RAN=yes%n"));
+        }
+        final int result = MainTest.withStdin(
+            new ByteArrayInputStream(new byte[0]),
+            () -> Main.interactive(startup.getAbsolutePath())
+        );
+        Assert.assertEquals(0, result);
+    }
+
     @SuppressWarnings("PMD.CloseResource")
     private static int withStdin(final InputStream input, final IntSupplier action) {
         final InputStream prior = System.in;
@@ -155,5 +205,104 @@ final class MainTest {
         } finally {
             System.setIn(prior);
         }
+    }
+
+    @Test
+    public void isIncompleteWithUnclosedSingleQuote() {
+        Assert.assertTrue(Main.isIncomplete("echo 'hello"));
+    }
+
+    @Test
+    public void isIncompleteWithUnclosedDoubleQuote() {
+        Assert.assertTrue(Main.isIncomplete("echo \"hello"));
+    }
+
+    @Test
+    public void isIncompleteWithClosedSingleQuote() {
+        Assert.assertFalse(Main.isIncomplete("echo 'hello'"));
+    }
+
+    @Test
+    public void isIncompleteWithClosedDoubleQuote() {
+        Assert.assertFalse(Main.isIncomplete("echo \"hello\""));
+    }
+
+    @Test
+    public void isIncompleteWithEscapedBackslash() {
+        Assert.assertFalse(Main.isIncomplete("echo hello\\\\"));
+    }
+
+    @Test
+    public void isIncompleteWithTrailingBackslash() {
+        Assert.assertTrue(Main.isIncomplete("echo hello\\"));
+    }
+
+    @Test
+    public void isIncompleteWithNestedSingleInDouble() {
+        Assert.assertFalse(Main.isIncomplete("echo \"it's fine\""));
+    }
+
+    @Test
+    public void isIncompleteWithNestedDoubleInSingle() {
+        Assert.assertFalse(Main.isIncomplete("echo 'he said \"hi\"'"));
+    }
+
+    @Test
+    public void executeLineWithParseError() {
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.executeLine(executor, "echo 'unclosed");
+        Assert.assertNotNull(executor.getVariable("PATH"));
+    }
+
+    @Test
+    public void executeLineWithValidCommand() {
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.executeLine(executor, "export PS1_TEST=yes");
+        Assert.assertEquals("yes", executor.getVariable("PS1_TEST"));
+    }
+
+    @Test
+    public void interactiveWithMultiLineInput() throws IOException {
+        final String input = String.format("echo 'hello%nworld'%n");
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                () -> Main.interactive(null)
+            )
+        );
+    }
+
+    @Test
+    public void interactiveWithEmptyEnvFile() throws IOException {
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.interactive("")
+            )
+        );
+    }
+
+    @Test
+    public void executeLineWithLexerError() {
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.executeLine(executor, "`unclosed backtick");
+        Assert.assertNotNull(executor.getVariable("PATH"));
+    }
+
+    @Test
+    public void interactiveWithContinuationPrompt() throws IOException {
+        final String input = String.format("echo '%n'%n");
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                () -> Main.interactive(null)
+            )
+        );
     }
 }

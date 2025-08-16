@@ -94,6 +94,11 @@ interface BuiltinContext {
     JobManager jobManager();
 
     /**
+     * @return The command history for fc built-in
+     */
+    CommandHistory history();
+
+    /**
      * @return The stdout stream the executor writes built-in output to
      */
     PrintStream outStream();
@@ -145,4 +150,21 @@ interface BuiltinContext {
      *     job, or 0 when no background job has run yet
      */
     int lastBackgroundPid();
+
+    /**
+     * @return The current shell flags string (e.g. "e", "xu", etc.)
+     */
+    String shellFlags();
+
+    /**
+     * Sets the shell flags string.
+     * @param flags The new flags (e.g. "e", "xu")
+     */
+    void setShellFlags(String flags);
+
+    /**
+     * Replaces the positional parameters with the given list.
+     * @param params The new positional parameters (excluding $0)
+     */
+    void setPositionalParams(List<String> params);
 }

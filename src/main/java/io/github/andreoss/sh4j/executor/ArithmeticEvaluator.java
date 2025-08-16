@@ -128,20 +128,31 @@ public final class ArithmeticEvaluator {
     }
 
     private static int applyAssignmentOp(final String op, final int cur, final int rhs) {
-        return switch (op) {
-            case "" -> rhs;
-            case "+" -> cur + rhs;
-            case "-" -> cur - rhs;
-            case "*" -> cur * rhs;
-            case "/" -> rhs == 0 ? 0 : cur / rhs;
-            case "%" -> rhs == 0 ? 0 : cur % rhs;
-            case "<<" -> cur << rhs;
-            case ">>" -> cur >> rhs;
-            case "&" -> cur & rhs;
-            case "^" -> cur ^ rhs;
-            case "|" -> cur | rhs;
-            default -> rhs;
-        };
+        if ("".equals(op)) {
+            return rhs;
+        } else if ("+".equals(op)) {
+            return cur + rhs;
+        } else if ("-".equals(op)) {
+            return cur - rhs;
+        } else if ("*".equals(op)) {
+            return cur * rhs;
+        } else if ("/".equals(op)) {
+            return rhs == 0 ? 0 : cur / rhs;
+        } else if ("%".equals(op)) {
+            return rhs == 0 ? 0 : cur % rhs;
+        } else if ("<<".equals(op)) {
+            return cur << rhs;
+        } else if (">>".equals(op)) {
+            return cur >> rhs;
+        } else if ("&".equals(op)) {
+            return cur & rhs;
+        } else if ("^".equals(op)) {
+            return cur ^ rhs;
+        } else if ("|".equals(op)) {
+            return cur | rhs;
+        } else {
+            return rhs;
+        }
     }
 
     private int readEnvInt(final String name) {
@@ -458,10 +469,19 @@ public final class ArithmeticEvaluator {
 
     /**
      * Holds the data for a matched assignment-form prefix.
-     * @param name    Target identifier
-     * @param op      Operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...)
-     * @param afterOp Position just past the operator
      */
-    private record AssignmentMatch(String name, String op, int afterOp) {
+    private static final class AssignmentMatch {
+        /** Target identifier. */
+        private final String name;
+        /** Operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...). */
+        private final String op;
+        /** Position just past the operator. */
+        private final int afterOp;
+
+        AssignmentMatch(final String name, final String op, final int afterOp) {
+            this.name = name;
+            this.op = op;
+            this.afterOp = afterOp;
+        }
     }
 }
