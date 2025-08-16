@@ -55,7 +55,7 @@ public class Executor implements BuiltinContext {
     /** {@code $0}..{@code $N} positional parameters (index 0 = script name). */
     private final List<String> positionalParams;
     /** Background-job threads spawned by {@code &}. */
-    private final List<Thread> backgroundThreads;
+    private final JobManager jobManager;
     /** Dispatcher for shell built-ins. */
     private final BuiltinDispatcher dispatcher;
     /** Arithmetic-expansion evaluator. */
@@ -108,7 +108,7 @@ public class Executor implements BuiltinContext {
         this.environment = new HashMap<>(environment);
         this.functions = new HashMap<>();
         this.positionalParams = new ArrayList<>(positionalParams);
-        this.backgroundThreads = new ArrayList<>();
+        this.jobManager = new JobManager();
         this.dispatcher = new BuiltinDispatcher();
         this.arith = new ArithmeticEvaluator();
         this.lastExitCode = 0;
@@ -239,15 +239,14 @@ public class Executor implements BuiltinContext {
     }
 
     private void executeAsync(final Pipeline pipeline) {
-        final Thread bgThread = new Thread(() -> {
+        final String cmdStr = pipelineToString(pipeline);
+        final int jobId = this.jobManager.submit(() -> {
             final Executor bgExecutor = new Executor(new HashMap<>(this.environment));
             bgExecutor.out = this.out;
             bgExecutor.err = this.err;
             bgExecutor.executePipeline(pipeline);
-        });
-        bgThread.start();
-        this.backgroundThreads.add(bgThread);
-        this.lastBgPid = (int) bgThread.getId();
+        }, cmdStr);
+        this.lastBgPid = jobId;
     }
 
     @Override
@@ -257,22 +256,22 @@ public class Executor implements BuiltinContext {
 
     @Override
     public void waitForBackgroundJobs() {
-        this.joinBackgroundJobs();
+        this.jobManager.waitForAll();
     }
 
-    private void joinBackgroundJobs() {
-        boolean interrupted = false;
-        for (final Thread thr : this.backgroundThreads) {
-            if (!interrupted) {
-                try {
-                    thr.join();
-                } catch (final InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    interrupted = true;
-                }
+    private void shutdown() {
+        this.jobManager.shutdown();
+    }
+
+    private static String pipelineToString(final Pipeline pipeline) {
+        final StringBuilder line = new StringBuilder();
+        for (final Node node : pipeline.getCommands()) {
+            if (!line.isEmpty()) {
+                line.append(" | ");
             }
+            line.append(node.toString());
         }
-        this.backgroundThreads.clear();
+        return line.toString();
     }
 
     private static boolean shouldContinue(final ListNode.Separator sep, final int exitCode) {
@@ -798,6 +797,11 @@ public class Executor implements BuiltinContext {
     @Override
     public Map<String, String> aliases() {
         return this.aliases;
+    }
+
+    @Override
+    public JobManager jobManager() {
+        return this.jobManager;
     }
 
     @Override

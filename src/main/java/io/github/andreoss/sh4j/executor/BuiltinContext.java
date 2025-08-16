@@ -89,6 +89,11 @@ interface BuiltinContext {
     Map<String, String> aliases();
 
     /**
+     * @return The job manager for background job control
+     */
+    JobManager jobManager();
+
+    /**
      * @return The stdout stream the executor writes built-in output to
      */
     PrintStream outStream();
