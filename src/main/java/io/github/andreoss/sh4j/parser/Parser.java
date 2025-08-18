@@ -261,11 +261,16 @@ public final class Parser {
     private ForNode parseForCommand() {
         this.consume();
         final String varName = this.expect(TokenType.WORD).text();
-        final List<String> words = new ArrayList<>();
-        this.expectWord("in");
-        while (this.check(TokenType.WORD) && !this.isReservedWord("do")) {
-            words.add(this.current.text());
+        final List<String> words;
+        if (this.check(TokenType.WORD) && "in".equals(this.current.text())) {
             this.consume();
+            words = new ArrayList<>();
+            while (this.check(TokenType.WORD) && !this.isReservedWord("do")) {
+                words.add(this.current.text());
+                this.consume();
+            }
+        } else {
+            words = null;
         }
         if (this.check(TokenType.SEMI)) {
             this.consume();

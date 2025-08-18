@@ -370,7 +370,17 @@ public class Executor implements BuiltinContext {
     private int runFor(final ForNode node) {
         int lastExit = 0;
         boolean broken = false;
-        for (final String word : node.getWords()) {
+        final List<String> words;
+        if (node.getWords() == null) {
+            words = this.positionalParams.size() <= 1
+                ? new ArrayList<>()
+                : new ArrayList<>(
+                    this.positionalParams.subList(1, this.positionalParams.size())
+                );
+        } else {
+            words = node.getWords();
+        }
+        for (final String word : words) {
             if (broken) {
                 break;
             }
@@ -882,8 +892,10 @@ public class Executor implements BuiltinContext {
 
     @Override
     public void setPositionalParams(final List<String> params) {
+        final String script = this.positionalParams.isEmpty()
+            ? "" : this.positionalParams.get(0);
         this.positionalParams.clear();
-        this.positionalParams.add(this.positionalParams.get(0));
+        this.positionalParams.add(script);
         this.positionalParams.addAll(params);
     }
 }
