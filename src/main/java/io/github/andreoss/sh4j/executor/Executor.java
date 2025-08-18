@@ -235,7 +235,9 @@ public class Executor implements BuiltinContext {
                 this.history.add(pipelineToString(pipeline));
                 if (!shouldContinue(sep, exitCode)) {
                     stopped = true;
-                } else if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0) {
+                } else if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0
+                    && sep != ListNode.Separator.AND_IF
+                    && sep != ListNode.Separator.OR_IF) {
                     stopped = true;
                 }
             }
@@ -357,7 +359,7 @@ public class Executor implements BuiltinContext {
         if (condExit == 0) {
             code = this.execute(node.getThenBody());
         } else if (node.getElseBody() == null) {
-            code = condExit;
+            code = 0;
         } else {
             code = this.execute(node.getElseBody());
         }

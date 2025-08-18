@@ -80,8 +80,21 @@ public final class Sh4j {
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
             code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return code;
+    }
+
+    /**
+     * Checks if errexit is active and should stop execution.
+     * @param executor The executor with shell flags
+     * @param code The exit code of the last command
+     * @return True if execution should stop
+     */
+    private static boolean errexit(final Executor executor, final int code) {
+        return executor.shellFlags().indexOf('e') >= 0 && code != 0;
     }
 
     /**
@@ -107,7 +120,10 @@ public final class Sh4j {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            executor.execute(ast);
+            final int code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return bos.toString(StandardCharsets.UTF_8);
     }
@@ -135,7 +151,10 @@ public final class Sh4j {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            executor.execute(ast);
+            final int code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return bos.toString(StandardCharsets.UTF_8);
     }
@@ -167,7 +186,10 @@ public final class Sh4j {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            executor.execute(ast);
+            final int code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return executor.getVariable(varName);
     }
@@ -183,7 +205,10 @@ public final class Sh4j {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            executor.execute(ast);
+            final int code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return new HashMap<String, String>(executor.environmentMap());
     }
@@ -272,6 +297,9 @@ public final class Sh4j {
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
             code = executor.execute(ast);
+            if (errexit(executor, code)) {
+                break;
+            }
         }
         return new Result(
             code,

@@ -664,7 +664,7 @@ public final class ExecutorTest {
     @Test
     public void executeIfFalseNoElse() {
         Assert.assertEquals(
-            1,
+            0,
             new Executor().execute(this.parse("if false; then echo yes; fi"))
         );
     }
