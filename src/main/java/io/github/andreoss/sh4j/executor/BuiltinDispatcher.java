@@ -1541,7 +1541,21 @@ final class BuiltinDispatcher {
         }
         self.setShellFlags(flags);
         if (idx < args.size()) {
-            self.setPositionalParams(args.subList(idx, args.size()));
+            final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
+            final List<String> params = new ArrayList<>();
+            for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
+                final String arg = args.get(aidx);
+                final String expanded = self.expandVariables(arg, env);
+                if (WordExpander.isQuoted(arg)) {
+                    params.add(WordExpander.removeQuotes(expanded));
+                } else {
+                    final List<String> fields = WordExpander.splitFields(expanded, ifsVal);
+                    for (final String field : fields) {
+                        params.add(WordExpander.removeQuotes(field));
+                    }
+                }
+            }
+            self.setPositionalParams(params);
         }
         return 0;
     }
