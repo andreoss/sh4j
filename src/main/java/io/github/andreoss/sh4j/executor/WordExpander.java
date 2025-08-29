@@ -438,6 +438,7 @@ public final class WordExpander {
             final String expanded = ctx.expandVariables(word, env);
             if (isAssignableName(varName)) {
                 env.put(varName, expanded);
+                ctx.environmentMap().put(varName, expanded);
             }
             result = expanded;
         } else {
@@ -458,6 +459,7 @@ public final class WordExpander {
             final String expanded = ctx.expandVariables(word, env);
             if (isAssignableName(varName)) {
                 env.put(varName, expanded);
+                ctx.environmentMap().put(varName, expanded);
             }
             result = expanded;
         } else {

@@ -327,7 +327,10 @@ public class Executor implements BuiltinContext {
             code = this.executeCommand(cmd);
         } else if (node instanceof Subshell) {
             final Subshell sub = (Subshell) node;
-            code = new Executor(new HashMap<>(this.environment)).execute(sub.getList());
+            final Executor child = new Executor(new HashMap<>(this.environment));
+            child.setOutputStream(this.out);
+            child.setErrorStream(this.err);
+            code = child.execute(sub.getList());
         } else if (node instanceof Grouping) {
             final Grouping group = (Grouping) node;
             code = this.execute(group.getList());
@@ -502,12 +505,12 @@ public class Executor implements BuiltinContext {
 
     private int executeCommand(final SimpleCommand cmd) {
         final Map<String, String> cmdEnv = new HashMap<>(this.environment);
-        processAssignments(cmd.getAssignments(), cmdEnv);
+        final int assignCode = this.processAssignments(cmd.getAssignments(), cmdEnv);
         final String name = cmd.getName();
         final int code;
         if (name == null || name.isEmpty()) {
             this.environment.putAll(cmdEnv);
-            code = 0;
+            code = assignCode;
         } else {
             code = this.runNamedCommand(cmd, name, cmdEnv);
         }
@@ -551,7 +554,26 @@ public class Executor implements BuiltinContext {
         } else {
             final FunctionNode func = this.functions.get(name);
             if (func != null) {
-                code = this.executeNode(func.getBody());
+                final List<String> savedParams = new ArrayList<>(this.positionalParams);
+                final List<String> funcArgs = new ArrayList<>();
+                final String ifsVal = cmdEnv.getOrDefault("IFS", DEFAULT_IFS);
+                for (final String arg : cmd.getArguments()) {
+                    final String expanded = this.expandVariables(arg, cmdEnv);
+                    if (WordExpander.isQuoted(arg)) {
+                        funcArgs.add(WordExpander.removeQuotes(expanded));
+                    } else {
+                        for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
+                            funcArgs.add(WordExpander.removeQuotes(field));
+                        }
+                    }
+                }
+                this.setPositionalParams(funcArgs);
+                try {
+                    code = this.executeNode(func.getBody());
+                } finally {
+                    this.positionalParams.clear();
+                    this.positionalParams.addAll(savedParams);
+                }
             } else {
                 code = this.runExternalCommand(cmd, name, cmdEnv);
             }
@@ -618,17 +640,25 @@ public class Executor implements BuiltinContext {
             || ":".equals(name) || "eval".equals(name);
     }
 
-    private static void processAssignments(
+    private int processAssignments(
         final List<String> assignments, final Map<String, String> targetEnv
     ) {
+        int code = 0;
         for (final String assignment : assignments) {
             final int eqIndex = assignment.indexOf('=');
             if (eqIndex > 0) {
                 final String varName = assignment.substring(0, eqIndex);
-                final String varValue = assignment.substring(eqIndex + 1);
-                targetEnv.put(varName, varValue);
+                if ("1".equals(this.environment.get(varName + "_READONLY"))) {
+                    this.err.println("sh: " + varName + ": readonly variable");
+                    code = 1;
+                    continue;
+                }
+                final String rawValue = assignment.substring(eqIndex + 1);
+                final String expanded = this.expandVariables(rawValue, targetEnv);
+                targetEnv.put(varName, WordExpander.removeQuotes(expanded));
             }
         }
+        return code;
     }
 
     @Override

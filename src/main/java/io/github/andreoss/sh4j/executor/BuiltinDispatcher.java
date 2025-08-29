@@ -1575,21 +1575,24 @@ final class BuiltinDispatcher {
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        if (args.isEmpty()) {
+        final List<String> all = new ArrayList<>(args);
+        all.addAll(assigns);
+        if (all.isEmpty()) {
             return 0;
         }
-        if ("-p".equals(args.get(0))) {
+        if (!args.isEmpty() && "-p".equals(args.get(0))) {
             return 0;
         }
-        for (final String arg : args) {
+        final Map<String, String> environment = self.environmentMap();
+        for (final String arg : all) {
             final int eqIdx = arg.indexOf('=');
             if (eqIdx >= 0) {
                 final String name = arg.substring(0, eqIdx);
                 final String value = arg.substring(eqIdx + 1);
-                env.put(name, value);
-                env.put(name + "_READONLY", "1");
+                environment.put(name, value);
+                environment.put(name + "_READONLY", "1");
             } else {
-                env.put(arg + "_READONLY", "1");
+                environment.put(arg + "_READONLY", "1");
             }
         }
         return 0;

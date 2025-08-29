@@ -289,7 +289,7 @@ public final class Sh4j {
         }
         final ByteArrayOutputStream outBos = new ByteArrayOutputStream();
         final ByteArrayOutputStream errBos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(outBos, true, StandardCharsets.UTF_8));
+        executor.setCaptureStream(outBos);
         executor.setErrorStream(new PrintStream(errBos, true, StandardCharsets.UTF_8));
         int code = 0;
         for (final String cmd : commands) {
