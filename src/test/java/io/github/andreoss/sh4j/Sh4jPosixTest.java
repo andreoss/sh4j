@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -542,13 +541,6 @@ public final class Sh4jPosixTest {
         Assert.assertEquals("a b c\n", result.stdout());
     }
 
-    @Ignore("Blocked by Problem #27 (quote-state tracking in word expansion): "
-        + "echo $VAR with VAR containing a literal backslash strips the "
-        + "backslash via WordExpander.removeQuotes because there is no tracking "
-        + "of which chars came from variable expansion vs from the source word. "
-        + "read -r correctly stores 'a\\b' in VAR (verified via ${#VAR}=3), but "
-        + "echo's quote-removal step then drops the backslash. POSIX 2.6 says "
-        + "quote removal should only strip quotes that were in the original word.")
     @Test
     public void readRawMode() {
         final String input = "a\\b\n";

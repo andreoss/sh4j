@@ -393,4 +393,55 @@ public final class WordExpanderTest {
     public void globMatchesNoMatch() {
         Assert.assertFalse(WordExpander.globMatches("a*", "xyz"));
     }
+
+    @Test
+    public void escapeForQuoteRemovalEmpty() {
+        Assert.assertEquals("", WordExpander.escapeForQuoteRemoval(""));
+    }
+
+    @Test
+    public void escapeForQuoteRemovalPlain() {
+        Assert.assertEquals("abc", WordExpander.escapeForQuoteRemoval("abc"));
+    }
+
+    @Test
+    public void escapeForQuoteRemovalBackslash() {
+        Assert.assertEquals(
+            "a\\\\b",
+            WordExpander.escapeForQuoteRemoval("a\\b")
+        );
+    }
+
+    @Test
+    public void escapeForQuoteRemovalSingleQuote() {
+        Assert.assertEquals(
+            "a\\'b",
+            WordExpander.escapeForQuoteRemoval("a'b")
+        );
+    }
+
+    @Test
+    public void escapeForQuoteRemovalDoubleQuote() {
+        Assert.assertEquals(
+            "a\\\"b",
+            WordExpander.escapeForQuoteRemoval("a\"b")
+        );
+    }
+
+    @Test
+    public void escapeForQuoteRemovalDollarNotEscaped() {
+        Assert.assertEquals(
+            "$VAR",
+            WordExpander.escapeForQuoteRemoval("$VAR")
+        );
+    }
+
+    @Test
+    public void escapeForQuoteRemovalRoundTrip() {
+        final String original = "a\\b'c\"d";
+        Assert.assertEquals(
+            original,
+            WordExpander.removeQuotes(WordExpander.escapeForQuoteRemoval(original))
+        );
+    }
 }

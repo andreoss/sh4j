@@ -91,7 +91,9 @@ public final class WordExpander {
         final StringBuffer buf = new StringBuffer();
         while (matcher.find()) {
             final String varName = matcher.group(1);
-            final String replacement = env.getOrDefault(varName, "");
+            final String replacement = escapeForQuoteRemoval(
+                env.getOrDefault(varName, "")
+            );
             matcher.appendReplacement(buf, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(buf);
@@ -116,7 +118,7 @@ public final class WordExpander {
             final char next = arg.charAt(idx + 1);
             final String special = ctx.getSpecialParam(next);
             if (special != null) {
-                expanded.append(special);
+                expanded.append(escapeForQuoteRemoval(special));
                 consumed = 2;
             } else if (next == '(') {
                 consumed = appendDollarParen(arg, idx, env, ctx, expanded);
@@ -146,7 +148,11 @@ public final class WordExpander {
         if (idx + 2 < arg.length() && arg.charAt(idx + 2) == '(') {
             final int end = findBalancedClose(arg, idx + 3, '(', ')', 2);
             if (end > 0) {
-                expanded.append(ctx.evalArithmetic(arg.substring(idx + 3, end - 2), env));
+                expanded.append(
+                    escapeForQuoteRemoval(
+                        ctx.evalArithmetic(arg.substring(idx + 3, end - 2), env)
+                    )
+                );
                 consumed = end - idx;
             } else {
                 expanded.append(arg.charAt(idx));
@@ -154,7 +160,11 @@ public final class WordExpander {
         } else {
             final int end = findBalancedClose(arg, idx + 2, '(', ')', 1);
             if (end > 0) {
-                expanded.append(ctx.executeCommandSubstitution(arg.substring(idx + 2, end - 1)));
+                expanded.append(
+                    escapeForQuoteRemoval(
+                        ctx.executeCommandSubstitution(arg.substring(idx + 2, end - 1))
+                    )
+                );
                 consumed = end - idx;
             } else {
                 expanded.append(arg.charAt(idx));
@@ -182,7 +192,7 @@ public final class WordExpander {
             if (replacement == null) {
                 expanded.append(arg.charAt(idx));
             } else {
-                expanded.append(replacement);
+                expanded.append(escapeForQuoteRemoval(replacement));
                 consumed = close - idx + 1;
             }
         } else {
@@ -813,6 +823,30 @@ public final class WordExpander {
                 || first == '\'' && last == '\'';
         }
         return result;
+    }
+
+    /**
+     * Escapes characters in expansion-produced data so that downstream
+     * {@link #removeQuotes} treats them as literal. POSIX 2.6 says quote
+     * removal acts only on quotes that were in the original word, not on
+     * data produced by expansions. Doubles every backslash and prefixes
+     * every literal single/double quote with a backslash.
+     * @param value Expansion-produced text
+     * @return The escaped text safe to feed back through removeQuotes
+     */
+    public static String escapeForQuoteRemoval(final String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        final StringBuilder out = new StringBuilder(value.length() + 4);
+        for (int idx = 0; idx < value.length(); idx = idx + 1) {
+            final char chr = value.charAt(idx);
+            if (chr == '\\' || chr == '\'' || chr == '"') {
+                out.append('\\');
+            }
+            out.append(chr);
+        }
+        return out.toString();
     }
 
     /**

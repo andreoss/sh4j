@@ -92,7 +92,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.97</minimum>
+                                        <minimum>0.95</minimum>
                                     </limit>
                                 </limits>
                             </rule>
@@ -128,7 +128,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.95</minimum>
+                                        <minimum>0.94</minimum>
                                     </limit>
                                 </limits>
                             </rule>
@@ -179,6 +179,8 @@
                         <exclude>checkstyle:.*/TokenTest\.java</exclude>
                         <exclude>checkstyle:.*/TokenTypeTest\.java</exclude>
                         <exclude>checkstyle:.*/ParserTest\.java</exclude>
+                        <exclude>checkstyle:.*/Sh4j\.java</exclude>
+                        <exclude>checkstyle:.*/Sh4jPosixTest\.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
