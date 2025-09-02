@@ -491,6 +491,123 @@ public final class IntegrationTest {
         );
     }
 
+    /**
+     * POSIX 2.2.2 Single-Quotes - all characters between single-quotes are
+     * preserved literally; no expansion occurs.
+     */
+    @Test
+    public void singleQuotesPreserveLiterally() throws Exception {
+        final File script = this.writeScript(
+            "sq.sh", String.format("X=val%necho '$X'%n")
+        );
+        Assert.assertEquals("$X\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.2.3 Double-Quotes - variables expand, single quotes are literal.
+     */
+    @Test
+    public void doubleQuotesAllowVariableExpansion() throws Exception {
+        final File script = this.writeScript(
+            "dq.sh", String.format("X=val%necho \"X=$X\"%n")
+        );
+        Assert.assertEquals("X=val\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${var:-word} default if unset.
+     */
+    @Test
+    public void parameterDefaultExpansion() throws Exception {
+        final File script = this.writeScript(
+            "pe.sh", String.format("echo ${UNSET:-default}%n")
+        );
+        Assert.assertEquals("default\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.3 Command Substitution - $(...) replaced by its stdout.
+     */
+    @Test
+    public void commandSubstitutionDollarParen() throws Exception {
+        final File script = this.writeScript(
+            "cs.sh", String.format("echo $(echo nested)%n")
+        );
+        Assert.assertEquals("nested\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - $((expression)).
+     */
+    @Test
+    public void arithmeticExpansion() throws Exception {
+        final File script = this.writeScript(
+            "ae.sh", String.format("echo $((2 * (3 + 4)))%n")
+        );
+        Assert.assertEquals("14\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.4 Here-Document - delimited input becomes stdin for the
+     * command.
+     */
+    @Test
+    public void hereDocument() throws Exception {
+        final File script = this.writeScript(
+            "hd.sh", String.format("cat <<EOF%nfirst line%nsecond line%nEOF%n")
+        );
+        Assert.assertEquals("first line\nsecond line\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.1 If Conditional Construct - if/elif/else/fi.
+     */
+    @Test
+    public void ifThenElseConstruct() throws Exception {
+        final File script = this.writeScript(
+            "ite.sh",
+            String.format("if false; then echo no; else echo yes; fi%n")
+        );
+        Assert.assertEquals("yes\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.4 Case Conditional Construct - case/in/esac.
+     */
+    @Test
+    public void caseConditionalConstruct() throws Exception {
+        final File script = this.writeScript(
+            "case.sh",
+            String.format("x=banana%ncase $x in%n  apple) echo a;;%n  banana) echo b;;%nesac%n")
+        );
+        Assert.assertEquals("b\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.5 Function Definition Command - functions persist and bind
+     * positional parameters.
+     */
+    @Test
+    public void functionDefinitionAndCall() throws Exception {
+        final File script = this.writeScript(
+            "fn.sh",
+            String.format("greet() { echo hi $1; }%ngreet world%n")
+        );
+        Assert.assertEquals("hi world\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.2 Special Parameters - $# yields positional-parameter count.
+     */
+    @Test
+    public void specialParameterPositionalCount() throws Exception {
+        final File script = this.writeScript(
+            "dollar-hash.sh",
+            String.format("set -- a b c%necho count=$#%n")
+        );
+        Assert.assertEquals("count=3\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

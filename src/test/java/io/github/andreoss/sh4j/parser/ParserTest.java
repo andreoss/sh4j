@@ -283,7 +283,8 @@ public final class ParserTest {
         final ListNode list = this.parse("echo FOO=bar");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         Assert.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
-        Assert.assertTrue(cmd.getAssignments().contains("FOO=bar"));
+        Assert.assertTrue(cmd.getArguments().contains("FOO=bar"));
+        Assert.assertTrue(cmd.getAssignments().isEmpty());
     }
 
     @Test
@@ -570,8 +571,10 @@ public final class ParserTest {
         final ListNode list = this.parse("cmd FOO=1 arg");
         final SimpleCommand cmd = (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
         Assert.assertEquals("cmd", cmd.getName());
-        Assert.assertEquals(1, cmd.getAssignments().size());
-        Assert.assertEquals("FOO=1", cmd.getAssignments().get(0));
+        Assert.assertEquals(0, cmd.getAssignments().size());
+        Assert.assertEquals(2, cmd.getArguments().size());
+        Assert.assertEquals("FOO=1", cmd.getArguments().get(0));
+        Assert.assertEquals("arg", cmd.getArguments().get(1));
     }
 
     @Test

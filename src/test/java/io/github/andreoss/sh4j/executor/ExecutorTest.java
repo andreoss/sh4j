@@ -2057,7 +2057,7 @@ public final class ExecutorTest {
     public void expandBracedUnknownOperatorFallsThrough() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assert.assertEquals("value@weird}", new Executor().expandVariables("${x@weird}", env));
+        Assert.assertEquals("${x@weird}", new Executor().expandVariables("${x@weird}", env));
     }
 
     @Test

@@ -405,7 +405,7 @@ public final class LexerTest {
     @Test
     public void readHereDocContentSkipsLeadingNewline() {
         Assert.assertEquals(
-            "hello",
+            String.format("hello%n"),
             this.lexer(String.format("%nhello%nEOF%n")).readHereDocContent("EOF", false)
         );
     }
@@ -421,7 +421,7 @@ public final class LexerTest {
     @Test
     public void readHereDocContentMultipleLines() {
         Assert.assertEquals(
-            String.format("first%nsecond%nthird"),
+            String.format("first%nsecond%nthird%n"),
             this.lexer(
                 String.format("%nfirst%nsecond%nthird%nEOF%n")
             ).readHereDocContent("EOF", false)

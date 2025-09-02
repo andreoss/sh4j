@@ -1393,7 +1393,7 @@ final class BuiltinDispatcher {
                     listMode = false;
                     if (idx + 1 < args.size() && args.get(idx + 1).contains("=")) {
                         substitute = args.get(idx + 1);
-                        idx = idx + 2;
+                        idx = idx + 1;
                     } else if (!assigns.isEmpty()) {
                         substitute = assigns.get(0);
                     } else {

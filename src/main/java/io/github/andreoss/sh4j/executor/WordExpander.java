@@ -81,23 +81,22 @@ public final class WordExpander {
         String current = expandTilde(arg, env);
         current = normaliseBackticks(current);
         final StringBuilder expanded = new StringBuilder();
+        boolean inSingle = false;
         int idx = 0;
         while (idx < current.length()) {
-            final int consumed = appendOneExpansion(current, idx, env, ctx, expanded);
-            idx = idx + consumed;
+            final char chr = current.charAt(idx);
+            if (chr == '\'') {
+                inSingle = !inSingle;
+                expanded.append(chr);
+                idx = idx + 1;
+            } else if (inSingle) {
+                expanded.append(chr);
+                idx = idx + 1;
+            } else {
+                idx = idx + appendOneExpansion(current, idx, env, ctx, expanded);
+            }
         }
-        current = expanded.toString();
-        final Matcher matcher = VAR_PATTERN.matcher(current);
-        final StringBuffer buf = new StringBuffer();
-        while (matcher.find()) {
-            final String varName = matcher.group(1);
-            final String replacement = escapeForQuoteRemoval(
-                env.getOrDefault(varName, "")
-            );
-            matcher.appendReplacement(buf, Matcher.quoteReplacement(replacement));
-        }
-        matcher.appendTail(buf);
-        return buf.toString();
+        return expanded.toString();
     }
 
     /**
@@ -124,6 +123,16 @@ public final class WordExpander {
                 consumed = appendDollarParen(arg, idx, env, ctx, expanded);
             } else if (next == '{' && idx + 2 < arg.length()) {
                 consumed = appendDollarBrace(arg, idx, env, ctx, expanded);
+            } else if (isIdentifierStart(next)) {
+                int end = idx + 2;
+                while (end < arg.length() && isIdentifierPart(arg.charAt(end))) {
+                    end = end + 1;
+                }
+                final String varName = arg.substring(idx + 1, end);
+                expanded.append(
+                    escapeForQuoteRemoval(env.getOrDefault(varName, ""))
+                );
+                consumed = end - idx;
             } else {
                 expanded.append(chr);
             }
@@ -131,6 +140,14 @@ public final class WordExpander {
             expanded.append(chr);
         }
         return consumed;
+    }
+
+    private static boolean isIdentifierStart(final char chr) {
+        return chr == '_' || chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z';
+    }
+
+    private static boolean isIdentifierPart(final char chr) {
+        return isIdentifierStart(chr) || chr >= '0' && chr <= '9';
     }
 
     /**

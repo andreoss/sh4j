@@ -208,7 +208,7 @@ public final class WordExpanderTest {
 
     @Test public void expandVariablesDollarBraceWithoutClose() {
         Assert.assertEquals(
-            "",
+            "${unclosed",
             WordExpander.expandVariables(
                 "${unclosed",
                 new HashMap<>(),

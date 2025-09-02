@@ -493,9 +493,14 @@ public final class Parser {
             pendingFd = Integer.parseInt(this.current.text());
             this.consume();
         }
+        final boolean hasName = !cmd.getName().isEmpty();
         while (this.startsSimpleCommand()) {
             if (this.check(TokenType.ASSIGNMENT_WORD)) {
-                cmd.addAssignment(this.current.text());
+                if (hasName) {
+                    cmd.addArgument(this.current.text());
+                } else {
+                    cmd.addAssignment(this.current.text());
+                }
                 this.consume();
             } else if (this.check(TokenType.IO_NUMBER)) {
                 pendingFd = Integer.parseInt(this.current.text());

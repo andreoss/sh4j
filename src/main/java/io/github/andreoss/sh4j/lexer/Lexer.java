@@ -49,10 +49,11 @@ public final class Lexer {
 
     /**
      * Reads the body of a here-document up to (but not including) the
-     * closing delimiter line.
+     * closing delimiter line. POSIX 2.7.4: each line ends with a newline,
+     * including the last line before the delimiter.
      * @param delimiter The heredoc delimiter
      * @param stripTabs True for {@code <<-} (strip leading tabs on each line)
-     * @return The heredoc content (without trailing newline)
+     * @return The heredoc content with trailing newline per POSIX
      */
     public String readHereDocContent(final String delimiter, final boolean stripTabs) {
         final StringBuilder content = new StringBuilder();
@@ -74,10 +75,7 @@ public final class Lexer {
             if (check.equals(delimiter)) {
                 done = true;
             } else {
-                if (content.length() > 0) {
-                    content.append('\n');
-                }
-                content.append(lineStr);
+                content.append(lineStr).append('\n');
             }
         }
         return content.toString();
