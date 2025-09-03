@@ -608,6 +608,129 @@ public final class IntegrationTest {
         Assert.assertEquals("count=3\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.2.1 Escape Character - backslash quotes the next character so it
+     * loses any special meaning.
+     */
+    @Test
+    public void backslashEscapesDollar() throws Exception {
+        final File script = this.writeScript(
+            "bs.sh", String.format("X=val%necho \\$X%n")
+        );
+        Assert.assertEquals("$X\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.5 Field Splitting - unquoted expansion is split on IFS.
+     */
+    @Test
+    public void fieldSplittingOnIfs() throws Exception {
+        final File script = this.writeScript(
+            "fs.sh", String.format("IFS=:%nX=a:b:c%nfor i in $X; do echo $i; done%n")
+        );
+        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.6 Pathname Expansion - glob characters match filenames.
+     */
+    @Test
+    public void pathnameExpansionGlob() throws Exception {
+        final File dir = this.tempdir.newFolder("globdir");
+        Assert.assertTrue(new File(dir, "alpha.txt").createNewFile());
+        Assert.assertTrue(new File(dir, "beta.txt").createNewFile());
+        Assert.assertTrue(new File(dir, "other.log").createNewFile());
+        final File script = this.writeScript(
+            "glob.sh",
+            String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n", dir.getAbsolutePath())
+        );
+        Assert.assertEquals(
+            "alpha.txt\nbeta.txt\n", this.runChildJvm(script)
+        );
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${#var} yields length.
+     */
+    @Test
+    public void parameterLengthExpansion() throws Exception {
+        final File script = this.writeScript(
+            "plen.sh", String.format("X=hello%necho ${#X}%n")
+        );
+        Assert.assertEquals("5\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${var%suffix} removes shortest suffix.
+     */
+    @Test
+    public void parameterSuffixRemoval() throws Exception {
+        final File script = this.writeScript(
+            "psuf.sh",
+            String.format("X=foo.tar.gz%necho ${X%%.gz}%n")
+        );
+        Assert.assertEquals("foo.tar\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.8.2 Exit Status - `!` inverts the exit status of the pipeline.
+     */
+    @Test
+    public void bangInvertsPipelineExit() throws Exception {
+        final File script = this.writeScript(
+            "bang.sh", String.format("! true%necho $?%n")
+        );
+        Assert.assertEquals("1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.3 While - body runs while the condition exits zero.
+     */
+    @Test
+    public void whileLoopCounts() throws Exception {
+        final File script = this.writeScript(
+            "while.sh",
+            String.format("i=1%nwhile [ $i -le 3 ]; do echo $i; i=$((i+1)); done%n")
+        );
+        Assert.assertEquals("1\n2\n3\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.5 Until - body runs while the condition exits non-zero.
+     */
+    @Test
+    public void untilLoopCounts() throws Exception {
+        final File script = this.writeScript(
+            "until.sh",
+            String.format("i=1%nuntil [ $i -gt 3 ]; do echo $i; i=$((i+1)); done%n")
+        );
+        Assert.assertEquals("1\n2\n3\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.3 Lists - AND-list short-circuits on first failure.
+     */
+    @Test
+    public void andOrListShortCircuit() throws Exception {
+        final File script = this.writeScript(
+            "andor.sh",
+            String.format("false && echo skip || echo ran%n")
+        );
+        Assert.assertEquals("ran\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.2 For - iterates over the given word list.
+     */
+    @Test
+    public void forIteratesWords() throws Exception {
+        final File script = this.writeScript(
+            "for.sh",
+            String.format("for n in one two three; do echo $n; done%n")
+        );
+        Assert.assertEquals("one\ntwo\nthree\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

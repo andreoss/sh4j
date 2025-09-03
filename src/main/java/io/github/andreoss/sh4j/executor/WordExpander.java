@@ -92,6 +92,10 @@ public final class WordExpander {
             } else if (inSingle) {
                 expanded.append(chr);
                 idx = idx + 1;
+            } else if (chr == '\\' && idx + 1 < current.length()) {
+                expanded.append(chr);
+                expanded.append(current.charAt(idx + 1));
+                idx = idx + 2;
             } else {
                 idx = idx + appendOneExpansion(current, idx, env, ctx, expanded);
             }

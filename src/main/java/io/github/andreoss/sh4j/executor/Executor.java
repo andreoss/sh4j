@@ -226,25 +226,42 @@ public class Executor implements BuiltinContext {
         while (!stopped && idx < pipelines.size()) {
             final Pipeline pipeline = pipelines.get(idx);
             final ListNode.Separator sep = separators.get(idx);
-            if (sep == ListNode.Separator.AMP) {
-                this.executeAsync(pipeline);
-                this.lastExitCode = 0;
-            } else {
-                final int exitCode = this.executePipeline(pipeline);
-                this.lastExitCode = exitCode;
-                this.history.add(pipelineToString(pipeline));
-                if (!shouldContinue(sep, exitCode)) {
-                    stopped = true;
-                } else if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0
-                    && sep != ListNode.Separator.AND_IF
-                    && sep != ListNode.Separator.OR_IF) {
-                    stopped = true;
+            final boolean run = idx == 0 || shouldRunNext(
+                separators.get(idx - 1), this.lastExitCode
+            );
+            if (run) {
+                if (sep == ListNode.Separator.AMP) {
+                    this.executeAsync(pipeline);
+                    this.lastExitCode = 0;
+                } else {
+                    final int exitCode = this.executePipeline(pipeline);
+                    this.lastExitCode = exitCode;
+                    this.history.add(pipelineToString(pipeline));
+                    if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0
+                        && sep != ListNode.Separator.AND_IF
+                        && sep != ListNode.Separator.OR_IF) {
+                        stopped = true;
+                    }
                 }
             }
             idx = idx + 1;
         }
         this.waitForBackgroundJobs();
         return this.lastExitCode;
+    }
+
+    private static boolean shouldRunNext(
+        final ListNode.Separator prevSep, final int prevExit
+    ) {
+        final boolean run;
+        if (prevSep == ListNode.Separator.AND_IF) {
+            run = prevExit == 0;
+        } else if (prevSep == ListNode.Separator.OR_IF) {
+            run = prevExit != 0;
+        } else {
+            run = true;
+        }
+        return run;
     }
 
     private void executeAsync(final Pipeline pipeline) {
@@ -284,18 +301,6 @@ public class Executor implements BuiltinContext {
             line.append(node.toString());
         }
         return line.toString();
-    }
-
-    private static boolean shouldContinue(final ListNode.Separator sep, final int exitCode) {
-        final boolean cont;
-        if (sep == ListNode.Separator.AND_IF) {
-            cont = exitCode == 0;
-        } else if (sep == ListNode.Separator.OR_IF) {
-            cont = exitCode != 0;
-        } else {
-            cont = true;
-        }
-        return cont;
     }
 
     private int executePipeline(final Pipeline pipeline) {
@@ -381,7 +386,18 @@ public class Executor implements BuiltinContext {
                     this.positionalParams.subList(1, this.positionalParams.size())
                 );
         } else {
-            words = node.getWords();
+            words = new ArrayList<>();
+            final String ifsVal = this.environment.getOrDefault("IFS", DEFAULT_IFS);
+            for (final String raw : node.getWords()) {
+                final String expanded = this.expandVariables(raw, this.environment);
+                if (WordExpander.isQuoted(raw)) {
+                    words.add(WordExpander.removeQuotes(expanded));
+                } else {
+                    for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
+                        words.add(WordExpander.removeQuotes(field));
+                    }
+                }
+            }
         }
         for (final String word : words) {
             if (broken) {
