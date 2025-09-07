@@ -731,6 +731,124 @@ public final class IntegrationTest {
         Assert.assertEquals("one\ntwo\nthree\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.5.1 Positional Parameters - $1, $2 access individual params.
+     */
+    @Test
+    public void positionalParametersDollarOneAndTwo() throws Exception {
+        final File script = this.writeScript(
+            "pos.sh", String.format("set -- alpha beta gamma%necho $1-$2%n")
+        );
+        Assert.assertEquals("alpha-beta\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.1 Tilde Expansion - leading ~ expands to $HOME.
+     */
+    @Test
+    public void tildeExpansionToHome() throws Exception {
+        final File script = this.writeScript(
+            "tilde.sh", String.format("HOME=/tmp/home%necho ~/x%n")
+        );
+        Assert.assertEquals("/tmp/home/x\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.7 Quote Removal - escaped quote inside double-quotes is
+     * preserved literally.
+     */
+    @Test
+    public void quoteRemovalEscapedDoubleQuote() throws Exception {
+        final File script = this.writeScript(
+            "qr.sh", String.format("echo \"a\\\"b\"%n")
+        );
+        Assert.assertEquals("a\"b\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.6 Duplicating Output FD - 2>&1 merges stderr into stdout.
+     */
+    @Test
+    public void duplicateStderrToStdout() throws Exception {
+        final File script = this.writeScript(
+            "dupfd.sh",
+            String.format("echo to-out%necho to-err 1>&2 2>&1%n")
+        );
+        Assert.assertEquals("to-out\nto-err\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.6 Brace Group - { list; } groups commands without subshell.
+     */
+    @Test
+    public void braceGroupSharesEnvironment() throws Exception {
+        final File script = this.writeScript(
+            "brace.sh",
+            String.format("{ X=inside; }%necho $X%n")
+        );
+        Assert.assertEquals("inside\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.1 Subshell - ( list ) runs in a subshell; outer env
+     * unchanged.
+     */
+    @Test
+    public void subshellEnvironmentIsolated() throws Exception {
+        final File script = this.writeScript(
+            "sub.sh",
+            String.format("X=outer%n(X=inner; echo $X)%necho $X%n")
+        );
+        Assert.assertEquals("inner\nouter\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.3 PATH - command search finds executables on PATH.
+     */
+    @Test
+    public void pathSearchFindsExternalCommand() throws Exception {
+        final File script = this.writeScript(
+            "path.sh", String.format("echo $(printf hello)%n")
+        );
+        Assert.assertEquals("hello\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - variable reference inside $((..)).
+     */
+    @Test
+    public void arithmeticReferencesVariable() throws Exception {
+        final File script = this.writeScript(
+            "arith2.sh", String.format("a=6; b=7%necho $((a * b))%n")
+        );
+        Assert.assertEquals("42\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.8.2 Exit Status - $? carries the last command's exit.
+     */
+    @Test
+    public void exitStatusPropagatesToDollarQuestion() throws Exception {
+        final File script = this.writeScript(
+            "dollarq.sh",
+            String.format("(exit 7)%necho $?%n")
+        );
+        Assert.assertEquals("7\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${var#prefix} removes shortest
+     * matching prefix.
+     */
+    @Test
+    public void parameterPrefixRemoval() throws Exception {
+        final File script = this.writeScript(
+            "ppref.sh",
+            String.format("X=foo.bar.baz%necho ${X#foo.}%n")
+        );
+        Assert.assertEquals("bar.baz\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
