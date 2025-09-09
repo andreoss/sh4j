@@ -849,6 +849,145 @@ public final class IntegrationTest {
         Assert.assertEquals("bar.baz\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.3.1 Alias Substitution - alias name expands to its body before
+     * parsing the rest of the command.
+     */
+    @Test
+    public void aliasSubstitution() throws Exception {
+        final File script = this.writeScript(
+            "alias.sh",
+            String.format("alias greet='echo hi'%ngreet there%n")
+        );
+        Assert.assertEquals("hi there\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.7 Open File Descriptor for Reading and Writing - {@code <>}
+     * opens a file for both read and write.
+     */
+    @Test
+    public void readWriteRedirection() throws Exception {
+        final File data = this.tempdir.newFile("rw.dat");
+        Files.writeString(data.toPath(), "stored\n");
+        final File script = this.writeScript(
+            "rw.sh",
+            String.format("cat <>%s%n", data.getAbsolutePath())
+        );
+        Assert.assertEquals("stored\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.8.1 Consequences of Shell Errors - {@code set -e} aborts on
+     * first command failure.
+     */
+    @Test
+    public void setEAbortsOnFirstFailure() throws Exception {
+        final File script = this.writeScript(
+            "sete.sh",
+            String.format("set -e%nfalse%necho should-not-print%n")
+        );
+        final String out = this.runChildJvmAllowingFailure(script);
+        Assert.assertFalse(
+            "set -e should abort before echo runs: " + out,
+            out.contains("should-not-print")
+        );
+    }
+
+    /**
+     * POSIX 2.14 export builtin - marks variable for child environment.
+     */
+    @Test
+    public void exportMakesVariableVisibleToSubshell() throws Exception {
+        final File script = this.writeScript(
+            "export.sh",
+            String.format("X=outer%nexport X%n(echo $X)%n")
+        );
+        Assert.assertEquals("outer\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 unset builtin - removes a variable.
+     */
+    @Test
+    public void unsetRemovesVariable() throws Exception {
+        final File script = this.writeScript(
+            "unset.sh",
+            String.format("X=hello%nunset X%necho [${X-empty}]%n")
+        );
+        Assert.assertEquals("[empty]\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 shift builtin - drops positional parameter $1, renumbers
+     * the rest.
+     */
+    @Test
+    public void shiftDropsFirstPositional() throws Exception {
+        final File script = this.writeScript(
+            "shift.sh",
+            String.format("set -- a b c%nshift%necho $1-$2%n")
+        );
+        Assert.assertEquals("b-c\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 readonly builtin - prevents reassignment.
+     */
+    @Test
+    public void readonlyPreventsReassignment() throws Exception {
+        final File script = this.writeScript(
+            "ro.sh",
+            String.format("readonly R=fixed%nR=changed%necho $R%n")
+        );
+        final String out = this.runChildJvm(script);
+        Assert.assertTrue("expected 'fixed' in output, got: " + out, out.contains("fixed"));
+        Assert.assertFalse(
+            "readonly should block reassignment, got: " + out,
+            out.contains("changed")
+        );
+    }
+
+    /**
+     * POSIX 2.14 true / false builtins - exit 0 / 1 respectively.
+     */
+    @Test
+    public void trueAndFalseExitCodes() throws Exception {
+        final File script = this.writeScript(
+            "tf.sh",
+            String.format("true; echo $?%nfalse; echo $?%n")
+        );
+        Assert.assertEquals("0\n1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 pwd builtin - prints the working directory.
+     */
+    @Test
+    public void pwdPrintsWorkingDirectory() throws Exception {
+        final File dir = this.tempdir.newFolder("wd");
+        final File script = this.writeScript(
+            "pwd.sh",
+            String.format("cd %s%npwd%n", dir.getAbsolutePath())
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue(
+            "expected pwd to end with /wd, got " + out, out.endsWith("/wd")
+        );
+    }
+
+    /**
+     * POSIX 2.14 colon builtin - {@code :} is a no-op returning 0.
+     */
+    @Test
+    public void colonBuiltinIsNoop() throws Exception {
+        final File script = this.writeScript(
+            "colon.sh",
+            String.format(":%necho $?%n")
+        );
+        Assert.assertEquals("0\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
@@ -856,6 +995,21 @@ public final class IntegrationTest {
         }
         Assert.assertTrue(script.setExecutable(true));
         return script;
+    }
+
+    private String runChildJvmAllowingFailure(final File script) throws Exception {
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            script.getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        return out;
     }
 
     private String runChildJvm(final File script) throws Exception {
