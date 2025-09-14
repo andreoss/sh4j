@@ -325,7 +325,14 @@ final class BuiltinDispatcher {
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        final String input = String.join(" ", args);
+        final StringBuilder buf = new StringBuilder();
+        for (final String arg : args) {
+            if (buf.length() > 0) {
+                buf.append(' ');
+            }
+            buf.append(WordExpander.removeQuotes(self.expandVariables(arg, env)));
+        }
+        final String input = buf.toString();
         final int code;
         if (input.isEmpty()) {
             code = 0;

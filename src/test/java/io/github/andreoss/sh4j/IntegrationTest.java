@@ -988,6 +988,123 @@ public final class IntegrationTest {
         Assert.assertEquals("0\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.14 cd builtin - changes the working directory.
+     */
+    @Test
+    public void cdChangesWorkingDirectory() throws Exception {
+        final File target = this.tempdir.newFolder("cd-target");
+        final File script = this.writeScript(
+            "cd.sh",
+            String.format("cd %s%npwd%n", target.getAbsolutePath())
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue("expected to land in /cd-target, got " + out, out.endsWith("/cd-target"));
+    }
+
+    /**
+     * POSIX 2.14 eval builtin - parses and runs its arguments as shell input.
+     */
+    @Test
+    public void evalRunsConstructedCommand() throws Exception {
+        final File script = this.writeScript(
+            "eval.sh",
+            String.format("CMD='echo dynamic'%neval $CMD%n")
+        );
+        Assert.assertEquals("dynamic\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 read builtin - reads one line from stdin into VAR.
+     */
+    @Test
+    public void readBuiltinFromStdinViaHeredoc() throws Exception {
+        final File script = this.writeScript(
+            "read.sh",
+            String.format("read VAR <<EOF%nhello world%nEOF%necho got=$VAR%n")
+        );
+        Assert.assertEquals("got=hello world\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 getopts builtin - parses option flags.
+     */
+    @Test
+    public void getoptsParsesSingleFlag() throws Exception {
+        final File script = this.writeScript(
+            "getopts.sh",
+            String.format("set -- -a foo%nwhile getopts a: opt; do echo $opt:$OPTARG; done%n")
+        );
+        Assert.assertEquals("a:foo\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 umask builtin - default mask is 0022.
+     */
+    @Test
+    public void umaskDefaultIsPrintable() throws Exception {
+        final File script = this.writeScript(
+            "umask.sh", String.format("umask%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue("expected 4-digit octal, got " + out, out.matches("\\d{4}"));
+    }
+
+    /**
+     * POSIX 2.5.2 Special Parameters - $$ is the shell's PID (positive int).
+     */
+    @Test
+    public void specialParameterDollarDollarIsPid() throws Exception {
+        final File script = this.writeScript(
+            "pid.sh", String.format("echo $$%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue("expected positive int, got " + out, out.matches("\\d+"));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${var:?word} writes error to stderr
+     * when var is unset.
+     */
+    @Test
+    public void parameterErrorIfUnset() throws Exception {
+        final File script = this.writeScript(
+            "perr.sh",
+            String.format("echo ${UNSET_REQ:?required}%n")
+        );
+        final String out = this.runChildJvmAllowingFailure(script);
+        Assert.assertTrue(
+            "expected error mentioning UNSET_REQ/required, got: " + out,
+            out.contains("UNSET_REQ") || out.contains("required")
+        );
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - ${var:+word} substitutes word when
+     * var is set non-empty.
+     */
+    @Test
+    public void parameterAlternativeIfSet() throws Exception {
+        final File script = this.writeScript(
+            "palt.sh",
+            String.format("X=v%necho ${X:+present}%necho ${UNSET:+present}%n")
+        );
+        Assert.assertEquals("present\n\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.2 Pipelines - data flows through every stage of a 3-stage
+     * pipeline.
+     */
+    @Test
+    public void multiStagePipeline() throws Exception {
+        final File script = this.writeScript(
+            "pipe.sh",
+            String.format("echo hello | tr 'a-z' 'A-Z' | tr -d 'L'%n")
+        );
+        Assert.assertEquals("HEO\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

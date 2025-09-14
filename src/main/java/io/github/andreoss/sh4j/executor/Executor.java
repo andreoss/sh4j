@@ -4,8 +4,10 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -26,6 +28,8 @@ import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
+import io.github.andreoss.sh4j.parser.Redirection;
+import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.WhileNode;
@@ -553,9 +557,18 @@ public class Executor implements BuiltinContext {
         );
         this.out = swap.out;
         this.err = swap.err;
+        final InputStream savedIn = this.swapInputForBuiltin(cmd.getRedirections());
         final Integer builtinResult = this.dispatcher.dispatch(
             name, this, cmd.getArguments(), cmdEnv, cmd.getAssignments()
         );
+        if (savedIn != null) {
+            try {
+                this.in.close();
+            } catch (final IOException ignored) {
+                // best-effort close of the swapped stdin
+            }
+            this.in = savedIn;
+        }
         if (swap.savedOut != null) {
             this.out.close();
             this.out = swap.savedOut;
@@ -595,6 +608,35 @@ public class Executor implements BuiltinContext {
             }
         }
         return code;
+    }
+
+    private InputStream swapInputForBuiltin(final List<Redirection> redirs) {
+        InputStream replacement = null;
+        for (final Redirection redir : redirs) {
+            final RedirectionType type = redir.getType();
+            if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
+                final String content = redir.getHereDocContent();
+                if (content != null) {
+                    final String expanded = this.expandVariables(content, this.environment);
+                    replacement = new ByteArrayInputStream(
+                        expanded.getBytes(StandardCharsets.UTF_8)
+                    );
+                }
+            } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
+                final String target = this.expandVariables(redir.getTarget(), this.environment);
+                try {
+                    replacement = new FileInputStream(target);
+                } catch (final java.io.FileNotFoundException ex) {
+                    // fall back to no replacement; read will see original stdin
+                }
+            }
+        }
+        if (replacement == null) {
+            return null;
+        }
+        final InputStream saved = this.in;
+        this.in = replacement;
+        return saved;
     }
 
     private int runExternalCommand(
