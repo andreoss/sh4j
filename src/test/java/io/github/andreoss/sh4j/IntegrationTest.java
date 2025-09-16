@@ -1105,6 +1105,136 @@ public final class IntegrationTest {
         Assert.assertEquals("HEO\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.7.1 Redirecting Input - input redirect supplies the content of
+     * a file to the command's stdin.
+     */
+    @Test
+    public void inputRedirectionFromFile() throws Exception {
+        final File data = this.tempdir.newFile("in.dat");
+        Files.writeString(data.toPath(), "feed\n");
+        final File script = this.writeScript(
+            "redir.sh",
+            String.format("cat <%s%n", data.getAbsolutePath())
+        );
+        Assert.assertEquals("feed\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 cd builtin - {@code cd -} jumps back to the previous
+     * directory recorded in OLDPWD.
+     */
+    @Test
+    public void cdDashRevisitsPreviousDirectory() throws Exception {
+        final File first = this.tempdir.newFolder("first");
+        final File second = this.tempdir.newFolder("second");
+        final File script = this.writeScript(
+            "cdback.sh",
+            String.format(
+                "cd %s%ncd %s%ncd - >/dev/null%npwd%n",
+                first.getAbsolutePath(), second.getAbsolutePath()
+            )
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue("expected to return to /first, got " + out, out.endsWith("/first"));
+    }
+
+    /**
+     * POSIX 2.14 type builtin - reports how the shell would interpret a
+     * name (builtin / function / file / not found).
+     */
+    @Test
+    public void typeBuiltinReportsBuiltin() throws Exception {
+        final File script = this.writeScript(
+            "type.sh", String.format("type echo%n")
+        );
+        final String out = this.runChildJvm(script);
+        Assert.assertTrue(
+            "expected output to mention echo as a builtin, got: " + out,
+            out.contains("echo")
+        );
+    }
+
+    /**
+     * POSIX 2.14 command -v - prints the command location / kind.
+     */
+    @Test
+    public void commandDashVReportsBuiltin() throws Exception {
+        final File script = this.writeScript(
+            "cmdv.sh", String.format("command -v cd%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertEquals("cd", out);
+    }
+
+    /**
+     * POSIX 2.14 hash builtin - {@code hash -r} clears the cache and
+     * returns 0.
+     */
+    @Test
+    public void hashDashRReturnsZero() throws Exception {
+        final File script = this.writeScript(
+            "hashr.sh", String.format("hash -r%necho $?%n")
+        );
+        Assert.assertEquals("0\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.2 Quoting - mixing single and double quotes in one word
+     * preserves each region's semantics.
+     */
+    @Test
+    public void mixedQuotingPreservesEachRegion() throws Exception {
+        final File script = this.writeScript(
+            "mq.sh",
+            String.format("X=val%necho '$X'\"$X\"%n")
+        );
+        Assert.assertEquals("$Xval\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.5 Function Definition - recursive function (factorial of 5).
+     */
+    @Test
+    public void recursiveFunctionFactorial() throws Exception {
+        final File script = this.writeScript(
+            "fact.sh",
+            String.format(
+                "fact() {%n  if [ $1 -le 1 ]; then echo 1; "
+                    + "else echo $(( $1 * $(fact $(( $1 - 1 ))) )); fi%n"
+                    + "}%nfact 5%n"
+            )
+        );
+        Assert.assertEquals("120\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 wait builtin - {@code wait} without args returns 0 when no
+     * background jobs are running.
+     */
+    @Test
+    public void waitWithoutBackgroundJobsReturnsZero() throws Exception {
+        final File script = this.writeScript(
+            "wait.sh", String.format("wait%necho $?%n")
+        );
+        Assert.assertEquals("0\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.4 Here-Document with quoted delimiter - body is NOT
+     * variable-expanded.
+     */
+    @Test
+    public void heredocQuotedDelimiterPreventsExpansion() throws Exception {
+        final File script = this.writeScript(
+            "hdq.sh",
+            String.format(
+                "X=val%ncat <<'EOF'%n$X literal%nEOF%n"
+            )
+        );
+        Assert.assertEquals("$X literal\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

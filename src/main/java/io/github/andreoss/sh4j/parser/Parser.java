@@ -519,10 +519,19 @@ public final class Parser {
         if (this.check(TokenType.DLESS) || this.check(TokenType.DLESSDASH)) {
             final boolean stripTabs = this.current.type() == TokenType.DLESSDASH;
             this.consume();
-            final String delimiter = this.expect(TokenType.WORD).text();
+            final String rawDelim = this.expect(TokenType.WORD).text();
+            final boolean quoted = isQuotedHereDocDelim(rawDelim);
+            final String delimiter;
+            if (quoted) {
+                delimiter = stripDelimQuotes(rawDelim);
+            } else {
+                delimiter = rawDelim;
+            }
             final String content = this.lexer.readHereDocContent(delimiter, stripTabs);
             final int desc = pendingFd >= 0 ? pendingFd : 0;
-            cmd.addRedirection(new Redirection(desc, RedirectionType.HERE_DOC, delimiter, content));
+            cmd.addRedirection(
+                new Redirection(desc, RedirectionType.HERE_DOC, delimiter, content, quoted)
+            );
         } else {
             final RedirectionType type = this.redirectionTypeForCurrent();
             final int defaultFd = defaultFdFor(type);
@@ -551,6 +560,30 @@ public final class Parser {
             type = RedirectionType.APPEND;
         }
         return type;
+    }
+
+    private static boolean isQuotedHereDocDelim(final String word) {
+        return word.length() >= 2
+            && (word.charAt(0) == '\'' && word.charAt(word.length() - 1) == '\''
+                || word.charAt(0) == '"' && word.charAt(word.length() - 1) == '"'
+                || word.indexOf('\\') >= 0);
+    }
+
+    private static String stripDelimQuotes(final String word) {
+        final StringBuilder out = new StringBuilder(word.length());
+        boolean escaped = false;
+        for (int idx = 0; idx < word.length(); idx = idx + 1) {
+            final char chr = word.charAt(idx);
+            if (escaped) {
+                out.append(chr);
+                escaped = false;
+            } else if (chr == '\\') {
+                escaped = true;
+            } else if (chr != '\'' && chr != '"') {
+                out.append(chr);
+            }
+        }
+        return out.toString();
     }
 
     private static int defaultFdFor(final RedirectionType type) {

@@ -169,9 +169,13 @@ public final class WordExpander {
         if (idx + 2 < arg.length() && arg.charAt(idx + 2) == '(') {
             final int end = findBalancedClose(arg, idx + 3, '(', ')', 2);
             if (end > 0) {
+                final String rawExpr = arg.substring(idx + 3, end - 2);
+                final String expandedExpr = removeQuotes(
+                    expandVariablesImpl(rawExpr, env, ctx)
+                );
                 expanded.append(
                     escapeForQuoteRemoval(
-                        ctx.evalArithmetic(arg.substring(idx + 3, end - 2), env)
+                        ctx.evalArithmetic(expandedExpr, env)
                     )
                 );
                 consumed = end - idx;

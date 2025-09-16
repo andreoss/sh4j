@@ -2131,7 +2131,7 @@ public final class ExecutorTest {
     public void commandWithSlashFound() {
         Assert.assertEquals(
             0,
-            new Executor(new HashMap<>()).execute(this.parse("/user/.nix-profile/bin/ls"))
+            new Executor(new HashMap<>()).execute(this.parse("/usr/bin/env true"))
         );
     }
 

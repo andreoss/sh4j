@@ -281,7 +281,7 @@ public final class RedirectionHandler {
         final UnaryOperator<String> expander
     ) {
         String content = redir.getHereDocContent();
-        if (content != null) {
+        if (content != null && !redir.isHereDocQuoted()) {
             content = expander.apply(content);
         }
         final File src = heredocFile(content);

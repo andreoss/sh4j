@@ -199,6 +199,7 @@ public class Executor implements BuiltinContext {
             new HashMap<>(this.environment),
             new ArrayList<>(this.positionalParams)
         );
+        sub.functions.putAll(this.functions);
         sub.setCaptureStream(baos);
         sub.execute(ast);
         String captured = baos.toString(StandardCharsets.UTF_8);
@@ -337,6 +338,7 @@ public class Executor implements BuiltinContext {
         } else if (node instanceof Subshell) {
             final Subshell sub = (Subshell) node;
             final Executor child = new Executor(new HashMap<>(this.environment));
+            child.functions.putAll(this.functions);
             child.setOutputStream(this.out);
             child.setErrorStream(this.err);
             code = child.execute(sub.getList());
@@ -617,9 +619,14 @@ public class Executor implements BuiltinContext {
             if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
                 final String content = redir.getHereDocContent();
                 if (content != null) {
-                    final String expanded = this.expandVariables(content, this.environment);
+                    final String body;
+                    if (redir.isHereDocQuoted()) {
+                        body = content;
+                    } else {
+                        body = this.expandVariables(content, this.environment);
+                    }
                     replacement = new ByteArrayInputStream(
-                        expanded.getBytes(StandardCharsets.UTF_8)
+                        body.getBytes(StandardCharsets.UTF_8)
                     );
                 }
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
