@@ -1235,6 +1235,144 @@ public final class IntegrationTest {
         Assert.assertEquals("$X literal\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.5.2 Special Parameters - $0 expands to the script name passed
+     * to the shell.
+     */
+    @Test
+    public void specialParameterDollarZeroIsScriptName() throws Exception {
+        final File script = this.writeScript(
+            "dollar0.sh", String.format("echo $0%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue(
+            "expected $0 to end with /dollar0.sh, got: " + out,
+            out.endsWith("/dollar0.sh")
+        );
+    }
+
+    /**
+     * POSIX 2.6.1 Tilde Expansion - tilde NOT at the start of a word must
+     * NOT expand.
+     */
+    @Test
+    public void tildeMidWordNotExpanded() throws Exception {
+        final File script = this.writeScript(
+            "midtilde.sh",
+            String.format("HOME=/h%necho a~b%n")
+        );
+        Assert.assertEquals("a~b\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - unary minus produces negative
+     * integer.
+     */
+    @Test
+    public void arithmeticNegativeNumbers() throws Exception {
+        final File script = this.writeScript(
+            "arithneg.sh", String.format("echo $((-3 - 4))%n")
+        );
+        Assert.assertEquals("-7\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - octal literal (leading 0).
+     */
+    @Test
+    public void arithmeticOctalLiteral() throws Exception {
+        final File script = this.writeScript(
+            "octal.sh", String.format("echo $((010 + 1))%n")
+        );
+        Assert.assertEquals("9\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.3 nested while loops - inner break breaks only the inner
+     * loop.
+     */
+    @Test
+    public void nestedWhileInnerBreak() throws Exception {
+        final File script = this.writeScript(
+            "nested.sh",
+            String.format(
+                "i=0%nwhile [ $i -lt 2 ]; do "
+                    + "j=0; while [ $j -lt 3 ]; do echo $i.$j; "
+                    + "if [ $j -eq 1 ]; then break; fi; j=$((j+1)); done; "
+                    + "i=$((i+1)); done%n"
+            )
+        );
+        Assert.assertEquals("0.0\n0.1\n1.0\n1.1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.5 Function Definition - a function can shadow a builtin
+     * within its own scope.
+     */
+    @Test
+    public void functionShadowsBuiltin() throws Exception {
+        final File script = this.writeScript(
+            "shadow.sh",
+            String.format("echo() { /usr/bin/env echo wrapped: $*; }%necho hi%n")
+        );
+        Assert.assertEquals("wrapped: hi\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 unset -f - removes a function definition.
+     */
+    @Test
+    public void unsetDashFRemovesFunction() throws Exception {
+        final File script = this.writeScript(
+            "unsetf.sh",
+            String.format(
+                "f() { echo from-fn; }%nf%nunset -f f%nf 2>/dev/null || echo gone%n"
+            )
+        );
+        Assert.assertEquals("from-fn\ngone\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.3 Token Recognition - {@code #} starts a comment that runs
+     * to end-of-line; the next command still executes.
+     */
+    @Test
+    public void hashStartsComment() throws Exception {
+        final File script = this.writeScript(
+            "comment.sh",
+            String.format("# this is a comment%necho after%n")
+        );
+        Assert.assertEquals("after\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.2.1 Escape Character - backslash-newline outside quotes is
+     * a line continuation, joining the two halves into one word.
+     */
+    @Test
+    public void backslashNewlineIsLineContinuation() throws Exception {
+        final File script = this.writeScript(
+            "cont.sh",
+            String.format("echo one\\%ntwo%n")
+        );
+        Assert.assertEquals("onetwo\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.3 IFS - reset to default (space-tab-newline) when unset
+     * during field splitting.
+     */
+    @Test
+    public void ifsUnsetUsesDefault() throws Exception {
+        final File script = this.writeScript(
+            "ifs.sh",
+            String.format(
+                "unset IFS%nX='a b c'%nfor i in $X; do echo $i; done%n"
+            )
+        );
+        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

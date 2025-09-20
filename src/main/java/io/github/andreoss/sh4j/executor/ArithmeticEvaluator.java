@@ -404,10 +404,41 @@ public final class ArithmeticEvaluator {
     }
 
     private static int readNumber(final String str, final int[] pos) {
-        int num = 0;
-        while (pos[0] < str.length() && Character.isDigit(str.charAt(pos[0]))) {
-            num = num * 10 + (str.charAt(pos[0]) - '0');
+        final int start = pos[0];
+        final int base;
+        if (pos[0] + 1 < str.length() && str.charAt(pos[0]) == '0'
+            && (str.charAt(pos[0] + 1) == 'x' || str.charAt(pos[0] + 1) == 'X')) {
+            base = 16;
+            pos[0] = pos[0] + 2;
+        } else if (pos[0] < str.length() && str.charAt(pos[0]) == '0'
+            && pos[0] + 1 < str.length()
+            && str.charAt(pos[0] + 1) >= '0' && str.charAt(pos[0] + 1) <= '7') {
+            base = 8;
             pos[0] = pos[0] + 1;
+        } else {
+            base = 10;
+        }
+        int num = 0;
+        while (pos[0] < str.length()) {
+            final char chr = str.charAt(pos[0]);
+            final int digit;
+            if (chr >= '0' && chr <= '9') {
+                digit = chr - '0';
+            } else if (base == 16 && chr >= 'a' && chr <= 'f') {
+                digit = chr - 'a' + 10;
+            } else if (base == 16 && chr >= 'A' && chr <= 'F') {
+                digit = chr - 'A' + 10;
+            } else {
+                break;
+            }
+            if (digit >= base) {
+                break;
+            }
+            num = num * base + digit;
+            pos[0] = pos[0] + 1;
+        }
+        if (pos[0] == start) {
+            pos[0] = start + 1;
         }
         return num;
     }

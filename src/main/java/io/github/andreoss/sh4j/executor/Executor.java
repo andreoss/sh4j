@@ -44,6 +44,15 @@ import io.github.andreoss.sh4j.parser.WhileNode;
 public class Executor implements BuiltinContext {
 
     /** Default IFS value (space, tab, newline). */
+    /**
+     * POSIX 2.14 special built-in utilities — these take priority over user-
+     * defined functions in command search (POSIX 2.9.1.1).
+     */
+    private static final java.util.Set<String> SPECIAL_BUILTINS = java.util.Set.of(
+        ":", ".", "break", "continue", "eval", "exec", "exit", "export",
+        "readonly", "return", "set", "shift", "times", "trap", "unset"
+    );
+
     private static final String DEFAULT_IFS = " \t\n";
     /** Default fallback PATH when none is set. */
     private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
@@ -553,6 +562,9 @@ public class Executor implements BuiltinContext {
             ).parse();
             return this.execute(ast);
         }
+        if (this.functions.containsKey(name) && !isSpecialBuiltin(name)) {
+            return this.invokeFunction(this.functions.get(name), cmd, cmdEnv);
+        }
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             cmd.getRedirections(), this.out, this.err,
             text -> this.expandVariables(text, this.environment)
@@ -583,33 +595,38 @@ public class Executor implements BuiltinContext {
         if (builtinResult != null) {
             code = builtinResult;
         } else {
-            final FunctionNode func = this.functions.get(name);
-            if (func != null) {
-                final List<String> savedParams = new ArrayList<>(this.positionalParams);
-                final List<String> funcArgs = new ArrayList<>();
-                final String ifsVal = cmdEnv.getOrDefault("IFS", DEFAULT_IFS);
-                for (final String arg : cmd.getArguments()) {
-                    final String expanded = this.expandVariables(arg, cmdEnv);
-                    if (WordExpander.isQuoted(arg)) {
-                        funcArgs.add(WordExpander.removeQuotes(expanded));
-                    } else {
-                        for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
-                            funcArgs.add(WordExpander.removeQuotes(field));
-                        }
-                    }
-                }
-                this.setPositionalParams(funcArgs);
-                try {
-                    code = this.executeNode(func.getBody());
-                } finally {
-                    this.positionalParams.clear();
-                    this.positionalParams.addAll(savedParams);
-                }
-            } else {
-                code = this.runExternalCommand(cmd, name, cmdEnv);
-            }
+            code = this.runExternalCommand(cmd, name, cmdEnv);
         }
         return code;
+    }
+
+    private int invokeFunction(
+        final FunctionNode func, final SimpleCommand cmd, final Map<String, String> cmdEnv
+    ) {
+        final List<String> savedParams = new ArrayList<>(this.positionalParams);
+        final List<String> funcArgs = new ArrayList<>();
+        final String ifsVal = cmdEnv.getOrDefault("IFS", DEFAULT_IFS);
+        for (final String arg : cmd.getArguments()) {
+            final String expanded = this.expandVariables(arg, cmdEnv);
+            if (WordExpander.isQuoted(arg)) {
+                funcArgs.add(WordExpander.removeQuotes(expanded));
+            } else {
+                for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
+                    funcArgs.add(WordExpander.removeQuotes(field));
+                }
+            }
+        }
+        this.setPositionalParams(funcArgs);
+        try {
+            return this.executeNode(func.getBody());
+        } finally {
+            this.positionalParams.clear();
+            this.positionalParams.addAll(savedParams);
+        }
+    }
+
+    private static boolean isSpecialBuiltin(final String name) {
+        return SPECIAL_BUILTINS.contains(name);
     }
 
     private InputStream swapInputForBuiltin(final List<Redirection> redirs) {

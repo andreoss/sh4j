@@ -128,8 +128,23 @@ final class BuiltinDispatcher {
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        for (final String arg : args) {
-            self.environmentMap().remove(arg);
+        boolean removeFunction = false;
+        int idx = 0;
+        while (idx < args.size() && args.get(idx).startsWith("-")) {
+            if ("-f".equals(args.get(idx))) {
+                removeFunction = true;
+            } else if (!"-v".equals(args.get(idx)) && !"--".equals(args.get(idx))) {
+                break;
+            }
+            idx = idx + 1;
+        }
+        for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
+            final String name = args.get(aidx);
+            if (removeFunction) {
+                self.functionsMap().remove(name);
+            } else {
+                self.environmentMap().remove(name);
+            }
         }
         return 0;
     }

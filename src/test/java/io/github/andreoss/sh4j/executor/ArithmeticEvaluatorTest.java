@@ -314,8 +314,9 @@ public final class ArithmeticEvaluatorTest {
     }
 
     @Test public void numericLiteralWithLeadingZeros() {
+        // POSIX 2.6.4: leading 0 is octal per the C standard; 042_8 = 34_10.
         Assert.assertEquals(
-            "42",
+            "34",
             new ArithmeticEvaluator().evalArithmetic("042", new HashMap<>())
         );
     }
