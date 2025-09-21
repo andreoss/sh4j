@@ -765,6 +765,9 @@ public class Executor implements BuiltinContext {
     @Override
     public String lookupVariable(final String name, final Map<String, String> env) {
         String result;
+        if (name.isEmpty()) {
+            return "";
+        }
         if (name.length() == 1) {
             result = this.getSpecialParam(name.charAt(0));
         } else {

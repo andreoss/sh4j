@@ -307,6 +307,9 @@ public final class WordExpander {
             return null;
         }
         if (inner.charAt(0) == '#') {
+            if (inner.length() == 1) {
+                return ctx.getSpecialParam('#');
+            }
             final String val = ctx.lookupVariable(inner.substring(1), env);
             return val == null ? "0" : String.valueOf(val.length());
         }

@@ -1504,6 +1504,143 @@ public final class IntegrationTest {
         Assert.assertTrue("expected $- to contain e, got: " + out, out.contains("e"));
     }
 
+    /**
+     * POSIX 2.5.3 LINENO - shell-variable holding the current line number
+     * of the executing script.
+     */
+    @Test
+    public void linenoTracksScriptLineNumber() throws Exception {
+        final File script = this.writeScript(
+            "ln.sh",
+            String.format("echo first%necho second-$LINENO%n")
+        );
+        final String out = this.runChildJvm(script);
+        Assert.assertTrue(
+            "expected LINENO to fire on line 2, got: " + out,
+            out.contains("second-2")
+        );
+    }
+
+    /**
+     * POSIX 2.5.3 OLDPWD - previous working directory after cd.
+     */
+    @Test
+    public void oldpwdAfterCd() throws Exception {
+        final File target = this.tempdir.newFolder("after");
+        final File script = this.writeScript(
+            "oldpwd.sh",
+            String.format(
+                "ORIG=$PWD%ncd %s%necho $OLDPWD%n", target.getAbsolutePath()
+            )
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertFalse("OLDPWD should not be empty", out.isEmpty());
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - ternary operator.
+     */
+    @Test
+    public void arithmeticTernaryOperator() throws Exception {
+        final File script = this.writeScript(
+            "tern.sh",
+            String.format("echo $((1 > 0 ? 42 : 13)) $((1 > 5 ? 42 : 13))%n")
+        );
+        Assert.assertEquals("42 13\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - logical AND / OR short-circuit.
+     */
+    @Test
+    public void arithmeticLogicalOps() throws Exception {
+        final File script = this.writeScript(
+            "logop.sh",
+            String.format("echo $((1 && 0)) $((0 || 2)) $((1 && 3))%n")
+        );
+        Assert.assertEquals("0 1 1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 readonly -p - lists all readonly variables.
+     */
+    @Test
+    public void readonlyDashPListsBindings() throws Exception {
+        final File script = this.writeScript(
+            "rop.sh",
+            String.format("readonly X=hello%nreadonly -p%n")
+        );
+        final String out = this.runChildJvm(script);
+        Assert.assertTrue("expected to list X, got: " + out, out.contains("X"));
+    }
+
+    /**
+     * POSIX 2.14 type - resolves multiple names in one invocation.
+     */
+    @Test
+    public void typeWithMultipleNames() throws Exception {
+        final File script = this.writeScript(
+            "tmulti.sh",
+            String.format("type echo cd%n")
+        );
+        final String out = this.runChildJvm(script);
+        Assert.assertTrue("expected echo in output, got: " + out, out.contains("echo"));
+        Assert.assertTrue("expected cd in output, got: " + out, out.contains("cd"));
+    }
+
+    /**
+     * POSIX 2.5.2 Special Parameters - $! is the PID of the most recently
+     * started background command.
+     */
+    @Test
+    public void specialParameterBangIsLastBgPid() throws Exception {
+        final File script = this.writeScript(
+            "bgpid.sh",
+            String.format("true &%necho ${!}%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue(
+            "expected positive int for $!, got: " + out, out.matches("\\d+")
+        );
+    }
+
+    /**
+     * POSIX 2.14 set -- with no further args clears positional parameters.
+     */
+    @Test
+    public void setDashDashClearsPositionalParams() throws Exception {
+        final File script = this.writeScript(
+            "setclr.sh",
+            String.format("set -- a b c%nset --%necho ${#}%n")
+        );
+        Assert.assertEquals("0\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.4 here-document with leading-tab strip via {@code <<-}.
+     */
+    @Test
+    public void heredocDashStripsLeadingTabs() throws Exception {
+        final File script = this.writeScript(
+            "hdtab.sh",
+            String.format("cat <<-EOF%n\tindented%n\tagain%n\tEOF%n")
+        );
+        Assert.assertEquals("indented\nagain\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.2 Special Parameters - $$ stays stable across the script
+     * (every read returns the same pid).
+     */
+    @Test
+    public void specialParameterDollarDollarStable() throws Exception {
+        final File script = this.writeScript(
+            "ddstable.sh",
+            String.format("A=$$%nB=$$%n[ \"$A\" = \"$B\" ] && echo same%n")
+        );
+        Assert.assertEquals("same\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

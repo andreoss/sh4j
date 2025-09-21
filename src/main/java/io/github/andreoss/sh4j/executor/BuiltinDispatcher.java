@@ -1588,7 +1588,9 @@ final class BuiltinDispatcher {
             idx = idx + 1;
         }
         self.setShellFlags(flags);
-        if (idx < args.size()) {
+        final boolean sawDashDash = idx > 0 && idx - 1 < args.size()
+            && "--".equals(args.get(idx - 1));
+        if (sawDashDash || idx < args.size()) {
             final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
             final List<String> params = new ArrayList<>();
             for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
@@ -1625,13 +1627,18 @@ final class BuiltinDispatcher {
     ) {
         final List<String> all = new ArrayList<>(args);
         all.addAll(assigns);
-        if (all.isEmpty()) {
-            return 0;
-        }
-        if (!args.isEmpty() && "-p".equals(args.get(0))) {
-            return 0;
-        }
         final Map<String, String> environment = self.environmentMap();
+        if (all.isEmpty() || !args.isEmpty() && "-p".equals(args.get(0))) {
+            for (final Map.Entry<String, String> entry : environment.entrySet()) {
+                final String key = entry.getKey();
+                if (key.endsWith("_READONLY") && "1".equals(entry.getValue())) {
+                    final String name = key.substring(0, key.length() - "_READONLY".length());
+                    final String value = environment.getOrDefault(name, "");
+                    self.outStream().println("readonly " + name + "=" + value);
+                }
+            }
+            return 0;
+        }
         for (final String arg : all) {
             final int eqIdx = arg.indexOf('=');
             if (eqIdx >= 0) {
