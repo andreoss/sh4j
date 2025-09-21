@@ -1641,6 +1641,138 @@ public final class IntegrationTest {
         Assert.assertEquals("same\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - parentheses change grouping.
+     */
+    @Test
+    public void arithmeticParensGroup() throws Exception {
+        final File script = this.writeScript(
+            "arithparen.sh",
+            String.format("echo $(( (2 + 3) * 4 ))%n")
+        );
+        Assert.assertEquals("20\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - nested ${X-${Y-default}}: outer
+     * default falls back to inner default when both vars are unset.
+     */
+    @Test
+    public void parameterExpansionNested() throws Exception {
+        final File script = this.writeScript(
+            "nested.sh",
+            String.format("echo ${UNSET_X-${UNSET_Y-fallback}}%n")
+        );
+        Assert.assertEquals("fallback\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7 Redirection - multiple redirections on one command apply
+     * in order (later overrides earlier on same fd).
+     */
+    @Test
+    public void multipleRedirectionsOnOneCommand() throws Exception {
+        final File data = this.tempdir.newFile("multi.dat");
+        Files.writeString(data.toPath(), "line\n");
+        final File script = this.writeScript(
+            "multi.sh",
+            String.format("cat <%s 2>&1%n", data.getAbsolutePath())
+        );
+        Assert.assertEquals("line\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.1 Simple Commands - a command with assignments and no
+     * command name persists the assignments in the shell environment.
+     */
+    @Test
+    public void assignmentOnlyCommandPersists() throws Exception {
+        final File script = this.writeScript(
+            "assignonly.sh",
+            String.format("FOO=set%necho [$FOO]%n")
+        );
+        Assert.assertEquals("[set]\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.2 Pipelines - leading `!` inverts the pipeline exit status.
+     */
+    @Test
+    public void bangBeforePipelineInverts() throws Exception {
+        final File script = this.writeScript(
+            "bangpipe.sh",
+            String.format("! false; echo $?%n! true; echo $?%n")
+        );
+        Assert.assertEquals("0\n1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.4 Case - {@code *)} matches anything as the default arm.
+     */
+    @Test
+    public void caseStarDefaultMatches() throws Exception {
+        final File script = this.writeScript(
+            "casestar.sh",
+            String.format(
+                "for w in apple banana cherry; do "
+                    + "case $w in apple) echo a;; *) echo d;; esac; done%n"
+            )
+        );
+        Assert.assertEquals("a\nd\nd\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.3 Command Substitution - backtick form is equivalent to $(...).
+     */
+    @Test
+    public void backtickCommandSubstitution() throws Exception {
+        final File script = this.writeScript(
+            "btick.sh",
+            String.format("X=`echo hello`%necho got=$X%n")
+        );
+        Assert.assertEquals("got=hello\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.4 nested case - case inside a case body works.
+     */
+    @Test
+    public void nestedCaseStatement() throws Exception {
+        final File script = this.writeScript(
+            "ncase.sh",
+            String.format(
+                "X=a; Y=2%ncase $X in a) case $Y in 2) echo a2;; "
+                    + "*) echo a-other;; esac;; esac%n"
+            )
+        );
+        Assert.assertEquals("a2\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - bitwise AND / OR / XOR.
+     */
+    @Test
+    public void arithmeticBitwiseOps() throws Exception {
+        final File script = this.writeScript(
+            "bitops.sh",
+            String.format("echo $((6 & 3)) $((6 | 1)) $((6 ^ 3))%n")
+        );
+        Assert.assertEquals("2 7 5\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 exec with no command modifies the shell's own redirections
+     * (here: redirecting stderr to stdout, so the next echo goes to stdout).
+     */
+    @Test
+    public void execWithNoCommandRedirectsShell() throws Exception {
+        final File script = this.writeScript(
+            "execredir.sh",
+            String.format("exec 2>&1%necho to-stderr 1>&2%n")
+        );
+        Assert.assertEquals("to-stderr\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

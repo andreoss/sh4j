@@ -261,9 +261,9 @@ public final class RedirectionHandler {
                 builder.redirectError(new File(DEV_NULL));
             }
         } else if (STDOUT_FD.equals(target) && desc == 2) {
-            builder.redirectErrorStream(true);
+            builder.redirectError(builder.redirectOutput());
         } else if (STDERR_FD.equals(target) && desc == 1) {
-            builder.redirectOutput(ProcessBuilder.Redirect.to(new File("/dev/stderr")));
+            builder.redirectOutput(builder.redirectError());
         }
     }
 

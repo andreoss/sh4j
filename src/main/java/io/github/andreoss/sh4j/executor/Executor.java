@@ -596,11 +596,15 @@ public class Executor implements BuiltinContext {
             this.in = savedIn;
         }
         if (swap.savedOut != null) {
-            this.out.close();
+            if (this.out != this.err) {
+                this.out.close();
+            }
             this.out = swap.savedOut;
         }
         if (swap.savedErr != null) {
-            this.err.close();
+            if (this.err != this.out) {
+                this.err.close();
+            }
             this.err = swap.savedErr;
         }
         final int code;

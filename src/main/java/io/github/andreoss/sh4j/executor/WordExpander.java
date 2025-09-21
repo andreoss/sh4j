@@ -198,6 +198,26 @@ public final class WordExpander {
         return consumed;
     }
 
+    private static int findMatchingBrace(final String arg, final int start) {
+        int depth = 1;
+        int pos = start;
+        while (pos < arg.length()) {
+            final char chr = arg.charAt(pos);
+            if (chr == '{' && pos > 0 && arg.charAt(pos - 1) == '$') {
+                depth = depth + 1;
+            } else if (chr == '{') {
+                depth = depth + 1;
+            } else if (chr == '}') {
+                depth = depth - 1;
+                if (depth == 0) {
+                    return pos;
+                }
+            }
+            pos = pos + 1;
+        }
+        return -1;
+    }
+
     /**
      * Handles {@code ${...}} starting at {@code idx}.
      * @return Number of source characters consumed (or 1 on no match)
@@ -210,7 +230,7 @@ public final class WordExpander {
         final StringBuilder expanded
     ) {
         int consumed = 1;
-        final int close = arg.indexOf('}', idx + 2);
+        final int close = findMatchingBrace(arg, idx + 2);
         if (close > idx + 2) {
             final String inner = arg.substring(idx + 2, close);
             final String replacement = expandBracedImpl(inner, env, ctx);
