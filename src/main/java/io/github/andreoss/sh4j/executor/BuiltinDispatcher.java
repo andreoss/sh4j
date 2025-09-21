@@ -43,10 +43,21 @@ final class BuiltinDispatcher {
         this.register("false", (self, args, env, assigns) -> 1);
         this.register(":", (self, args, env, assigns) -> 0);
         this.register("break", (self, args, env, assigns) -> {
-            throw new Executor.BreakSignal();
+            throw new Executor.BreakSignal(parseLoopLevels(args));
         });
         this.register("continue", (self, args, env, assigns) -> {
-            throw new Executor.ContinueSignal();
+            throw new Executor.ContinueSignal(parseLoopLevels(args));
+        });
+        this.register("return", (self, args, env, assigns) -> {
+            int code = 0;
+            if (!args.isEmpty()) {
+                try {
+                    code = Integer.parseInt(args.get(0));
+                } catch (final NumberFormatException ignored) {
+                    code = 0;
+                }
+            }
+            throw new Executor.ReturnSignal(code);
         });
         this.register("unset", BuiltinDispatcher::doUnset);
         this.register("export", BuiltinDispatcher::doExport);
@@ -147,6 +158,21 @@ final class BuiltinDispatcher {
             }
         }
         return 0;
+    }
+
+    private static int parseLoopLevels(final List<String> args) {
+        int levels = 1;
+        if (!args.isEmpty()) {
+            try {
+                final int parsed = Integer.parseInt(args.get(0));
+                if (parsed > 0) {
+                    levels = parsed;
+                }
+            } catch (final NumberFormatException ignored) {
+                levels = 1;
+            }
+        }
+        return levels;
     }
 
     /**

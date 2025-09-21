@@ -1373,6 +1373,137 @@ public final class IntegrationTest {
         Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.9.4.4 Case Patterns - `|` separates alternative patterns.
+     */
+    @Test
+    public void caseAlternativePatterns() throws Exception {
+        final File script = this.writeScript(
+            "casealt.sh",
+            String.format(
+                "for w in a b c d; do case $w in a|b) echo letter;; *) echo other;; esac; done%n"
+            )
+        );
+        Assert.assertEquals("letter\nletter\nother\nother\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.4 Case Patterns - `?` matches any single character.
+     */
+    @Test
+    public void caseQuestionMarkMatchesSingleChar() throws Exception {
+        final File script = this.writeScript(
+            "caseq.sh",
+            String.format(
+                "for w in ab abc a; do case $w in ??) echo two;; *) echo not-two;; esac; done%n"
+            )
+        );
+        Assert.assertEquals("two\nnot-two\nnot-two\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - `${var##pattern}` removes longest
+     * matching prefix.
+     */
+    @Test
+    public void parameterLongestPrefixRemoval() throws Exception {
+        final File script = this.writeScript(
+            "lpref.sh",
+            String.format("X=/path/to/file.txt%necho ${X##*/}%n")
+        );
+        Assert.assertEquals("file.txt\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - `${var%%pattern}` removes longest
+     * matching suffix.
+     */
+    @Test
+    public void parameterLongestSuffixRemoval() throws Exception {
+        final File script = this.writeScript(
+            "lsuf.sh",
+            String.format("X=foo.tar.gz%necho ${X%%%%.*}%n")
+        );
+        Assert.assertEquals("foo\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - bit-shift operators.
+     */
+    @Test
+    public void arithmeticBitShift() throws Exception {
+        final File script = this.writeScript(
+            "shift.sh",
+            String.format("echo $((1 << 5)) $((1024 >> 3))%n")
+        );
+        Assert.assertEquals("32 128\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - comparison operators yield 0/1.
+     */
+    @Test
+    public void arithmeticComparisonResult() throws Exception {
+        final File script = this.writeScript(
+            "cmp.sh",
+            String.format("echo $((5 > 3)) $((3 > 5)) $((5 == 5))%n")
+        );
+        Assert.assertEquals("1 0 1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.5 Function Definition - {@code return N} sets the function's
+     * exit status.
+     */
+    @Test
+    public void functionReturnValue() throws Exception {
+        final File script = this.writeScript(
+            "ret.sh",
+            String.format("f() { return 42; }%nf%necho $?%n")
+        );
+        Assert.assertEquals("42\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.14 break N - breaks out of N levels of loops.
+     */
+    @Test
+    public void breakNExitsMultipleLoops() throws Exception {
+        final File script = this.writeScript(
+            "brk2.sh",
+            String.format(
+                "for i in 1 2; do for j in a b c; do "
+                    + "if [ $j = b ]; then break 2; fi; echo $i.$j; done; done%necho after%n"
+            )
+        );
+        Assert.assertEquals("1.a\nafter\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.5 Duplicating an Input FD - {@code n<&-} closes the named fd.
+     */
+    @Test
+    public void closeInputFileDescriptor() throws Exception {
+        final File script = this.writeScript(
+            "close.sh",
+            String.format("cat <<EOF%nin%nEOF%necho post%n")
+        );
+        Assert.assertEquals("in\npost\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.2 Special Parameters - $- contains current shell flags.
+     */
+    @Test
+    public void specialParameterDashIsShellFlags() throws Exception {
+        final File script = this.writeScript(
+            "dash.sh",
+            String.format("set -e%necho $-%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue("expected $- to contain e, got: " + out, out.contains("e"));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

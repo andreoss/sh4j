@@ -422,8 +422,14 @@ public class Executor implements BuiltinContext {
             try {
                 lastExit = this.execute(node.getBody());
             } catch (final BreakSignal ex) {
+                if (ex.getLevels() > 1) {
+                    throw new BreakSignal(ex.getLevels() - 1);
+                }
                 broken = true;
             } catch (final ContinueSignal ex) {
+                if (ex.getLevels() > 1) {
+                    throw new ContinueSignal(ex.getLevels() - 1);
+                }
                 lastExit = 0;
             }
         }
@@ -442,8 +448,14 @@ public class Executor implements BuiltinContext {
                 try {
                     lastExit = this.execute(node.getBody());
                 } catch (final BreakSignal ex) {
+                    if (ex.getLevels() > 1) {
+                        throw new BreakSignal(ex.getLevels() - 1);
+                    }
                     running = false;
                 } catch (final ContinueSignal ex) {
+                    if (ex.getLevels() > 1) {
+                        throw new ContinueSignal(ex.getLevels() - 1);
+                    }
                     lastExit = 0;
                 }
             }
@@ -619,6 +631,8 @@ public class Executor implements BuiltinContext {
         this.setPositionalParams(funcArgs);
         try {
             return this.executeNode(func.getBody());
+        } catch (final ReturnSignal ex) {
+            return ex.getCode();
         } finally {
             this.positionalParams.clear();
             this.positionalParams.addAll(savedParams);
@@ -902,8 +916,7 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * Throwable used to unwind a {@code break} from a loop body. Package
-     * private; thrown by the break-builtin and caught in runFor/runWhile.
+     * Throwable used to unwind a {@code break N} from N nested loops.
      * @since 1.0
      */
     static class BreakSignal extends RuntimeException {
@@ -911,14 +924,32 @@ public class Executor implements BuiltinContext {
         /** Serial version. */
         private static final long serialVersionUID = 1L;
 
-        /** Default constructor. */
+        /** Remaining loop levels to break out of. */
+        private final int levels;
+
+        /** Default constructor (single level). */
         BreakSignal() {
+            this(1);
+        }
+
+        /**
+         * @param levels Number of loop levels to break out of
+         */
+        BreakSignal(final int levels) {
             super();
+            this.levels = levels;
+        }
+
+        /**
+         * @return Remaining loop levels to break out of
+         */
+        int getLevels() {
+            return this.levels;
         }
     }
 
     /**
-     * Throwable used to unwind a {@code continue} from a loop body.
+     * Throwable used to unwind a {@code continue N} from N nested loops.
      * @since 1.0
      */
     static class ContinueSignal extends RuntimeException {
@@ -926,9 +957,55 @@ public class Executor implements BuiltinContext {
         /** Serial version. */
         private static final long serialVersionUID = 1L;
 
-        /** Default constructor. */
+        /** Remaining loop levels to continue at. */
+        private final int levels;
+
+        /** Default constructor (innermost). */
         ContinueSignal() {
+            this(1);
+        }
+
+        /**
+         * @param levels Number of loop levels to skip over
+         */
+        ContinueSignal(final int levels) {
             super();
+            this.levels = levels;
+        }
+
+        /**
+         * @return Remaining loop levels to skip over
+         */
+        int getLevels() {
+            return this.levels;
+        }
+    }
+
+    /**
+     * Throwable used to unwind a {@code return N} from a function body.
+     * @since 1.0
+     */
+    static class ReturnSignal extends RuntimeException {
+
+        /** Serial version. */
+        private static final long serialVersionUID = 1L;
+
+        /** The exit status that the function should yield. */
+        private final int code;
+
+        /**
+         * @param code The exit status to yield
+         */
+        ReturnSignal(final int code) {
+            super();
+            this.code = code;
+        }
+
+        /**
+         * @return The exit status to yield
+         */
+        int getCode() {
+            return this.code;
         }
     }
 
