@@ -1773,6 +1773,107 @@ public final class IntegrationTest {
         Assert.assertEquals("to-stderr\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - logical NOT (!) inverts truthiness.
+     */
+    @Test
+    public void arithmeticLogicalNot() throws Exception {
+        final File script = this.writeScript(
+            "lnot.sh",
+            String.format("echo $((!0)) $((!5)) $((!!7))%n")
+        );
+        Assert.assertEquals("1 0 1\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - unary plus and double-negate.
+     */
+    @Test
+    public void arithmeticUnaryPlus() throws Exception {
+        final File script = this.writeScript(
+            "uplus.sh",
+            String.format("echo $((+5)) $((- -7))%n")
+        );
+        Assert.assertEquals("5 7\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.2 Parameter Expansion - `${var:-}` with empty default keeps
+     * the empty.
+     */
+    @Test
+    public void parameterDefaultEmptyWord() throws Exception {
+        final File script = this.writeScript(
+            "ed.sh",
+            String.format("echo [${UNSET:-}]%n")
+        );
+        Assert.assertEquals("[]\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.1 Lists - multiple commands separated by `;` all execute.
+     */
+    @Test
+    public void multipleCommandsOnOneLine() throws Exception {
+        final File script = this.writeScript(
+            "multi-cmd.sh",
+            String.format("echo a; echo b; echo c%n")
+        );
+        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic Expansion - mixed-sign arithmetic.
+     */
+    @Test
+    public void arithmeticMixedSign() throws Exception {
+        final File script = this.writeScript(
+            "mix.sh",
+            String.format("echo $((-3 + 8)) $((5 - 10))%n")
+        );
+        Assert.assertEquals("5 -5\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.2.1 Escape Character - `\\n` outside quotes preserves the
+     * literal 'n' character.
+     */
+    @Test
+    public void backslashPreservesNextChar() throws Exception {
+        final File script = this.writeScript(
+            "esc.sh",
+            String.format("echo a\\nb%n")
+        );
+        Assert.assertEquals("anb\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.3 Command Substitution - empty substitution yields empty
+     * string.
+     */
+    @Test
+    public void emptyCommandSubstitution() throws Exception {
+        final File script = this.writeScript(
+            "ecs.sh",
+            String.format("echo a$()b%n")
+        );
+        Assert.assertEquals("ab\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7 Redirection - higher-numbered fd redirected to file.
+     */
+    @Test
+    public void higherNumberedFdRedirection() throws Exception {
+        final File data = this.tempdir.newFile("fd3.dat");
+        Files.writeString(data.toPath(), "from-fd3\n");
+        final File script = this.writeScript(
+            "fd3.sh",
+            String.format("cat 0<%s%n", data.getAbsolutePath())
+        );
+        Assert.assertEquals("from-fd3\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

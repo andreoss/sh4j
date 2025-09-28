@@ -1002,17 +1002,21 @@ public final class WordExpander {
     static List<String> globFiles(final String pattern) {
         final File cwd = new File(System.getProperty("user.dir"));
         final String[] files = cwd.list();
-        final List<String> matches;
+        final List<String> matches = new ArrayList<>();
         if (files == null) {
-            matches = new ArrayList<>();
-        } else {
-            final PathMatcher matcher =
-                FileSystems.getDefault().getPathMatcher("glob:" + pattern);
-            matches = new ArrayList<>();
-            for (final String name : files) {
-                if (matcher.matches(Paths.get(name))) {
-                    matches.add(name);
-                }
+            return matches;
+        }
+        final PathMatcher matcher;
+        try {
+            matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+        } catch (final java.util.regex.PatternSyntaxException ignored) {
+            return matches;
+        } catch (final IllegalArgumentException ignored) {
+            return matches;
+        }
+        for (final String name : files) {
+            if (matcher.matches(Paths.get(name))) {
+                matches.add(name);
             }
         }
         return matches;
