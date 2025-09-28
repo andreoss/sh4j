@@ -5,8 +5,6 @@
 package io.github.andreoss.sh4j.executor;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
@@ -86,12 +84,6 @@ interface BuiltinContext {
     void markExported(String name);
 
     /**
-     * @param name Variable name
-     * @return True when the variable is exported
-     */
-    boolean isExported(String name);
-
-    /**
      * Marks a variable read-only.
      * @param name Variable name
      */
@@ -111,15 +103,15 @@ interface BuiltinContext {
     boolean unsetVariable(String name);
 
     /**
-     * @return The executor's current working directory
-     */
-    File currentDirectory();
-
-    /**
      * Changes the executor's current working directory.
      * @param dir New working directory
      */
     void setCurrentDirectory(File dir);
+
+    /**
+     * @return The shell.s current working directory
+     */
+    File currentDirectory();
 
     /**
      * @param name Command name
@@ -205,11 +197,6 @@ interface BuiltinContext {
     PrintStream outStream();
 
     /**
-     * @return The stdin stream the executor reads from
-     */
-    InputStream stdin();
-
-    /**
      * Resolves a command name to its absolute path via PATH.
      * @param name The command name as written in source
      * @return The absolute path, or null when not found
@@ -225,13 +212,6 @@ interface BuiltinContext {
      * Clears the word-expansion error flag.
      */
     void clearWordExpansionError();
-
-    /**
-     * Maps an IO failure to the POSIX exit code the shell should return.
-     * @param exc The exception caught while invoking an external command
-     * @return 127 (not found) or 126 (not executable)
-     */
-    int exitCodeForIoException(IOException exc);
 
     /**
      * Recursively executes another AST list (used by {@code eval}).

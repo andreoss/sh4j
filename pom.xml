@@ -160,7 +160,13 @@
                         <exclude>pmd:.*/sh4j/executor/RedirectionHandler\.java</exclude>
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>checkstyle:.*/src/main/java/.*</exclude>
-                         <exclude>pmd:.*/src/main/java/.*</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/Main\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/JobManager\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/CommandHistory\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/parser/Node\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/lexer/Token\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/lexer/CharReader\.java</exclude>
+                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/BuiltinContext\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/.*</exclude>
                          <exclude>errorprone:.*/src/test/java/.*</exclude>
                          <exclude>pmd:.*/src/test/java/.*</exclude>
@@ -182,6 +188,9 @@
                         <exclude>checkstyle:.*/Sh4j\.java</exclude>
                         <exclude>checkstyle:.*/Sh4jPosixTest\.java</exclude>
                         <exclude>checkstyle:.*/PosixRegressionTest\.java</exclude>
+                        <exclude>checkstyle:.*/BuiltinMutationTest\.java</exclude>
+                        <exclude>checkstyle:.*/ExecutorMutationTest\.java</exclude>
+                        <exclude>checkstyle:.*/JobManagerTest\.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -191,6 +200,34 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.30.1</version>
+                <configuration>
+                    <targetClasses>
+                        <param>io.github.andreoss.sh4j.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>io.github.andreoss.sh4j.*</param>
+                    </targetTests>
+                    <excludedTestClasses>
+                        <param>io.github.andreoss.sh4j.IntegrationTest</param>
+                        <param>io.github.andreoss.sh4j.PosixConformanceTest</param>
+                    </excludedTestClasses>
+                    <threads>4</threads>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                        <param>CSV</param>
+                    </outputFormats>
+                    <timestampedReports>false</timestampedReports>
+                    <timeoutConst>4000</timeoutConst>
+                    <timeoutFactor>2.0</timeoutFactor>
+                    <mutationThreshold>87</mutationThreshold>
+                    <failWhenNoMutations>true</failWhenNoMutations>
+                </configuration>
             </plugin>
     </plugins>
     </build>

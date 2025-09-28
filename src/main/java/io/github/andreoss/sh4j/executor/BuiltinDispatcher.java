@@ -65,7 +65,6 @@ final class BuiltinDispatcher {
         this.register("pwd", BuiltinDispatcher::doPwd);
         this.register("echo", BuiltinDispatcher::doEcho);
         this.register("eval", BuiltinDispatcher::doEval);
-        this.register("exec", BuiltinDispatcher::doExec);
         this.register("exit", BuiltinDispatcher::doExit);
         this.register("type", BuiltinDispatcher::doType);
         this.register("command", BuiltinDispatcher::doCommand);
@@ -378,66 +377,6 @@ final class BuiltinDispatcher {
         } else {
             final ListNode ast = new Parser(new Lexer(new CharReader(input))).parse();
             code = self.execute(ast);
-        }
-        return code;
-    }
-
-    /**
-     * Implementation of {@code exec COMMAND ARG ...}.
-     */
-    private static int doExec(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env,
-        final List<String> assigns
-    ) {
-        int code;
-        if (args.isEmpty()) {
-            code = 0;
-        } else {
-            final String cmdName = self.expandVariables(args.get(0), env);
-            final String resolved = self.resolveCommand(cmdName);
-            if (resolved == null) {
-                code = Executor.EXIT_COMMAND_NOT_FOUND;
-            } else {
-                code = runExec(self, args, env, resolved);
-            }
-        }
-        return code;
-    }
-
-    /**
-     * Forks the external command and waits for it.
-     * @param self     Façade for env / expansion / IO-exception mapping
-     * @param args     The original args (with {@code args[0]} the command name)
-     * @param env      Live environment
-     * @param resolved Absolute path of the resolved command
-     * @return The child's exit code, or a POSIX mapping of an IO failure
-     */
-    private static int runExec(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env,
-        final String resolved
-    ) {
-        final List<String> cmdArgs = new ArrayList<>(args.size());
-        cmdArgs.add(resolved);
-        for (int idx = 1; idx < args.size(); idx = idx + 1) {
-            final String expanded = self.expandVariables(args.get(idx), env);
-            cmdArgs.add(WordExpander.removeQuotes(expanded));
-        }
-        final ProcessBuilder builder = new ProcessBuilder(cmdArgs);
-        builder.environment().putAll(env);
-        builder.directory(new File(System.getProperty("user.dir")));
-        int code;
-        try {
-            final Process process = builder.start();
-            code = process.waitFor();
-        } catch (final IOException ex) {
-            code = self.exitCodeForIoException(ex);
-        } catch (final InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            code = 1;
         }
         return code;
     }
@@ -837,9 +776,8 @@ final class BuiltinDispatcher {
         }
         if (code == 0 && shifts > 0) {
             final List<String> pos = self.positionalParamsList();
-            final int maxShift = pos.size() - 1;
-            if (shifts >= maxShift) {
-                pos.subList(1, pos.size()).clear();
+            if (shifts > pos.size() - 1) {
+                code = 1;
             } else {
                 pos.subList(1, 1 + shifts).clear();
             }
@@ -966,7 +904,11 @@ final class BuiltinDispatcher {
             }
             pos = pos + 1;
         }
-        fields.add(current.toString());
+        final boolean trailingWhitespace = current.length() == 0 && pos > 0
+            && (line.charAt(pos - 1) == ' ' || line.charAt(pos - 1) == '\t');
+        if (!trailingWhitespace || fields.isEmpty()) {
+            fields.add(current.toString());
+        }
         return fields;
     }
 
@@ -1714,8 +1656,11 @@ final class BuiltinDispatcher {
                 self.expandVariables(args.get(0), env)
             );
             try {
+                final File raw = new File(path);
+                final File script = raw.isAbsolute()
+                    ? raw : new File(self.currentDirectory(), path);
                 final String source = new String(
-                    Files.readAllBytes(new File(path).toPath()), StandardCharsets.UTF_8
+                    Files.readAllBytes(script.toPath()), StandardCharsets.UTF_8
                 );
                 final List<String> saved = new ArrayList<>(self.positionalParamsList());
                 if (args.size() > 1) {

@@ -4,11 +4,17 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for WordExpander.
@@ -16,6 +22,9 @@ import org.junit.Test;
  */
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
 public final class WordExpanderTest {
+
+    @Rule
+    public TemporaryFolder tempdir = new TemporaryFolder();
 
     /** ABC constant. */
     private static final String ABC = "abc";
@@ -163,14 +172,16 @@ public final class WordExpanderTest {
     }
 
     @Test public void expandVariablesParityColonQuestionUnsetSetsError() {
-        Assert.assertTrue(
-            "expected error flag set on :? for unset var",
+        try {
             WordExpander.expandVariables(
                 "${UNSET_VAR_FOR_PARITY:?required}",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error
-        );
+            );
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test public void expandVariablesUnclosedArithmetic() {
@@ -229,9 +240,12 @@ public final class WordExpanderTest {
     @Test public void expandVariablesParityErrorFlagConsumedAfterRead() {
         final Executor excp = new Executor(new HashMap<>());
         final Map<String, String> env = new HashMap<>();
-        Assert.assertTrue(
-            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp).error
-        );
+        try {
+            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp);
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
         Assert.assertFalse(
             "flag should be consumed by previous wrapper call",
             WordExpander.expandVariables("plain", env, excp).error
@@ -258,13 +272,16 @@ public final class WordExpanderTest {
     }
 
     @Test public void expandBracedColonQuestionUnsetSetsError() {
-        Assert.assertTrue(
+        try {
             WordExpander.expandBraced(
                 "x:?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error
-        );
+            );
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test public void expandBracedHashLength() {
@@ -316,13 +333,16 @@ public final class WordExpanderTest {
     }
 
     @Test public void expandBracedQuestionWithoutColonUnsetSetsError() {
-        Assert.assertTrue(
+        try {
             WordExpander.expandBraced(
                 "x?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).error
-        );
+            );
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test public void expandBracedEqualsWithoutColonUnsetAssigns() {
@@ -443,5 +463,264 @@ public final class WordExpanderTest {
             original,
             WordExpander.removeQuotes(WordExpander.escapeForQuoteRemoval(original))
         );
+    }
+
+    @Test
+    public void unclosedDollarParenAndNestedBraceStayLiteral() {
+        Assert.assertEquals(
+            "$(abc\n",
+            io.github.andreoss.sh4j.Sh4j.out("echo $(abc")
+        );
+        Assert.assertEquals(
+            "x\n",
+            io.github.andreoss.sh4j.Sh4j.out("echo ${a${b}}x")
+        );
+        Assert.assertEquals(
+            "${a\n",
+            io.github.andreoss.sh4j.Sh4j.out("echo ${a")
+        );
+    }
+
+    @Test
+    public void defaultOperatorsDistinguishUnsetFromEmpty() {
+        Assert.assertEquals(
+            "default||||\n",
+            io.github.andreoss.sh4j.Sh4j.out(
+                "U=; echo \"${M-default}|${U-default}|${U:+alt}|${U:+}|${M:+alt}\""
+            )
+        );
+    }
+
+    @Test
+    public void prefixAndSuffixOperatorsAtBoundaries() {
+        Assert.assertEquals(
+            "abc||abc||bc|ab|\n",
+            io.github.andreoss.sh4j.Sh4j.out(
+                "X=abc; echo \"${X#}|${X##*}|${X%}|${X%%*}|${X#a*}|${X%c}|${X##a*}\""
+            )
+        );
+    }
+
+    @Test
+    public void errorOnNullWithoutWordUsesDefaultMessage() {
+        final io.github.andreoss.sh4j.Sh4j.Result result =
+            io.github.andreoss.sh4j.Sh4j.runFull("echo ${MISSING:?}");
+        Assert.assertTrue(result.stderr().contains("$MISSING"));
+    }
+
+    @Test
+    public void normaliseBacktickNestedAndUnclosed() {
+        Assert.assertEquals(
+            "$(echo ${x})",
+            WordExpander.normaliseBackticks("`echo ${x}`")
+        );
+        Assert.assertEquals(
+            "`unclosed",
+            WordExpander.normaliseBackticks("`unclosed")
+        );
+        Assert.assertEquals(
+            "${x}",
+            WordExpander.normaliseBackticks("${x}")
+        );
+    }
+
+    @Test
+    public void removeQuotesBoundaryForms() {
+        Assert.assertEquals("", WordExpander.removeQuotes(""));
+        Assert.assertEquals("a", WordExpander.removeQuotes("'a"));
+        Assert.assertEquals("a", WordExpander.removeQuotes("\"a"));
+        Assert.assertEquals("a\\", WordExpander.removeQuotes("a\\"));
+        Assert.assertEquals("a\\qb", WordExpander.removeQuotes("\"a\\qb\""));
+    }
+
+    @Test
+    public void quoteAndGlobBoundaries() {
+        Assert.assertFalse(WordExpander.isQuoted(null));
+        Assert.assertFalse(WordExpander.isQuoted(""));
+        Assert.assertFalse(WordExpander.isQuoted("\""));
+        Assert.assertFalse(WordExpander.containsGlobChars("abc"));
+        Assert.assertTrue(WordExpander.containsGlobChars("a?c"));
+        Assert.assertTrue(WordExpander.containsGlobChars("a[c"));
+    }
+
+    @Test
+    public void globMatchesBoundaries() {
+        Assert.assertTrue(WordExpander.globMatches("", ""));
+        Assert.assertFalse(WordExpander.globMatches("", "x"));
+        Assert.assertTrue(WordExpander.globMatches("[abc", "[abc"));
+        Assert.assertTrue(WordExpander.globMatches("a?c", "abc"));
+        Assert.assertFalse(WordExpander.globMatches("a?c", "ac"));
+        Assert.assertTrue(WordExpander.globMatches("a.b", "a.b"));
+        Assert.assertFalse(WordExpander.globMatches("a.b", "axb"));
+    }
+
+    @Test
+    public void appendDoubleQuotedEscapesInRemoveQuotes() {
+        Assert.assertEquals(
+            "a$b`c\"d\\e",
+            WordExpander.removeQuotes("\"a\\$b\\`c\\\"d\\\\e\"")
+        );
+    }
+
+    @Test
+    public void identifierBoundariesAndEmptyBrace() {
+        Assert.assertEquals(
+            "zu a1 a_\n",
+            io.github.andreoss.sh4j.Sh4j.out("Z=z; _=u; A1=a1; A_=a_; echo $Z$_ $A1 $A_")
+        );
+        Assert.assertEquals("${}x\n", io.github.andreoss.sh4j.Sh4j.out("echo ${}x"));
+    }
+
+    @Test
+    public void substitutionBoundaryForms() {
+        Assert.assertEquals("\n", io.github.andreoss.sh4j.Sh4j.out("echo $( )"));
+        Assert.assertEquals("0\n", io.github.andreoss.sh4j.Sh4j.out("echo $(( ))"));
+        Assert.assertEquals("$((1\n", io.github.andreoss.sh4j.Sh4j.out("echo $((1"));
+        Assert.assertEquals("$(x\n", io.github.andreoss.sh4j.Sh4j.out("echo $(x"));
+    }
+
+    @Test
+    public void nestedBraceMatching() {
+        Assert.assertEquals("x\n", io.github.andreoss.sh4j.Sh4j.out("A=x; echo ${A:-${B:-d}}"));
+        Assert.assertEquals("y\n", io.github.andreoss.sh4j.Sh4j.out("B=y; echo ${A:-${B:-d}}"));
+        Assert.assertEquals("x\n", io.github.andreoss.sh4j.Sh4j.out("echo ${a{b}c}x"));
+    }
+
+    @Test
+    public void errorOnNullWithCustomWord() {
+        final io.github.andreoss.sh4j.Sh4j.Result result =
+            io.github.andreoss.sh4j.Sh4j.runFull("echo ${MISSING:?msg}");
+        Assert.assertTrue(result.stderr().contains("msg"));
+    }
+
+    @Test
+    public void prefixAndSuffixFullMatchBoundaries() {
+        Assert.assertEquals(
+            "||||abc\n",
+            io.github.andreoss.sh4j.Sh4j.out(
+                "X=abc; echo \"${X#abc}|${X##abc}|${X%abc}|${X%%abc}|${X#z}\""
+            )
+        );
+    }
+
+    @Test
+    public void assignmentOperatorRejectsInvalidNames() {
+        Assert.assertNull(
+            io.github.andreoss.sh4j.Sh4j.getVar("bad-name", "echo ${bad-name:=x}")
+        );
+    }
+
+    @Test
+    public void tildeBoundaries() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/home/u");
+        env.put("PWD", "/cur");
+        Assert.assertEquals("/home/u", WordExpander.expandTilde("~", env));
+        Assert.assertEquals("/cur", WordExpander.expandTilde("~+", env));
+        Assert.assertEquals("", WordExpander.expandTilde("", env));
+    }
+
+    @Test
+    public void normaliseDollarAndUnclosedForms() {
+        Assert.assertEquals("$x", WordExpander.normaliseBackticks("$x"));
+        Assert.assertEquals("$", WordExpander.normaliseBackticks("$"));
+        Assert.assertEquals("$(x", WordExpander.normaliseBackticks("$(x"));
+        Assert.assertEquals("${x", WordExpander.normaliseBackticks("${x"));
+    }
+
+    @Test
+    public void quoteBoundaryAndEmptyEscape() {
+        Assert.assertTrue(WordExpander.isQuoted("\"\""));
+        Assert.assertTrue(WordExpander.isQuoted("''"));
+        Assert.assertFalse(WordExpander.isQuoted("\"x"));
+        Assert.assertNull(WordExpander.escapeForQuoteRemoval(null));
+        Assert.assertEquals("", WordExpander.escapeForQuoteRemoval(""));
+    }
+
+    @Test
+    public void removeQuotesEscapedDoubleAndEmpty() {
+        Assert.assertEquals("", WordExpander.removeQuotes("\"\""));
+        Assert.assertEquals("a\"b", WordExpander.removeQuotes("\"a\\\"b\""));
+        Assert.assertEquals("a\\", WordExpander.removeQuotes("\"a\\\\\""));
+    }
+
+    @Test
+    public void pathnameExpansionSkipsDotfilesAndSorts() throws IOException {
+        final File dir = this.tempdir.newFolder("we-glob");
+        Files.write(new File(dir, "b.txt").toPath(), new byte[0]);
+        Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
+        Files.write(new File(dir, ".hidden").toPath(), new byte[0]);
+        Assert.assertEquals(
+            Arrays.asList("a.txt", "b.txt"),
+            WordExpander.pathnameExpand(Arrays.asList("*.txt"), dir)
+        );
+        Assert.assertEquals(
+            Arrays.asList(".hidden"),
+            WordExpander.pathnameExpand(Arrays.asList(".*"), dir)
+        );
+        Assert.assertEquals(
+            Arrays.asList("no-match*"),
+            WordExpander.pathnameExpand(Arrays.asList("no-match*"), dir)
+        );
+    }
+
+    @Test
+    public void globCharacterBoundaries() {
+        Assert.assertFalse(WordExpander.containsGlobChars(""));
+        Assert.assertTrue(WordExpander.globMatches("[", "["));
+        Assert.assertFalse(WordExpander.globMatches("[", "x"));
+        Assert.assertTrue(WordExpander.containsGlobChars("*"));
+        Assert.assertTrue(WordExpander.containsGlobChars("?"));
+        Assert.assertTrue(WordExpander.containsGlobChars("["));
+        Assert.assertTrue(WordExpander.globMatches("[ab]", "a"));
+        Assert.assertFalse(WordExpander.globMatches("[ab]", "c"));
+    }
+
+    @Test
+    public void trailingBackslashAndUnclosedExpansions() {
+        Assert.assertEquals("a\\\n", io.github.andreoss.sh4j.Sh4j.out("echo a\\"));
+        Assert.assertEquals("${\n", io.github.andreoss.sh4j.Sh4j.out("echo ${"));
+        Assert.assertEquals("$\n", io.github.andreoss.sh4j.Sh4j.out("echo $"));
+    }
+
+    @Test
+    public void identifierAndSubstitutionBoundaries() {
+        Assert.assertEquals(
+            "zu n\n",
+            io.github.andreoss.sh4j.Sh4j.out("Z=z; _=u; Z9=n; echo $Z$_ $Z9")
+        );
+        Assert.assertEquals(
+            "1 true false\n",
+            io.github.andreoss.sh4j.Sh4j.out("echo $((1)) $(echo true) $(echo false)")
+        );
+        Assert.assertEquals(
+            "x 2\n",
+            io.github.andreoss.sh4j.Sh4j.out("set -- x y; echo ${1} ${#}")
+        );
+    }
+
+    @Test
+    public void prefixAndSuffixNoMatchForms() {
+        Assert.assertEquals(
+            "abc|abc|abc|abc\n",
+            io.github.andreoss.sh4j.Sh4j.out("X=abc; echo \"${X#z}|${X##z}|${X%z}|${X%%z}\"")
+        );
+    }
+
+    @Test
+    public void tildeUserAndRootBoundaries() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/home/u");
+        env.put("PWD", "/cur");
+        Assert.assertEquals("~user/x", WordExpander.expandTilde("~user/x", env));
+        Assert.assertEquals("/cur/", WordExpander.expandTilde("~+/", env));
+    }
+
+    @Test
+    public void removeQuotesUnclosedAndEscapedForms() {
+        Assert.assertEquals("a", WordExpander.removeQuotes("'a"));
+        Assert.assertEquals("a", WordExpander.removeQuotes("\"a"));
+        Assert.assertEquals("ab", WordExpander.removeQuotes("a\\b"));
+        Assert.assertEquals("a\\", WordExpander.removeQuotes("a\\"));
     }
 }

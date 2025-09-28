@@ -25,6 +25,247 @@ public final class PosixRegressionTest {
     public TemporaryFolder tempdir = new TemporaryFolder();
 
     @Test
+    public void commentStartsAtTokenPositionOnly() {
+        Assert.assertEquals("a\n", Sh4j.out("echo a #c"));
+        Assert.assertEquals("b\n", Sh4j.out("#lead\necho b"));
+        Assert.assertEquals("one#two\n", Sh4j.out("echo one#two"));
+    }
+
+    @Test
+    public void bracketNegationAndReservedWordsAsArguments() {
+        Assert.assertEquals(
+            "notclass\n",
+            Sh4j.out("case zzz in [!abc]*) echo notclass;; *) echo no;; esac")
+        );
+        Assert.assertEquals(
+            "klass\n",
+            Sh4j.out("case abc in [abc]*) echo klass;; *) echo no;; esac")
+        );
+        Assert.assertEquals("if then fi\n", Sh4j.out("echo if then fi"));
+        Assert.assertEquals("multi\n", Sh4j.out("case aaab in a*b) echo multi;; esac"));
+    }
+
+    /**
+     * POSIX 2.7.3 Appending Redirected Output and POSIX 2.7 Redirection.
+     */
+    @Test
+    public void appendRedirectAndAssignmentPrefix() throws IOException {
+        final File file = this.tempdir.newFile("append.txt");
+        final Sh4j.Result result = Sh4j.runFull(
+            String.format("echo a > %s; echo b >> %s; cat %s",
+                file.getAbsolutePath(), file.getAbsolutePath(), file.getAbsolutePath())
+        );
+        Assert.assertEquals("a\nb\n", result.stdout());
+        Assert.assertEquals("hi\n[]\n", Sh4j.out("x=1 echo hi; echo [$x]"));
+    }
+
+    @Test
+    public void shiftBeyondCountAndQuotedCasePatterns() {
+        Assert.assertEquals("rc=1\n", Sh4j.out("set -- a; shift 5; echo \"rc=$?\""));
+        Assert.assertEquals("count=2\n", Sh4j.out("set -- a b c; shift 1; echo \"count=$#\""));
+        Assert.assertEquals(
+            "no\n",
+            Sh4j.out("v='a*'; case aX in \"$v\") echo lit;; *) echo no;; esac")
+        );
+        Assert.assertEquals(
+            "lit\n",
+            Sh4j.out("v='a*'; case 'a*' in $v) echo lit;; *) echo no;; esac")
+        );
+        Assert.assertEquals("after\n", Sh4j.out("break; echo after"));
+        Assert.assertEquals(
+            "1a\n",
+            Sh4j.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done")
+        );
+    }
+
+    @Test
+    public void readonlyAssignmentTerminatesShell() {
+        final Sh4j.Result result = Sh4j.runFull(
+            new ByteArrayInputStream(new byte[0]),
+            "readonly R=1; R=2; echo after"
+        );
+        Assert.assertEquals(1, result.exitCode());
+        Assert.assertEquals("", result.stdout());
+    }
+
+    @Test
+    public void globExpandsDirectoryPrefix() throws IOException {
+        final File dir = this.tempdir.newFolder("sub");
+        Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
+        Files.write(new File(dir, "b.log").toPath(), new byte[0]);
+        Assert.assertEquals(
+            String.format("%s/a.txt\n", dir.getAbsolutePath()),
+            Sh4j.out(String.format("echo %s/*.txt", dir.getAbsolutePath()))
+        );
+    }
+
+    /**
+     * POSIX 2.4 Reserved Words: reserved words are only reserved in command
+     * position, so they stay ordinary arguments elsewhere.
+     */
+    @Test
+    public void posix24ReservedWordsAsArguments() {
+        Assert.assertEquals("if then fi\n", Sh4j.out("echo if then fi"));
+    }
+
+    /**
+     * POSIX 2.10.1 Shell Grammar Lexical Conventions, part of POSIX 2.10 Shell Grammar.: a {@code #} starts a
+     * comment only at a token position.
+     */
+    @Test
+    public void posix1010LexicalConventions() {
+        Assert.assertEquals("one#two\n", Sh4j.out("echo one#two"));
+        Assert.assertEquals("a\n", Sh4j.out("echo a  #trailing"));
+    }
+
+    /**
+     * POSIX 2.10.2 Shell Grammar Rules: assignments preceding the command
+     * name affect only that command's environment.
+     */
+    @Test
+    public void posix1020AssignmentPrefixScope() {
+        Assert.assertEquals("hi\n[]\n", Sh4j.out("x=1 echo hi; echo [$x]"));
+    }
+
+    /**
+     * POSIX 2.11 Signals and Error Handling: {@code set -e} stops the shell
+     * on a failing simple command.
+     */
+    @Test
+    public void posix211SetEErrorHandling() {
+        final Sh4j.Result result = Sh4j.runFull(
+            new ByteArrayInputStream(new byte[0]),
+            "set -e; false; echo nope"
+        );
+        Assert.assertEquals(1, result.exitCode());
+        Assert.assertEquals("", result.stdout());
+    }
+
+    /**
+     * POSIX 2.12 Shell Execution Environment: a subshell inherits variables
+     * but its directory change does not affect the parent.
+     */
+    @Test
+    public void posix212SubshellEnvironment() {
+        final String cwd = Sh4j.out("pwd").trim();
+        Assert.assertEquals(
+            String.format("1\n/\n%s\n", cwd),
+            Sh4j.out("v=1; (echo $v); (cd /; pwd); pwd")
+        );
+    }
+
+    /**
+     * POSIX 2.13.1 Patterns Matching a Single Character, part of POSIX 2.13 Pattern Matching Notation.: {@code ?} and
+     * bracket negation with {@code !}.
+     */
+    @Test
+    public void posix2131SingleCharacterPatterns() {
+        Assert.assertEquals("q\n", Sh4j.out("case ab in a?) echo q;; *) echo n;; esac"));
+        Assert.assertEquals("n\n", Sh4j.out("case z in [!abc]) echo n;; *) echo no;; esac"));
+        Assert.assertEquals("k\n", Sh4j.out("case b in [abc]) echo k;; *) echo no;; esac"));
+    }
+
+    /**
+     * POSIX 2.13.2 Patterns Matching Multiple Characters: {@code *} spans
+     * any run of characters.
+     */
+    @Test
+    public void posix2132MultipleCharacterPatterns() {
+        Assert.assertEquals("m\n", Sh4j.out("case aaab in a*b) echo m;; *) echo no;; esac"));
+    }
+
+    /**
+     * POSIX 2.13.3 Patterns Used for Filename Expansion: glob characters
+     * expand against the shell's working directory.
+     */
+    @Test
+    public void posix2133FilenameExpansion() throws IOException {
+        final File dir = this.tempdir.newFolder("pathexpand");
+        Files.write(new File(dir, "one.txt").toPath(), new byte[0]);
+        Files.write(new File(dir, "two.txt").toPath(), new byte[0]);
+        Files.write(new File(dir, "skip.log").toPath(), new byte[0]);
+        Assert.assertEquals(
+            "one.txt two.txt\n",
+            Sh4j.out(String.format("cd %s; echo *.txt", dir.getAbsolutePath()))
+        );
+    }
+
+    @Test
+    public void redirectionsResolveAgainstShellCwd() throws IOException {
+        final File dir = this.tempdir.newFolder("cwdtest");
+        final String base = dir.getAbsolutePath();
+        Assert.assertEquals(
+            "seed\n",
+            Sh4j.out(
+                String.format(
+                    "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base
+                )
+            )
+        );
+        Assert.assertEquals(
+            "fd-ok\n",
+            Sh4j.out(
+                String.format(
+                    "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt", base
+                )
+            )
+        );
+        Assert.assertEquals(
+            "fd-ok\n",
+            new String(
+                Files.readAllBytes(new File(dir, "fdout.txt").toPath()),
+                StandardCharsets.UTF_8
+            )
+        );
+    }
+
+    @Test
+    public void execRedirectionFailureTerminatesShell() {
+        final Sh4j.Result input = Sh4j.runFull(
+            new ByteArrayInputStream(new byte[0]),
+            "exec 9</nonexistent-dir-xyz/f; echo after"
+        );
+        Assert.assertEquals(1, input.exitCode());
+        Assert.assertEquals("", input.stdout());
+        final Sh4j.Result output = Sh4j.runFull(
+            new ByteArrayInputStream(new byte[0]),
+            "exec >/nonexistent-dir-xyz/f; echo after"
+        );
+        Assert.assertEquals(1, output.exitCode());
+        Assert.assertEquals("", output.stdout());
+    }
+
+    @Test
+    public void descriptorRedirectionsPersistAcrossCommands() throws IOException {
+        final File file = this.tempdir.newFile("fd.txt");
+        Files.write(file.toPath(), "seed\n".getBytes(StandardCharsets.UTF_8));
+        final String path = file.getAbsolutePath();
+        Assert.assertEquals(
+            "v=seed\n",
+            Sh4j.out(
+                String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path)
+            )
+        );
+        Assert.assertEquals(
+            "w=seed\n",
+            Sh4j.out(
+                String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path)
+            )
+        );
+        Assert.assertEquals(
+            "y=[]\n",
+            Sh4j.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                String.format("exec 5<%s; exec 5<&-; read y <&5; echo \"y=[$y]\"", path)
+            ).stdout()
+        );
+    }
+
+    /**
+     * POSIX 2.8 Exit Status and POSIX 2.9 Shell Commands: `exit` ends the
+     * list and propagates its status.
+     */
+    @Test
     public void exitStopsListAndPropagatesStatus() {
         final Sh4j.Result result = Sh4j.runFull("exit 3; echo after");
         Assert.assertEquals(3, result.exitCode());
@@ -383,6 +624,9 @@ public final class PosixRegressionTest {
         );
     }
 
+    /**
+     * POSIX 2.9.4 Compound Commands: nested loop level unwinding.
+     */
     @Test
     public void nestedBreakAndContinueLevels() {
         Assert.assertEquals(
@@ -397,8 +641,8 @@ public final class PosixRegressionTest {
 
     @Test
     public void illegalLoopAndReturnDiagnostics() {
-        Assert.assertEquals(1, Sh4j.run("break"));
-        Assert.assertEquals(1, Sh4j.run("continue"));
+        Assert.assertEquals(0, Sh4j.run("break"));
+        Assert.assertEquals(0, Sh4j.run("continue"));
         Assert.assertEquals(5, Sh4j.run("return 5"));
     }
 

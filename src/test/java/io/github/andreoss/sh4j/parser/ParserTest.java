@@ -737,6 +737,75 @@ public final class ParserTest {
         Assert.assertEquals("/tmp/log", result.getTarget());
     }
 
+    @Test
+    public void quotedHeredocDelimiters() {
+        for (final String delim : new String[] {"'EOF'", "\"EOF\"", "\\EOF"}) {
+            final ListNode list = this.parse(
+                String.format("cat <<%s%nbody%nEOF%n", delim)
+            );
+            final SimpleCommand cmd = (SimpleCommand) list.getPipelines()
+                .get(0).getCommands().get(0);
+            Assert.assertTrue(cmd.getRedirections().get(0).isHereDocQuoted());
+            Assert.assertEquals("EOF", cmd.getRedirections().get(0).getTarget());
+        }
+    }
+
+    @Test
+    public void redirectionDescriptorBoundaries() {
+        final SimpleCommand explicit = (SimpleCommand) this.parse("cmd 2>out")
+            .getPipelines().get(0).getCommands().get(0);
+        Assert.assertEquals(2, explicit.getRedirections().get(0).getFd());
+        final SimpleCommand implicit = (SimpleCommand) this.parse("cmd <in")
+            .getPipelines().get(0).getCommands().get(0);
+        Assert.assertEquals(0, implicit.getRedirections().get(0).getFd());
+        final SimpleCommand dup = (SimpleCommand) this.parse("cmd 2>&1")
+            .getPipelines().get(0).getCommands().get(0);
+        Assert.assertEquals(RedirectionType.DUP_OUTPUT, dup.getRedirections().get(0).getType());
+        final SimpleCommand readWrite = (SimpleCommand) this.parse("cmd <>file")
+            .getPipelines().get(0).getCommands().get(0);
+        Assert.assertEquals(RedirectionType.READWRITE, readWrite.getRedirections().get(0).getType());
+    }
+
+    @Test(expected = ParseException.class)
+    public void redirectionWithoutTargetFails() {
+        this.parse("cat >");
+    }
+
+    @Test
+    public void pipelineSeparatorsInCompoundConditions() {
+        Assert.assertEquals(
+            1,
+            this.parse("if a & b; then c; fi").getPipelines().size()
+        );
+        Assert.assertEquals(
+            1,
+            this.parse("while a && b; do c; done").getPipelines().size()
+        );
+        Assert.assertEquals(
+            1,
+            this.parse("until a || b; do c; done").getPipelines().size()
+        );
+    }
+
+    @Test
+    public void assignmentAndNamedCommandLineNumbers() {
+        final ListNode list = this.parse(String.format("X=1%necho hi%n"));
+        final SimpleCommand assignment = (SimpleCommand) list.getPipelines()
+            .get(0).getCommands().get(0);
+        final SimpleCommand named = (SimpleCommand) list.getPipelines()
+            .get(1).getCommands().get(0);
+        Assert.assertEquals(1, assignment.getLineNumber());
+        Assert.assertEquals(2, named.getLineNumber());
+    }
+
+    @Test
+    public void simpleCommandToStringWithoutName() {
+        final SimpleCommand cmd = new SimpleCommand(null);
+        cmd.addArgument("a");
+        cmd.addArgument("b");
+        Assert.assertEquals("a b", cmd.toString());
+    }
+
     private Parser parser(final String input) {
         return new Parser(new Lexer(new CharReader(input)));
     }

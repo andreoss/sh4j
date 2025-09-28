@@ -256,7 +256,7 @@ public final class ExecutorTest {
     @Test
     public void executeBuiltinStdoutRedirectIoException() throws Exception {
         Assert.assertEquals(
-            0,
+            1,
             new Executor().execute(this.parse("echo hello >/dev/null/no_such_path_xyz"))
         );
     }
@@ -264,7 +264,7 @@ public final class ExecutorTest {
     @Test
     public void executeBuiltinStderrRedirectIoException() throws Exception {
         Assert.assertEquals(
-            0,
+            1,
             new Executor().execute(this.parse("echo hello 2>/dev/null/no_such_stderr_xyz"))
         );
     }
@@ -272,7 +272,7 @@ public final class ExecutorTest {
     @Test
     public void executeBuiltinStdoutAppendIoException() throws Exception {
         Assert.assertEquals(
-            0,
+            1,
             new Executor().execute(this.parse("echo hello >>/dev/null/no_such_append_xyz"))
         );
     }
@@ -280,7 +280,7 @@ public final class ExecutorTest {
     @Test
     public void executeBuiltinStderrAppendIoException() throws Exception {
         Assert.assertEquals(
-            0,
+            1,
             new Executor().execute(this.parse("echo hello 2>>/dev/null/no_such_eappend_xyz"))
         );
     }
@@ -1810,7 +1810,7 @@ public final class ExecutorTest {
     @Test
     public void shiftLargerThanPositionalCount() {
         Assert.assertEquals(
-            0,
+            1,
             new Executor(
                 new HashMap<>(),
                 java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b")
@@ -2489,18 +2489,22 @@ public final class ExecutorTest {
 
     @Test
     public void expandBracedColonQuestionUnset() {
-        Assert.assertEquals(
-            "",
-            new Executor(new HashMap<>()).expandVariables("${x:?my error}", new HashMap<>())
-        );
+        try {
+            new Executor(new HashMap<>()).expandVariables("${x:?my error}", new HashMap<>());
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test
     public void expandBracedQuestionUnset() {
-        Assert.assertEquals(
-            "",
-            new Executor(new HashMap<>()).expandVariables("${x?my error}", new HashMap<>())
-        );
+        try {
+            new Executor(new HashMap<>()).expandVariables("${x?my error}", new HashMap<>());
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test
@@ -2515,10 +2519,12 @@ public final class ExecutorTest {
 
     @Test
     public void expandBracedColonQuestionDefaultMsg() {
-        Assert.assertEquals(
-            "",
-            new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>())
-        );
+        try {
+            new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>());
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
     }
 
     @Test
@@ -2526,7 +2532,12 @@ public final class ExecutorTest {
         final Executor executor = new Executor(new HashMap<>());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        executor.expandVariables("${x:?my error}", new HashMap<>());
+        try {
+            executor.expandVariables("${x:?my error}", new HashMap<>());
+            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final Executor.ExitSignal ex) {
+            Assert.assertEquals(1, ex.getCode());
+        }
         Assert.assertTrue(
             "error message should go to injected stream",
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error")

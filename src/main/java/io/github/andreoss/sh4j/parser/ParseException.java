@@ -13,6 +13,9 @@ package io.github.andreoss.sh4j.parser;
  */
 public class ParseException extends RuntimeException {
 
+    /** Serial version for this exception class. */
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates a new parse exception with the given diagnostic message.
      * @param message Human-readable description of the parse failure

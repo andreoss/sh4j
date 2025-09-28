@@ -30,6 +30,7 @@ public final class Lexer {
      */
     public Token nextToken() {
         this.skipWhitespace();
+        this.skipComment();
         final Token result;
         if (this.reader.isEof()) {
             result = Token.of(TokenType.END_OF_FILE, "", this.reader);
@@ -102,6 +103,19 @@ public final class Lexer {
             }
         }
         return line.toString();
+    }
+
+    /**
+     * Consumes a comment when {@code #} starts a token position (POSIX
+     * 2.10.1). A {@code #} inside a word stays a literal character.
+     */
+    private void skipComment() {
+        while (!this.reader.isEof() && this.reader.peek() == '#') {
+            while (!this.reader.isEof() && this.reader.peek() != '\n') {
+                this.reader.consume();
+            }
+            this.skipWhitespace();
+        }
     }
 
     /**

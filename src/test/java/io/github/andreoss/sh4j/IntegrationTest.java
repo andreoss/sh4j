@@ -597,7 +597,7 @@ public final class IntegrationTest {
     }
 
     /**
-     * POSIX 2.5.2 Special Parameters - $# yields positional-parameter count.
+     * POSIX 2.5.2 Special Parameters, part of POSIX 2.5 Parameters and Variables - $# yields positional-parameter count.
      */
     @Test
     public void specialParameterPositionalCount() throws Exception {
@@ -940,8 +940,15 @@ public final class IntegrationTest {
             "ro.sh",
             String.format("readonly R=fixed%nR=changed%necho $R%n")
         );
-        final String out = this.runChildJvm(script);
-        Assert.assertTrue("expected 'fixed' in output, got: " + out, out.contains("fixed"));
+        final String out = this.runChildJvmAllowingFailure(script);
+        Assert.assertTrue(
+            "expected readonly diagnostic, got: " + out,
+            out.contains("readonly")
+        );
+        Assert.assertFalse(
+            "assignment to a readonly variable must abort a non-interactive shell, got: " + out,
+            out.contains("fixed")
+        );
         Assert.assertFalse(
             "readonly should block reassignment, got: " + out,
             out.contains("changed")

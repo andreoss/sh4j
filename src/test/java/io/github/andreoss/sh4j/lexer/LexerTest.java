@@ -428,6 +428,128 @@ public final class LexerTest {
         );
     }
 
+    @Test
+    public void quotesInsideOtherQuoteKinds() {
+        Assert.assertEquals(
+            "\"a'b\"",
+            this.lexer("\"a'b\"").nextToken().text()
+        );
+        Assert.assertEquals(
+            "'a\"b'",
+            this.lexer("'a\"b'").nextToken().text()
+        );
+    }
+
+    @Test
+    public void escapedSingleQuoteOutsideQuotes() {
+        Assert.assertEquals(
+            "a\\'b",
+            this.lexer("a\\'b").nextToken().text()
+        );
+    }
+
+    @Test
+    public void doubleQuotedEscapes() {
+        Assert.assertEquals(
+            "\"a\\$b\\`c\\\"d\\\\e\"",
+            this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken().text()
+        );
+        Assert.assertEquals(
+            "\"a\\qb\"",
+            this.lexer("\"a\\qb\"").nextToken().text()
+        );
+        Assert.assertEquals(
+            "\"ab\"",
+            this.lexer(String.format("\"a\\%nb\"")).nextToken().text()
+        );
+    }
+
+    @Test
+    public void nestedCommandAndArithmeticSubstitutions() {
+        Assert.assertEquals(
+            "$((1+(2)))",
+            this.lexer("$((1+(2)))").nextToken().text()
+        );
+        Assert.assertEquals(
+            "$(echo (x))",
+            this.lexer("$(echo (x))").nextToken().text()
+        );
+        Assert.assertEquals(
+            "$(abc",
+            this.lexer("$(abc").nextToken().text()
+        );
+    }
+
+    @Test
+    public void nestedAndUnbalancedBraces() {
+        Assert.assertEquals(
+            "${a${b}}",
+            this.lexer("${a${b}}").nextToken().text()
+        );
+        Assert.assertEquals(
+            "${a",
+            this.lexer("${a").nextToken().text()
+        );
+    }
+
+    @Test
+    public void backtickWithEscapedBacktick() {
+        Assert.assertEquals(
+            "`a\\`b`",
+            this.lexer("`a\\`b`").nextToken().text()
+        );
+    }
+
+    @Test
+    public void assignmentWordNameValidation() {
+        Assert.assertEquals(
+            TokenType.ASSIGNMENT_WORD,
+            this.lexer("A1=x").nextToken().type()
+        );
+        Assert.assertEquals(
+            TokenType.ASSIGNMENT_WORD,
+            this.lexer("_A=x").nextToken().type()
+        );
+        Assert.assertEquals(
+            TokenType.WORD,
+            this.lexer("1A=x").nextToken().type()
+        );
+        Assert.assertEquals(
+            TokenType.WORD,
+            this.lexer("A-B=x").nextToken().type()
+        );
+    }
+
+    @Test
+    public void descriptorDigitsAreRecognised() {
+        final Lexer digits = this.lexer("2>file");
+        Assert.assertEquals(TokenType.IO_NUMBER, digits.nextToken().type());
+        Assert.assertEquals(TokenType.GREAT, digits.nextToken().type());
+        final Lexer mixed = this.lexer("2a>file");
+        Assert.assertEquals(TokenType.WORD, mixed.nextToken().type());
+        Assert.assertEquals(TokenType.GREAT, mixed.nextToken().type());
+    }
+
+    @Test
+    public void heredocStripsOnlyLeadingTabs() {
+        Assert.assertEquals(
+            String.format("foo%n  bar%n"),
+            this.lexer(
+                String.format("%n\tfoo%n\t  bar%n\tEOF%n")
+            ).readHereDocContent("EOF", true)
+        );
+    }
+
+    @Test
+    public void heredocKeepsTabsWhenNotStripped() {
+        Assert.assertEquals(
+            String.format("\tfoo%n"),
+            this.lexer(
+                String.format("%n\tfoo%nEOF%n")
+            ).readHereDocContent("EOF", false)
+        );
+    }
+
     private Lexer lexer(final String input) {
         return new Lexer(new CharReader(input));
     }

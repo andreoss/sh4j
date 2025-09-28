@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -47,7 +48,6 @@ import io.github.andreoss.sh4j.parser.WhileNode;
  */
 public class Executor implements BuiltinContext {
 
-    /** Default IFS value (space, tab, newline). */
     /**
      * POSIX 2.14 special built-in utilities — these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
@@ -57,6 +57,7 @@ public class Executor implements BuiltinContext {
         "readonly", "return", "set", "shift", "times", "trap", "unset"
     );
 
+    /** Default IFS value (space, tab, newline). */
     private static final String DEFAULT_IFS = " \t\n";
     /** Default fallback PATH when none is set. */
     private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
@@ -109,6 +110,22 @@ public class Executor implements BuiltinContext {
     private final CommandHistory history;
     /** Nesting depth of {@link #execute(ListNode)} calls. */
     private int executeDepth;
+
+    /** Exit status of the last command substitution (-1 when none ran). */
+    private int substitutionStatus = -1;
+
+    /** Input streams bound to descriptors by a redirection-only {@code exec}. */
+    private final Map<Integer, InputStream> descriptors = new HashMap<>();
+
+    /** Output streams bound to descriptors by a redirection-only exec. */
+    private final Map<Integer, PrintStream> outDescriptors = new HashMap<>();
+
+
+    /** True when the current input swap borrowed a descriptor stream. */
+    private boolean inputBorrowed;
+
+    /** Nesting depth of active loop bodies. */
+    private int loopDepth;
 
     /**
      * Builds an executor seeded with the current process environment.
@@ -221,11 +238,6 @@ public class Executor implements BuiltinContext {
     }
 
     @Override
-    public boolean isExported(final String name) {
-        return this.exported.contains(name);
-    }
-
-    @Override
     public void markReadonly(final String name) {
         this.readonly.add(name);
     }
@@ -249,13 +261,13 @@ public class Executor implements BuiltinContext {
     }
 
     @Override
-    public File currentDirectory() {
-        return this.cwd;
+    public void setCurrentDirectory(final File dir) {
+        this.cwd = dir.getAbsoluteFile();
     }
 
     @Override
-    public void setCurrentDirectory(final File dir) {
-        this.cwd = dir.getAbsoluteFile();
+    public File currentDirectory() {
+        return this.cwd;
     }
 
     @Override
@@ -364,7 +376,7 @@ public class Executor implements BuiltinContext {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final Executor sub = this.subshell();
         sub.setCaptureStream(baos);
-        sub.execute(ast);
+        this.substitutionStatus = sub.execute(ast);
         String captured = baos.toString(StandardCharsets.UTF_8);
         while (captured.endsWith("\n")) {
             captured = captured.substring(0, captured.length() - 1);
@@ -401,14 +413,12 @@ public class Executor implements BuiltinContext {
             if (this.executeDepth > 1) {
                 throw ex;
             }
-            this.err.println("sh: break: not in a loop");
-            code = 1;
+            code = 0;
         } catch (final ContinueSignal ex) {
             if (this.executeDepth > 1) {
                 throw ex;
             }
-            this.err.println("sh: continue: not in a loop");
-            code = 1;
+            code = 0;
         } finally {
             this.executeDepth = this.executeDepth - 1;
         }
@@ -431,7 +441,26 @@ public class Executor implements BuiltinContext {
                     this.executeAsync(pipeline);
                     this.lastExitCode = 0;
                 } else {
-                    final int exitCode = this.executePipeline(pipeline);
+                    final int exitCode;
+                    try {
+                        exitCode = this.executePipeline(pipeline);
+                    } catch (final BreakSignal ex) {
+                        if (this.loopDepth > 0) {
+                            throw ex;
+                        }
+                        this.err.println("sh: break: not in a loop");
+                        this.lastExitCode = 0;
+                        idx = idx + 1;
+                        continue;
+                    } catch (final ContinueSignal ex) {
+                        if (this.loopDepth > 0) {
+                            throw ex;
+                        }
+                        this.err.println("sh: continue: not in a loop");
+                        this.lastExitCode = 0;
+                        idx = idx + 1;
+                        continue;
+                    }
                     this.lastExitCode = exitCode;
                     this.history.add(pipelineToString(pipeline));
                     if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0
@@ -585,6 +614,7 @@ public class Executor implements BuiltinContext {
 
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private int runFor(final ForNode node) {
+        this.loopDepth = this.loopDepth + 1;
         int lastExit = 0;
         boolean broken = false;
         final List<String> words;
@@ -619,10 +649,12 @@ public class Executor implements BuiltinContext {
                 lastExit = 0;
             }
         }
+        this.loopDepth = this.loopDepth - 1;
         return lastExit;
     }
 
     private int runWhile(final WhileNode node) {
+        this.loopDepth = this.loopDepth + 1;
         int lastExit = 0;
         boolean running = true;
         while (running) {
@@ -646,6 +678,7 @@ public class Executor implements BuiltinContext {
                 }
             }
         }
+        this.loopDepth = this.loopDepth - 1;
         return lastExit;
     }
 
@@ -661,7 +694,11 @@ public class Executor implements BuiltinContext {
             }
             for (final String pattern : item.getPatterns()) {
                 final String expanded = this.expandVariables(pattern, this.environment);
-                if (WordExpander.globMatches(WordExpander.removeQuotes(expanded), word)) {
+                final String cleaned = WordExpander.removeQuotes(expanded);
+                final boolean quoted = pattern.indexOf('\'') >= 0 || pattern.indexOf('"') >= 0;
+                final boolean hits = quoted ? cleaned.equals(word)
+                    : WordExpander.globMatches(cleaned, word);
+                if (hits) {
                     code = this.execute(item.getBody());
                     matched = true;
                     break;
@@ -730,12 +767,17 @@ public class Executor implements BuiltinContext {
 
     private int executeCommand(final SimpleCommand cmd) {
         final Map<String, String> cmdEnv = new HashMap<>(this.environment);
+        this.substitutionStatus = -1;
         final int assignCode = this.processAssignments(cmd.getAssignments(), cmdEnv);
         final String name = cmd.getName();
         final int code;
         if (name == null || name.isEmpty()) {
             this.environment.putAll(cmdEnv);
-            code = assignCode;
+            if (this.substitutionStatus >= 0) {
+                code = this.substitutionStatus;
+            } else {
+                code = assignCode;
+            }
         } else {
             code = this.runNamedCommand(cmd, name, cmdEnv);
         }
@@ -768,14 +810,16 @@ public class Executor implements BuiltinContext {
         }
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             cmd.getRedirections(), this.out, this.err,
-            text -> this.expandVariables(text, this.environment)
+            text -> this.expandVariables(text, this.environment), this.cwd, this.outDescriptors
         );
         this.out = swap.out;
         this.err = swap.err;
         final InputStream savedIn = this.swapInputForBuiltin(cmd.getRedirections());
         final int code;
         try {
-            if (!bypassFunctions && this.functions.containsKey(name)
+            if (swap.failed) {
+                code = 1;
+            } else if (!bypassFunctions && this.functions.containsKey(name)
                 && !isSpecialBuiltin(name)) {
                 this.environment.putAll(cmdEnv);
                 code = this.invokeFunction(this.functions.get(name), cmd, cmdEnv);
@@ -794,11 +838,14 @@ public class Executor implements BuiltinContext {
             }
         } finally {
             if (savedIn != null) {
-                try {
-                    this.in.close();
-                } catch (final IOException ignored) {
-                    this.wordExpansionError = false;
+                if (!this.inputBorrowed) {
+                    try {
+                        this.in.close();
+                    } catch (final IOException ignored) {
+                        this.wordExpansionError = false;
+                    }
                 }
+                this.inputBorrowed = false;
                 this.in = savedIn;
             }
             if (swap.savedOut != null) {
@@ -825,23 +872,96 @@ public class Executor implements BuiltinContext {
      * @param cmdEnv Expansion environment
      * @return 0 for redirection-only exec
      */
+    /**
+     * Expands a redirection target into a file resolved against the shell's
+     * working directory.
+     * @param redir The redirection whose target is expanded
+     * @return The resolved file
+     */
+    private File redirectionFile(final Redirection redir) {
+        final File raw = new File(this.expandVariables(redir.getTarget(), this.environment));
+        final File result;
+        if (raw.isAbsolute()) {
+            result = raw;
+        } else {
+            result = new File(this.cwd, raw.getPath());
+        }
+        return result;
+    }
+
     private int runExec(final SimpleCommand cmd, final Map<String, String> cmdEnv) {
         final int code;
         if (cmd.getArguments().isEmpty()) {
             final RedirectionHandler.StreamSwap swap =
                 RedirectionHandler.redirectOutputForBuiltin(
                     cmd.getRedirections(), this.out, this.err,
-                    text -> this.expandVariables(text, this.environment)
+                    text -> this.expandVariables(text, this.environment), this.cwd, this.outDescriptors
                 );
             this.out = swap.out;
             this.err = swap.err;
             final InputStream saved = this.swapInputForBuiltin(cmd.getRedirections());
-            if (saved != null) {
+            if (saved != null && saved != System.in) {
                 try {
                     saved.close();
                 } catch (final IOException ignored) {
                     this.wordExpansionError = false;
                 }
+            }
+            boolean bound = !swap.failed;
+            for (final Redirection redir : cmd.getRedirections()) {
+                final RedirectionType type = redir.getType();
+                final int desc = redir.getFd();
+                if (desc > 0 && (type == RedirectionType.READWRITE
+                    || type == RedirectionType.INPUT)) {
+                    final File target = this.redirectionFile(redir);
+                    try {
+                        if (type == RedirectionType.READWRITE) {
+                            this.outDescriptors.put(
+                                desc,
+                                new PrintStream(
+                                    new FileOutputStream(target, true), false,
+                                    StandardCharsets.UTF_8
+                                )
+                            );
+                        }
+                        this.descriptors.put(desc, new FileInputStream(target));
+                    } catch (final IOException ex) {
+                        bound = false;
+                    }
+                } else if (desc > 0 && (type == RedirectionType.OUTPUT
+                    || type == RedirectionType.CLOBBER || type == RedirectionType.APPEND)) {
+                    final File target = this.redirectionFile(redir);
+                    try {
+                        this.outDescriptors.put(
+                            desc,
+                            new PrintStream(
+                                new FileOutputStream(target, type == RedirectionType.APPEND),
+                                false, StandardCharsets.UTF_8
+                            )
+                        );
+                    } catch (final IOException ex) {
+                        bound = false;
+                    }
+                } else if (desc > 0 && type == RedirectionType.DUP_INPUT
+                    && "-".equals(redir.getTarget())) {
+                    final InputStream closed = this.descriptors.remove(desc);
+                    if (closed != null) {
+                        try {
+                            closed.close();
+                        } catch (final IOException ex) {
+                            bound = false;
+                        }
+                    }
+                } else if (desc > 0 && type == RedirectionType.DUP_OUTPUT
+                    && "-".equals(redir.getTarget())) {
+                    final PrintStream closed = this.outDescriptors.remove(desc);
+                    if (closed != null) {
+                        closed.close();
+                    }
+                }
+            }
+            if (!bound) {
+                throw new ExitSignal(1);
             }
             code = 0;
         } else {
@@ -900,8 +1020,16 @@ public class Executor implements BuiltinContext {
                         body.getBytes(StandardCharsets.UTF_8)
                     );
                 }
+            } else if (type == RedirectionType.DUP_INPUT) {
+                final InputStream bound = this.descriptors.get(
+                    parseDescriptor(this.expandVariables(redir.getTarget(), this.environment))
+                );
+                if (bound != null) {
+                    replacement = bound;
+                    this.inputBorrowed = true;
+                }
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
-                final String target = this.expandVariables(redir.getTarget(), this.environment);
+                final File target = this.redirectionFile(redir);
                 try {
                     replacement = new FileInputStream(target);
                 } catch (final java.io.FileNotFoundException ex) {
@@ -915,6 +1043,21 @@ public class Executor implements BuiltinContext {
         final InputStream saved = this.in;
         this.in = replacement;
         return saved;
+    }
+
+    /**
+     * Parses a redirection descriptor target such as {@code 3}.
+     * @param text The expanded redirection target
+     * @return The descriptor number, or -1 when it is not numeric
+     */
+    private static int parseDescriptor(final String text) {
+        int result = -1;
+        try {
+            result = Integer.parseInt(text.trim());
+        } catch (final NumberFormatException ex) {
+            result = -1;
+        }
+        return result;
     }
 
     private int runExternalCommand(
@@ -932,7 +1075,8 @@ public class Executor implements BuiltinContext {
             } else {
                 RedirectionHandler.setupRedirections(
                     builder, cmd.getRedirections(),
-                    text -> this.expandVariables(text, this.environment)
+                    text -> this.expandVariables(text, this.environment),
+                    this.cwd
                 );
                 code = this.startAndAwaitOne(builder);
             }
@@ -1028,8 +1172,7 @@ public class Executor implements BuiltinContext {
                 final String varName = assignment.substring(0, eqIndex);
                 if (this.readonly.contains(varName)) {
                     this.err.println("sh: " + varName + ": readonly variable");
-                    code = 1;
-                    continue;
+                    throw new ExitSignal(1);
                 }
                 final String rawValue = assignment.substring(eqIndex + 1);
                 final String expanded = this.expandVariables(rawValue, targetEnv);
@@ -1134,8 +1277,8 @@ public class Executor implements BuiltinContext {
         } else {
             String separator = " ";
             final String ifs = this.environment.get("IFS");
-            if (ifs != null && !ifs.isEmpty()) {
-                separator = ifs.substring(0, 1);
+            if (ifs != null) {
+                separator = ifs.isEmpty() ? "" : ifs.substring(0, 1);
             }
             joined = String.join(
                 separator,
@@ -1158,8 +1301,7 @@ public class Executor implements BuiltinContext {
         return result;
     }
 
-    @Override
-    public int exitCodeForIoException(final IOException exc) {
+    private int exitCodeForIoException(final IOException exc) {
         final String msg = exc.getMessage();
         final int code;
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
@@ -1267,11 +1409,6 @@ public class Executor implements BuiltinContext {
         /** Remaining loop levels to break out of. */
         private final int levels;
 
-        /** Default constructor (single level). */
-        BreakSignal() {
-            this(1);
-        }
-
         /**
          * @param levels Number of loop levels to break out of
          */
@@ -1299,11 +1436,6 @@ public class Executor implements BuiltinContext {
 
         /** Remaining loop levels to continue at. */
         private final int levels;
-
-        /** Default constructor (innermost). */
-        ContinueSignal() {
-            this(1);
-        }
 
         /**
          * @param levels Number of loop levels to skip over
@@ -1410,11 +1542,6 @@ public class Executor implements BuiltinContext {
     @Override
     public PrintStream outStream() {
         return this.out;
-    }
-
-    @Override
-    public InputStream stdin() {
-        return this.in;
     }
 
     @Override

@@ -54,6 +54,8 @@ public final class RedirectionHandler {
         public final PrintStream savedOut;
         /** The pre-call stderr (null when not swapped). */
         public final PrintStream savedErr;
+        /** True when a redirection target could not be opened. */
+        public final boolean failed;
 
         /**
          * Creates a stream swap record.
@@ -61,17 +63,20 @@ public final class RedirectionHandler {
          * @param err      The new live stderr
          * @param savedOut The pre-call stdout (null when not swapped)
          * @param savedErr The pre-call stderr (null when not swapped)
+         * @param failed   True when a redirection target could not be opened
          */
         public StreamSwap(
             final PrintStream out,
             final PrintStream err,
             final PrintStream savedOut,
-            final PrintStream savedErr
+            final PrintStream savedErr,
+            final boolean failed
         ) {
             this.out = out;
             this.err = err;
             this.savedOut = savedOut;
             this.savedErr = savedErr;
+            this.failed = failed;
         }
     }
 
@@ -90,16 +95,43 @@ public final class RedirectionHandler {
         final PrintStream currentErr,
         final UnaryOperator<String> expander
     ) {
+        return redirectOutputForBuiltin(
+            redirs, currentOut, currentErr, expander, null,
+            java.util.Collections.<Integer, PrintStream>emptyMap()
+        );
+    }
+
+    /**
+     * Same as the four-argument form, but resolves relative redirection
+     * targets against { base} and accepts descriptors bound by a
+     * previous redirection-only { exec}.
+     * @param redirs      The redirections attached to the invocation
+     * @param currentOut  The executor current stdout
+     * @param currentErr  The executor current stderr
+     * @param expander    Word-expansion callback
+     * @param base        Directory for relative targets (null = process cwd)
+     * @param descriptors Output descriptors bound by { exec N>file}
+     * @return The new live + saved stream pair
+     */
+    public static StreamSwap redirectOutputForBuiltin(
+        final List<Redirection> redirs,
+        final PrintStream currentOut,
+        final PrintStream currentErr,
+        final UnaryOperator<String> expander,
+        final File base,
+        final java.util.Map<Integer, PrintStream> descriptors
+    ) {
         PrintStream out = currentOut;
         PrintStream err = currentErr;
         PrintStream savedOut = null;
         PrintStream savedErr = null;
+        boolean failed = false;
         for (final Redirection redir : redirs) {
             final RedirectionType type = redir.getType();
             final int desc = redir.getFd();
             final String target = expander.apply(redir.getTarget());
             if (type == RedirectionType.OUTPUT || type == RedirectionType.CLOBBER) {
-                final PrintStream fileOut = openForWrite(target, false);
+                final PrintStream fileOut = openForWrite(target, false, base);
                 if (fileOut != null) {
                     if (desc == 1) {
                         if (savedOut == null) {
@@ -112,9 +144,11 @@ public final class RedirectionHandler {
                         }
                         err = fileOut;
                     }
+                } else {
+                    failed = true;
                 }
             } else if (type == RedirectionType.APPEND) {
-                final PrintStream fileOut = openForWrite(target, true);
+                final PrintStream fileOut = openForWrite(target, true, base);
                 if (fileOut != null) {
                     if (desc == 1) {
                         if (savedOut == null) {
@@ -127,10 +161,12 @@ public final class RedirectionHandler {
                         }
                         err = fileOut;
                     }
+                } else {
+                    failed = true;
                 }
             } else if (type == RedirectionType.DUP_OUTPUT) {
                 if (CLOSE.equals(target)) {
-                    final PrintStream nullPs = openForWrite(DEV_NULL, false);
+                    final PrintStream nullPs = openForWrite(DEV_NULL, false, base);
                     if (nullPs != null) {
                         if (desc == 1) {
                             if (savedOut == null) {
@@ -143,6 +179,8 @@ public final class RedirectionHandler {
                             }
                             err = nullPs;
                         }
+                    } else {
+                        failed = true;
                     }
                 } else if (STDOUT_FD.equals(target) && desc == 2) {
                     if (savedErr == null) {
@@ -154,10 +192,25 @@ public final class RedirectionHandler {
                         savedOut = out;
                     }
                     out = err;
+                } else {
+                    final PrintStream bound = descriptor(descriptors, target);
+                    if (bound == null) {
+                        failed = true;
+                    } else if (desc == 1) {
+                        if (savedOut == null) {
+                            savedOut = out;
+                        }
+                        out = bound;
+                    } else if (desc == 2) {
+                        if (savedErr == null) {
+                            savedErr = err;
+                        }
+                        err = bound;
+                    }
                 }
             }
         }
-        return new StreamSwap(out, err, savedOut, savedErr);
+        return new StreamSwap(out, err, savedOut, savedErr, failed);
     }
 
     /**
@@ -172,8 +225,25 @@ public final class RedirectionHandler {
         final List<Redirection> redirections,
         final UnaryOperator<String> expander
     ) {
+        setupRedirections(builder, redirections, expander, null);
+    }
+
+    /**
+     * Same as the three-argument form, resolving relative targets against
+     * { base}.
+     * @param builder      The process builder to mutate
+     * @param redirections The redirections in source order
+     * @param expander     Word-expansion callback for the targets
+     * @param base         Directory for relative targets (null = process cwd)
+     */
+    public static void setupRedirections(
+        final ProcessBuilder builder,
+        final List<Redirection> redirections,
+        final UnaryOperator<String> expander,
+        final File base
+    ) {
         for (final Redirection redir : redirections) {
-            applyOne(builder, redir, expander);
+            applyOne(builder, redir, expander, base);
         }
     }
 
@@ -217,11 +287,36 @@ public final class RedirectionHandler {
      * @param append True for append-mode, false for truncate
      * @return The print stream, or null on IO failure
      */
-    private static PrintStream openForWrite(final String target, final boolean append) {
+    private static File resolve(final String target, final File base) {
+        final File file = new File(target);
+        final File result;
+        if (base == null || file.isAbsolute()) {
+            result = file;
+        } else {
+            result = new File(base, target);
+        }
+        return result;
+    }
+
+    private static PrintStream descriptor(
+        final java.util.Map<Integer, PrintStream> descriptors, final String target
+    ) {
+        PrintStream result = null;
+        try {
+            result = descriptors.get(Integer.parseInt(target.trim()));
+        } catch (final NumberFormatException ex) {
+            result = null;
+        }
+        return result;
+    }
+
+    private static PrintStream openForWrite(
+        final String target, final boolean append, final File base
+    ) {
         PrintStream result;
         try {
             result = new PrintStream(
-                new FileOutputStream(target, append),
+                new FileOutputStream(resolve(target, base), append),
                 false,
                 StandardCharsets.UTF_8
             );
@@ -236,11 +331,13 @@ public final class RedirectionHandler {
      * @param builder  The builder to mutate
      * @param redir    The redirection to apply
      * @param expander Word-expansion callback
+     * @param base     Directory for relative targets (null = process cwd)
      */
     private static void applyOne(
         final ProcessBuilder builder,
         final Redirection redir,
-        final UnaryOperator<String> expander
+        final UnaryOperator<String> expander,
+        final File base
     ) {
         final int desc = redir.getFd();
         final RedirectionType type = redir.getType();
@@ -254,7 +351,7 @@ public final class RedirectionHandler {
         } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
             applyHereDoc(builder, desc, redir, expander);
         } else {
-            final File file = new File(expander.apply(rawTarget));
+            final File file = resolve(expander.apply(rawTarget), base);
             applyFileRedirect(builder, desc, type, file);
         }
     }

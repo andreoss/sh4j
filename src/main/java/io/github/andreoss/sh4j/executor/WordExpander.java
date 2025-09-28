@@ -573,7 +573,8 @@ public final class WordExpander {
             }
             ctx.errStream().println("$" + varName + ": " + msg);
             ctx.setWordExpansionError();
-            result = "";
+            ctx.clearWordExpansionError();
+            throw new Executor.ExitSignal(1);
         } else {
             result = varValue;
         }
@@ -596,7 +597,8 @@ public final class WordExpander {
             }
             ctx.errStream().println("$" + varName + ": " + msg);
             ctx.setWordExpansionError();
-            result = "";
+            ctx.clearWordExpansionError();
+            throw new Executor.ExitSignal(1);
         } else {
             result = varValue;
         }
@@ -1034,28 +1036,41 @@ public final class WordExpander {
      * @return The matching files
      */
     static List<String> globFiles(final String pattern, final File cwd) {
-        final String[] files = cwd.list();
+        final int slash = pattern.lastIndexOf('/');
+        final String prefix = slash < 0 ? "" : pattern.substring(0, slash);
+        final String segment = slash < 0 ? pattern : pattern.substring(slash + 1);
+        final File dir;
+        if (prefix.isEmpty()) {
+            dir = cwd;
+        } else if (prefix.startsWith("/")) {
+            dir = new File(prefix);
+        } else {
+            dir = new File(cwd, prefix);
+        }
+        final String[] files = dir.list();
         final List<String> matches = new ArrayList<>();
         if (files == null) {
             return matches;
         }
         final PathMatcher matcher;
         try {
-            matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+            matcher = FileSystems.getDefault().getPathMatcher("glob:" + segment);
         } catch (final java.util.regex.PatternSyntaxException ignored) {
             return matches;
         } catch (final IllegalArgumentException ignored) {
             return matches;
         }
-        final int slash = pattern.lastIndexOf('/');
-        final String segment = slash < 0 ? pattern : pattern.substring(slash + 1);
         final boolean dotPattern = segment.startsWith(".");
         for (final String name : files) {
             if (name.startsWith(".") && !dotPattern) {
                 continue;
             }
             if (matcher.matches(Paths.get(name))) {
-                matches.add(name);
+                if (prefix.isEmpty()) {
+                    matches.add(name);
+                } else {
+                    matches.add(prefix + "/" + name);
+                }
             }
         }
         return matches;
@@ -1080,9 +1095,14 @@ public final class WordExpander {
                 || chr == '|' || chr == '\\') {
                 regex.append('\\').append(chr);
             } else if (chr == '[') {
-                final int end = pattern.indexOf(']', idx);
-                if (end > idx) {
-                    regex.append(pattern, idx, end + 1);
+                final int end = pattern.indexOf(']', idx + 1);
+                if (end > idx + 1) {
+                    final String body = pattern.substring(idx + 1, end);
+                    if (body.startsWith("!") && body.length() > 1) {
+                        regex.append("[^").append(body.substring(1)).append(']');
+                    } else {
+                        regex.append('[').append(body).append(']');
+                    }
                     idx = end;
                 } else {
                     regex.append("\\[");

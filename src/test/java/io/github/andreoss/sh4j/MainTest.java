@@ -6,9 +6,11 @@ package io.github.andreoss.sh4j;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.function.IntSupplier;
@@ -253,6 +255,136 @@ public final class MainTest {
         Assert.assertEquals(0, result);
     }
 
+    @Test
+    public void exitCodeDashCMissingArgument() {
+        Assert.assertEquals(1, Main.exitCode(new String[] {"-c"}));
+    }
+
+    @Test
+    public void exitCodeDashSEmptyStdin() {
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.exitCode(new String[] {"-s"})
+            )
+        );
+    }
+
+    @Test
+    public void runSourceRunsExitTrap() throws IOException {
+        final File marker = this.tempdir.newFile("trap-marker.txt");
+        final int code = Main.runSource(
+            String.format(
+                "trap 'echo trapped > %s' EXIT; echo body",
+                marker.getAbsolutePath()
+            ),
+            java.util.Collections.singletonList("sh")
+        );
+        Assert.assertEquals(0, code);
+        Assert.assertEquals(
+            "trapped" + System.lineSeparator(),
+            new String(Files.readAllBytes(marker.toPath()), StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    public void runSourcePropagatesExitAndRunsTrap() throws IOException {
+        final File marker = this.tempdir.newFile("exit-trap-marker.txt");
+        final int code = Main.runSource(
+            String.format(
+                "trap 'echo trapped > %s' EXIT; exit 3",
+                marker.getAbsolutePath()
+            ),
+            java.util.Collections.singletonList("sh")
+        );
+        Assert.assertEquals(3, code);
+        Assert.assertTrue(marker.isFile());
+    }
+
+    @Test
+    public void interactiveIncompleteQuoteAtEof() {
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream("echo 'x".getBytes(StandardCharsets.UTF_8)),
+                () -> Main.interactive(null)
+            )
+        );
+    }
+
+    @Test
+    public void interactiveBlankLinesAndParseError() {
+        final String input = String.format("%n%nif%necho done%n");
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                () -> Main.interactive(null)
+            )
+        );
+    }
+
+    @Test
+    public void interactiveCustomPromptsAndContinuation() throws IOException {
+        final File startup = this.tempdir.newFile("prompt-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='p1> '%nPS2='p2> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final String input = String.format("echo 'a%nb'%n");
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                () -> Main.interactive(startup.getAbsolutePath())
+            )
+        );
+    }
+
+    @Test
+    public void interactiveCapturedOutputAndPrompts() throws IOException {
+        final File startup = this.tempdir.newFile("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        final String input = String.format("echo hello%necho 'a%nb'%n%nif%n");
+        Assert.assertEquals(
+            0,
+            MainTest.withStreams(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            )
+        );
+        final String text = out.toString(StandardCharsets.UTF_8);
+        Assert.assertTrue(text.contains("one> "));
+        Assert.assertTrue(text.contains("two> "));
+        Assert.assertTrue(text.contains("hello"));
+        Assert.assertTrue(text.contains("a"));
+        Assert.assertTrue(err.toString(StandardCharsets.UTF_8).contains("syntax error"));
+    }
+
+    @Test
+    public void interactiveBlankAndIncompleteDoubleQuoteAtEof() {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        final String input = String.format("%n\n\necho \"x");
+        Assert.assertEquals(
+            0,
+            MainTest.withStreams(
+                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                out,
+                err,
+                () -> Main.interactive(null)
+            )
+        );
+    }
+
     @SuppressWarnings("PMD.CloseResource")
     private static int withStdin(final InputStream input, final IntSupplier action) {
         final InputStream prior = System.in;
@@ -300,6 +432,26 @@ public final class MainTest {
             new io.github.andreoss.sh4j.executor.Executor();
         Main.runStartupFile(executor, startup.getAbsolutePath());
         Assert.assertNotNull(executor.getVariable("PATH"));
+    }
+
+    @SuppressWarnings("PMD.CloseResource")
+    private static int withStreams(
+        final InputStream input, final ByteArrayOutputStream out,
+        final ByteArrayOutputStream err, final IntSupplier action
+    ) {
+        final InputStream priorIn = System.in;
+        final PrintStream priorOut = System.out;
+        final PrintStream priorErr = System.err;
+        System.setIn(input);
+        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
+        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(priorIn);
+            System.setOut(priorOut);
+            System.setErr(priorErr);
+        }
     }
 
     @Test

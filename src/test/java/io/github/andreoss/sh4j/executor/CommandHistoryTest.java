@@ -151,4 +151,29 @@ public final class CommandHistoryTest {
         final CommandHistory hist = new CommandHistory();
         Assert.assertTrue(hist.list(1, 0).isEmpty());
     }
+
+    @Test
+    public void capacityOneAndRangeBoundaries() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        Assert.assertEquals(1, hist.size());
+        Assert.assertEquals("two", hist.get(2));
+        Assert.assertNull(hist.get(1));
+        Assert.assertNull(hist.get(3));
+        Assert.assertTrue(hist.list(0, 0).isEmpty());
+        Assert.assertTrue(hist.list(-99, 0).isEmpty());
+        Assert.assertTrue(hist.list(3, 2).isEmpty());
+    }
+
+    @Test
+    public void negativeRelativeNumbersClampToBuffer() {
+        final CommandHistory hist = new CommandHistory(2);
+        hist.add("one");
+        hist.add("two");
+        hist.add("three");
+        Assert.assertEquals(3, hist.list(-1, -1).get(0).number());
+        Assert.assertEquals("three", hist.list(-1, -1).get(0).command());
+        Assert.assertTrue(hist.list(-99, -1).isEmpty());
+    }
 }

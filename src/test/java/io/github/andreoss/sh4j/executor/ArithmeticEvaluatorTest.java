@@ -320,4 +320,90 @@ public final class ArithmeticEvaluatorTest {
             new ArithmeticEvaluator().evalArithmetic("042", new HashMap<>())
         );
     }
+
+    @Test public void assignmentWithWhitespace() {
+        final Map<String, String> env = new HashMap<>();
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("x = 5", env));
+        Assert.assertEquals("5", env.get("x"));
+        Assert.assertEquals("8", new ArithmeticEvaluator().evalArithmetic("x += 3", env));
+        Assert.assertEquals("8", env.get("x"));
+    }
+
+    @Test public void shiftAssignments() {
+        final Map<String, String> env = new HashMap<>();
+        Assert.assertEquals("2", new ArithmeticEvaluator().evalArithmetic("x = 2", env));
+        Assert.assertEquals("16", new ArithmeticEvaluator().evalArithmetic("x <<= 3", env));
+        Assert.assertEquals("16", env.get("x"));
+        Assert.assertEquals("8", new ArithmeticEvaluator().evalArithmetic("x >>= 1", env));
+    }
+
+    @Test public void relationalSingleCharacterOperators() {
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("2<3", new HashMap<>()));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("3>2", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("2<1", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("2>3", new HashMap<>()));
+    }
+
+    @Test public void ternaryWithoutColon() {
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("1?5", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("0?5", new HashMap<>()));
+    }
+
+    @Test public void unaryOperators() {
+        Assert.assertEquals("3", new ArithmeticEvaluator().evalArithmetic("+3", new HashMap<>()));
+        Assert.assertEquals("-3", new ArithmeticEvaluator().evalArithmetic("-3", new HashMap<>()));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("!0", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("!2", new HashMap<>()));
+        Assert.assertEquals("-1", new ArithmeticEvaluator().evalArithmetic("~0", new HashMap<>()));
+    }
+
+    @Test public void unbalancedParenAndTrailingWhitespace() {
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("(2+3", new HashMap<>()));
+        Assert.assertEquals("5", new ArithmeticEvaluator().evalArithmetic("2 + 3   ", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("", new HashMap<>()));
+    }
+
+    @Test public void numberBasesAndInvalidDigits() {
+        Assert.assertEquals("15", new ArithmeticEvaluator().evalArithmetic("0Xf", new HashMap<>()));
+        Assert.assertEquals("63", new ArithmeticEvaluator().evalArithmetic("077", new HashMap<>()));
+        Assert.assertEquals("9", new ArithmeticEvaluator().evalArithmetic("09", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("@", new HashMap<>()));
+    }
+
+    @Test public void invalidEnvValueBecomesZero() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "not-a-number");
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("x", env));
+    }
+
+    @Test public void compoundAssignmentVersusShift() {
+        final Map<String, String> env = new HashMap<>();
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("x = 1", env));
+        Assert.assertEquals("2", new ArithmeticEvaluator().evalArithmetic("x <<= 1", env));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("x <= 2", env));
+    }
+
+    @Test public void readNumberBoundaryForms() {
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("0x0", new HashMap<>()));
+        Assert.assertEquals("2748", new ArithmeticEvaluator().evalArithmetic("0XABC", new HashMap<>()));
+        Assert.assertEquals("8", new ArithmeticEvaluator().evalArithmetic("08", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("0", new HashMap<>()));
+        Assert.assertEquals("123", new ArithmeticEvaluator().evalArithmetic("123abc", new HashMap<>()));
+    }
+
+    @Test public void trailingOperatorsAndSpacedTernary() {
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("1+", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("1*", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("1<", new HashMap<>()));
+        Assert.assertEquals("2", new ArithmeticEvaluator().evalArithmetic("1 ? 2 : 3", new HashMap<>()));
+        Assert.assertEquals("3", new ArithmeticEvaluator().evalArithmetic("0 ? 2 : 3", new HashMap<>()));
+    }
+
+    @Test public void singleCharacterRelationalBranches() {
+        Assert.assertEquals("4", new ArithmeticEvaluator().evalArithmetic("2<<1", new HashMap<>()));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("2<=2", new HashMap<>()));
+        Assert.assertEquals("0", new ArithmeticEvaluator().evalArithmetic("2<1", new HashMap<>()));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("2>1", new HashMap<>()));
+        Assert.assertEquals("1", new ArithmeticEvaluator().evalArithmetic("2>=2", new HashMap<>()));
+    }
 }
