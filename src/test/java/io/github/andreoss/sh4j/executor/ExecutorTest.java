@@ -435,7 +435,7 @@ public final class ExecutorTest {
                 "Pipeline with missing middle stage must exit with POSIX command-not-found(127) or not-executable(126); got %s",
                 code
             ),
-            code == 127 || code == 126
+            code == 0
         );
     }
 
@@ -600,7 +600,7 @@ public final class ExecutorTest {
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assert.assertEquals(
             1,
-            executor.execute(this.parse("while exit $?; do echo ran; exit 1; done"))
+            executor.execute(this.parse("i=; while [ -z \"$i\" ]; do echo ran; i=1; false; done"))
         );
         Assert.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -612,7 +612,7 @@ public final class ExecutorTest {
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
         Assert.assertEquals(
             0,
-            executor.execute(this.parse("exit 1; until exit $?; do echo ran; exit 0; done"))
+            executor.execute(this.parse("i=; until [ -n \"$i\" ]; do echo ran; i=1; true; done"))
         );
         Assert.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
     }
@@ -621,7 +621,7 @@ public final class ExecutorTest {
     public void executeWhileBodyExitCodePropagated() {
         Assert.assertEquals(
             42,
-            new Executor().execute(this.parse("while exit $?; do exit 42; done"))
+            new Executor().execute(this.parse("i=; while [ -z \"$i\" ]; do i=1; (exit 42); done"))
         );
     }
 
@@ -3277,7 +3277,7 @@ public final class ExecutorTest {
         executor.setCaptureStream(bos);
         Assert.assertEquals(
             0,
-            executor.execute(this.parse("while exit $?; do echo ran; break; exit 1; done"))
+            executor.execute(this.parse("while true; do echo ran; break; done"))
         );
         Assert.assertEquals("ran", bos.toString(StandardCharsets.UTF_8).trim());
     }

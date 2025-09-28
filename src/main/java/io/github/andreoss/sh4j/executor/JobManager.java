@@ -14,8 +14,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 final class JobManager {
+
+    static final long JOB_PID_BASE = 1_000_000_000L;
 
     enum State {
         RUNNING,
@@ -28,7 +31,7 @@ final class JobManager {
         final long pid;
         final String command;
         volatile State state;
-        int exitCode;
+        volatile int exitCode;
         final CompletableFuture<Integer> future;
 
         Job(final int id, final long pid, final String command,
@@ -57,16 +60,22 @@ final class JobManager {
     }
 
     int submit(final Runnable task, final String command) {
+        return this.submit(() -> {
+            task.run();
+            return 0;
+        }, command);
+    }
+
+    int submit(final Supplier<Integer> task, final String command) {
         final int id = this.nextId.getAndIncrement();
         final CompletableFuture<Integer> future = CompletableFuture.supplyAsync(
             () -> {
                 Thread.currentThread().setName("sh-job-" + id);
-                task.run();
-                return 0;
+                return task.get();
             },
             this.pool
         );
-        final Job job = new Job(id, id, command, future);
+        final Job job = new Job(id, JOB_PID_BASE + id, command, future);
         future.whenComplete((result, ex) -> {
             if (ex instanceof CancellationException) {
                 job.state = State.STOPPED;
@@ -79,6 +88,14 @@ final class JobManager {
             this.jobs.put(id, job);
         }
         return id;
+    }
+
+    long pidForId(final int id) {
+        return JOB_PID_BASE + id;
+    }
+
+    static boolean isJobPid(final long pid) {
+        return pid >= JOB_PID_BASE;
     }
 
     Job getJob(final int id) {
@@ -94,6 +111,19 @@ final class JobManager {
             }
             return job;
         }
+    }
+
+    Job getJobByPid(final long pid) {
+        Job result = null;
+        synchronized (this.jobs) {
+            for (final Job job : this.jobs.values()) {
+                if (job.pid == pid) {
+                    result = job;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     List<Job> listJobs() {
@@ -114,33 +144,46 @@ final class JobManager {
 
     int waitForJob(final int id) {
         final Job job = this.getJob(id);
+        final int code;
         if (job == null) {
-            return 127;
+            code = 127;
+        } else {
+            code = this.await(job);
         }
+        return code;
+    }
+
+    int waitForPid(final long pid) {
+        final Job job = this.getJobByPid(pid);
+        final int code;
+        if (job == null) {
+            code = 127;
+        } else {
+            code = this.await(job);
+        }
+        return code;
+    }
+
+    private int await(final Job job) {
+        int code;
         try {
-            final int code = job.future.get();
+            code = job.future.get();
             job.state = State.DONE;
             job.exitCode = code;
-            return code;
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return 1;
+            code = 1;
         } catch (final ExecutionException ex) {
-            return 1;
+            code = 1;
         }
+        return code;
     }
 
     void waitForAll() {
         final List<Job> all = this.listJobs();
         for (final Job job : all) {
             if (job.state == State.RUNNING) {
-                try {
-                    job.future.get();
-                } catch (final InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                } catch (final ExecutionException ex) {
-                    // ignore
-                }
+                this.await(job);
             }
         }
         synchronized (this.jobs) {

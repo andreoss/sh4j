@@ -133,8 +133,9 @@ public final class WordExpander {
                     end = end + 1;
                 }
                 final String varName = arg.substring(idx + 1, end);
+                final String value = ctx.lookupVariable(varName, env);
                 expanded.append(
-                    escapeForQuoteRemoval(env.getOrDefault(varName, ""))
+                    escapeForQuoteRemoval(value == null ? "" : value)
                 );
                 consumed = end - idx;
             } else {
@@ -707,9 +708,20 @@ public final class WordExpander {
     public static String normaliseBackticks(final String arg) {
         final StringBuilder result = new StringBuilder();
         int idx = 0;
+        boolean single = false;
         while (idx < arg.length()) {
-            final int consumed = normaliseOne(arg, idx, result);
-            idx = idx + consumed;
+            final char chr = arg.charAt(idx);
+            if (chr == '\'') {
+                single = !single;
+                result.append(chr);
+                idx = idx + 1;
+            } else if (single) {
+                result.append(chr);
+                idx = idx + 1;
+            } else {
+                final int consumed = normaliseOne(arg, idx, result);
+                idx = idx + consumed;
+            }
         }
         return result.toString();
     }
@@ -969,10 +981,23 @@ public final class WordExpander {
      * @return The post-glob fields
      */
     public static List<String> pathnameExpand(final List<String> fields) {
+        return pathnameExpand(fields, new File(System.getProperty("user.dir")));
+    }
+
+    /**
+     * Pathname expansion relative to a specific directory. Dotfiles are
+     * skipped unless the final pattern segment starts with a dot.
+     * @param fields The post-IFS fields
+     * @param cwd Directory used for relative patterns
+     * @return The post-glob fields
+     */
+    public static List<String> pathnameExpand(
+        final List<String> fields, final File cwd
+    ) {
         final List<String> result = new ArrayList<>();
         for (final String field : fields) {
             if (containsGlobChars(field)) {
-                final List<String> matches = globFiles(field);
+                final List<String> matches = globFiles(field, cwd);
                 if (matches.isEmpty()) {
                     result.add(field);
                 } else {
@@ -1000,7 +1025,15 @@ public final class WordExpander {
      * @return The matching files in the current directory
      */
     static List<String> globFiles(final String pattern) {
-        final File cwd = new File(System.getProperty("user.dir"));
+        return globFiles(pattern, new File(System.getProperty("user.dir")));
+    }
+
+    /**
+     * @param pattern A glob pattern
+     * @param cwd     Directory used for relative patterns
+     * @return The matching files
+     */
+    static List<String> globFiles(final String pattern, final File cwd) {
         final String[] files = cwd.list();
         final List<String> matches = new ArrayList<>();
         if (files == null) {
@@ -1014,7 +1047,13 @@ public final class WordExpander {
         } catch (final IllegalArgumentException ignored) {
             return matches;
         }
+        final int slash = pattern.lastIndexOf('/');
+        final String segment = slash < 0 ? pattern : pattern.substring(slash + 1);
+        final boolean dotPattern = segment.startsWith(".");
         for (final String name : files) {
+            if (name.startsWith(".") && !dotPattern) {
+                continue;
+            }
             if (matcher.matches(Paths.get(name))) {
                 matches.add(name);
             }

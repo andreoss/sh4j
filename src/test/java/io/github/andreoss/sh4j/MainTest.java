@@ -60,6 +60,11 @@ public final class MainTest {
     }
 
     @Test
+    public void exitCodeDashCRunsCommand() {
+        Assert.assertEquals(7, Main.exitCode(new String[] {"-c", "exit 7"}));
+    }
+
+    @Test
     public void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
         final File script = this.tempdir.newFile("test_exit.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
@@ -141,6 +146,58 @@ public final class MainTest {
     }
 
     @Test
+    public void exitCodeDashSReadsStdin() {
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream("echo streamed\n".getBytes(StandardCharsets.UTF_8)),
+                () -> Main.exitCode(new String[] {"-s"})
+            )
+        );
+    }
+
+    @Test
+    public void exitCodeDashIWithEof() {
+        Assert.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.exitCode(new String[] {"-i"})
+            )
+        );
+    }
+
+    @Test
+    public void exitCodeDashDashRunsScript() throws IOException {
+        final File script = this.tempdir.newFile("dashdash.sh");
+        Files.write(script.toPath(), "exit 4\n".getBytes(StandardCharsets.UTF_8));
+        Assert.assertEquals(
+            4, Main.exitCode(new String[] {"--", script.getAbsolutePath()})
+        );
+    }
+
+    @Test
+    public void exitCodeUnknownOptionSkipsToScript() throws IOException {
+        final File script = this.tempdir.newFile("unknown.sh");
+        Files.write(script.toPath(), "exit 5\n".getBytes(StandardCharsets.UTF_8));
+        Assert.assertEquals(
+            5, Main.exitCode(new String[] {"-x", script.getAbsolutePath()})
+        );
+    }
+
+    @Test
+    public void runSourceParseErrorReturnsTwo() {
+        Assert.assertEquals(2, Main.runSource("if", java.util.Collections.singletonList("sh")));
+    }
+
+    @Test
+    public void runSourceExitStatus() {
+        Assert.assertEquals(
+            6, Main.runSource("exit 6", java.util.Collections.singletonList("sh"))
+        );
+    }
+
+    @Test
     public void runStartupFileExecutesScript() throws IOException {
         final File startup = this.tempdir.newFile("env.sh");
         try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
@@ -205,6 +262,44 @@ public final class MainTest {
         } finally {
             System.setIn(prior);
         }
+    }
+
+    @Test
+    public void exitCodeDashCWithPositionalArguments() {
+        Assert.assertEquals(
+            7, Main.exitCode(new String[] {"-c", "exit $1", "sh", "7"})
+        );
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void exitCodeDashSReadFailure() {
+        MainTest.withStdin(
+            new InputStream() {
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            },
+            () -> Main.exitCode(new String[] {"-s"})
+        );
+    }
+
+    @Test
+    public void executeLineWithIncompleteIf() {
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.executeLine(executor, "if");
+        Assert.assertNotNull(executor.getVariable("PATH"));
+    }
+
+    @Test
+    public void runStartupFileWithParseError() throws IOException {
+        final File startup = this.tempdir.newFile("bad-env.sh");
+        Files.write(startup.toPath(), "if\n".getBytes(StandardCharsets.UTF_8));
+        final io.github.andreoss.sh4j.executor.Executor executor =
+            new io.github.andreoss.sh4j.executor.Executor();
+        Main.runStartupFile(executor, startup.getAbsolutePath());
+        Assert.assertNotNull(executor.getVariable("PATH"));
     }
 
     @Test

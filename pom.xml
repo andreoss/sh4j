@@ -181,6 +181,7 @@
                         <exclude>checkstyle:.*/ParserTest\.java</exclude>
                         <exclude>checkstyle:.*/Sh4j\.java</exclude>
                         <exclude>checkstyle:.*/Sh4jPosixTest\.java</exclude>
+                        <exclude>checkstyle:.*/PosixRegressionTest\.java</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -193,4 +194,33 @@
             </plugin>
     </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native-image</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.6</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <imageName>sh4j</imageName>
+                            <mainClass>io.github.andreoss.sh4j.Main</mainClass>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -293,7 +293,7 @@ public final class Sh4jPosixTest {
 
     @Test
     public void questionMarkIsLastExitCode() {
-        Assert.assertEquals("42\n", Sh4j.out("exit 42", "echo $?"));
+        Assert.assertEquals("42\n", Sh4j.out("(exit 42)", "echo $?"));
     }
 
     @Test

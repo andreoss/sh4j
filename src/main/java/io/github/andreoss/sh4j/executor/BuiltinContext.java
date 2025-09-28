@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -69,9 +70,109 @@ interface BuiltinContext {
     void setWordExpansionError();
 
     /**
-     * @return The live environment map (mutating it propagates to the executor)
+     * @return The live shell-variable map (mutating it propagates to the executor)
      */
     Map<String, String> environmentMap();
+
+    /**
+     * @return A copy containing only variables marked for export
+     */
+    Map<String, String> exportedEnvironment();
+
+    /**
+     * Marks a variable for export to child processes.
+     * @param name Variable name
+     */
+    void markExported(String name);
+
+    /**
+     * @param name Variable name
+     * @return True when the variable is exported
+     */
+    boolean isExported(String name);
+
+    /**
+     * Marks a variable read-only.
+     * @param name Variable name
+     */
+    void markReadonly(String name);
+
+    /**
+     * @param name Variable name
+     * @return True when the variable is read-only
+     */
+    boolean isReadonly(String name);
+
+    /**
+     * Removes a variable unless it is read-only.
+     * @param name Variable name
+     * @return True when the variable was removed
+     */
+    boolean unsetVariable(String name);
+
+    /**
+     * @return The executor's current working directory
+     */
+    File currentDirectory();
+
+    /**
+     * Changes the executor's current working directory.
+     * @param dir New working directory
+     */
+    void setCurrentDirectory(File dir);
+
+    /**
+     * @param name Command name
+     * @return True when the dispatcher has a built-in registered under the name
+     */
+    boolean isBuiltinName(String name);
+
+    /**
+     * Reads one line from the executor's stdin without buffering past the
+     * newline.
+     * @return The line without its terminator, or null on EOF
+     */
+    String readInputLine();
+
+    /**
+     * Stores a trap action.
+     * @param signal Signal name (for example EXIT)
+     * @param action Shell text to run, or null to remove the trap
+     */
+    void setTrap(String signal, String action);
+
+    /**
+     * @return A live view of the trap table
+     */
+    Map<String, String> traps();
+
+    /**
+     * Expands one word into zero or more fields, honouring quoted
+     * {@code "$@"} boundaries and field splitting.
+     * @param arg Source word
+     * @param env Expansion environment view
+     * @return The expanded fields
+     */
+    List<String> expandFields(String arg, Map<String, String> env);
+
+    /**
+     * Expands one word into fields and applies pathname expansion when the
+     * word is unquoted and globbing is enabled.
+     * @param arg Source word
+     * @param env Expansion environment view
+     * @return The expanded fields
+     */
+    List<String> expandArguments(String arg, Map<String, String> env);
+
+    /**
+     * Runs a command bypassing function and alias lookup (used by the
+     * {@code command} built-in).
+     * @param name Command name
+     * @param args Raw argument words
+     * @param env Expansion environment view
+     * @return Exit status
+     */
+    int executeBypassingFunctions(String name, List<String> args, Map<String, String> env);
 
     /**
      * @return The live positional-parameter list
@@ -146,8 +247,8 @@ interface BuiltinContext {
     void waitForBackgroundJobs();
 
     /**
-     * @return The PID (thread ID) of the most recently spawned background
-     *     job, or 0 when no background job has run yet
+     * @return The identifier reported by {@code $!} for the most recent
+     *     background job, or 0 when no background job has run yet
      */
     int lastBackgroundPid();
 

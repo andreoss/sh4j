@@ -1874,6 +1874,138 @@ public final class IntegrationTest {
         Assert.assertEquals("from-fd3\n", this.runChildJvm(script));
     }
 
+    /**
+     * POSIX 2.9.4.2 For - empty word list means zero iterations.
+     */
+    @Test
+    public void forEmptyWordListSkipsBody() throws Exception {
+        final File script = this.writeScript(
+            "empfor.sh",
+            String.format("for i in; do echo $i; done%necho after%n")
+        );
+        Assert.assertEquals("after\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.2 For - loop variable retains last iterated value.
+     */
+    @Test
+    public void forLoopVarPersistsAfter() throws Exception {
+        final File script = this.writeScript(
+            "forpersist.sh",
+            String.format("for i in a b c; do :; done%necho $i%n")
+        );
+        Assert.assertEquals("c\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.7.2 Redirecting Output - `>|` overrides noclobber.
+     */
+    @Test
+    public void clobberRedirectWritesFile() throws Exception {
+        final File target = this.tempdir.newFile("clob.dat");
+        Files.writeString(target.toPath(), "old\n");
+        final File script = this.writeScript(
+            "clob.sh",
+            String.format("echo new >|%s%ncat %s%n",
+                target.getAbsolutePath(), target.getAbsolutePath()
+            )
+        );
+        Assert.assertEquals("new\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.4 Arithmetic - hex literal with `0x` prefix.
+     */
+    @Test
+    public void arithmeticHexLiteral() throws Exception {
+        final File script = this.writeScript(
+            "hex.sh",
+            String.format("echo $((0x10 + 0xF))%n")
+        );
+        Assert.assertEquals("31\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.3.1 alias chains - aliases expand transitively.
+     */
+    @Test
+    public void aliasChain() throws Exception {
+        final File script = this.writeScript(
+            "alchain.sh",
+            String.format("alias a=b%nalias b='echo final'%na arg%n")
+        );
+        Assert.assertEquals("final arg\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.5.2 special params - $0 inside a function is the script name
+     * (not the function name) per POSIX.
+     */
+    @Test
+    public void dollarZeroInsideFunction() throws Exception {
+        final File script = this.writeScript(
+            "fn0.sh",
+            String.format("f() { echo $0; }%nf%n")
+        );
+        final String out = this.runChildJvm(script).trim();
+        Assert.assertTrue(
+            "expected $0 to end with /fn0.sh, got: " + out, out.endsWith("/fn0.sh")
+        );
+    }
+
+    /**
+     * POSIX 2.7.2 Redirecting Output - the last `>` to the same file wins.
+     */
+    @Test
+    public void multipleOutputRedirectsLastWins() throws Exception {
+        final File a = this.tempdir.newFile("a.dat");
+        final File b = this.tempdir.newFile("b.dat");
+        final File script = this.writeScript(
+            "mout.sh",
+            String.format("echo hi >%s >%s%ncat %s%n",
+                a.getAbsolutePath(), b.getAbsolutePath(), b.getAbsolutePath()
+            )
+        );
+        Assert.assertEquals("hi\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.6.7 Quote Removal - mixed nested quotes preserve each region.
+     */
+    @Test
+    public void quoteRemovalMixedNested() throws Exception {
+        final File script = this.writeScript(
+            "qmix.sh",
+            String.format("echo 'a'\"b\"'c'%n")
+        );
+        Assert.assertEquals("abc\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.8.2 Exit Status - {@code true; echo $?} reports 0.
+     */
+    @Test
+    public void exitStatusTrueIsZero() throws Exception {
+        final File script = this.writeScript(
+            "trueq.sh",
+            String.format("true%necho $?%n")
+        );
+        Assert.assertEquals("0\n", this.runChildJvm(script));
+    }
+
+    /**
+     * POSIX 2.9.4.3 While - explicit while-false loop runs zero iterations.
+     */
+    @Test
+    public void whileFalseZeroIterations() throws Exception {
+        final File script = this.writeScript(
+            "wfalse.sh",
+            String.format("while false; do echo never; done%necho done%n")
+        );
+        Assert.assertEquals("done\n", this.runChildJvm(script));
+    }
+
     private File writeScript(final String name, final String content) throws IOException {
         final File script = this.tempdir.newFile(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {

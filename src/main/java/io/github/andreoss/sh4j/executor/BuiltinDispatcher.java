@@ -4,10 +4,10 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +84,9 @@ final class BuiltinDispatcher {
         this.register("fc", BuiltinDispatcher::doFc);
         this.register("set", BuiltinDispatcher::doSet);
         this.register("readonly", BuiltinDispatcher::doReadonly);
+        this.register("trap", BuiltinDispatcher::doTrap);
+        this.register("times", BuiltinDispatcher::doTimes);
+        this.register(".", BuiltinDispatcher::doDot);
     }
 
     /**
@@ -149,15 +152,17 @@ final class BuiltinDispatcher {
             }
             idx = idx + 1;
         }
+        int code = 0;
         for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
             final String name = args.get(aidx);
             if (removeFunction) {
                 self.functionsMap().remove(name);
-            } else {
-                self.environmentMap().remove(name);
+            } else if (!self.unsetVariable(name)) {
+                self.errStream().println("sh: " + name + ": readonly variable");
+                throw new Executor.ExitSignal(1);
             }
         }
-        return 0;
+        return code;
     }
 
     private static int parseLoopLevels(final List<String> args) {
@@ -185,20 +190,25 @@ final class BuiltinDispatcher {
         final List<String> assigns
     ) {
         final Map<String, String> environment = self.environmentMap();
-        if (!assigns.isEmpty()) {
-            environment.putAll(env);
+        final List<String> names = new ArrayList<>(args);
+        if (!names.isEmpty() && "-p".equals(names.get(0))) {
+            names.clear();
         }
-        for (final String arg : args) {
-            final int eqIdx = arg.indexOf('=');
-            if (eqIdx >= 0) {
-                environment.put(arg.substring(0, eqIdx), arg.substring(eqIdx + 1));
-            } else {
-                environment.putIfAbsent(arg, "");
+        if (names.isEmpty()) {
+            for (final Map.Entry<String, String> entry : self.exportedEnvironment().entrySet()) {
+                self.outStream().println("export " + entry.getKey() + "=" + entry.getValue());
             }
         }
-        if (assigns.isEmpty() && args.isEmpty()) {
-            for (final Map.Entry<String, String> entry : environment.entrySet()) {
-                self.outStream().println("export " + entry.getKey() + "=" + entry.getValue());
+        for (final String arg : names) {
+            final int eqIdx = arg.indexOf('=');
+            if (eqIdx >= 0) {
+                final String name = arg.substring(0, eqIdx);
+                final String expanded = self.expandVariables(arg.substring(eqIdx + 1), env);
+                environment.put(name, WordExpander.removeQuotes(expanded));
+                self.markExported(name);
+            } else {
+                environment.putIfAbsent(arg, "");
+                self.markExported(arg);
             }
         }
         return 0;
@@ -237,6 +247,7 @@ final class BuiltinDispatcher {
             final File dir = new File(target);
             if (dir.isDirectory()) {
                 code = applyChdir(environment, dir);
+                self.setCurrentDirectory(new File(environment.getOrDefault("PWD", ".")));
             } else {
                 code = 1;
             }
@@ -305,7 +316,6 @@ final class BuiltinDispatcher {
             environment.put("OLDPWD", oldPwd);
         }
         environment.put("PWD", abs);
-        System.setProperty("user.dir", abs);
         return 0;
     }
 
@@ -325,31 +335,19 @@ final class BuiltinDispatcher {
             start = 1;
         }
         boolean firstField = true;
-        boolean error = false;
+        self.clearWordExpansionError();
         for (int idx = start; idx < args.size(); idx = idx + 1) {
-            final String arg = args.get(idx);
-            final WordExpander.ExpansionResult res = WordExpander.expandVariables(arg, env, self);
-            error = error || res.error;
-            final String expanded = res.value;
-            if (WordExpander.isQuoted(arg)) {
+            for (final String field : self.expandArguments(args.get(idx), env)) {
                 if (!firstField) {
                     self.outStream().print(" ");
                 }
-                self.outStream().print(WordExpander.removeQuotes(expanded));
+                self.outStream().print(field);
                 firstField = false;
-            } else {
-                final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
-                final List<String> fields = WordExpander.pathnameExpand(
-                    WordExpander.splitFields(expanded, ifsVal)
-                );
-                for (final String field : fields) {
-                    if (!firstField) {
-                        self.outStream().print(" ");
-                    }
-                    self.outStream().print(WordExpander.removeQuotes(field));
-                    firstField = false;
-                }
             }
+        }
+        final boolean error = self.wordExpansionErrorOccurred();
+        if (error) {
+            self.clearWordExpansionError();
         }
         if (newline) {
             self.outStream().println();
@@ -468,7 +466,7 @@ final class BuiltinDispatcher {
                 }
             }
         }
-        return code;
+        throw new Executor.ExitSignal(code);
     }
 
     /**
@@ -483,10 +481,10 @@ final class BuiltinDispatcher {
         int code = 0;
         for (final String arg : args) {
             final String expanded = self.expandVariables(arg, env);
-            if (Executor.isBuiltin(expanded)) {
-                self.outStream().println(expanded + " is a shell built-in");
-            } else if (self.functionsMap().containsKey(expanded)) {
+            if (self.functionsMap().containsKey(expanded)) {
                 self.outStream().println(expanded + " is a function");
+            } else if (self.isBuiltinName(expanded)) {
+                self.outStream().println(expanded + " is a shell built-in");
             } else {
                 final String resolved = self.resolveCommand(expanded);
                 if (resolved == null) {
@@ -537,14 +535,9 @@ final class BuiltinDispatcher {
             if (locate || verbose) {
                 code = describeCommand(self, name, verbose);
             } else {
-                final StringBuilder line = new StringBuilder(name);
-                for (int i = idx + 1; i < args.size(); i += 1) {
-                    line.append(' ').append(args.get(i));
-                }
-                final ListNode ast = new Parser(
-                    new Lexer(new CharReader(line.toString()))
-                ).parse();
-                code = self.execute(ast);
+                code = self.executeBypassingFunctions(
+                    name, args.subList(idx + 1, args.size()), env
+                );
             }
         }
         return code;
@@ -561,15 +554,15 @@ final class BuiltinDispatcher {
         final BuiltinContext self, final String name, final boolean verbose
     ) {
         int code = 0;
-        if (Executor.isBuiltin(name)) {
+        if (self.functionsMap().containsKey(name)) {
             if (verbose) {
-                self.outStream().println(name + " is a shell built-in");
+                self.outStream().println(name + " is a function");
             } else {
                 self.outStream().println(name);
             }
-        } else if (self.functionsMap().containsKey(name)) {
+        } else if (self.isBuiltinName(name)) {
             if (verbose) {
-                self.outStream().println(name + " is a function");
+                self.outStream().println(name + " is a shell built-in");
             } else {
                 self.outStream().println(name);
             }
@@ -734,6 +727,9 @@ final class BuiltinDispatcher {
         int code;
         try {
             final long pid = Long.parseLong(pidStr);
+            if (JobManager.isJobPid(pid)) {
+                return 127;
+            }
             final java.util.Optional<ProcessHandle> handle = ProcessHandle.of(pid);
             if (handle.isPresent()) {
                 final boolean sent;
@@ -778,7 +774,7 @@ final class BuiltinDispatcher {
                 continue;
             }
             final String name = self.expandVariables(arg, env);
-            if (!Executor.isBuiltin(name) && self.resolveCommand(name) == null) {
+            if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
                 code = 127;
             }
         }
@@ -806,16 +802,10 @@ final class BuiltinDispatcher {
         if (args.isEmpty()) {
             self.waitForBackgroundJobs();
         } else {
-            final int known = self.lastBackgroundPid();
             for (final String arg : args) {
                 final String expanded = self.expandVariables(arg, env);
                 try {
-                    final int pid = Integer.parseInt(expanded);
-                    if (pid == known && known > 0) {
-                        self.waitForBackgroundJobs();
-                    } else {
-                        code = 127;
-                    }
+                    code = self.jobManager().waitForPid(Long.parseLong(expanded));
                 } catch (final NumberFormatException ex) {
                     code = 127;
                 }
@@ -881,42 +871,35 @@ final class BuiltinDispatcher {
             idx = 1;
         }
         final List<String> names = args.subList(idx, args.size());
-        final BufferedReader reader = new BufferedReader(
-            new InputStreamReader(self.stdin())
-        );
-        try {
-            final String line = reader.readLine();
-            if (line == null) {
-                return 1;
-            }
-            final String processed;
-            if (raw) {
-                processed = line;
-            } else {
-                processed = processReadEscapes(line);
-            }
-            final Map<String, String> environment = self.environmentMap();
-            if (names.isEmpty()) {
-                environment.put("REPLY", processed);
-                return 0;
-            }
-            final String ifs = env.getOrDefault("IFS", DEFAULT_IFS);
-            final char firstIfs = ifs.charAt(0);
-            final List<String> fields = splitReadFields(processed, ifs, firstIfs);
-            for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
-                final String name = names.get(vdx);
-                if (vdx == names.size() - 1) {
-                    environment.put(name, joinReadFields(fields, vdx, ifs, firstIfs));
-                } else if (vdx < fields.size()) {
-                    environment.put(name, fields.get(vdx));
-                } else {
-                    environment.put(name, "");
-                }
-            }
-            return 0;
-        } catch (final IOException ex) {
+        final String line = self.readInputLine();
+        if (line == null) {
             return 1;
         }
+        final String processed;
+        if (raw) {
+            processed = line;
+        } else {
+            processed = processReadEscapes(line);
+        }
+        final Map<String, String> environment = self.environmentMap();
+        if (names.isEmpty()) {
+            environment.put("REPLY", processed);
+            return 0;
+        }
+        final String ifs = env.getOrDefault("IFS", DEFAULT_IFS);
+        final char firstIfs = ifs.charAt(0);
+        final List<String> fields = splitReadFields(processed, ifs, firstIfs);
+        for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
+            final String name = names.get(vdx);
+            if (vdx == names.size() - 1) {
+                environment.put(name, joinReadFields(fields, vdx, ifs, firstIfs));
+            } else if (vdx < fields.size()) {
+                environment.put(name, fields.get(vdx));
+            } else {
+                environment.put(name, "");
+            }
+        }
+        return 0;
     }
 
     /**
@@ -1573,41 +1556,186 @@ final class BuiltinDispatcher {
     ) {
         String flags = self.shellFlags();
         int idx = 0;
-        while (idx < args.size() && args.get(idx).startsWith("-")
-            && !"--".equals(args.get(idx))) {
+        boolean sawDashDash = false;
+        while (idx < args.size()) {
             final String flag = args.get(idx);
+            if ("--".equals(flag)) {
+                idx = idx + 1;
+                sawDashDash = true;
+                break;
+            }
+            if (("-o".equals(flag) || "+o".equals(flag)) && idx + 1 < args.size()) {
+                final String option = args.get(idx + 1);
+                final char opt = setOptionFlag(option);
+                if (opt != 0) {
+                    if ("-o".equals(flag)) {
+                        if (flags.indexOf(opt) < 0) {
+                            flags = flags + opt;
+                        }
+                    } else {
+                        flags = flags.replace(String.valueOf(opt), "");
+                    }
+                }
+                idx = idx + 2;
+                continue;
+            }
+            if (flag.length() < 2
+                || !("-".equals(flag.substring(0, 1)) || "+".equals(flag.substring(0, 1)))) {
+                break;
+            }
+            final boolean enable = "-".equals(flag.substring(0, 1));
             for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
                 final char ch = flag.charAt(fidx);
-                if (flags.indexOf(ch) < 0) {
+                if (enable && flags.indexOf(ch) < 0) {
                     flags = flags + ch;
+                } else if (!enable) {
+                    flags = flags.replace(String.valueOf(ch), "");
                 }
             }
             idx = idx + 1;
         }
-        if (idx < args.size() && "--".equals(args.get(idx))) {
-            idx = idx + 1;
-        }
         self.setShellFlags(flags);
-        final boolean sawDashDash = idx > 0 && idx - 1 < args.size()
-            && "--".equals(args.get(idx - 1));
         if (sawDashDash || idx < args.size()) {
-            final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
             final List<String> params = new ArrayList<>();
             for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
-                final String arg = args.get(aidx);
-                final String expanded = self.expandVariables(arg, env);
-                if (WordExpander.isQuoted(arg)) {
-                    params.add(WordExpander.removeQuotes(expanded));
-                } else {
-                    final List<String> fields = WordExpander.splitFields(expanded, ifsVal);
-                    for (final String field : fields) {
-                        params.add(WordExpander.removeQuotes(field));
-                    }
-                }
+                params.addAll(self.expandArguments(args.get(aidx), env));
             }
             self.setPositionalParams(params);
         }
         return 0;
+    }
+
+    /**
+     * Maps a {@code set -o} option name to its single-character flag.
+     * @param option Option name
+     * @return Flag character, or 0 when unsupported
+     */
+    private static char setOptionFlag(final String option) {
+        final char flag;
+        if ("errexit".equals(option)) {
+            flag = 'e';
+        } else if ("nounset".equals(option)) {
+            flag = 'u';
+        } else if ("noglob".equals(option)) {
+            flag = 'f';
+        } else if ("xtrace".equals(option)) {
+            flag = 'x';
+        } else if ("noexec".equals(option)) {
+            flag = 'n';
+        } else if ("verbose".equals(option)) {
+            flag = 'v';
+        } else if ("allexport".equals(option)) {
+            flag = 'a';
+        } else {
+            flag = 0;
+        }
+        return flag;
+    }
+
+    /**
+     * Implementation of {@code trap [action signal ...]}.
+     * Only the EXIT trap is executed by the executor; other signals are
+     * recorded but the JDK does not expose portable signal handlers.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return 0
+     */
+    private static int doTrap(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        final int code;
+        if (args.isEmpty()) {
+            for (final Map.Entry<String, String> entry : self.traps().entrySet()) {
+                self.outStream().println(
+                    "trap -- '" + entry.getValue() + "' " + entry.getKey()
+                );
+            }
+            code = 0;
+        } else if ("-".equals(args.get(0))) {
+            for (int idx = 1; idx < args.size(); idx = idx + 1) {
+                self.setTrap(args.get(idx).toUpperCase(java.util.Locale.ROOT), null);
+            }
+            code = 0;
+        } else {
+            final String action = WordExpander.removeQuotes(args.get(0));
+            for (int idx = 1; idx < args.size(); idx = idx + 1) {
+                self.setTrap(
+                    args.get(idx).toUpperCase(java.util.Locale.ROOT), action
+                );
+            }
+            code = 0;
+        }
+        return code;
+    }
+
+    /**
+     * Implementation of {@code times}.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment (unused)
+     * @param assigns Inline assignments (unused)
+     * @return 0
+     */
+    private static int doTimes(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        self.outStream().println("0m0.000s 0m0.000s");
+        self.outStream().println("0m0.000s 0m0.000s");
+        return 0;
+    }
+
+    /**
+     * Implementation of {@code . file [args...]}.
+     * @param self    Builtin context
+     * @param args    Args after the command name
+     * @param env     Environment for word expansion
+     * @param assigns Inline assignments (unused)
+     * @return The sourced script's exit status, or 1 on IO/parse failure
+     */
+    private static int doDot(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
+    ) {
+        int code;
+        if (args.isEmpty()) {
+            code = 1;
+        } else {
+            final String path = WordExpander.removeQuotes(
+                self.expandVariables(args.get(0), env)
+            );
+            try {
+                final String source = new String(
+                    Files.readAllBytes(new File(path).toPath()), StandardCharsets.UTF_8
+                );
+                final List<String> saved = new ArrayList<>(self.positionalParamsList());
+                if (args.size() > 1) {
+                    self.setPositionalParams(args.subList(1, args.size()));
+                }
+                try {
+                    final ListNode ast = new Parser(
+                        new Lexer(new CharReader(source))
+                    ).parse();
+                    code = self.execute(ast);
+                } finally {
+                    self.positionalParamsList().clear();
+                    self.positionalParamsList().addAll(saved);
+                }
+            } catch (final IOException ex) {
+                self.errStream().println("sh: " + path + ": cannot open");
+                code = 1;
+            }
+        }
+        return code;
     }
 
     /**
@@ -1628,13 +1756,15 @@ final class BuiltinDispatcher {
         final List<String> all = new ArrayList<>(args);
         all.addAll(assigns);
         final Map<String, String> environment = self.environmentMap();
-        if (all.isEmpty() || !args.isEmpty() && "-p".equals(args.get(0))) {
+        if (!all.isEmpty() && "-p".equals(all.get(0))) {
+            all.remove(0);
+        }
+        if (all.isEmpty()) {
             for (final Map.Entry<String, String> entry : environment.entrySet()) {
-                final String key = entry.getKey();
-                if (key.endsWith("_READONLY") && "1".equals(entry.getValue())) {
-                    final String name = key.substring(0, key.length() - "_READONLY".length());
-                    final String value = environment.getOrDefault(name, "");
-                    self.outStream().println("readonly " + name + "=" + value);
+                if (self.isReadonly(entry.getKey())) {
+                    self.outStream().println(
+                        "readonly " + entry.getKey() + "=" + entry.getValue()
+                    );
                 }
             }
             return 0;
@@ -1643,11 +1773,11 @@ final class BuiltinDispatcher {
             final int eqIdx = arg.indexOf('=');
             if (eqIdx >= 0) {
                 final String name = arg.substring(0, eqIdx);
-                final String value = arg.substring(eqIdx + 1);
-                environment.put(name, value);
-                environment.put(name + "_READONLY", "1");
+                final String expanded = self.expandVariables(arg.substring(eqIdx + 1), env);
+                environment.put(name, WordExpander.removeQuotes(expanded));
+                self.markReadonly(name);
             } else {
-                environment.put(arg + "_READONLY", "1");
+                self.markReadonly(arg);
             }
         }
         return 0;

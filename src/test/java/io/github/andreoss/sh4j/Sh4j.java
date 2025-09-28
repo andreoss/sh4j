@@ -84,6 +84,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return code;
     }
 
@@ -125,6 +126,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return bos.toString(StandardCharsets.UTF_8);
     }
 
@@ -156,6 +158,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return bos.toString(StandardCharsets.UTF_8);
     }
 
@@ -191,6 +194,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return executor.getVariable(varName);
     }
 
@@ -210,6 +214,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return new HashMap<String, String>(executor.environmentMap());
     }
 
@@ -301,6 +306,7 @@ public final class Sh4j {
                 break;
             }
         }
+        executor.runExitTrap();
         return new Result(
             code,
             outBos.toString(StandardCharsets.UTF_8),

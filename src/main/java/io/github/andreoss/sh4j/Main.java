@@ -51,17 +51,98 @@ public final class Main {
      * @return The exit status the JVM should report
      */
     static int exitCode(final String[] args) {
-        final int code;
-        if (args.length > 0) {
-            final List<String> scriptArgs = new ArrayList<>(args.length);
-            for (final String arg : args) {
-                scriptArgs.add(arg);
+        int idx = 0;
+        boolean readStdin = false;
+        boolean forceInteractive = false;
+        String command = null;
+        while (idx < args.length) {
+            final String arg = args[idx];
+            if ("-c".equals(arg)) {
+                if (idx + 1 < args.length) {
+                    command = args[idx + 1];
+                    idx = idx + 2;
+                }
+                break;
+            } else if ("-s".equals(arg)) {
+                readStdin = true;
+                idx = idx + 1;
+            } else if ("-i".equals(arg)) {
+                forceInteractive = true;
+                idx = idx + 1;
+            } else if ("--".equals(arg)) {
+                idx = idx + 1;
+                break;
+            } else if (arg.startsWith("-")) {
+                idx = idx + 1;
+            } else {
+                break;
             }
-            code = runScript(args[0], scriptArgs);
-        } else {
+        }
+        final int code;
+        if (command != null) {
+            final List<String> params = new ArrayList<>();
+            params.add(idx < args.length ? args[idx] : "sh");
+            for (int pos = idx + 1; pos < args.length; pos = pos + 1) {
+                params.add(args[pos]);
+            }
+            code = runSource(command, params);
+        } else if (readStdin) {
+            code = runSource(readAll(System.in), Arrays.asList("sh"));
+        } else if (forceInteractive || idx >= args.length) {
             code = interactive();
+        } else {
+            final List<String> scriptArgs = new ArrayList<>();
+            scriptArgs.add(args[idx]);
+            for (int pos = idx + 1; pos < args.length; pos = pos + 1) {
+                scriptArgs.add(args[pos]);
+            }
+            code = runScript(args[idx], scriptArgs);
         }
         return code;
+    }
+
+    /**
+     * Parses and executes shell source text.
+     * @param source The shell source
+     * @param params Positional parameters ({@code $0} first)
+     * @return Exit status
+     */
+    static int runSource(final String source, final List<String> params) {
+        int code;
+        final Executor executor = new Executor(System.getenv(), params);
+        try {
+            final ListNode ast = new Parser(
+                new Lexer(new CharReader(source))
+            ).parse();
+            code = executor.execute(ast);
+        } catch (final io.github.andreoss.sh4j.parser.ParseException ex) {
+            System.err.println("sh: syntax error: " + ex.getMessage());
+            code = 2;
+        } finally {
+            executor.runExitTrap();
+        }
+        return code;
+    }
+
+    /**
+     * Reads all bytes from a stream as UTF-8 text.
+     * @param stream Input stream
+     * @return Decoded text
+     */
+    private static String readAll(final java.io.InputStream stream) {
+        final java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        final String text;
+        try {
+            int read = stream.read();
+            while (read != -1) {
+                buffer.write(read);
+                read = stream.read();
+            }
+            text = buffer.toString("UTF-8");
+        } catch (final IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        return text;
     }
 
     /**
@@ -88,13 +169,9 @@ public final class Main {
                 content.append(line).append('\n');
                 line = reader.readLine();
             }
-            final CharReader charReader = new CharReader(content.toString());
-            final Lexer lexer = new Lexer(charReader);
-            final Parser parser = new Parser(lexer);
-            final ListNode ast = parser.parse();
-            final Executor executor = new Executor(System.getenv(), scriptArgs);
-            code = executor.execute(ast);
+            code = runSource(content.toString(), scriptArgs);
         } catch (final IOException ex) {
+            System.err.println("sh: " + filename + ": cannot open");
             code = 1;
         }
         return code;
@@ -167,8 +244,8 @@ public final class Main {
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
             executor.execute(ast);
-        } catch (final Exception ex) {
-            System.err.println("sh: parse error: " + ex.getMessage());
+        } catch (final io.github.andreoss.sh4j.parser.ParseException ex) {
+            System.err.println("sh: syntax error: " + ex.getMessage());
         }
     }
 
@@ -219,6 +296,8 @@ public final class Main {
             executor.execute(ast);
         } catch (final IOException ex) {
             System.err.println("sh: " + envFile + ": cannot open");
+        } catch (final io.github.andreoss.sh4j.parser.ParseException ex) {
+            System.err.println("sh: syntax error: " + ex.getMessage());
         }
     }
 }

@@ -102,10 +102,14 @@ public final class RedirectionHandler {
                 final PrintStream fileOut = openForWrite(target, false);
                 if (fileOut != null) {
                     if (desc == 1) {
-                        savedOut = out;
+                        if (savedOut == null) {
+                            savedOut = out;
+                        }
                         out = fileOut;
                     } else if (desc == 2) {
-                        savedErr = err;
+                        if (savedErr == null) {
+                            savedErr = err;
+                        }
                         err = fileOut;
                     }
                 }
@@ -113,10 +117,14 @@ public final class RedirectionHandler {
                 final PrintStream fileOut = openForWrite(target, true);
                 if (fileOut != null) {
                     if (desc == 1) {
-                        savedOut = out;
+                        if (savedOut == null) {
+                            savedOut = out;
+                        }
                         out = fileOut;
                     } else if (desc == 2) {
-                        savedErr = err;
+                        if (savedErr == null) {
+                            savedErr = err;
+                        }
                         err = fileOut;
                     }
                 }
@@ -125,18 +133,26 @@ public final class RedirectionHandler {
                     final PrintStream nullPs = openForWrite(DEV_NULL, false);
                     if (nullPs != null) {
                         if (desc == 1) {
-                            savedOut = out;
+                            if (savedOut == null) {
+                                savedOut = out;
+                            }
                             out = nullPs;
                         } else if (desc == 2) {
-                            savedErr = err;
+                            if (savedErr == null) {
+                                savedErr = err;
+                            }
                             err = nullPs;
                         }
                     }
                 } else if (STDOUT_FD.equals(target) && desc == 2) {
-                    savedErr = err;
+                    if (savedErr == null) {
+                        savedErr = err;
+                    }
                     err = out;
                 } else if (STDERR_FD.equals(target) && desc == 1) {
-                    savedOut = out;
+                    if (savedOut == null) {
+                        savedOut = out;
+                    }
                     out = err;
                 }
             }
