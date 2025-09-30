@@ -63,11 +63,6 @@ interface BuiltinContext {
     PrintStream errStream();
 
     /**
-     * Signals that a word expansion failed (e.g. {@code ${var:?}}).
-     */
-    void setWordExpansionError();
-
-    /**
      * @return The live shell-variable map (mutating it propagates to the executor)
      */
     Map<String, String> environmentMap();
@@ -202,16 +197,6 @@ interface BuiltinContext {
      * @return The absolute path, or null when not found
      */
     String resolveCommand(String name);
-
-    /**
-     * @return Whether a prior word expansion set the error flag
-     */
-    boolean wordExpansionErrorOccurred();
-
-    /**
-     * Clears the word-expansion error flag.
-     */
-    void clearWordExpansionError();
 
     /**
      * Recursively executes another AST list (used by {@code eval}).

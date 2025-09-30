@@ -334,7 +334,6 @@ final class BuiltinDispatcher {
             start = 1;
         }
         boolean firstField = true;
-        self.clearWordExpansionError();
         for (int idx = start; idx < args.size(); idx = idx + 1) {
             for (final String field : self.expandArguments(args.get(idx), env)) {
                 if (!firstField) {
@@ -344,14 +343,10 @@ final class BuiltinDispatcher {
                 firstField = false;
             }
         }
-        final boolean error = self.wordExpansionErrorOccurred();
-        if (error) {
-            self.clearWordExpansionError();
-        }
         if (newline) {
             self.outStream().println();
         }
-        return error ? 1 : 0;
+        return 0;
     }
 
     /**
@@ -392,17 +387,10 @@ final class BuiltinDispatcher {
     ) {
         int code = 0;
         if (!args.isEmpty()) {
-            final WordExpander.ExpansionResult res = WordExpander.expandVariables(
-                args.get(0), env, self
-            );
-            if (res.error) {
+            try {
+                code = Integer.parseInt(self.expandVariables(args.get(0), env));
+            } catch (final NumberFormatException ex) {
                 code = 1;
-            } else {
-                try {
-                    code = Integer.parseInt(res.value);
-                } catch (final NumberFormatException ex) {
-                    code = 1;
-                }
             }
         }
         throw new Executor.ExitSignal(code);

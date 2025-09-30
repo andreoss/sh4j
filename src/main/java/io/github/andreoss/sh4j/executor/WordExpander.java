@@ -45,27 +45,6 @@ public final class WordExpander {
     }
 
     /**
-     * The result of a word expansion: the produced text and whether a
-     * sub-expansion (e.g. {@code ${var:?}}) flagged an error.
-     */
-    public static final class ExpansionResult {
-        /** The expanded text. */
-        public final String value;
-        /** True when at least one sub-expansion failed. */
-        public final boolean error;
-
-        /**
-         * Creates an expansion result.
-         * @param value The expanded text
-         * @param error True when at least one sub-expansion failed
-         */
-        public ExpansionResult(final String value, final boolean error) {
-            this.value = value;
-            this.error = error;
-        }
-    }
-
-    /**
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
      * brace expansion, and bare variable references.
      * @param arg The source word
@@ -282,23 +261,6 @@ public final class WordExpander {
             result = -1;
         }
         return result;
-    }
-
-    /**
-     * Thin wrapper around {@link #expandVariablesImpl} that returns the
-     * post-call error flag in a record.
-     */
-    public static ExpansionResult expandVariables(
-        final String arg,
-        final Map<String, String> env,
-        final BuiltinContext ctx
-    ) {
-        final String value = ctx.expandVariables(arg, env);
-        final boolean error = ctx.wordExpansionErrorOccurred();
-        if (error) {
-            ctx.clearWordExpansionError();
-        }
-        return new ExpansionResult(value, error);
     }
 
     /**
@@ -572,8 +534,6 @@ public final class WordExpander {
                 msg = word;
             }
             ctx.errStream().println("$" + varName + ": " + msg);
-            ctx.setWordExpansionError();
-            ctx.clearWordExpansionError();
             throw new Executor.ExitSignal(1);
         } else {
             result = varValue;
@@ -596,8 +556,6 @@ public final class WordExpander {
                 msg = word;
             }
             ctx.errStream().println("$" + varName + ": " + msg);
-            ctx.setWordExpansionError();
-            ctx.clearWordExpansionError();
             throw new Executor.ExitSignal(1);
         } else {
             result = varValue;
@@ -650,23 +608,6 @@ public final class WordExpander {
     private static boolean isAssignableName(final String varName) {
         return varName.chars()
             .allMatch(chr -> Character.isLetterOrDigit(chr) || chr == '_');
-    }
-
-    /**
-     * Wrapper around {@link #expandBracedImpl} that returns the
-     * error flag in a record.
-     */
-    public static ExpansionResult expandBraced(
-        final String inner,
-        final Map<String, String> env,
-        final BuiltinContext ctx
-    ) {
-        final String value = expandBracedImpl(inner, env, ctx);
-        final boolean error = ctx.wordExpansionErrorOccurred();
-        if (error) {
-            ctx.clearWordExpansionError();
-        }
-        return new ExpansionResult(value, error);
     }
 
     /**

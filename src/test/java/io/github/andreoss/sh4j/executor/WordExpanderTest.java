@@ -140,40 +140,43 @@ public final class WordExpanderTest {
     }
 
     @Test public void expandVariablesParityPlainText() {
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
+        Assert.assertEquals(
             "hello world",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
+            WordExpander.expandVariablesImpl(
+                "hello world",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            )
         );
-        Assert.assertEquals("hello world", result.value);
-        Assert.assertFalse(result.error);
     }
 
     @Test public void expandVariablesParityVarSubstitution() {
         final Map<String, String> env = new HashMap<>();
         env.put("MSG", "world");
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
-            "hello $MSG",
-            env,
-            new Executor(new HashMap<>())
+        Assert.assertEquals(
+            "hello world",
+            WordExpander.expandVariablesImpl(
+                "hello $MSG",
+                env,
+                new Executor(new HashMap<>())
+            )
         );
-        Assert.assertEquals("hello world", result.value);
-        Assert.assertFalse(result.error);
     }
 
     @Test public void expandVariablesParityArithmetic() {
-        final WordExpander.ExpansionResult result = WordExpander.expandVariables(
-            "$((3 + 4))",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
+        Assert.assertEquals(
+            "7",
+            WordExpander.expandVariablesImpl(
+                "$((3 + 4))",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            )
         );
-        Assert.assertEquals("7", result.value);
-        Assert.assertFalse(result.error);
     }
 
     @Test public void expandVariablesParityColonQuestionUnsetSetsError() {
         try {
-            WordExpander.expandVariables(
+            WordExpander.expandVariablesImpl(
                 "${UNSET_VAR_FOR_PARITY:?required}",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
@@ -187,44 +190,44 @@ public final class WordExpanderTest {
     @Test public void expandVariablesUnclosedArithmetic() {
         Assert.assertEquals(
             "$((1+2",
-            WordExpander.expandVariables(
+            WordExpander.expandVariablesImpl(
                 "$((1+2",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value
+            )
         );
     }
 
     @Test public void expandVariablesUnclosedCmdSub() {
         Assert.assertEquals(
             "$(unclosed",
-            WordExpander.expandVariables(
+            WordExpander.expandVariablesImpl(
                 "$(unclosed",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value
+            )
         );
     }
 
     @Test public void expandVariablesDollarAtEnd() {
         Assert.assertEquals(
             "trailing$",
-            WordExpander.expandVariables(
+            WordExpander.expandVariablesImpl(
                 "trailing$",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value
+            )
         );
     }
 
     @Test public void expandVariablesDollarBraceWithoutClose() {
         Assert.assertEquals(
             "${unclosed",
-            WordExpander.expandVariables(
+            WordExpander.expandVariablesImpl(
                 "${unclosed",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value
+            )
         );
     }
 
@@ -233,47 +236,33 @@ public final class WordExpanderTest {
         env.put("X", "hi");
         Assert.assertEquals(
             "hi-suffix",
-            WordExpander.expandVariables("$X-suffix", env, new Executor(new HashMap<>())).value
-        );
-    }
-
-    @Test public void expandVariablesParityErrorFlagConsumedAfterRead() {
-        final Executor excp = new Executor(new HashMap<>());
-        final Map<String, String> env = new HashMap<>();
-        try {
-            WordExpander.expandVariables("${UNSET_AGAIN:?msg}", env, excp);
-            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final Executor.ExitSignal ex) {
-            Assert.assertEquals(1, ex.getCode());
-        }
-        Assert.assertFalse(
-            "flag should be consumed by previous wrapper call",
-            WordExpander.expandVariables("plain", env, excp).error
+            WordExpander.expandVariablesImpl("$X-suffix", env, new Executor(new HashMap<>()))
         );
     }
 
     @Test public void expandBracedColonDashUnsetReturnsDefault() {
-        final WordExpander.ExpansionResult result = WordExpander.expandBraced(
-            "x:-fallback",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
+        Assert.assertEquals(
+            "fallback",
+            WordExpander.expandBracedImpl(
+                "x:-fallback",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            )
         );
-        Assert.assertEquals("fallback", result.value);
-        Assert.assertFalse(result.error);
     }
 
     @Test public void expandBracedColonEqUnsetAssigns() {
         final Map<String, String> env = new HashMap<>();
         Assert.assertEquals(
             "42",
-            WordExpander.expandBraced("x:=42", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("x:=42", env, new Executor(new HashMap<>()))
         );
         Assert.assertEquals("42", env.get("x"));
     }
 
     @Test public void expandBracedColonQuestionUnsetSetsError() {
         try {
-            WordExpander.expandBraced(
+            WordExpander.expandBracedImpl(
                 "x:?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
@@ -289,18 +278,18 @@ public final class WordExpanderTest {
         env.put("v", "hello");
         Assert.assertEquals(
             "5",
-            WordExpander.expandBraced("#v", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("#v", env, new Executor(new HashMap<>()))
         );
     }
 
     @Test public void expandBracedDashWithoutColonUnset() {
         Assert.assertEquals(
             "fallback",
-            WordExpander.expandBraced(
+            WordExpander.expandBracedImpl(
                 "x-fallback",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
-            ).value
+            )
         );
     }
 
@@ -310,7 +299,7 @@ public final class WordExpanderTest {
         Assert.assertEquals(
             "set-but-empty: no fallback",
             "",
-            WordExpander.expandBraced("x-fallback", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("x-fallback", env, new Executor(new HashMap<>()))
         );
     }
 
@@ -319,7 +308,7 @@ public final class WordExpanderTest {
         env.put("x", "");
         Assert.assertEquals(
             "word",
-            WordExpander.expandBraced("x+word", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("x+word", env, new Executor(new HashMap<>()))
         );
     }
 
@@ -328,13 +317,13 @@ public final class WordExpanderTest {
         env.put("x", "v");
         Assert.assertEquals(
             "word",
-            WordExpander.expandBraced("x:+word", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("x:+word", env, new Executor(new HashMap<>()))
         );
     }
 
     @Test public void expandBracedQuestionWithoutColonUnsetSetsError() {
         try {
-            WordExpander.expandBraced(
+            WordExpander.expandBracedImpl(
                 "x?required",
                 new HashMap<>(),
                 new Executor(new HashMap<>())
@@ -349,7 +338,7 @@ public final class WordExpanderTest {
         final Map<String, String> env = new HashMap<>();
         Assert.assertEquals(
             "42",
-            WordExpander.expandBraced("x=42", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("x=42", env, new Executor(new HashMap<>()))
         );
         Assert.assertEquals("42", env.get("x"));
     }
@@ -359,7 +348,7 @@ public final class WordExpanderTest {
         env.put("f", "a/b/c/d");
         Assert.assertEquals(
             "d",
-            WordExpander.expandBraced("f##*/", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("f##*/", env, new Executor(new HashMap<>()))
         );
     }
 
@@ -368,7 +357,7 @@ public final class WordExpanderTest {
         env.put("f", "a.b.c");
         Assert.assertEquals(
             "a",
-            WordExpander.expandBraced("f%%.*", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("f%%.*", env, new Executor(new HashMap<>()))
         );
     }
 
@@ -390,7 +379,7 @@ public final class WordExpanderTest {
         env.put("f", "a.txt");
         Assert.assertEquals(
             "a",
-            WordExpander.expandBraced("f%.txt", env, new Executor(new HashMap<>())).value
+            WordExpander.expandBracedImpl("f%.txt", env, new Executor(new HashMap<>()))
         );
     }
 

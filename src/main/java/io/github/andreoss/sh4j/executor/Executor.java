@@ -102,8 +102,6 @@ public class Executor implements BuiltinContext {
     private PrintStream err;
     /** Live stdin used by built-ins (read, etc.). */
     private InputStream in;
-    /** Flag set by {@link WordExpander} on expansion failure. */
-    private boolean wordExpansionError;
     /** Alias table (alias name → replacement text). */
     private Map<String, String> aliases;
     /** Command history for fc built-in. */
@@ -169,7 +167,6 @@ public class Executor implements BuiltinContext {
         this.err = System.err;
         this.in = System.in;
         this.aliases = new HashMap<>();
-        this.wordExpansionError = false;
         this.history = new CommandHistory();
         this.setDefaults();
     }
@@ -842,7 +839,6 @@ public class Executor implements BuiltinContext {
                     try {
                         this.in.close();
                     } catch (final IOException ignored) {
-                        this.wordExpansionError = false;
                     }
                 }
                 this.inputBorrowed = false;
@@ -904,7 +900,6 @@ public class Executor implements BuiltinContext {
                 try {
                     saved.close();
                 } catch (final IOException ignored) {
-                    this.wordExpansionError = false;
                 }
             }
             boolean bound = !swap.failed;
@@ -1069,17 +1064,12 @@ public class Executor implements BuiltinContext {
             code = EXIT_COMMAND_NOT_FOUND;
         } else {
             final ProcessBuilder builder = this.createProcessBuilder(resolved, cmd, cmdEnv);
-            if (this.wordExpansionError) {
-                this.wordExpansionError = false;
-                code = 1;
-            } else {
-                RedirectionHandler.setupRedirections(
-                    builder, cmd.getRedirections(),
-                    text -> this.expandVariables(text, this.environment),
-                    this.cwd
-                );
-                code = this.startAndAwaitOne(builder);
-            }
+            RedirectionHandler.setupRedirections(
+                builder, cmd.getRedirections(),
+                text -> this.expandVariables(text, this.environment),
+                this.cwd
+            );
+            code = this.startAndAwaitOne(builder);
         }
         return code;
     }
@@ -1542,21 +1532,6 @@ public class Executor implements BuiltinContext {
     @Override
     public PrintStream outStream() {
         return this.out;
-    }
-
-    @Override
-    public boolean wordExpansionErrorOccurred() {
-        return this.wordExpansionError;
-    }
-
-    @Override
-    public void clearWordExpansionError() {
-        this.wordExpansionError = false;
-    }
-
-    @Override
-    public void setWordExpansionError() {
-        this.wordExpansionError = true;
     }
 
     @Override
