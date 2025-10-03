@@ -965,14 +965,6 @@ public final class WordExpander {
 
     /**
      * @param pattern A glob pattern
-     * @return The matching files in the current directory
-     */
-    static List<String> globFiles(final String pattern) {
-        return globFiles(pattern, new File(System.getProperty("user.dir")));
-    }
-
-    /**
-     * @param pattern A glob pattern
      * @param cwd     Directory used for relative patterns
      * @return The matching files
      */

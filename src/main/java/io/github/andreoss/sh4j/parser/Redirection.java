@@ -37,22 +37,6 @@ public final class Redirection {
     }
 
     /**
-     * Creates a redirection, including any inline here-document.
-     * @param desc    The file descriptor
-     * @param type    The kind of redirection
-     * @param target  Target word (file path, fd, ...)
-     * @param heredoc The here-document body, or null
-     */
-    public Redirection(
-        final int desc,
-        final RedirectionType type,
-        final String target,
-        final String heredoc
-    ) {
-        this(desc, type, target, heredoc, false);
-    }
-
-    /**
      * Creates a redirection, including here-doc body and quoted-delimiter
      * flag.
      * @param desc    The file descriptor

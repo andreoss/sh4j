@@ -654,4 +654,114 @@ public final class BuiltinMutationTest {
             Sh4j.runFull("sleep 0.1 & fg").stdout().contains("sleep")
         );
     }
+
+    @Test
+    public void dispatcherResidualBranches() throws IOException {
+        Assert.assertTrue(Sh4j.out("command -V ls").contains(" is /"));
+        Assert.assertEquals(1, Sh4j.run("command -V __no_such_cmd__"));
+        Assert.assertEquals(
+            "?\n",
+            Sh4j.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"")
+        );
+        final Sh4j.Result missing = Sh4j.runFull("echo one; fc -s nope");
+        Assert.assertEquals(1, missing.exitCode());
+        Assert.assertTrue(missing.stderr().contains("-s requires pat=rep"));
+        Assert.assertEquals(
+            "hi\necho hey\nhey\n",
+            Sh4j.out("echo hi; fc -s hi=hey")
+        );
+        Assert.assertEquals(
+            "one\n1\techo one\n",
+            Sh4j.out("echo one; fc -l abc")
+        );
+        final Path fd = this.tempdir.newFile("fd.txt").toPath();
+        Sh4j.run("echo hi; exec 3>" + fd + "; fc -s nope 2>&3; exec 3>&-");
+        Assert.assertTrue(
+            new String(Files.readAllBytes(fd), StandardCharsets.UTF_8)
+                .contains("fc: -s requires pat=rep")
+        );
+    }
+
+    @Test
+    public void pipelineAndDotResidualBranches() throws IOException {
+        Assert.assertEquals(0, Sh4j.run("__no_such__ | cat"));
+        Assert.assertEquals(127, Sh4j.run("echo x | __no_such__"));
+        Assert.assertEquals("3\n", Sh4j.out("(exit 3); echo $?"));
+        final Path dir = this.tempdir.newFolder("dotrel").toPath();
+        Files.write(
+            dir.resolve("s.sh"),
+            "X=dot\n".getBytes(StandardCharsets.UTF_8)
+        );
+        Assert.assertEquals(
+            "dot\n",
+            Sh4j.out("cd " + dir + "; . ./s.sh; echo \"$X\"")
+        );
+    }
+
+    @Test
+    public void arithmeticOperatorResidualBranches() {
+        Assert.assertEquals(
+            "1 6 24 31\n8 1 1 1 1\n2 7 12 3\n1 -1 2\n",
+            Sh4j.out(
+                "echo $((2 ^ 3)) $((1+2+3)) $((2*3*4)) $((0x1f))",
+                "echo $((010)) $((3>2)) $((3>=3)) $((3!=2)) $((3==3))",
+                "echo $((6&3)) $((6|3)) $((6<<1)) $((6>>1))",
+                "echo $((!0)) $((~0)) $((0?1:2))"
+            )
+        );
+        Assert.assertEquals(
+            "7 7 0 0\n",
+            Sh4j.out("x=5; echo $((x+=2)) $((x)) $((x=0)) $((x))")
+        );
+    }
+
+    @Test
+    public void heredocTabStripAndJobLookupBranches() {
+        Assert.assertEquals(
+            "tabbed\n",
+            Sh4j.out("cat <<-EOF\n\ttabbed\n\tEOF")
+        );
+        Assert.assertEquals(0, Sh4j.run("jobs 99"));
+        Assert.assertEquals(127, Sh4j.run("kill -9 999999"));
+        Assert.assertEquals(127, Sh4j.run("kill -KILL 999999"));
+        Assert.assertEquals(1, Sh4j.run("command -v __no_such_cmd__"));
+    }
+
+    @Test
+    public void compoundAssignmentAndGlobPrefixBranches() throws IOException {
+        Assert.assertEquals(
+            "12 6 2 3 11 22 7 1 0\n",
+            Sh4j.out(
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))"
+                + " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
+        Assert.assertEquals("1\n", Sh4j.out("echo $((unknownvar+1))"));
+        Assert.assertEquals("1\n", Sh4j.out("echo $((1+))"));
+        Assert.assertEquals("0\n", Sh4j.out("echo $((x=))"));
+        Assert.assertEquals(0, Sh4j.run("command"));
+        Assert.assertEquals(1, Sh4j.run("command -v"));
+        Assert.assertEquals(1, Sh4j.run("command -V"));
+        Assert.assertEquals(1, Sh4j.run("echo x >&abc"));
+        final Sh4j.Result unset = Sh4j.runFull("echo ${missing_q?}");
+        Assert.assertEquals(1, unset.exitCode());
+        Assert.assertTrue(unset.stderr().contains("parameter not set"));
+        final Path dir = this.tempdir.newFolder("glob").toPath();
+        Files.write(dir.resolve("a.txt"), new byte[0]);
+        Files.createDirectories(dir.resolve("sub"));
+        Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);
+        Assert.assertEquals(
+            "sub/a.txt\n",
+            Sh4j.out("cd " + dir + "; echo sub/*.txt")
+        );
+        Assert.assertEquals(
+            dir.resolve("sub").resolve("a.txt") + "\n",
+            Sh4j.out("echo " + dir + "/sub/*.txt")
+        );
+        Assert.assertEquals(
+            "nodir/*.txt\n",
+            Sh4j.out("cd " + dir + "; echo nodir/*.txt")
+        );
+        Assert.assertEquals(127, Sh4j.run("sleep 0.1 & kill -9 $!"));
+    }
 }

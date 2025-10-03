@@ -85,6 +85,15 @@
                     <configuration>
                         <rules>
                             <rule>
+                                <element>BUNDLE</element>
+                                <limits>
+                                    <limit>
+                                        <counter>INSTRUCTION</counter>
+                                        <minimum>0.99</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                            <rule>
                                 <element>PACKAGE</element>
                                 <includes>
                                     <include>io.github.andreoss.sh4j</include>
@@ -92,7 +101,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.95</minimum>
+                                        <minimum>0.99</minimum>
                                     </limit>
                                 </limits>
                             </rule>
@@ -104,7 +113,7 @@
                                  <limits>
                                      <limit>
                                          <counter>INSTRUCTION</counter>
-                                         <minimum>0.96</minimum>
+                                         <minimum>0.99</minimum>
                                      </limit>
                                  </limits>
                              </rule>
@@ -116,7 +125,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.95</minimum>
+                                        <minimum>0.98</minimum>
                                     </limit>
                                 </limits>
                             </rule>
@@ -128,7 +137,7 @@
                                 <limits>
                                     <limit>
                                         <counter>INSTRUCTION</counter>
-                                        <minimum>0.92</minimum>
+                                        <minimum>0.98</minimum>
                                     </limit>
                                 </limits>
                             </rule>

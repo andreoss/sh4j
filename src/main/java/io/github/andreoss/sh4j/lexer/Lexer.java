@@ -67,13 +67,7 @@ public final class Lexer {
             if (!this.reader.isEof()) {
                 this.reader.consume();
             }
-            final String check;
-            if (stripTabs) {
-                check = stripLeadingTabs(lineStr);
-            } else {
-                check = lineStr;
-            }
-            if (check.equals(delimiter)) {
+            if (lineStr.equals(delimiter)) {
                 done = true;
             } else {
                 content.append(lineStr).append('\n');
@@ -475,19 +469,6 @@ public final class Lexer {
     private static boolean isOperatorChar(final int chr) {
         return chr == '&' || chr == '|' || chr == ';' || chr == '<' || chr == '>'
             || chr == '(' || chr == ')' || chr == '{' || chr == '}';
-    }
-
-    /**
-     * Strips leading tabs from a heredoc line ({@code <<-}).
-     * @param str The line
-     * @return The line with leading tabs removed
-     */
-    private static String stripLeadingTabs(final String str) {
-        int idx = 0;
-        while (idx < str.length() && str.charAt(idx) == '\t') {
-            idx = idx + 1;
-        }
-        return str.substring(idx);
     }
 
     /**
