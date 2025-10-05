@@ -507,6 +507,20 @@ public final class PosixRegressionTest {
     }
 
     @Test
+    public void exitTrapSeesTheStatusTheShellExitsWith() {
+        final Sh4j.Result exited = Sh4j.runFull(
+            "trap \"echo st=$?\" EXIT; exit 7"
+        );
+        Assert.assertEquals(7, exited.exitCode());
+        Assert.assertEquals("st=7\n", exited.stdout());
+        final Sh4j.Result failed = Sh4j.runFull(
+            "trap 'echo exit=$?' EXIT; false"
+        );
+        Assert.assertEquals(1, failed.exitCode());
+        Assert.assertEquals("exit=1\n", failed.stdout());
+    }
+
+    @Test
     public void trapListingAndRemoval() {
         final Sh4j.Result result = Sh4j.runFull(
             "trap 'echo t' EXIT; trap; trap - EXIT; echo body"

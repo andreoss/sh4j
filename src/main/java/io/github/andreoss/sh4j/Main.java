@@ -108,7 +108,7 @@ public final class Main {
      * @return Exit status
      */
     static int runSource(final String source, final List<String> params) {
-        int code;
+        int code = 0;
         final Executor executor = new Executor(System.getenv(), params);
         try {
             final ListNode ast = new Parser(
@@ -119,7 +119,7 @@ public final class Main {
             System.err.println("sh: syntax error: " + ex.getMessage());
             code = 2;
         } finally {
-            executor.runExitTrap();
+            executor.runExitTrap(code);
         }
         return code;
     }

@@ -310,9 +310,18 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * Runs and removes the EXIT trap, if one is installed.
+     * Runs and removes the EXIT trap using the last exit status.
      */
     public void runExitTrap() {
+        this.runExitTrap(this.lastExitCode);
+    }
+
+    /**
+     * Runs and removes the EXIT trap with the status the shell exits with.
+     * @param status The shell exit status the trap observes as {@code $?}
+     */
+    public void runExitTrap(final int status) {
+        this.lastExitCode = status;
         final String action = this.traps.remove("EXIT");
         if (action != null && !action.isEmpty() && !"-".equals(action)) {
             try {

@@ -84,7 +84,7 @@ public final class Sh4j {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return code;
     }
 
@@ -117,16 +117,17 @@ public final class Sh4j {
         final Executor executor = new Executor(new HashMap<String, String>(env));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            final int code = executor.execute(ast);
+            code = executor.execute(ast);
             if (errexit(executor, code)) {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return bos.toString(StandardCharsets.UTF_8);
     }
 
@@ -149,16 +150,17 @@ public final class Sh4j {
         final Executor executor = new Executor(new HashMap<String, String>(env));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            final int code = executor.execute(ast);
+            code = executor.execute(ast);
             if (errexit(executor, code)) {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return bos.toString(StandardCharsets.UTF_8);
     }
 
@@ -185,16 +187,17 @@ public final class Sh4j {
         final String... commands
     ) {
         final Executor executor = new Executor(new HashMap<String, String>(env));
+        int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            final int code = executor.execute(ast);
+            code = executor.execute(ast);
             if (errexit(executor, code)) {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return executor.getVariable(varName);
     }
 
@@ -205,16 +208,17 @@ public final class Sh4j {
      */
     public static Map<String, String> env(final String... commands) {
         final Executor executor = new Executor(new HashMap<String, String>(DEFAULT_ENV));
+        int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
             final Parser parser = new Parser(lexer);
             final ListNode ast = parser.parse();
-            final int code = executor.execute(ast);
+            code = executor.execute(ast);
             if (errexit(executor, code)) {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return new HashMap<String, String>(executor.environmentMap());
     }
 
@@ -306,7 +310,7 @@ public final class Sh4j {
                 break;
             }
         }
-        executor.runExitTrap();
+        executor.runExitTrap(code);
         return new Result(
             code,
             outBos.toString(StandardCharsets.UTF_8),
