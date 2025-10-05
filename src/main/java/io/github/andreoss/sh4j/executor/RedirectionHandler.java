@@ -281,11 +281,10 @@ public final class RedirectionHandler {
     }
 
     /**
-     * Opens a file for writing as a {@link PrintStream}, swallowing IO
-     * failures (the caller checks for null).
-     * @param target The file path
-     * @param append True for append-mode, false for truncate
-     * @return The print stream, or null on IO failure
+     * Resolves a redirection target against the shell working directory.
+     * @param target The redirection target as written
+     * @param base Shell working directory, or null to keep the path as written
+     * @return The resolved file
      */
     private static File resolve(final String target, final File base) {
         final File file = new File(target);
