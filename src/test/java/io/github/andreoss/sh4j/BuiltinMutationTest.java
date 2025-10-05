@@ -317,7 +317,7 @@ public final class BuiltinMutationTest {
 
     @Test
     public void aliasForms() {
-        Assert.assertEquals("hi\n", Sh4j.out("alias a='echo hi'; a"));
+        Assert.assertEquals("hi\n", Sh4j.out("alias a='echo hi'", "a"));
         Assert.assertEquals(
             "a='echo hi'\n",
             Sh4j.out("alias a='echo hi'; alias a")
@@ -510,7 +510,7 @@ public final class BuiltinMutationTest {
 
     @Test
     public void aliasQuotedAndEmptyValues() {
-        Assert.assertEquals("", Sh4j.out("alias e=''; e"));
+        Assert.assertEquals("", Sh4j.out("alias e=''", "e"));
         Assert.assertEquals(
             "a='x y'\n",
             Sh4j.out("alias a=\"x y\"; alias a")

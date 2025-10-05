@@ -147,6 +147,9 @@ run_case read-r-flag 'cd /tmp; printf "x\\\\y\n" > rr.txt; read -r v < rr.txt; e
 run_case trap-exit-status "trap 'echo exit=\$?' EXIT; false"
 run_case positional-tenth 'set -- 1 2 3 4 5 6 7 8 9 10 11; echo "$9 ${10}"'
 run_case command-builtin 'command echo hi'
+run_case alias-same-line "alias q='echo Q'; q; echo rc=\$?"
+run_case alias-next-line $'alias q=\'echo Q\'\nq'
+run_case alias-function-body "alias e='echo X'; f() { e; }; f; echo rc=\$?"
 run_case unset-multiple 'a=1; b=2; unset a b; echo "[$a][$b]"'
 run_case wait-invalid-pid 'wait 999999; echo "rc=$?"'
 run_case heredoc-with-substitution $'x=1; cat <<EOF\nsub=$(echo S)\nEOF'

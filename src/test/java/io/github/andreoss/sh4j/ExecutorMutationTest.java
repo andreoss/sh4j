@@ -87,9 +87,16 @@ public final class ExecutorMutationTest {
 
     @Test
     public void aliasAndExecStatuses() {
-        Assert.assertEquals(1, Sh4j.run("alias a='false'; a"));
-        Assert.assertEquals(0, Sh4j.run("alias a='true'; a"));
+        Assert.assertEquals(1, Sh4j.run("alias a='false'", "a"));
+        Assert.assertEquals(0, Sh4j.run("alias a='true'", "a"));
         Assert.assertEquals(7, Sh4j.run("exec sh -c 'exit 7'"));
+    }
+
+    @Test
+    public void aliasExpansionUsesTheTableCapturedAtReadTime() {
+        Assert.assertEquals(127, Sh4j.run("alias q='echo Q'; q"));
+        Assert.assertEquals("Q\n", Sh4j.out("alias q='echo Q'", "q"));
+        Assert.assertEquals(127, Sh4j.run("alias e='echo X'; f() { e; }; f"));
     }
 
     @Test

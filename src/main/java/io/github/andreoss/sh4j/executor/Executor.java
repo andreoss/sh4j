@@ -108,6 +108,10 @@ public class Executor implements BuiltinContext {
     private final CommandHistory history;
     /** Nesting depth of {@link #execute(ListNode)} calls. */
     private int executeDepth;
+    /** Alias table captured when the current source line started. */
+    private Map<String, String> aliasSnapshot;
+    /** Source line the alias snapshot belongs to. */
+    private int aliasSnapshotLine;
 
     /** Exit status of the last command substitution (-1 when none ran). */
     private int substitutionStatus = -1;
@@ -388,6 +392,10 @@ public class Executor implements BuiltinContext {
 
     @Override
     public int execute(final ListNode list) {
+        if (this.executeDepth == 0) {
+            this.aliasSnapshot = null;
+            this.aliasSnapshotLine = -1;
+        }
         this.executeDepth = this.executeDepth + 1;
         int code;
         try {
@@ -558,6 +566,7 @@ public class Executor implements BuiltinContext {
         int code;
         if (node instanceof SimpleCommand) {
             final SimpleCommand cmd = (SimpleCommand) node;
+            this.refreshAliases(cmd);
             this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
             if (this.shellFlags.indexOf('x') >= 0) {
                 this.err.println("+ " + cmd);
@@ -787,11 +796,23 @@ public class Executor implements BuiltinContext {
         return this.runNamedCommand(cmd, name, cmdEnv, false);
     }
 
+    private Map<String, String> aliasTable() {
+        return this.aliasSnapshot == null ? this.aliases : this.aliasSnapshot;
+    }
+
+    private void refreshAliases(final SimpleCommand cmd) {
+        final int line = cmd.getLineNumber();
+        if (this.aliasSnapshot == null || line != this.aliasSnapshotLine) {
+            this.aliasSnapshot = new HashMap<>(this.aliases);
+            this.aliasSnapshotLine = line;
+        }
+    }
+
     private int runNamedCommand(
         final SimpleCommand cmd, final String name, final Map<String, String> cmdEnv,
         final boolean bypassFunctions
     ) {
-        final String alias = bypassFunctions ? null : this.aliases.get(name);
+        final String alias = bypassFunctions ? null : this.aliasTable().get(name);
         if (alias != null) {
             final StringBuilder line = new StringBuilder(alias);
             for (final String arg : cmd.getArguments()) {

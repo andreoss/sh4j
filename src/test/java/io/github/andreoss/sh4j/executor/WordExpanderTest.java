@@ -240,6 +240,16 @@ public final class WordExpanderTest {
         );
     }
 
+    @Test public void expandBracedEmptyInnerReturnsNull() {
+        Assert.assertNull(
+            WordExpander.expandBracedImpl(
+                "",
+                new HashMap<>(),
+                new Executor(new HashMap<>())
+            )
+        );
+    }
+
     @Test public void expandBracedColonDashUnsetReturnsDefault() {
         Assert.assertEquals(
             "fallback",
