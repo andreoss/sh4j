@@ -293,7 +293,11 @@ public final class WordExpander {
             if (inner.length() == 1) {
                 return ctx.getSpecialParam('#');
             }
-            final String val = ctx.lookupVariable(inner.substring(1), env);
+            final String name = inner.substring(1);
+            if ("*".equals(name) || "@".equals(name)) {
+                return String.valueOf(ctx.positionalParamsList().size() - 1);
+            }
+            final String val = ctx.lookupVariable(name, env);
             return val == null ? "0" : String.valueOf(val.length());
         }
         final int nameEnd = findNameEnd(inner);

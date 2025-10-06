@@ -507,6 +507,20 @@ public final class PosixRegressionTest {
     }
 
     @Test
+    public void lengthOfStarAndAtCountsPositionalParameters() {
+        Assert.assertEquals(
+            "3 3\n",
+            Sh4j.out("set -- a b c; echo \"${#*}\" \"${#@}\"")
+        );
+        Assert.assertEquals(
+            "0 0\n",
+            Sh4j.out("set --; echo \"${#*}\" \"${#@}\"")
+        );
+        Assert.assertEquals("4\n", Sh4j.out("v=abcd; echo \"${#v}\""));
+        Assert.assertEquals("2\n", Sh4j.out("set -- a b; echo \"$#\""));
+    }
+
+    @Test
     public void exitTrapSeesTheStatusTheShellExitsWith() {
         final Sh4j.Result exited = Sh4j.runFull(
             "trap \"echo st=$?\" EXIT; exit 7"
