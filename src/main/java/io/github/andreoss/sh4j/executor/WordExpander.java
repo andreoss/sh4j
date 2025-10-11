@@ -994,8 +994,6 @@ public final class WordExpander {
             matcher = FileSystems.getDefault().getPathMatcher("glob:" + segment);
         } catch (final java.util.regex.PatternSyntaxException ignored) {
             return matches;
-        } catch (final IllegalArgumentException ignored) {
-            return matches;
         }
         final boolean dotPattern = segment.startsWith(".");
         for (final String name : files) {

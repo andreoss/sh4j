@@ -762,6 +762,7 @@ public final class BuiltinMutationTest {
             "nodir/*.txt\n",
             Sh4j.out("cd " + dir + "; echo nodir/*.txt")
         );
+        Assert.assertEquals("[]\n", Sh4j.out("echo []"));
         Assert.assertEquals(127, Sh4j.run("sleep 0.1 & kill -9 $!"));
     }
 }

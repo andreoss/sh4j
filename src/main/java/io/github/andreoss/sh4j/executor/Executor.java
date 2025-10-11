@@ -891,14 +891,6 @@ public class Executor implements BuiltinContext {
     }
 
     /**
-     * Implements {@code exec}: redirection-only calls persist the stream
-     * changes; a command replaces the shell semantically by unwinding with
-     * the child's status.
-     * @param cmd The exec command node
-     * @param cmdEnv Expansion environment
-     * @return 0 for redirection-only exec
-     */
-    /**
      * Expands a redirection target into a file resolved against the shell's
      * working directory.
      * @param redir The redirection whose target is expanded
@@ -915,6 +907,14 @@ public class Executor implements BuiltinContext {
         return result;
     }
 
+    /**
+     * Implements {@code exec}: redirection-only calls persist the stream
+     * changes; a command replaces the shell semantically by unwinding with
+     * the child's status.
+     * @param cmd The exec command node
+     * @param cmdEnv Expansion environment
+     * @return 0 for redirection-only exec
+     */
     private int runExec(final SimpleCommand cmd, final Map<String, String> cmdEnv) {
         final int code;
         if (cmd.getArguments().isEmpty()) {
