@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -542,6 +543,28 @@ public final class PosixRegressionTest {
         Assert.assertTrue(result.stdout().contains("trap -- 'echo t' EXIT"));
         Assert.assertTrue(result.stdout().contains("body"));
         Assert.assertFalse(result.stdout().contains("t\n"));
+    }
+
+    @Test
+    public void dotReturnStopsOnlyTheSourcedFile() throws IOException {
+        final Path returned = this.tempdir.newFile("ret.sh").toPath();
+        Files.write(
+            returned,
+            "echo before; return 5; echo after\n".getBytes(StandardCharsets.UTF_8)
+        );
+        final Sh4j.Result result = Sh4j.runFull(
+            ". " + returned + "; echo \"rc=$?\""
+        );
+        Assert.assertEquals(0, result.exitCode());
+        Assert.assertEquals("before\nrc=5\n", result.stdout());
+        final Path exited = this.tempdir.newFile("exit.sh").toPath();
+        Files.write(
+            exited,
+            "echo x; exit 3; echo y\n".getBytes(StandardCharsets.UTF_8)
+        );
+        final Sh4j.Result shell = Sh4j.runFull(". " + exited + "; echo after");
+        Assert.assertEquals(3, shell.exitCode());
+        Assert.assertEquals("x\n", shell.stdout());
     }
 
     @Test

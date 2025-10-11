@@ -1658,7 +1658,11 @@ final class BuiltinDispatcher {
                     final ListNode ast = new Parser(
                         new Lexer(new CharReader(source))
                     ).parse();
-                    code = self.execute(ast);
+                    try {
+                        code = self.execute(ast);
+                    } catch (final Executor.ReturnSignal ex) {
+                        code = ex.getCode();
+                    }
                 } finally {
                     self.positionalParamsList().clear();
                     self.positionalParamsList().addAll(saved);
