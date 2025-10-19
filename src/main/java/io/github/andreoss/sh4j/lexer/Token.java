@@ -41,7 +41,7 @@ public final class Token {
      * @param reader The lexer's input cursor, queried for line/column
      * @return A token at the reader's current position
      */
-    public static Token of(final TokenType type, final String text, final CharReader reader) {
+    static Token of(final TokenType type, final String text, final CharReader reader) {
         return new Token(type, text, reader.getLine(), reader.getColumn());
     }
 
