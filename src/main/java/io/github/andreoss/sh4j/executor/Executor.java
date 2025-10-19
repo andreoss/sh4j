@@ -627,7 +627,6 @@ public class Executor implements BuiltinContext {
         return code;
     }
 
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private int runFor(final ForNode node) {
         this.loopDepth = this.loopDepth + 1;
         int lastExit = 0;
