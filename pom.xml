@@ -172,7 +172,6 @@
                          <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/JobManager\.java</exclude>
                          <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/CommandHistory\.java</exclude>
                          <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/parser/Node\.java</exclude>
-                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/lexer/CharReader\.java</exclude>
                          <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/executor/BuiltinContext\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/Executor\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/BuiltinContext\.java</exclude>

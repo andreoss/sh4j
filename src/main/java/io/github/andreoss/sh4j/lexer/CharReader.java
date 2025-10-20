@@ -20,6 +20,8 @@ public final class CharReader {
     private final Reader reader;
     /** Cached next character (or -1 at EOF). */
     private int peeked;
+    /** Whether the first character has been read. */
+    private boolean loaded;
     /** 1-based line number of the cached character. */
     private int line;
     /** 0-based column number of the cached character. */
@@ -41,7 +43,6 @@ public final class CharReader {
         this.reader = reader;
         this.line = 1;
         this.column = 0;
-        this.read();
     }
 
     /**
@@ -49,6 +50,10 @@ public final class CharReader {
      * @return The next character, or -1 at end-of-input
      */
     public int peek() {
+        if (!this.loaded) {
+            this.read();
+            this.loaded = true;
+        }
         return this.peeked;
     }
 
@@ -57,7 +62,7 @@ public final class CharReader {
      * @return The character that was previously at the cursor
      */
     public int consume() {
-        final int cur = this.peeked;
+        final int cur = this.peek();
         if (cur == '\n') {
             this.line = this.line + 1;
             this.column = 0;
@@ -72,7 +77,7 @@ public final class CharReader {
      * @return True when the cursor has reached end-of-input
      */
     public boolean isEof() {
-        return this.peeked == -1;
+        return this.peek() == -1;
     }
 
     /**
