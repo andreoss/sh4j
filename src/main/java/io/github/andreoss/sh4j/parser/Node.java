@@ -13,7 +13,7 @@ package io.github.andreoss.sh4j.parser;
  * concrete types rather than via virtual dispatch.</p>
  * @since 1.0
  */
-public abstract class Node {
+public class Node {
 
     /**
      * Default constructor for subclasses.
