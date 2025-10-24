@@ -34,7 +34,7 @@ final class CommandHistory {
      * Creates a history with the default capacity.
      */
     CommandHistory() {
-        this(DEFAULT_CAPACITY);
+        this(CommandHistory.DEFAULT_CAPACITY);
     }
 
     /**
@@ -92,10 +92,11 @@ final class CommandHistory {
      *     or 0 when the history is empty
      */
     int lastNumber() {
-        if (this.count == 0) {
-            return 0;
+        int result = 0;
+        if (this.count != 0) {
+            result = this.nextNumber - 1;
         }
-        return this.nextNumber - 1;
+        return result;
     }
 
     /**
@@ -104,14 +105,14 @@ final class CommandHistory {
      * @return The command text, or null when not found
      */
     String get(final int number) {
-        if (number < 1 || number >= this.nextNumber) {
-            return null;
+        String result = null;
+        if (number >= 1 && number < this.nextNumber) {
+            final int idx = this.indexForNumber(number);
+            if (idx >= 0) {
+                result = this.buffer[idx];
+            }
         }
-        final int idx = this.indexForNumber(number);
-        if (idx < 0) {
-            return null;
-        }
-        return this.buffer[idx];
+        return result;
     }
 
     /**
@@ -125,14 +126,13 @@ final class CommandHistory {
     List<Entry> list(final int first, final int last) {
         final List<Entry> result = new ArrayList<>();
         final int actualFirst = this.resolveNumber(first);
-        int actualLast = last == 0 ? this.lastNumber() : this.resolveNumber(last);
-        if (actualFirst < 1 || actualLast < actualFirst) {
-            return result;
-        }
-        for (int num = actualFirst; num <= actualLast; num = num + 1) {
-            final String cmd = this.get(num);
-            if (cmd != null) {
-                result.add(new Entry(num, cmd));
+        final int actualLast = last == 0 ? this.lastNumber() : this.resolveNumber(last);
+        if (actualFirst >= 1 && actualLast >= actualFirst) {
+            for (int num = actualFirst; num <= actualLast; num = num + 1) {
+                final String cmd = this.get(num);
+                if (cmd != null) {
+                    result.add(new Entry(num, cmd));
+                }
             }
         }
         return result;
@@ -144,13 +144,15 @@ final class CommandHistory {
      * @return Absolute history number, or -1 when the history is empty
      */
     private int resolveNumber(final int number) {
-        if (this.count == 0) {
-            return -1;
+        int result = -1;
+        if (this.count != 0) {
+            if (number >= 0) {
+                result = number;
+            } else {
+                result = this.lastNumber() + number + 1;
+            }
         }
-        if (number >= 0) {
-            return number;
-        }
-        return this.lastNumber() + number + 1;
+        return result;
     }
 
     /**
@@ -159,14 +161,16 @@ final class CommandHistory {
      * @return Buffer index, or -1 when the number is out of range
      */
     private int indexForNumber(final int number) {
+        int result = -1;
         if (this.count < this.capacity) {
-            return number - 1;
+            result = number - 1;
+        } else {
+            final int offset = number - (this.nextNumber - this.count);
+            if (offset >= 0 && offset < this.count) {
+                result = (this.head + offset) % this.capacity;
+            }
         }
-        final int offset = number - (this.nextNumber - this.count);
-        if (offset < 0 || offset >= this.count) {
-            return -1;
-        }
-        return (this.head + offset) % this.capacity;
+        return result;
     }
 
     /**
