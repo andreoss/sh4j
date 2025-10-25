@@ -512,7 +512,7 @@ public class Executor implements BuiltinContext {
             bgExecutor.err = parent.err;
             return bgExecutor.executePipeline(pipeline);
         }, cmdStr);
-        this.lastBgPid = (int) this.jobManager.pidForId(jobId);
+        this.lastBgPid = (int) (JobManager.JOB_PID_BASE + jobId);
     }
 
     @Override

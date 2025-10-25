@@ -14,11 +14,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 final class JobManager {
 
     static final long JOB_PID_BASE = 1_000_000_000L;
+
+    private final ExecutorService pool;
+    private final Map<Integer, Job> jobs;
+    private final AtomicInteger nextId;
+    private final ReentrantLock lock;
 
     enum State {
         RUNNING,
@@ -43,11 +49,22 @@ final class JobManager {
             this.state = State.RUNNING;
             this.exitCode = -1;
         }
-    }
 
-    private final ExecutorService pool;
-    private final Map<Integer, Job> jobs;
-    private final AtomicInteger nextId;
+        int await() {
+            int code;
+            try {
+                code = this.future.get();
+                this.state = State.DONE;
+                this.exitCode = code;
+            } catch (final InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                code = 1;
+            } catch (final ExecutionException ex) {
+                code = 1;
+            }
+            return code;
+        }
+    }
 
     JobManager() {
         this.pool = Executors.newCachedThreadPool(runnable -> {
@@ -57,6 +74,7 @@ final class JobManager {
         });
         this.jobs = new LinkedHashMap<>();
         this.nextId = new AtomicInteger(1);
+        this.lock = new ReentrantLock();
     }
 
     int submit(final Runnable task, final String command) {
@@ -75,7 +93,7 @@ final class JobManager {
             },
             this.pool
         );
-        final Job job = new Job(id, JOB_PID_BASE + id, command, future);
+        final Job job = new Job(id, JobManager.JOB_PID_BASE + id, command, future);
         future.whenComplete((result, ex) -> {
             if (ex instanceof CancellationException) {
                 job.state = State.STOPPED;
@@ -84,61 +102,59 @@ final class JobManager {
                 job.exitCode = result != null ? result : 1;
             }
         });
-        synchronized (this.jobs) {
+        this.lock.lock();
+        try {
             this.jobs.put(id, job);
+        } finally {
+            this.lock.unlock();
         }
         return id;
     }
 
-    long pidForId(final int id) {
-        return JOB_PID_BASE + id;
-    }
-
     static boolean isJobPid(final long pid) {
-        return pid >= JOB_PID_BASE;
+        return pid >= JobManager.JOB_PID_BASE;
     }
 
     Job getJob(final int id) {
-        synchronized (this.jobs) {
+        this.lock.lock();
+        try {
             final Job job = this.jobs.get(id);
             if (job != null && job.state == State.RUNNING && job.future.isDone()) {
-                job.state = State.DONE;
-                try {
-                    job.exitCode = job.future.get();
-                } catch (final Exception ex) {
-                    job.exitCode = 1;
-                }
+                job.await();
             }
             return job;
+        } finally {
+            this.lock.unlock();
         }
     }
 
     Job getJobByPid(final long pid) {
         Job result = null;
-        synchronized (this.jobs) {
+        this.lock.lock();
+        try {
             for (final Job job : this.jobs.values()) {
                 if (job.pid == pid) {
                     result = job;
                     break;
                 }
             }
+        } finally {
+            this.lock.unlock();
         }
         return result;
     }
 
     List<Job> listJobs() {
-        synchronized (this.jobs) {
+        this.lock.lock();
+        try {
             for (final Job job : this.jobs.values()) {
                 if (job.state == State.RUNNING && job.future.isDone()) {
-                    job.state = State.DONE;
-                    try {
-                        job.exitCode = job.future.get();
-                    } catch (final Exception ex) {
-                        job.exitCode = 1;
-                    }
+                    job.await();
                 }
             }
             return new ArrayList<>(this.jobs.values());
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -148,7 +164,7 @@ final class JobManager {
         if (job == null) {
             code = 127;
         } else {
-            code = this.await(job);
+            code = job.await();
         }
         return code;
     }
@@ -159,22 +175,7 @@ final class JobManager {
         if (job == null) {
             code = 127;
         } else {
-            code = this.await(job);
-        }
-        return code;
-    }
-
-    private int await(final Job job) {
-        int code;
-        try {
-            code = job.future.get();
-            job.state = State.DONE;
-            job.exitCode = code;
-        } catch (final InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            code = 1;
-        } catch (final ExecutionException ex) {
-            code = 1;
+            code = job.await();
         }
         return code;
     }
@@ -183,11 +184,14 @@ final class JobManager {
         final List<Job> all = this.listJobs();
         for (final Job job : all) {
             if (job.state == State.RUNNING) {
-                this.await(job);
+                job.await();
             }
         }
-        synchronized (this.jobs) {
+        this.lock.lock();
+        try {
             this.jobs.clear();
+        } finally {
+            this.lock.unlock();
         }
     }
 

@@ -32,7 +32,7 @@ public final class JobManagerTest {
     public void supplierJobReturnsStatusAndPid() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
-        final long pid = manager.pidForId(id);
+        final long pid = JobManager.JOB_PID_BASE + id;
         Assert.assertEquals(7, manager.waitForPid(pid));
         Assert.assertNotNull(manager.getJobByPid(pid));
         Assert.assertEquals(7, manager.waitForJob(id));
