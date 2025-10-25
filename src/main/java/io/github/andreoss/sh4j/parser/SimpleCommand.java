@@ -39,6 +39,7 @@ public final class SimpleCommand extends Node {
     }
 
     /**
+     * Returns the command name.
      * @return The command name (may be null)
      */
     public String getName() {
@@ -46,6 +47,7 @@ public final class SimpleCommand extends Node {
     }
 
     /**
+     * Returns the source line number.
      * @return 1-based source line number
      */
     public int getLineNumber() {
@@ -61,6 +63,7 @@ public final class SimpleCommand extends Node {
     }
 
     /**
+     * Returns the positional arguments.
      * @return Positional arguments
      */
     public List<String> getArguments() {
@@ -68,6 +71,7 @@ public final class SimpleCommand extends Node {
     }
 
     /**
+     * Returns the inline redirections.
      * @return Inline redirections
      */
     public List<Redirection> getRedirections() {
@@ -75,6 +79,7 @@ public final class SimpleCommand extends Node {
     }
 
     /**
+     * Returns the inline assignments.
      * @return Inline assignments ({@code KEY=VALUE} strings)
      */
     public List<String> getAssignments() {
