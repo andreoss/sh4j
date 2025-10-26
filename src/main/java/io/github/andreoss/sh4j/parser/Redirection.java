@@ -60,6 +60,7 @@ public final class Redirection {
     }
 
     /**
+     * Returns the target file descriptor.
      * @return The file descriptor this redirection targets
      */
     public int getFd() {
@@ -67,6 +68,7 @@ public final class Redirection {
     }
 
     /**
+     * Returns the redirection kind.
      * @return The redirection kind
      */
     public RedirectionType getType() {
@@ -74,6 +76,7 @@ public final class Redirection {
     }
 
     /**
+     * Returns the target word.
      * @return The target word
      */
     public String getTarget() {
@@ -81,6 +84,7 @@ public final class Redirection {
     }
 
     /**
+     * Returns the inline here-document body.
      * @return Inline here-document body, or null
      */
     public String getHereDocContent() {
@@ -88,6 +92,7 @@ public final class Redirection {
     }
 
     /**
+     * Checks whether the here-document delimiter was quoted.
      * @return True when the heredoc delimiter was quoted (POSIX 2.7.4: skip
      *         variable / command / arithmetic expansion of the body)
      */

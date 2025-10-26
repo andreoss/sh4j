@@ -174,7 +174,6 @@
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/CommandHistory\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/JobManager\.java</exclude>
-                         <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/Redirection\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/CaseNode\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/WhileNode\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/IfNode\.java</exclude>
