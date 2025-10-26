@@ -32,6 +32,7 @@ public final class WhileNode extends Node {
     }
 
     /**
+     * Returns the loop's predicate.
      * @return The loop's predicate
      */
     public ListNode getCondition() {
@@ -39,6 +40,7 @@ public final class WhileNode extends Node {
     }
 
     /**
+     * Returns the loop body.
      * @return The loop body
      */
     public ListNode getBody() {
@@ -46,6 +48,7 @@ public final class WhileNode extends Node {
     }
 
     /**
+     * Checks whether this is an {@code until} loop.
      * @return True when this is an {@code until} loop
      */
     public boolean isUntil() {
