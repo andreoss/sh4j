@@ -29,6 +29,7 @@ public final class CaseNode extends Node {
     }
 
     /**
+     * Returns the case-word.
      * @return The case-word
      */
     public String getWord() {
@@ -36,6 +37,7 @@ public final class CaseNode extends Node {
     }
 
     /**
+     * Returns the case-arms.
      * @return The case-arms
      */
     public List<CaseItem> getItems() {
@@ -65,6 +67,7 @@ public final class CaseNode extends Node {
         }
 
         /**
+         * Returns this arm's alternative patterns.
          * @return This arm's alternative patterns
          */
         public List<String> getPatterns() {
@@ -72,6 +75,7 @@ public final class CaseNode extends Node {
         }
 
         /**
+         * Returns this arm's body.
          * @return This arm's body
          */
         public ListNode getBody() {
