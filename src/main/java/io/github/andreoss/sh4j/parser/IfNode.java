@@ -34,6 +34,7 @@ public final class IfNode extends Node {
     }
 
     /**
+     * Returns the if-condition's command list.
      * @return The if-condition's command list
      */
     public ListNode getCondition() {
@@ -41,6 +42,7 @@ public final class IfNode extends Node {
     }
 
     /**
+     * Returns the then-branch command list.
      * @return The then-branch command list
      */
     public ListNode getThenBody() {
@@ -48,6 +50,7 @@ public final class IfNode extends Node {
     }
 
     /**
+     * Returns the else-branch command list.
      * @return The else-branch command list, or null
      */
     public ListNode getElseBody() {
