@@ -174,7 +174,6 @@
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/CommandHistory\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/JobManager\.java</exclude>
-                         <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/ForNode\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/Pipeline\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/Parser\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/parser/ListNode\.java</exclude>

@@ -33,6 +33,7 @@ public final class ForNode extends Node {
     }
 
     /**
+     * Returns the loop variable name.
      * @return The loop variable name
      */
     public String getVariable() {
@@ -40,6 +41,7 @@ public final class ForNode extends Node {
     }
 
     /**
+     * Returns the iteration words.
      * @return The iteration words
      */
     public List<String> getWords() {
@@ -47,6 +49,7 @@ public final class ForNode extends Node {
     }
 
     /**
+     * Returns the loop body.
      * @return The loop body
      */
     public ListNode getBody() {
