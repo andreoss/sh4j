@@ -31,6 +31,7 @@ public final class Pipeline extends Node {
     }
 
     /**
+     * Returns the list of pipeline stages.
      * @return The list of pipeline stages
      */
     public List<Node> getCommands() {
@@ -38,6 +39,7 @@ public final class Pipeline extends Node {
     }
 
     /**
+     * Checks whether the pipeline is logically negated.
      * @return True when the pipeline is logically negated
      */
     public boolean isBang() {
