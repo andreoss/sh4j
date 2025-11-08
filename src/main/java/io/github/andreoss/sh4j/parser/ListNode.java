@@ -49,6 +49,7 @@ public final class ListNode extends Node {
     }
 
     /**
+     * Returns the pipelines in source order.
      * @return The pipelines in source order
      */
     public List<Pipeline> getPipelines() {
@@ -56,6 +57,7 @@ public final class ListNode extends Node {
     }
 
     /**
+     * Returns the separator slots.
      * @return Separator slots, parallel to {@link #getPipelines()}
      */
     public List<Separator> getSeparators() {
