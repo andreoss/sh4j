@@ -27,6 +27,7 @@ public final class FunctionNode extends Node {
     }
 
     /**
+     * Returns the function name.
      * @return The function name
      */
     public String getName() {
@@ -34,6 +35,7 @@ public final class FunctionNode extends Node {
     }
 
     /**
+     * Returns the function body.
      * @return The function body
      */
     public Node getBody() {
