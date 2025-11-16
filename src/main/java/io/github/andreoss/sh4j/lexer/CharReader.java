@@ -74,6 +74,7 @@ public final class CharReader {
     }
 
     /**
+     * Checks whether the cursor has reached end-of-input.
      * @return True when the cursor has reached end-of-input
      */
     public boolean isEof() {
@@ -81,6 +82,7 @@ public final class CharReader {
     }
 
     /**
+     * Returns the 1-based line number of the next character.
      * @return 1-based line number of the next character
      */
     public int getLine() {
@@ -88,6 +90,7 @@ public final class CharReader {
     }
 
     /**
+     * Returns the 0-based column number of the next character.
      * @return 0-based column number of the next character
      */
     public int getColumn() {
