@@ -56,9 +56,9 @@ public enum TokenType {
     LPAREN,
     /** Subshell-close punctuation {@code )}. */
     RPAREN,
-    /** Brace-group open punctuation {@code &#123;}. */
+    /** Brace-group open punctuation: opening curly brace. */
     LBRACE,
-    /** Brace-group close punctuation {@code &#125;}. */
+    /** Brace-group close punctuation: closing curly brace. */
     RBRACE,
     /** End-of-input sentinel. */
     END_OF_FILE
