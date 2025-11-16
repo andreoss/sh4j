@@ -25,6 +25,7 @@ public final class Grouping extends Node {
     }
 
     /**
+     * Returns the wrapped command list.
      * @return The wrapped command list
      */
     public ListNode getList() {
