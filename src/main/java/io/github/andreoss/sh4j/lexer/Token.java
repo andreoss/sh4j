@@ -45,22 +45,34 @@ public final class Token {
         return new Token(type, text, reader.getLine(), reader.getColumn());
     }
 
-    /** @return The token's syntactic category */
+    /**
+     * Returns the token's syntactic category.
+     * @return The token's syntactic category
+     */
     public TokenType type() {
         return this.type;
     }
 
-    /** @return The verbatim characters that produced the token */
+    /**
+     * Returns the verbatim characters that produced the token.
+     * @return The verbatim characters that produced the token
+     */
     public String text() {
         return this.text;
     }
 
-    /** @return 1-based source line where the token starts */
+    /**
+     * Returns the 1-based source line where the token starts.
+     * @return 1-based source line where the token starts
+     */
     public int line() {
         return this.line;
     }
 
-    /** @return 1-based source column where the token starts */
+    /**
+     * Returns the 1-based source column where the token starts.
+     * @return 1-based source column where the token starts
+     */
     public int column() {
         return this.column;
     }
@@ -70,10 +82,9 @@ public final class Token {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof Token)) {
+        if (!(obj instanceof Token other)) {
             return false;
         }
-        final Token other = (Token) obj;
         return this.type == other.type
             && this.line == other.line
             && this.column == other.column
