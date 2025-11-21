@@ -33,9 +33,6 @@ public final class WordExpander {
     /** Default fallback used when {@code HOME} is unset. */
     private static final String DEFAULT_HOME = "/root";
 
-    /** Whitespace characters considered field separators by default. */
-    private static final String DEFAULT_IFS_WS = " \t\n";
-
     /**
      * Utility class; no instances.
      */
@@ -127,11 +124,11 @@ public final class WordExpander {
     }
 
     private static boolean isIdentifierStart(final char chr) {
-        return chr == '_' || chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z';
+        return chr == '_' || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z');
     }
 
     private static boolean isIdentifierPart(final char chr) {
-        return isIdentifierStart(chr) || chr >= '0' && chr <= '9';
+        return isIdentifierStart(chr) || (chr >= '0' && chr <= '9');
     }
 
     /**
@@ -275,7 +272,7 @@ public final class WordExpander {
 
     /**
      * Full implementation of {@code ${...}} brace expansion.
-     * @param inner The text between {@code ${} and {@code }}
+     * @param inner The text inside the braces
      * @param env   Environment view
      * @param ctx   Executor callbacks
      * @return The expansion, or null when the inner text doesn't match any
@@ -815,6 +812,7 @@ public final class WordExpander {
     }
 
     /**
+     * Checks whether the word is quoted.
      * @param arg Any word
      * @return True when the word is surrounded by matching single or double
      *         quotes
@@ -826,8 +824,8 @@ public final class WordExpander {
         } else {
             final char first = arg.charAt(0);
             final char last = arg.charAt(arg.length() - 1);
-            result = first == '"' && last == '"'
-                || first == '\'' && last == '\'';
+            result = (first == '"' && last == '"')
+                || (first == '\'' && last == '\'');
         }
         return result;
     }
@@ -959,6 +957,7 @@ public final class WordExpander {
     }
 
     /**
+     * Checks whether the string contains glob characters.
      * @param str Any string
      * @return True when {@code str} contains any of {@code *}, {@code ?},
      *         or {@code [}
@@ -968,6 +967,7 @@ public final class WordExpander {
     }
 
     /**
+     * Returns the files matching a glob pattern.
      * @param pattern A glob pattern
      * @param cwd     Directory used for relative patterns
      * @return The matching files
@@ -1012,6 +1012,7 @@ public final class WordExpander {
     }
 
     /**
+     * Checks whether a glob pattern matches a string.
      * @param pattern A glob pattern
      * @param str     The candidate text
      * @return True when {@code pattern} matches {@code str}
