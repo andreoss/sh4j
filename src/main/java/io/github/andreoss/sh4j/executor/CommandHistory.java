@@ -73,6 +73,7 @@ final class CommandHistory {
     }
 
     /**
+     * Returns the number of stored commands.
      * @return The number of commands currently stored
      */
     int size() {
@@ -80,6 +81,7 @@ final class CommandHistory {
     }
 
     /**
+     * Returns the next history number.
      * @return The history number that will be assigned to the next
      *     added command (1 when empty, N+1 after N commands)
      */
@@ -88,6 +90,7 @@ final class CommandHistory {
     }
 
     /**
+     * Returns the most recent history number.
      * @return The history number of the most recently added command,
      *     or 0 when the history is empty
      */
