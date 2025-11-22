@@ -169,7 +169,6 @@
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>checkstyle:.*/src/main/java/.*</exclude>
                          <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/Main\.java</exclude>
-                         <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/Executor\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/executor/BuiltinDispatcher\.java</exclude>
                          <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/Main\.java</exclude>
                          <exclude>errorprone:.*/src/test/java/.*</exclude>
