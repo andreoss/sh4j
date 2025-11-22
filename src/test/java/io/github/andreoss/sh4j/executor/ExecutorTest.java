@@ -2865,7 +2865,7 @@ public final class ExecutorTest {
             "test-cmd"
         );
         final JobManager.Job job = mgr.getJob(id);
-        job.future.cancel(true);
+        job.cancel();
         Assert.assertEquals(0, executor.execute(this.parse("bg " + id)));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assert.assertTrue(

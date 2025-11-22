@@ -38,14 +38,16 @@ final class JobManager {
         final String command;
         volatile State state;
         volatile int exitCode;
-        final CompletableFuture<Integer> future;
+        final CompletableFuture<Integer> source;
+        CompletableFuture<Integer> future;
 
         Job(final int id, final long pid, final String command,
-            final CompletableFuture<Integer> future) {
+            final CompletableFuture<Integer> source) {
             this.id = id;
             this.pid = pid;
             this.command = command;
-            this.future = future;
+            this.source = source;
+            this.future = source;
             this.state = State.RUNNING;
             this.exitCode = -1;
         }
@@ -59,10 +61,15 @@ final class JobManager {
             } catch (final InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 code = 1;
-            } catch (final ExecutionException ex) {
+            } catch (final CancellationException | ExecutionException ex) {
                 code = 1;
             }
             return code;
+        }
+
+        void cancel() {
+            this.source.cancel(true);
+            this.future.cancel(true);
         }
     }
 
@@ -86,15 +93,15 @@ final class JobManager {
 
     int submit(final Supplier<Integer> task, final String command) {
         final int id = this.nextId.getAndIncrement();
-        final CompletableFuture<Integer> future = CompletableFuture.supplyAsync(
+        final CompletableFuture<Integer> source = CompletableFuture.supplyAsync(
             () -> {
                 Thread.currentThread().setName("sh-job-" + id);
                 return task.get();
             },
             this.pool
         );
-        final Job job = new Job(id, JobManager.JOB_PID_BASE + id, command, future);
-        future.whenComplete((result, ex) -> {
+        final Job job = new Job(id, JobManager.JOB_PID_BASE + id, command, source);
+        job.future = source.whenComplete((result, ex) -> {
             if (ex instanceof CancellationException) {
                 job.state = State.STOPPED;
             } else {
