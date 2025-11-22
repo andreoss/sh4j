@@ -98,6 +98,7 @@ final class BuiltinDispatcher {
     }
 
     /**
+     * Checks whether a built-in is registered.
      * @param name A command name
      * @return True when a built-in is registered under {@code name}
      */
@@ -818,7 +819,7 @@ final class BuiltinDispatcher {
         for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
             final String name = names.get(vdx);
             if (vdx == names.size() - 1) {
-                environment.put(name, joinReadFields(fields, vdx, ifs, firstIfs));
+                environment.put(name, joinReadFields(fields, vdx, firstIfs));
             } else if (vdx < fields.size()) {
                 environment.put(name, fields.get(vdx));
             } else {
@@ -904,13 +905,12 @@ final class BuiltinDispatcher {
      * Joins remaining fields starting at {@code start} using IFS.
      * @param fields  All split fields
      * @param start   Index of first field to join
-     * @param ifs     IFS string for delimiter
      * @param firstIfs The first IFS char
      * @return Joined string
      */
     private static String joinReadFields(
         final List<String> fields, final int start,
-        final String ifs, final char firstIfs
+        final char firstIfs
     ) {
         final StringBuilder out = new StringBuilder();
         for (int idx = start; idx < fields.size(); idx = idx + 1) {
@@ -1050,14 +1050,11 @@ final class BuiltinDispatcher {
         final String optstring = args.get(0);
         final String varName = args.get(1);
         final List<String> pargs;
-        final boolean usePositional;
         if (args.size() > 2) {
             pargs = args.subList(2, args.size());
-            usePositional = false;
         } else {
             final List<String> pos = self.positionalParamsList();
             pargs = pos.subList(1, pos.size());
-            usePositional = true;
         }
         final Map<String, String> environment = self.environmentMap();
         int optind;
@@ -1211,18 +1208,11 @@ final class BuiltinDispatcher {
             }
         }
         for (final JobManager.Job job : all) {
-            final String state;
-            switch (job.state) {
-                case RUNNING:
-                    state = "Running";
-                    break;
-                case DONE:
-                    state = "Done";
-                    break;
-                default:
-                    state = "Stopped";
-                    break;
-            }
+            final String state = switch (job.state) {
+                case RUNNING -> "Running";
+                case DONE -> "Done";
+                default -> "Stopped";
+            };
             self.outStream().printf("[%d] %s %s%n", job.id, state, job.command);
         }
         return 0;
@@ -1391,7 +1381,7 @@ final class BuiltinDispatcher {
             last = hist.lastNumber();
         }
         if (substitute != null) {
-            return fcSubstitute(self, hist, substitute, first, env);
+            return fcSubstitute(self, hist, substitute, first);
         }
         if (listMode) {
             return fcList(self, hist, first, last, noNumbers);
@@ -1442,12 +1432,11 @@ final class BuiltinDispatcher {
      * @param hist      The command history
      * @param pattern   The substitution pattern (old=new)
      * @param number    History number to operate on
-     * @param env       Environment for variable lookup
      * @return 0 on success, 1 on error
      */
     private static int fcSubstitute(
         final BuiltinContext self, final CommandHistory hist,
-        final String pattern, final int number, final Map<String, String> env
+        final String pattern, final int number
     ) {
         final int eqIdx = pattern.indexOf('=');
         if (eqIdx < 0) {
