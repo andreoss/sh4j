@@ -168,8 +168,6 @@
                         <exclude>pmd:.*/sh4j/executor/RedirectionHandler\.java</exclude>
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>checkstyle:.*/src/main/java/.*</exclude>
-                         <exclude>pmd:.*/src/main/java/io/github/andreoss/sh4j/Main\.java</exclude>
-                         <exclude>errorprone:.*/src/main/java/io/github/andreoss/sh4j/Main\.java</exclude>
                          <exclude>errorprone:.*/src/test/java/.*</exclude>
                          <exclude>pmd:.*/src/test/java/.*</exclude>
                         <exclude>checkstyle:.*ExecutorTest\.java</exclude>
