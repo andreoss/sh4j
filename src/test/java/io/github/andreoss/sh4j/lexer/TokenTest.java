@@ -11,7 +11,6 @@ import org.junit.Test;
  * Tests for Token.
  * @since 1.0
  */
-@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
 public final class TokenTest {
 
     @Test
