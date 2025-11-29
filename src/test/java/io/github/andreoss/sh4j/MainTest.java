@@ -23,7 +23,7 @@ import org.junit.rules.TemporaryFolder;
  * Tests for Main.
  * @since 1.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnnecessaryLocalRule"})
+@SuppressWarnings("PMD.TooManyMethods")
 public final class MainTest {
 
     @Rule
