@@ -156,6 +156,12 @@ public final class BuiltinMutationTest {
                 public int read() throws IOException {
                     throw new IOException("boom");
                 }
+
+                @Override
+                public int read(final byte[] buf, final int off, final int len)
+                    throws IOException {
+                    throw new IOException("boom");
+                }
             },
             "read x; echo \"rc=$? x=[$x]\""
         );

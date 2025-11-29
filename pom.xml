@@ -24,6 +24,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -167,8 +173,26 @@
                         <exclude>pmd:.*/sh4j/executor/RedirectionHandler\.java</exclude>
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>checkstyle:.*/src/main/java/.*</exclude>
-                         <exclude>errorprone:.*/src/test/java/.*</exclude>
-                         <exclude>pmd:.*/src/test/java/.*</exclude>
+                         <exclude>pmd:.*/sh4j/BuiltinMutationTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/ArithmeticEvaluatorTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/BuiltinDispatcherTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/CommandHistoryTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/ExecutorTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/JobManagerTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/ExecutorMutationTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/RedirectionHandlerTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/executor/WordExpanderTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/IntegrationTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/lexer/CharReaderTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/lexer/LexerTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/lexer/TokenTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/MainTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/parser/ParserTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/PosixConformanceTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/PosixRegressionTest\.java</exclude>
+                         <exclude>pmd:.*/sh4j/PosixTests\.java</exclude>
+                         <exclude>pmd:.*/sh4j/Sh4j\.java</exclude>
+                         <exclude>pmd:.*/sh4j/Sh4jPosixTest\.java</exclude>
                         <exclude>checkstyle:.*ExecutorTest\.java</exclude>
                          <exclude>checkstyle:.*/IntegrationTest\.java</exclude>
                          <exclude>checkstyle:.*/CommandHistoryTest\.java</exclude>

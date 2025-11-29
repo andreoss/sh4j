@@ -930,7 +930,11 @@ public final class ExecutorTest {
         final String pid = executor.expandVariables("$$", new HashMap<>());
         Assert.assertNotNull(pid);
         Assert.assertFalse(pid.isEmpty());
-        Assert.assertEquals(String.valueOf(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0])), pid);
+        final String jvm = ManagementFactory.getRuntimeMXBean().getName();
+        Assert.assertEquals(
+            String.valueOf(Long.parseLong(jvm.substring(0, jvm.indexOf('@')))),
+            pid
+        );
     }
 
     @Test
@@ -3597,7 +3601,9 @@ public final class ExecutorTest {
     @Test
     public void readWithOneVar() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("hello\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("hello\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read var")));
         Assert.assertEquals("hello", executor.getVariable("var"));
     }
@@ -3605,7 +3611,9 @@ public final class ExecutorTest {
     @Test
     public void readWithMultipleVars() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("a b c\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("a b c\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read x y z")));
         Assert.assertEquals("a", executor.getVariable("x"));
         Assert.assertEquals("b", executor.getVariable("y"));
@@ -3615,7 +3623,9 @@ public final class ExecutorTest {
     @Test
     public void readLastVarGetsRemainingFields() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("a b c d\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("a b c d\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read x y")));
         Assert.assertEquals("a", executor.getVariable("x"));
         Assert.assertEquals("b c d", executor.getVariable("y"));
@@ -3624,7 +3634,9 @@ public final class ExecutorTest {
     @Test
     public void readReplyWhenNoVar() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("hello world\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("hello world\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read")));
         Assert.assertEquals("hello world", executor.getVariable("REPLY"));
     }
@@ -3639,7 +3651,9 @@ public final class ExecutorTest {
     @Test
     public void readRawModePreservesBackslash() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("a\\tb\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("a\\tb\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read -r var")));
         Assert.assertEquals("a\\tb", executor.getVariable("var"));
     }
@@ -3647,7 +3661,9 @@ public final class ExecutorTest {
     @Test
     public void readBackslashWithoutRawRemovesEscape() {
         final Executor executor = new Executor();
-        executor.setInputStream(new ByteArrayInputStream("a\\tb\n".getBytes()));
+        executor.setInputStream(
+            new ByteArrayInputStream("a\\tb\n".getBytes(StandardCharsets.UTF_8))
+        );
         Assert.assertEquals(0, executor.execute(this.parse("read var")));
         Assert.assertEquals("atb", executor.getVariable("var"));
     }

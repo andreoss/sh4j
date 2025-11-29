@@ -141,6 +141,12 @@ public final class MainTest {
                     public int read() throws IOException {
                         throw new IOException();
                     }
+
+                    @Override
+                    public int read(final byte[] buf, final int off, final int len)
+                        throws IOException {
+                        throw new IOException();
+                    }
                 },
                 () -> Main.exitCode(new String[0])
             )
@@ -409,6 +415,12 @@ public final class MainTest {
             new InputStream() {
                 @Override
                 public int read() throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public int read(final byte[] buf, final int off, final int len)
+                    throws IOException {
                     throw new IOException();
                 }
             },
