@@ -5,8 +5,12 @@
 package io.github.andreoss.sh4j.executor;
 
 import java.util.List;
-import org.junit.Assert;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for JobManager.
@@ -19,12 +23,20 @@ public final class JobManagerTest {
     public void runnableJobCompletesWithZero() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
-        Assert.assertEquals(0, manager.waitForJob(id));
+        assertThat(
+            "job should complete with zero",
+            manager.waitForJob(id),
+            equalTo(0)
+        );
         final JobManager.Job job = manager.getJob(id);
-        Assert.assertNotNull(job);
-        Assert.assertEquals(JobManager.State.DONE, job.state);
-        Assert.assertEquals(0, job.exitCode);
-        Assert.assertEquals("work", job.command);
+        assertThat("job should exist", job, notNullValue());
+        assertThat(
+            "state should be DONE",
+            job.state,
+            equalTo(JobManager.State.DONE)
+        );
+        assertThat("exit code should be zero", job.exitCode, equalTo(0));
+        assertThat("command should round-trip", job.command, equalTo("work"));
         manager.shutdown();
     }
 
@@ -33,26 +45,38 @@ public final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
         final long pid = JobManager.JOB_PID_BASE + id;
-        Assert.assertEquals(7, manager.waitForPid(pid));
-        Assert.assertNotNull(manager.getJobByPid(pid));
-        Assert.assertEquals(7, manager.waitForJob(id));
-        Assert.assertEquals(127, manager.waitForJob(999));
-        Assert.assertEquals(127, manager.waitForPid(999));
-        Assert.assertNull(manager.getJob(999));
+        assertThat("pid should map to status", manager.waitForPid(pid), equalTo(7));
+        assertThat(
+            "pid should be registered",
+            manager.getJobByPid(pid),
+            notNullValue()
+        );
+        assertThat("job should return status", manager.waitForJob(id), equalTo(7));
+        assertThat(
+            "unknown job should return 127",
+            manager.waitForJob(999),
+            equalTo(127)
+        );
+        assertThat(
+            "unknown pid should return 127",
+            manager.waitForPid(999),
+            equalTo(127)
+        );
+        assertThat("unknown job should be absent", manager.getJob(999), nullValue());
         manager.shutdown();
     }
 
     @Test
     public void listJobsAndWaitForAll() throws Exception {
         final JobManager manager = new JobManager();
-        final int first = manager.submit(() -> 1, "first");
-        final int second = manager.submit(() -> 2, "second");
+        manager.submit(() -> 1, "first");
+        manager.submit(() -> 2, "second");
         final List<JobManager.Job> listed = manager.listJobs();
-        Assert.assertEquals(2, listed.size());
-        Assert.assertEquals(first, listed.get(0).id);
-        Assert.assertEquals(second, listed.get(1).id);
+        assertThat("two jobs should be listed", listed.size(), equalTo(2));
+        assertThat("first job command", listed.get(0).command, equalTo("first"));
+        assertThat("second job command", listed.get(1).command, equalTo("second"));
         manager.waitForAll();
-        Assert.assertTrue(manager.listJobs().isEmpty());
+        assertThat("jobs should be cleared", manager.listJobs().isEmpty(), equalTo(true));
         manager.shutdown();
     }
 
@@ -62,14 +86,24 @@ public final class JobManagerTest {
         final int id = manager.submit(() -> {
             throw new IllegalStateException("boom");
         }, "fail");
-        Assert.assertEquals(1, manager.waitForJob(id));
-        Assert.assertEquals(JobManager.State.DONE, manager.getJob(id).state);
+        assertThat("failed job should return 1", manager.waitForJob(id), equalTo(1));
+        assertThat(
+            "failed job should be DONE",
+            manager.getJob(id).state,
+            equalTo(JobManager.State.DONE)
+        );
         manager.shutdown();
     }
 
     @Test
     public void jobPidBoundaries() {
-        Assert.assertTrue(JobManager.isJobPid(JobManager.JOB_PID_BASE));
-        Assert.assertFalse(JobManager.isJobPid(JobManager.JOB_PID_BASE - 1));
+        assertThat(
+            "base should be a job pid",
+            JobManager.isJobPid(JobManager.JOB_PID_BASE), equalTo(true)
+        );
+        assertThat(
+            "base minus one should not be a job pid",
+            JobManager.isJobPid(JobManager.JOB_PID_BASE - 1), equalTo(false)
+        );
     }
 }
