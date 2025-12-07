@@ -4,9 +4,13 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.util.Arrays;
-import org.junit.Assert;
+import java.util.List;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for CommandHistory.
@@ -23,18 +27,18 @@ public final class CommandHistoryTest {
     @Test
     public void emptyHistoryHasSizeZero() {
         final CommandHistory hist = new CommandHistory();
-        Assert.assertEquals(0, hist.size());
-        Assert.assertEquals(0, hist.lastNumber());
-        Assert.assertEquals(1, hist.nextNumber());
+        assertThat(hist.size(), equalTo(0));
+        assertThat(hist.lastNumber(), equalTo(0));
+        assertThat(hist.nextNumber(), equalTo(1));
     }
 
     @Test
     public void addIncrementsSizeAndNumber() {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo hello");
-        Assert.assertEquals(1, hist.size());
-        Assert.assertEquals(1, hist.lastNumber());
-        Assert.assertEquals(2, hist.nextNumber());
+        assertThat(hist.size(), equalTo(1));
+        assertThat(hist.lastNumber(), equalTo(1));
+        assertThat(hist.nextNumber(), equalTo(2));
     }
 
     @Test
@@ -42,17 +46,17 @@ public final class CommandHistoryTest {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo one");
         hist.add("echo two");
-        Assert.assertEquals("echo one", hist.get(1));
-        Assert.assertEquals("echo two", hist.get(2));
+        assertThat(hist.get(1), equalTo("echo one"));
+        assertThat(hist.get(2), equalTo("echo two"));
     }
 
     @Test
     public void getReturnsNullForOutOfRange() {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo one");
-        Assert.assertNull(hist.get(0));
-        Assert.assertNull(hist.get(2));
-        Assert.assertNull(hist.get(-1));
+        assertThat(hist.get(0), nullValue());
+        assertThat(hist.get(2), nullValue());
+        assertThat(hist.get(-1), nullValue());
     }
 
     @Test
@@ -61,12 +65,12 @@ public final class CommandHistoryTest {
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final java.util.List<CommandHistory.Entry> entries = hist.list(1, 0);
-        Assert.assertEquals(3, entries.size());
-        Assert.assertEquals(1, entries.get(0).number());
-        Assert.assertEquals("cmd1", entries.get(0).command());
-        Assert.assertEquals(3, entries.get(2).number());
-        Assert.assertEquals("cmd3", entries.get(2).command());
+        final List<CommandHistory.Entry> entries = hist.list(1, 0);
+        assertThat(entries.size(), equalTo(3));
+        assertThat(entries.get(0).number(), equalTo(1));
+        assertThat(entries.get(0).command(), equalTo("cmd1"));
+        assertThat(entries.get(2).number(), equalTo(3));
+        assertThat(entries.get(2).command(), equalTo("cmd3"));
     }
 
     @Test
@@ -75,10 +79,10 @@ public final class CommandHistoryTest {
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final java.util.List<CommandHistory.Entry> entries = hist.list(-2, -1);
-        Assert.assertEquals(2, entries.size());
-        Assert.assertEquals(2, entries.get(0).number());
-        Assert.assertEquals(3, entries.get(1).number());
+        final List<CommandHistory.Entry> entries = hist.list(-2, -1);
+        assertThat(entries.size(), equalTo(2));
+        assertThat(entries.get(0).number(), equalTo(2));
+        assertThat(entries.get(1).number(), equalTo(3));
     }
 
     @Test
@@ -87,17 +91,17 @@ public final class CommandHistoryTest {
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final java.util.List<CommandHistory.Entry> entries = hist.list(2, 2);
-        Assert.assertEquals(1, entries.size());
-        Assert.assertEquals("cmd2", entries.get(0).command());
+        final List<CommandHistory.Entry> entries = hist.list(2, 2);
+        assertThat(entries.size(), equalTo(1));
+        assertThat(entries.get(0).command(), equalTo("cmd2"));
     }
 
     @Test
     public void listEmptyWhenOutOfRange() {
         final CommandHistory hist = new CommandHistory();
         hist.add("cmd1");
-        final java.util.List<CommandHistory.Entry> entries = hist.list(5, 10);
-        Assert.assertTrue(entries.isEmpty());
+        final List<CommandHistory.Entry> entries = hist.list(5, 10);
+        assertThat(entries.isEmpty(), is(true));
     }
 
     @Test
@@ -107,12 +111,12 @@ public final class CommandHistoryTest {
         hist.add("cmd2");
         hist.add("cmd3");
         hist.add("cmd4");
-        Assert.assertEquals(3, hist.size());
-        Assert.assertEquals(4, hist.lastNumber());
-        Assert.assertNull(hist.get(1));
-        Assert.assertEquals("cmd2", hist.get(2));
-        Assert.assertEquals("cmd3", hist.get(3));
-        Assert.assertEquals("cmd4", hist.get(4));
+        assertThat(hist.size(), equalTo(3));
+        assertThat(hist.lastNumber(), equalTo(4));
+        assertThat(hist.get(1), nullValue());
+        assertThat(hist.get(2), equalTo("cmd2"));
+        assertThat(hist.get(3), equalTo("cmd3"));
+        assertThat(hist.get(4), equalTo("cmd4"));
     }
 
     @Test
@@ -122,10 +126,10 @@ public final class CommandHistoryTest {
         hist.add("cmd2");
         hist.add("cmd3");
         hist.add("cmd4");
-        final java.util.List<CommandHistory.Entry> entries = hist.list(2, 0);
-        Assert.assertEquals(3, entries.size());
-        Assert.assertEquals("cmd2", entries.get(0).command());
-        Assert.assertEquals("cmd4", entries.get(2).command());
+        final List<CommandHistory.Entry> entries = hist.list(2, 0);
+        assertThat(entries.size(), equalTo(3));
+        assertThat(entries.get(0).command(), equalTo("cmd2"));
+        assertThat(entries.get(2).command(), equalTo("cmd4"));
     }
 
     @Test
@@ -133,23 +137,24 @@ public final class CommandHistoryTest {
         final CommandHistory hist = new CommandHistory();
         hist.add("");
         hist.add(null);
-        Assert.assertEquals(0, hist.size());
+        assertThat(hist.size(), equalTo(0));
     }
 
     @Test
     public void negativeCapacityThrows() {
         try {
             new CommandHistory(0);
-            Assert.fail("Expected IllegalArgumentException");
+            // Should not reach here
+            assertThat(true, is(false));
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals(IllegalArgumentException.class, e.getClass());
+            assertThat(e.getClass(), equalTo(IllegalArgumentException.class));
         }
     }
 
     @Test
     public void listEmptyHistoryReturnsEmpty() {
         final CommandHistory hist = new CommandHistory();
-        Assert.assertTrue(hist.list(1, 0).isEmpty());
+        assertThat(hist.list(1, 0).isEmpty(), is(true));
     }
 
     @Test
@@ -157,13 +162,13 @@ public final class CommandHistoryTest {
         final CommandHistory hist = new CommandHistory(1);
         hist.add("one");
         hist.add("two");
-        Assert.assertEquals(1, hist.size());
-        Assert.assertEquals("two", hist.get(2));
-        Assert.assertNull(hist.get(1));
-        Assert.assertNull(hist.get(3));
-        Assert.assertTrue(hist.list(0, 0).isEmpty());
-        Assert.assertTrue(hist.list(-99, 0).isEmpty());
-        Assert.assertTrue(hist.list(3, 2).isEmpty());
+        assertThat(hist.size(), equalTo(1));
+        assertThat(hist.get(2), equalTo("two"));
+        assertThat(hist.get(1), nullValue());
+        assertThat(hist.get(3), nullValue());
+        assertThat(hist.list(0, 0).isEmpty(), is(true));
+        assertThat(hist.list(-99, 0).isEmpty(), is(true));
+        assertThat(hist.list(3, 2).isEmpty(), is(true));
     }
 
     @Test
@@ -172,8 +177,8 @@ public final class CommandHistoryTest {
         hist.add("one");
         hist.add("two");
         hist.add("three");
-        Assert.assertEquals(3, hist.list(-1, -1).get(0).number());
-        Assert.assertEquals("three", hist.list(-1, -1).get(0).command());
-        Assert.assertTrue(hist.list(-99, -1).isEmpty());
+        assertThat(hist.list(-1, -1).get(0).number(), equalTo(3));
+        assertThat(hist.list(-1, -1).get(0).command(), equalTo("three"));
+        assertThat(hist.list(-99, -1).isEmpty(), is(true));
     }
 }
