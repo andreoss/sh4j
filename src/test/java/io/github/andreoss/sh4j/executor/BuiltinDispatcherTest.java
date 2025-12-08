@@ -4,10 +4,14 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.util.HashMap;
 import java.util.Arrays;
-import org.junit.Assert;
+import java.util.HashMap;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for BuiltinDispatcher.
@@ -18,83 +22,84 @@ public final class BuiltinDispatcherTest {
 
     @Test
     public void registryHasTrue() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("true"));
+        assertThat(new BuiltinDispatcher().isBuiltin("true"), is(true));
     }
 
     @Test
     public void registryHasFalse() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("false"));
+        assertThat(new BuiltinDispatcher().isBuiltin("false"), is(true));
     }
 
     @Test
     public void registryHasColon() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin(":"));
+        assertThat(new BuiltinDispatcher().isBuiltin(":"), is(true));
     }
 
     @Test
     public void registryRejectsUnknown() {
-        Assert.assertFalse(new BuiltinDispatcher().isBuiltin("nope"));
+        assertThat(new BuiltinDispatcher().isBuiltin("nope"), is(false));
     }
 
     @Test public void dispatchTrueReturnsZero() {
-        Assert.assertEquals(
-            (Integer) 0,
-            new BuiltinDispatcher().dispatch("true", null, Arrays.asList(), new HashMap<>(), Arrays.asList())
+        assertThat(
+            new BuiltinDispatcher().dispatch("true", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            equalTo(0)
         );
     }
 
     @Test public void dispatchFalseReturnsOne() {
-        Assert.assertEquals(
-            (Integer) 1,
-            new BuiltinDispatcher().dispatch("false", null, Arrays.asList(), new HashMap<>(), Arrays.asList())
+        assertThat(
+            new BuiltinDispatcher().dispatch("false", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            equalTo(1)
         );
     }
 
     @Test public void dispatchColonReturnsZero() {
-        Assert.assertEquals(
-            (Integer) 0,
-            new BuiltinDispatcher().dispatch(":", null, Arrays.asList(), new HashMap<>(), Arrays.asList())
+        assertThat(
+            new BuiltinDispatcher().dispatch(":", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            equalTo(0)
         );
     }
 
     @Test public void dispatchUnknownReturnsNull() {
-        Assert.assertNull(
-            new BuiltinDispatcher().dispatch("nope", null, Arrays.asList(), new HashMap<>(), Arrays.asList())
+        assertThat(
+            new BuiltinDispatcher().dispatch("nope", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            nullValue()
         );
     }
 
     @Test
     public void registryHasType() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("type"));
+        assertThat(new BuiltinDispatcher().isBuiltin("type"), is(true));
     }
 
     @Test
     public void registryHasShift() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("shift"));
+        assertThat(new BuiltinDispatcher().isBuiltin("shift"), is(true));
     }
 
     @Test
     public void registryHasUnset() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("unset"));
+        assertThat(new BuiltinDispatcher().isBuiltin("unset"), is(true));
     }
 
     @Test
     public void registryHasBreak() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("break"));
+        assertThat(new BuiltinDispatcher().isBuiltin("break"), is(true));
     }
 
     @Test
     public void registryHasContinue() {
-        Assert.assertTrue(new BuiltinDispatcher().isBuiltin("continue"));
+        assertThat(new BuiltinDispatcher().isBuiltin("continue"), is(true));
     }
 
     @Test public void registerCustomBuiltin() {
         final BuiltinDispatcher disp = new BuiltinDispatcher();
         disp.register("mybuiltin", (self, args, env, assigns) -> 42);
-        Assert.assertTrue(disp.isBuiltin("mybuiltin"));
-        Assert.assertEquals(
-            (Integer) 42,
-            disp.dispatch("mybuiltin", null, Arrays.asList(), new HashMap<>(), Arrays.asList())
+        assertThat(disp.isBuiltin("mybuiltin"), is(true));
+        assertThat(
+            disp.dispatch("mybuiltin", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            equalTo(42)
         );
     }
 }
