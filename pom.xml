@@ -182,7 +182,6 @@
                          <exclude>pmd:.*/sh4j/IntegrationTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/lexer/CharReaderTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/lexer/LexerTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/lexer/TokenTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/MainTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/parser/ParserTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/PosixConformanceTest\.java</exclude>
