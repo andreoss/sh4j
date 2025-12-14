@@ -11,10 +11,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for PosixConformance.
@@ -28,89 +30,77 @@ public final class PosixConformanceTest {
 
     @Test
     public void positionalParamCount() throws Exception {
-        Assert.assertTrue(run(String.format("echo $#%n"), "a", "b", "c").trim().equals("3"));
+        assertThat(run(String.format("echo $#%n"), "a", "b", "c").trim(), equalTo("3"));
     }
 
     @Test
     public void positionalParamAt() throws Exception {
-        Assert.assertTrue(
-            run(String.format("echo $@%n"), "x", "y", "z").trim().equals("x y z")
-        );
+        assertThat(run(String.format("echo $@%n"), "x", "y", "z").trim(), equalTo("x y z"));
     }
 
     @Test
     public void positionalFirstParam() throws Exception {
-        Assert.assertTrue(this.run(String.format("echo $1%n"), "hello").trim().equals("hello"));
+        assertThat(run(String.format("echo $1%n"), "hello").trim(), equalTo("hello"));
     }
 
     @Test
     public void paramDefaultWhenUnset() throws Exception {
-        Assert.assertTrue(
-            run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim().equals("fallback")
-        );
+        assertThat(run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim(), equalTo("fallback"));
     }
 
     @Test
     public void paramLengthOfVar() throws Exception {
-        Assert.assertTrue(run(String.format("V=hello; echo ${#V}%n")).trim().equals("5"));
+        assertThat(run(String.format("V=hello; echo ${#V}%n")).trim(), equalTo("5"));
     }
 
     @Test
     public void arithmeticPrecedence() throws Exception {
-        Assert.assertTrue(run(String.format("echo $((1 + 2 * 3))%n")).trim().equals("7"));
+        assertThat(run(String.format("echo $((1 + 2 * 3))%n")).trim(), equalTo("7"));
     }
 
     @Test
     public void arithmeticParens() throws Exception {
-        Assert.assertTrue(run(String.format("echo $(((1 + 2) * 3))%n")).trim().equals("9"));
+        assertThat(run(String.format("echo $(((1 + 2) * 3))%n")).trim(), equalTo("9"));
     }
 
     @Test
     public void commandSubstitutionDollarParen() throws Exception {
-        Assert.assertTrue(run(String.format("echo a$(echo b)c%n")).trim().equals("abc"));
+        assertThat(run(String.format("echo a$(echo b)c%n")).trim(), equalTo("abc"));
     }
 
     @Test
     public void backtickSubstitution() throws Exception {
-        Assert.assertTrue(run(String.format("echo a`echo b`c%n")).trim().equals("abc"));
+        assertThat(run(String.format("echo a`echo b`c%n")).trim(), equalTo("abc"));
     }
 
     @Test
     public void ifThenElse() throws Exception {
-        Assert.assertTrue(
-            run(String.format("if true; then echo yes; else echo no; fi%n")).trim().equals("yes")
-        );
+        assertThat(run(String.format("if true; then echo yes; else echo no; fi%n")).trim(), equalTo("yes"));
     }
 
     @Test
     public void forLoopBody() throws Exception {
-        Assert.assertEquals(
-            String.format("a%nb%nc"),
-            run(String.format("for i in a b c; do echo $i; done%n")).trim()
-        );
+        assertThat(run(String.format("for i in a b c; do echo $i; done%n")).trim(), equalTo(String.format("a%nb%nc")));
     }
 
     @Test
     public void caseExact() throws Exception {
-        Assert.assertTrue(
-            run(
-                String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")
-            ).trim().equals("YES")
+        assertThat(
+            run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim(),
+            equalTo("YES")
         );
     }
 
     @Test
     public void echoWithDoubleQuotes() throws Exception {
-        Assert.assertTrue(
-            run(String.format("echo \"hello world\"%n")).trim().equals("hello world")
-        );
+        assertThat(run(String.format("echo \"hello world\"%n")).trim(), equalTo("hello world"));
     }
 
     @Test
     public void hereDocContent() throws Exception {
-        Assert.assertEquals(
-            String.format("line1%nline2"),
-            run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim()
+        assertThat(
+            run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim(),
+            equalTo(String.format("line1%nline2"))
         );
     }
 
@@ -136,9 +126,10 @@ public final class PosixConformanceTest {
     private static byte[] readAllBytes(final InputStream in) throws IOException {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) != -1) {
+        int n = in.read(buf);
+        while (n != -1) {
             bos.write(buf, 0, n);
+            n = in.read(buf);
         }
         return bos.toByteArray();
     }

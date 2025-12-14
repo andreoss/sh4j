@@ -183,7 +183,6 @@
                          <exclude>pmd:.*/sh4j/lexer/LexerTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/MainTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/parser/ParserTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/PosixConformanceTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/PosixRegressionTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/PosixTests\.java</exclude>
                          <exclude>pmd:.*/sh4j/Sh4j\.java</exclude>
