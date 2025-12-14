@@ -6,8 +6,10 @@ package io.github.andreoss.sh4j.lexer;
 
 import java.io.IOException;
 import java.io.Reader;
-import org.junit.Assert;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for CharReader.
@@ -18,85 +20,85 @@ public final class CharReaderTest {
 
     @Test
     public void peekReturnsFirstChar() {
-        Assert.assertEquals('a', new CharReader("a").peek());
+        assertThat(new CharReader("a").peek(), is(97));
     }
 
     @Test
     public void consumeReturnsCharsInOrder() {
         final CharReader result = new CharReader("ab");
-        Assert.assertEquals('a', result.consume());
-        Assert.assertEquals('b', result.consume());
+        assertThat(result.consume(), is(97));
+        assertThat(result.consume(), is(98));
     }
 
     @Test
     public void consumeAdvancesPosition() {
         final CharReader result = new CharReader("ab");
         result.consume();
-        Assert.assertEquals('b', result.peek());
+        assertThat(result.peek(), is(98));
     }
 
     @Test
     public void isEofReturnsFalseWhenCharsRemain() {
-        Assert.assertFalse(new CharReader("abc").isEof());
+        assertThat(new CharReader("abc").isEof(), is(false));
     }
 
     @Test
     public void eofOnEmptyString() {
         final CharReader result = new CharReader("");
-        Assert.assertTrue(result.isEof());
-        Assert.assertEquals(-1, result.peek());
+        assertThat(result.isEof(), is(true));
+        assertThat(result.peek(), is(-1));
     }
 
     @Test
     public void eofAfterFullConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        Assert.assertTrue(result.isEof());
-        Assert.assertEquals(-1, result.peek());
+        assertThat(result.isEof(), is(true));
+        assertThat(result.peek(), is(-1));
     }
 
     @Test
     public void consumeEofReturnsMinusOne() {
-        Assert.assertEquals(-1, new CharReader("").consume());
+        assertThat(new CharReader("").consume(), is(-1));
     }
 
     @Test
     public void lineColumnInitialValues() {
         final CharReader result = new CharReader("a");
-        Assert.assertEquals(1, result.getLine());
-        Assert.assertEquals(0, result.getColumn());
+        assertThat(result.getLine(), is(1));
+        assertThat(result.getColumn(), is(0));
     }
 
     @Test
     public void lineColumnAfterConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        Assert.assertEquals(1, result.getLine());
-        Assert.assertEquals(1, result.getColumn());
+        assertThat(result.getLine(), is(1));
+        assertThat(result.getColumn(), is(1));
     }
 
     @Test
     public void newlineIncrementsLineAndResetsColumn() {
         final CharReader result = new CharReader(String.format("%n"));
         result.consume();
-        Assert.assertEquals(2, result.getLine());
-        Assert.assertEquals(0, result.getColumn());
+        assertThat(result.getLine(), is(2));
+        assertThat(result.getColumn(), is(0));
     }
 
     @Test
     public void multipleLines() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        Assert.assertEquals(1, result.getLine());
-        Assert.assertEquals(0, result.getColumn());
+        assertThat(result.getLine(), is(1));
+        assertThat(result.getColumn(), is(0));
         result.consume();
-        Assert.assertEquals(1, result.getLine());
-        Assert.assertEquals(1, result.getColumn());
+        assertThat(result.getLine(), is(1));
+        assertThat(result.getColumn(), is(1));
         result.consume();
-        Assert.assertEquals(2, result.getLine());
-        Assert.assertEquals(0, result.getColumn());
+        assertThat(result.getLine(), is(2));
+        assertThat(result.getColumn(), is(0));
         result.consume();
-        Assert.assertEquals(2, result.getLine());
-        Assert.assertEquals(1, result.getColumn());
+        assertThat(result.getLine(), is(2));
+        assertThat(result.getColumn(), is(1));
     }
 
     @Test
@@ -105,13 +107,11 @@ public final class CharReaderTest {
             new Reader() {
 
                 @Override
-
                 public int read() throws IOException {
                     throw new IOException();
                 }
 
                 @Override
-
                 public int read(final char[] cbuf, final int off, final int len)
                     throws IOException {
                     throw new IOException();
@@ -123,18 +123,18 @@ public final class CharReaderTest {
                 }
             }
         );
-        Assert.assertTrue(reader.isEof());
-        Assert.assertEquals(-1, reader.peek());
-        Assert.assertEquals(-1, reader.consume());
+        assertThat(reader.isEof(), is(true));
+        assertThat(reader.peek(), is(-1));
+        assertThat(reader.consume(), is(-1));
     }
 
     @Test
     public void eofStaysEofOnMultipleCalls() {
         final CharReader result = new CharReader("");
-        Assert.assertTrue(result.isEof());
-        Assert.assertEquals(-1, result.peek());
-        Assert.assertEquals(-1, result.consume());
-        Assert.assertTrue(result.isEof());
-        Assert.assertEquals(-1, result.peek());
+        assertThat(result.isEof(), is(true));
+        assertThat(result.peek(), is(-1));
+        assertThat(result.consume(), is(-1));
+        assertThat(result.isEof(), is(true));
+        assertThat(result.peek(), is(-1));
     }
 }
