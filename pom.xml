@@ -176,7 +176,6 @@
                          <exclude>pmd:.*/sh4j/BuiltinMutationTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/ArithmeticEvaluatorTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/ExecutorTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/ExecutorMutationTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/RedirectionHandlerTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/WordExpanderTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/IntegrationTest\.java</exclude>
