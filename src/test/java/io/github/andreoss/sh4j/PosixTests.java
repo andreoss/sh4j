@@ -4,16 +4,16 @@
  */
 package io.github.andreoss.sh4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Arrays;
-import org.junit.Assert;
+import java.util.Collections;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for Posix.
@@ -27,122 +27,122 @@ public final class PosixTests {
 
     @Test
     public void trueExitZero() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("true%n")));
+        assertThat(this.run(String.format("true%n")), is(0));
     }
 
     @Test
     public void falseExitOne() throws IOException {
-        Assert.assertEquals(1, this.run(String.format("false%n")));
+        assertThat(this.run(String.format("false%n")), is(1));
     }
 
     @Test
     public void exitFortyTwo() throws IOException {
-        Assert.assertEquals(42, this.run(String.format("exit 42%n")));
+        assertThat(this.run(String.format("exit 42%n")), is(42));
     }
 
     @Test
     public void exitZero() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("exit 0%n")));
+        assertThat(this.run(String.format("exit 0%n")), is(0));
     }
 
     @Test
     public void exitOne() throws IOException {
-        Assert.assertEquals(1, this.run(String.format("exit 1%n")));
+        assertThat(this.run(String.format("exit 1%n")), is(1));
     }
 
     @Test
     public void echoHello() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("echo hello%n")));
+        assertThat(this.run(String.format("echo hello%n")), is(0));
     }
 
     @Test
     public void echoArgs() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("echo a b c%n")));
+        assertThat(this.run(String.format("echo a b c%n")), is(0));
     }
 
     @Test
     public void pipeline() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("echo hello | cat%n")));
+        assertThat(this.run(String.format("echo hello | cat%n")), is(0));
     }
 
     @Test
     public void pipelineMulti() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("echo hello | cat | wc -c%n")));
+        assertThat(this.run(String.format("echo hello | cat | wc -c%n")), is(0));
     }
 
     @Test
     public void andIf() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("true && echo ok%n")));
+        assertThat(this.run(String.format("true && echo ok%n")), is(0));
     }
 
     @Test
     public void andIfStop() throws IOException {
-        Assert.assertEquals(1, this.run(String.format("false && echo nope%n")));
+        assertThat(this.run(String.format("false && echo nope%n")), is(1));
     }
 
     @Test
     public void orIf() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("false || echo ok%n")));
+        assertThat(this.run(String.format("false || echo ok%n")), is(0));
     }
 
     @Test
     public void orIfStop() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("true || echo nope%n")));
+        assertThat(this.run(String.format("true || echo nope%n")), is(0));
     }
 
     @Test
     public void bangFalse() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("! false%n")));
+        assertThat(this.run(String.format("! false%n")), is(0));
     }
 
     @Test
     public void bangTrue() throws IOException {
-        Assert.assertEquals(1, this.run(String.format("! true%n")));
+        assertThat(this.run(String.format("! true%n")), is(1));
     }
 
     @Test
     public void semicolon() throws IOException {
-        Assert.assertEquals(1, this.run(String.format("true; false%n")));
+        assertThat(this.run(String.format("true; false%n")), is(1));
     }
 
     @Test
     public void background() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("sleep 0 &%n")));
+        assertThat(this.run(String.format("sleep 0 &%n")), is(0));
     }
 
     @Test
     public void assignThenCmd() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("MSG=hello echo $MSG%n")));
+        assertThat(this.run(String.format("MSG=hello echo $MSG%n")), is(0));
     }
 
     @Test
     public void assignOnly() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("MSG=hello%necho $MSG%n")));
+        assertThat(this.run(String.format("MSG=hello%necho $MSG%n")), is(0));
     }
 
     @Test
     public void multiAssign() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("A=1 B=2%n")));
+        assertThat(this.run(String.format("A=1 B=2%n")), is(0));
     }
 
     @Test
     public void varExpand() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("echo $HOME%n")));
+        assertThat(this.run(String.format("echo $HOME%n")), is(0));
     }
 
     @Test
     public void cmdNotFound() throws IOException {
-        Assert.assertEquals(127, this.run(String.format("nonexistent_cmd_xyz%n")));
+        assertThat(this.run(String.format("nonexistent_cmd_xyz%n")), is(127));
     }
 
     @Test
     public void pwd() throws IOException {
-        Assert.assertEquals(0, this.run(String.format("pwd%n")));
+        assertThat(this.run(String.format("pwd%n")), is(0));
     }
 
     private int run(final String script) throws IOException {
         final File file = this.tempdir.newFile("t.sh");
         Files.writeString(file.toPath(), script);
-        return Main.runScript(file.getAbsolutePath(), Arrays.asList(file.getAbsolutePath()));
+        return Main.runScript(file.getAbsolutePath(), Collections.singletonList(file.getAbsolutePath()));
     }
 }

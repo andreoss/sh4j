@@ -184,7 +184,6 @@
                          <exclude>pmd:.*/sh4j/MainTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/parser/ParserTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/PosixRegressionTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/PosixTests\.java</exclude>
                          <exclude>pmd:.*/sh4j/Sh4j\.java</exclude>
                          <exclude>pmd:.*/sh4j/Sh4jPosixTest\.java</exclude>
                         <exclude>checkstyle:.*ExecutorTest\.java</exclude>
