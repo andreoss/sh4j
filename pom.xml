@@ -174,7 +174,6 @@
                         <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
                          <exclude>checkstyle:.*/src/main/java/.*</exclude>
                          <exclude>pmd:.*/sh4j/BuiltinMutationTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/executor/ArithmeticEvaluatorTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/ExecutorTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/RedirectionHandlerTest\.java</exclude>
                          <exclude>pmd:.*/sh4j/executor/WordExpanderTest\.java</exclude>
