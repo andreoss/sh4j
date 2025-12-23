@@ -13,146 +13,244 @@ import java.util.Map;
  * decimal string.
  *
  * <p>The grammar is implemented as a precedence-climbing chain:
- * assignment → ternary → logical-or → logical-and → bit-or → bit-xor →
- * bit-and → equality → relational → shift → additive → term → factor.</p>
+ * assignment, ternary, logical-or, logical-and, bit-or, bit-xor, bit-and,
+ * equality, relational, shift, additive, term, and factor.</p>
+ *
  * @since 1.0
  */
 public final class ArithmeticEvaluator {
 
     /** Environment view used by identifier lookup; nullable. */
     private Map<String, String> arenv;
-    /** When true, assignments + variable mutations are suppressed (used
-     *  by short-circuit and ternary unselected branches). */
+
+    /** When true, assignments and variable mutations are suppressed. */
     private boolean mute;
 
     /**
      * Default constructor.
      */
     public ArithmeticEvaluator() {
-        super();
+        // Intentionally empty.
     }
 
     /**
      * Evaluates an arithmetic expression in the context of {@code env}.
+     *
      * @param expr The expression body (already stripped of {@code $((...))})
-     * @param env  Environment view for identifier lookup / mutation
+     * @param env Environment view for identifier lookup and mutation
      * @return The integer result formatted as a decimal string
      */
     public String evalArithmetic(final String expr, final Map<String, String> env) {
         final Map<String, String> prev = this.arenv;
         this.arenv = env;
-        String result;
+        final String result;
         try {
-            result = String.valueOf(this.parseArithmetic(expr.trim(), new int[]{0}));
+            result = String.valueOf(
+                this.parseArithmetic(new ArithmeticCursor(expr.trim()))
+            );
         } finally {
             this.arenv = prev;
         }
         return result;
     }
 
-    private int parseArithmetic(final String str, final int[] pos) {
-        return this.parseAssignment(str, pos);
+    private int parseArithmetic(final ArithmeticCursor cursor) {
+        return this.parseAssignment(cursor);
     }
 
-    private int parseAssignment(final String str, final int[] pos) {
-        final int save = pos[0];
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        int result;
-        final AssignmentMatch match = this.tryAssignment(str, pos);
+    private int parseAssignment(final ArithmeticCursor cursor) {
+        final int save = cursor.pos();
+        cursor.skipWhitespace();
+        final int result;
+        final ArithmeticEvaluator.AssignmentMatch match =
+            ArithmeticEvaluator.tryAssignment(cursor);
         if (match == null) {
-            pos[0] = save;
-            result = this.parseTernary(str, pos);
+            cursor.pos(save);
+            result = this.parseTernary(cursor);
         } else {
-            pos[0] = match.afterOp;
-            final int rhs = this.parseAssignment(str, pos);
-            final int cur = this.readEnvInt(match.name);
-            final int newVal = applyAssignmentOp(match.op, cur, rhs);
+            cursor.pos(match.after());
+            final int value = ArithmeticEvaluator.applyAssignmentOp(
+                match.oper(), this.readEnvInt(match.name()),
+                this.parseAssignment(cursor)
+            );
             if (!this.mute && this.arenv != null) {
-                this.arenv.put(match.name, String.valueOf(newVal));
+                this.arenv.put(match.name(), String.valueOf(value));
             }
-            result = newVal;
+            result = value;
         }
         return result;
     }
 
-    /**
-     * Tries to match an assignment-form prefix at the current position.
-     * @return The match, or null when the current position is not an
-     *         assignment target
-     */
-    private AssignmentMatch tryAssignment(final String str, final int[] pos) {
-        AssignmentMatch match = null;
-        if (pos[0] < str.length()
-            && (Character.isLetter(str.charAt(pos[0])) || str.charAt(pos[0]) == '_')) {
-            int end = pos[0];
-            while (end < str.length()
-                && (Character.isLetterOrDigit(str.charAt(end)) || str.charAt(end) == '_')) {
-                end = end + 1;
-            }
-            final String name = str.substring(pos[0], end);
-            int after = end;
-            while (after < str.length() && Character.isWhitespace(str.charAt(after))) {
-                after = after + 1;
-            }
-            match = detectAssignmentOp(str, after, name);
+    private static ArithmeticEvaluator.AssignmentMatch tryAssignment(
+        final ArithmeticCursor cursor
+    ) {
+        ArithmeticEvaluator.AssignmentMatch match = null;
+        if (ArithmeticEvaluator.isIdentifierStart(cursor)) {
+            final int end = ArithmeticEvaluator.identifierEnd(cursor);
+            final String name = cursor.text().substring(cursor.pos(), end);
+            cursor.pos(end);
+            cursor.skipWhitespace();
+            match = ArithmeticEvaluator.detectAssignmentOp(cursor, name);
         }
         return match;
     }
 
-    /**
-     * Detects which compound assignment operator (or plain {@code =}) is
-     * at position {@code start} of {@code str}.
-     */
-    private static AssignmentMatch detectAssignmentOp(
-        final String str, final int start, final String name
-    ) {
-        AssignmentMatch match = null;
-        if (start < str.length()) {
-            final char ch0 = str.charAt(start);
-            final char ch1 = start + 1 < str.length() ? str.charAt(start + 1) : 0;
-            final char ch2 = start + 2 < str.length() ? str.charAt(start + 2) : 0;
-            if ((ch0 == '<' || ch0 == '>') && ch1 == ch0 && ch2 == '=') {
-                match = new AssignmentMatch(name, "" + ch0 + ch1, start + 3);
-            } else if (ch1 == '=' && isCompoundAssignFirst(ch0)) {
-                match = new AssignmentMatch(name, "" + ch0, start + 2);
-            } else if (ch0 == '=' && ch1 != '=') {
-                match = new AssignmentMatch(name, "", start + 1);
+    private static boolean isIdentifierStart(final ArithmeticCursor cursor) {
+        boolean result = false;
+        if (!cursor.eof()) {
+            final char chr = cursor.charAt(0);
+            result = Character.isLetter(chr) || chr == '_';
+        }
+        return result;
+    }
+
+    private static int identifierEnd(final ArithmeticCursor cursor) {
+        int end = cursor.pos();
+        while (end < cursor.text().length()) {
+            final char chr = cursor.text().charAt(end);
+            if (!Character.isLetterOrDigit(chr) && chr != '_') {
+                break;
             }
+            end = end + 1;
+        }
+        return end;
+    }
+
+    private static ArithmeticEvaluator.AssignmentMatch detectAssignmentOp(
+        final ArithmeticCursor cursor, final String name
+    ) {
+        ArithmeticEvaluator.AssignmentMatch match =
+            ArithmeticEvaluator.detectDoubleOp(cursor, name);
+        if (match == null) {
+            match = ArithmeticEvaluator.detectSingleOp(cursor, name);
+        }
+        return match;
+    }
+
+    private static ArithmeticEvaluator.AssignmentMatch detectDoubleOp(
+        final ArithmeticCursor cursor, final String name
+    ) {
+        ArithmeticEvaluator.AssignmentMatch match = null;
+        if (cursor.hasPrefix("<<=")) {
+            match = new ArithmeticEvaluator.AssignmentMatch(
+                name, "<<", cursor.pos() + 3
+            );
+        } else if (cursor.hasPrefix(">>=")) {
+            match = new ArithmeticEvaluator.AssignmentMatch(
+                name, ">>", cursor.pos() + 3
+            );
+        }
+        return match;
+    }
+
+    private static ArithmeticEvaluator.AssignmentMatch detectSingleOp(
+        final ArithmeticCursor cursor, final String name
+    ) {
+        ArithmeticEvaluator.AssignmentMatch match = null;
+        final char first = cursor.charAt(0);
+        final char second = cursor.charAt(1);
+        if (ArithmeticEvaluator.isCompoundAssignFirst(first) && second == '=') {
+            match = new ArithmeticEvaluator.AssignmentMatch(
+                name, String.valueOf(first), cursor.pos() + 2
+            );
+        } else if (first == '=' && second != '=') {
+            match = new ArithmeticEvaluator.AssignmentMatch(
+                name, "", cursor.pos() + 1
+            );
         }
         return match;
     }
 
     private static boolean isCompoundAssignFirst(final char chr) {
-        return chr == '*' || chr == '/' || chr == '%' || chr == '+'
-            || chr == '-' || chr == '&' || chr == '^' || chr == '|';
+        return "*/%+-&^|".indexOf(chr) >= 0;
     }
 
-    private static int applyAssignmentOp(final String op, final int cur, final int rhs) {
-        if ("".equals(op)) {
-            return rhs;
-        } else if ("+".equals(op)) {
-            return cur + rhs;
-        } else if ("-".equals(op)) {
-            return cur - rhs;
-        } else if ("*".equals(op)) {
-            return cur * rhs;
-        } else if ("/".equals(op)) {
-            return rhs == 0 ? 0 : cur / rhs;
-        } else if ("%".equals(op)) {
-            return rhs == 0 ? 0 : cur % rhs;
-        } else if ("<<".equals(op)) {
-            return cur << rhs;
-        } else if (">>".equals(op)) {
-            return cur >> rhs;
-        } else if ("&".equals(op)) {
-            return cur & rhs;
-        } else if ("^".equals(op)) {
-            return cur ^ rhs;
-        } else if ("|".equals(op)) {
-            return cur | rhs;
+    private static int applyAssignmentOp(
+        final String oper, final int cur, final int rhs
+    ) {
+        final int result;
+        if ("".equals(oper)) {
+            result = rhs;
+        } else if (ArithmeticEvaluator.isAdditiveOp(oper)) {
+            result = ArithmeticEvaluator.applyAdditive(oper, cur, rhs);
+        } else if (ArithmeticEvaluator.isMultiplicativeOp(oper)) {
+            result = ArithmeticEvaluator.applyMultiplicative(oper, cur, rhs);
         } else {
-            return rhs;
+            result = ArithmeticEvaluator.applyBitwise(oper, cur, rhs);
         }
+        return result;
+    }
+
+    private static boolean isAdditiveOp(final String oper) {
+        return "+".equals(oper) || "-".equals(oper);
+    }
+
+    private static boolean isMultiplicativeOp(final String oper) {
+        return "*".equals(oper) || "/".equals(oper) || "%".equals(oper);
+    }
+
+    private static int applyAdditive(
+        final String oper, final int cur, final int rhs
+    ) {
+        final int result;
+        if ("+".equals(oper)) {
+            result = cur + rhs;
+        } else {
+            result = cur - rhs;
+        }
+        return result;
+    }
+
+    private static int applyMultiplicative(
+        final String oper, final int cur, final int rhs
+    ) {
+        final int result;
+        if ("*".equals(oper)) {
+            result = cur * rhs;
+        } else if ("/".equals(oper)) {
+            result = ArithmeticEvaluator.safeDivide(cur, rhs);
+        } else {
+            result = ArithmeticEvaluator.safeModulo(cur, rhs);
+        }
+        return result;
+    }
+
+    private static int applyBitwise(
+        final String oper, final int cur, final int rhs
+    ) {
+        final int result;
+        if ("<<".equals(oper)) {
+            result = cur << rhs;
+        } else if (">>".equals(oper)) {
+            result = cur >> rhs;
+        } else if ("&".equals(oper)) {
+            result = cur & rhs;
+        } else if ("^".equals(oper)) {
+            result = cur ^ rhs;
+        } else {
+            result = cur | rhs;
+        }
+        return result;
+    }
+
+    private static int safeDivide(final int cur, final int rhs) {
+        final int result;
+        if (rhs == 0) {
+            result = 0;
+        } else {
+            result = cur / rhs;
+        }
+        return result;
+    }
+
+    private static int safeModulo(final int cur, final int rhs) {
+        final int result;
+        if (rhs == 0) {
+            result = 0;
+        } else {
+            result = cur % rhs;
+        }
+        return result;
     }
 
     private int readEnvInt(final String name) {
@@ -167,352 +265,397 @@ public final class ArithmeticEvaluator {
         return cur;
     }
 
-    private int parseTernary(final String str, final int[] pos) {
-        final int cond = this.parseLogicalOr(str, pos);
-        ArithmeticEvaluator.skipWhitespace(str, pos);
+    private int parseTernary(final ArithmeticCursor cursor) {
+        final int cond = this.parseLogicalOr(cursor);
+        cursor.skipWhitespace();
         int result = cond;
-        if (pos[0] < str.length() && str.charAt(pos[0]) == '?') {
-            pos[0] = pos[0] + 1;
-            final boolean prevMute = this.mute;
+        if (cursor.currentIs('?')) {
+            cursor.advance();
+            final boolean muted = this.mute;
             if (cond == 0) {
                 this.mute = true;
             }
-            final int thenVal = this.parseAssignment(str, pos);
-            this.mute = prevMute;
-            ArithmeticEvaluator.skipWhitespace(str, pos);
-            if (pos[0] < str.length() && str.charAt(pos[0]) == ':') {
-                pos[0] = pos[0] + 1;
+            final int truthy = this.parseAssignment(cursor);
+            this.mute = muted;
+            cursor.skipWhitespace();
+            if (cursor.currentIs(':')) {
+                cursor.advance();
             }
             if (cond != 0) {
                 this.mute = true;
             }
-            final int elseVal = this.parseAssignment(str, pos);
-            this.mute = prevMute;
-            result = cond == 0 ? elseVal : thenVal;
+            final int falsy = this.parseAssignment(cursor);
+            this.mute = muted;
+            if (cond == 0) {
+                result = falsy;
+            } else {
+                result = truthy;
+            }
         }
         return result;
     }
 
-    private int parseLogicalOr(final String str, final int[] pos) {
-        int value = this.parseLogicalAnd(str, pos);
-        while (this.matchOp(str, pos, "||")) {
-            final boolean prevMute = this.mute;
+    private int parseLogicalOr(final ArithmeticCursor cursor) {
+        int value = this.parseLogicalAnd(cursor);
+        while (ArithmeticEvaluator.matchOp(cursor, "||")) {
+            final boolean muted = this.mute;
             if (value != 0) {
                 this.mute = true;
             }
-            final int rhs = this.parseLogicalAnd(str, pos);
-            this.mute = prevMute;
-            value = value != 0 || rhs != 0 ? 1 : 0;
+            final int rhs = this.parseLogicalAnd(cursor);
+            this.mute = muted;
+            if (value == 0 && rhs == 0) {
+                value = 0;
+            } else {
+                value = 1;
+            }
         }
         return value;
     }
 
-    private int parseLogicalAnd(final String str, final int[] pos) {
-        int value = this.parseBitOr(str, pos);
-        while (this.matchOp(str, pos, "&&")) {
-            final boolean prevMute = this.mute;
+    private int parseLogicalAnd(final ArithmeticCursor cursor) {
+        int value = this.parseBitOr(cursor);
+        while (ArithmeticEvaluator.matchOp(cursor, "&&")) {
+            final boolean muted = this.mute;
             if (value == 0) {
                 this.mute = true;
             }
-            final int rhs = this.parseBitOr(str, pos);
-            this.mute = prevMute;
-            value = value != 0 && rhs != 0 ? 1 : 0;
-        }
-        return value;
-    }
-
-    private int parseBitOr(final String str, final int[] pos) {
-        int value = this.parseBitXor(str, pos);
-        while (this.peekIsSingle(str, pos, '|', "||")) {
-            pos[0] = pos[0] + 1;
-            value = value | this.parseBitXor(str, pos);
-        }
-        return value;
-    }
-
-    private int parseBitXor(final String str, final int[] pos) {
-        int value = this.parseBitAnd(str, pos);
-        while (this.peekIs(str, pos, '^')) {
-            pos[0] = pos[0] + 1;
-            value = value ^ this.parseBitAnd(str, pos);
-        }
-        return value;
-    }
-
-    private int parseBitAnd(final String str, final int[] pos) {
-        int value = this.parseEquality(str, pos);
-        while (this.peekIsSingle(str, pos, '&', "&&")) {
-            pos[0] = pos[0] + 1;
-            value = value & this.parseEquality(str, pos);
-        }
-        return value;
-    }
-
-    private int parseEquality(final String str, final int[] pos) {
-        int value = this.parseRelational(str, pos);
-        boolean done = false;
-        while (!done) {
-            if (this.matchOp(str, pos, "==")) {
-                value = value == this.parseRelational(str, pos) ? 1 : 0;
-            } else if (this.matchOp(str, pos, "!=")) {
-                value = value != this.parseRelational(str, pos) ? 1 : 0;
+            final int rhs = this.parseBitOr(cursor);
+            this.mute = muted;
+            if (value == 0 || rhs == 0) {
+                value = 0;
             } else {
-                done = true;
+                value = 1;
             }
         }
         return value;
     }
 
-    private int parseRelational(final String str, final int[] pos) {
-        int value = this.parseShift(str, pos);
-        boolean done = false;
-        while (!done) {
-            if (this.matchOp(str, pos, "<=")) {
-                value = value <= this.parseShift(str, pos) ? 1 : 0;
-            } else if (this.matchOp(str, pos, ">=")) {
-                value = value >= this.parseShift(str, pos) ? 1 : 0;
-            } else if (this.peekIsSingleNotFollowedBy(str, pos, '<', '<', '=')) {
-                pos[0] = pos[0] + 1;
-                value = value < this.parseShift(str, pos) ? 1 : 0;
-            } else if (this.peekIsSingleNotFollowedBy(str, pos, '>', '>', '=')) {
-                pos[0] = pos[0] + 1;
-                value = value > this.parseShift(str, pos) ? 1 : 0;
-            } else {
-                done = true;
-            }
+    private int parseBitOr(final ArithmeticCursor cursor) {
+        int value = this.parseBitXor(cursor);
+        while (ArithmeticEvaluator.peekIsSingle(cursor, '|', "||")) {
+            cursor.advance();
+            value = value | this.parseBitXor(cursor);
         }
         return value;
     }
 
-    private int parseShift(final String str, final int[] pos) {
-        int value = this.parseAdditive(str, pos);
-        boolean done = false;
-        while (!done) {
-            if (this.matchOp(str, pos, "<<")) {
-                value = value << this.parseAdditive(str, pos);
-            } else if (this.matchOp(str, pos, ">>")) {
-                value = value >> this.parseAdditive(str, pos);
-            } else {
-                done = true;
-            }
+    private int parseBitXor(final ArithmeticCursor cursor) {
+        int value = this.parseBitAnd(cursor);
+        while (ArithmeticEvaluator.peekIs(cursor, '^')) {
+            cursor.advance();
+            value = value ^ this.parseBitAnd(cursor);
         }
         return value;
     }
 
-    private int parseAdditive(final String str, final int[] pos) {
-        int value = this.parseTerm(str, pos);
+    private int parseBitAnd(final ArithmeticCursor cursor) {
+        int value = this.parseEquality(cursor);
+        while (ArithmeticEvaluator.peekIsSingle(cursor, '&', "&&")) {
+            cursor.advance();
+            value = value & this.parseEquality(cursor);
+        }
+        return value;
+    }
+
+    private int parseEquality(final ArithmeticCursor cursor) {
+        int value = this.parseRelational(cursor);
         boolean done = false;
-        while (!done && pos[0] < str.length()) {
-            ArithmeticEvaluator.skipWhitespace(str, pos);
-            if (pos[0] >= str.length()) {
-                done = true;
-            } else {
-                final char chr = str.charAt(pos[0]);
-                if (chr == '+') {
-                    pos[0] = pos[0] + 1;
-                    value = value + this.parseTerm(str, pos);
-                } else if (chr == '-') {
-                    pos[0] = pos[0] + 1;
-                    value = value - this.parseTerm(str, pos);
+        while (!done) {
+            if (ArithmeticEvaluator.matchOp(cursor, "==")) {
+                if (value == this.parseRelational(cursor)) {
+                    value = 1;
                 } else {
-                    done = true;
+                    value = 0;
                 }
-            }
-        }
-        return value;
-    }
-
-    private int parseTerm(final String str, final int[] pos) {
-        int value = this.parseFactor(str, pos);
-        boolean done = false;
-        while (!done && pos[0] < str.length()) {
-            ArithmeticEvaluator.skipWhitespace(str, pos);
-            if (pos[0] >= str.length()) {
-                done = true;
-            } else {
-                final char chr = str.charAt(pos[0]);
-                if (chr == '*') {
-                    pos[0] = pos[0] + 1;
-                    value = value * this.parseFactor(str, pos);
-                } else if (chr == '/') {
-                    pos[0] = pos[0] + 1;
-                    final int div = this.parseFactor(str, pos);
-                    value = div == 0 ? 0 : value / div;
-                } else if (chr == '%') {
-                    pos[0] = pos[0] + 1;
-                    final int div = this.parseFactor(str, pos);
-                    value = div == 0 ? 0 : value % div;
+            } else if (ArithmeticEvaluator.matchOp(cursor, "!=")) {
+                if (value == this.parseRelational(cursor)) {
+                    value = 0;
                 } else {
-                    done = true;
+                    value = 1;
                 }
+            } else {
+                done = true;
             }
         }
         return value;
     }
 
-    private int parseFactor(final String str, final int[] pos) {
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        int result;
-        if (pos[0] >= str.length()) {
-            result = 0;
+    private int parseRelational(final ArithmeticCursor cursor) {
+        int value = this.parseShift(cursor);
+        boolean done = false;
+        while (!done) {
+            if (ArithmeticEvaluator.matchOp(cursor, "<=")) {
+                value = ArithmeticEvaluator.boolValue(
+                    value <= this.parseShift(cursor)
+                );
+            } else if (ArithmeticEvaluator.matchOp(cursor, ">=")) {
+                value = ArithmeticEvaluator.boolValue(
+                    value >= this.parseShift(cursor)
+                );
+            } else if (ArithmeticEvaluator.peekIsSingleNotFollowedBy(
+                cursor, '<', "<="
+            )) {
+                cursor.advance();
+                value = ArithmeticEvaluator.boolValue(
+                    value < this.parseShift(cursor)
+                );
+            } else if (ArithmeticEvaluator.peekIsSingleNotFollowedBy(
+                cursor, '>', ">="
+            )) {
+                cursor.advance();
+                value = ArithmeticEvaluator.boolValue(
+                    value > this.parseShift(cursor)
+                );
+            } else {
+                done = true;
+            }
+        }
+        return value;
+    }
+
+    private static int boolValue(final boolean flag) {
+        final int result;
+        if (flag) {
+            result = 1;
         } else {
-            final char chr = str.charAt(pos[0]);
-            if (chr == '(') {
-                pos[0] = pos[0] + 1;
-                result = this.parseArithmetic(str, pos);
-                ArithmeticEvaluator.skipWhitespace(str, pos);
-                if (pos[0] < str.length() && str.charAt(pos[0]) == ')') {
-                    pos[0] = pos[0] + 1;
-                }
-            } else if (chr == '+') {
-                pos[0] = pos[0] + 1;
-                result = this.parseFactor(str, pos);
-            } else if (chr == '-') {
-                pos[0] = pos[0] + 1;
-                result = -this.parseFactor(str, pos);
-            } else if (chr == '!') {
-                pos[0] = pos[0] + 1;
-                result = this.parseFactor(str, pos) == 0 ? 1 : 0;
-            } else if (chr == '~') {
-                pos[0] = pos[0] + 1;
-                result = ~this.parseFactor(str, pos);
-            } else if (Character.isLetter(chr) || chr == '_') {
-                result = this.readIdentifier(str, pos);
-            } else {
-                result = readNumber(str, pos);
-            }
+            result = 0;
         }
         return result;
     }
 
-    private int readIdentifier(final String str, final int[] pos) {
-        int end = pos[0];
-        while (end < str.length()
-            && (Character.isLetterOrDigit(str.charAt(end)) || str.charAt(end) == '_')) {
-            end = end + 1;
+    private int parseShift(final ArithmeticCursor cursor) {
+        int value = this.parseAdditive(cursor);
+        boolean done = false;
+        while (!done) {
+            if (ArithmeticEvaluator.matchOp(cursor, "<<")) {
+                value = value << this.parseAdditive(cursor);
+            } else if (ArithmeticEvaluator.matchOp(cursor, ">>")) {
+                value = value >> this.parseAdditive(cursor);
+            } else {
+                done = true;
+            }
         }
-        final String name = str.substring(pos[0], end);
-        pos[0] = end;
-        final String val = this.arenv == null ? "0" : this.arenv.getOrDefault(name, "0");
+        return value;
+    }
+
+    private int parseAdditive(final ArithmeticCursor cursor) {
+        int value = this.parseTerm(cursor);
+        boolean done = false;
+        while (!done && !cursor.eof()) {
+            cursor.skipWhitespace();
+            if (cursor.eof()) {
+                done = true;
+            } else {
+                final char chr = cursor.charAt(0);
+                if (chr == '+') {
+                    cursor.advance();
+                    value = value + this.parseTerm(cursor);
+                } else if (chr == '-') {
+                    cursor.advance();
+                    value = value - this.parseTerm(cursor);
+                } else {
+                    done = true;
+                }
+            }
+        }
+        return value;
+    }
+
+    private int parseTerm(final ArithmeticCursor cursor) {
+        int value = this.parseFactor(cursor);
+        boolean done = false;
+        while (!done && !cursor.eof()) {
+            cursor.skipWhitespace();
+            if (cursor.eof()) {
+                done = true;
+            } else {
+                final char chr = cursor.charAt(0);
+                if (chr == '*') {
+                    cursor.advance();
+                    value = value * this.parseFactor(cursor);
+                } else if (chr == '/') {
+                    cursor.advance();
+                    value = ArithmeticEvaluator.safeDivide(
+                        value, this.parseFactor(cursor)
+                    );
+                } else if (chr == '%') {
+                    cursor.advance();
+                    value = ArithmeticEvaluator.safeModulo(
+                        value, this.parseFactor(cursor)
+                    );
+                } else {
+                    done = true;
+                }
+            }
+        }
+        return value;
+    }
+
+    private int parseFactor(final ArithmeticCursor cursor) {
+        cursor.skipWhitespace();
+        final int result;
+        if (cursor.eof()) {
+            result = 0;
+        } else {
+            result = this.parseFactorToken(cursor);
+        }
+        return result;
+    }
+
+    private int parseFactorToken(final ArithmeticCursor cursor) {
+        final char chr = cursor.charAt(0);
+        final int result;
+        if (chr == '(') {
+            result = this.parseGroup(cursor);
+        } else if (chr == '+') {
+            cursor.advance();
+            result = this.parseFactor(cursor);
+        } else if (chr == '-') {
+            cursor.advance();
+            result = -this.parseFactor(cursor);
+        } else if (chr == '!') {
+            result = this.parseNot(cursor);
+        } else if (chr == '~') {
+            cursor.advance();
+            result = ~this.parseFactor(cursor);
+        } else if (Character.isLetter(chr) || chr == '_') {
+            result = this.readIdentifier(cursor);
+        } else {
+            result = ArithmeticEvaluator.readNumber(cursor);
+        }
+        return result;
+    }
+
+    private int parseGroup(final ArithmeticCursor cursor) {
+        cursor.advance();
+        final int result = this.parseArithmetic(cursor);
+        cursor.skipWhitespace();
+        if (cursor.currentIs(')')) {
+            cursor.advance();
+        }
+        return result;
+    }
+
+    private int parseNot(final ArithmeticCursor cursor) {
+        cursor.advance();
+        final int result;
+        if (this.parseFactor(cursor) == 0) {
+            result = 1;
+        } else {
+            result = 0;
+        }
+        return result;
+    }
+
+    private int readIdentifier(final ArithmeticCursor cursor) {
+        final int end = ArithmeticEvaluator.identifierEnd(cursor);
+        final String name = cursor.text().substring(cursor.pos(), end);
+        cursor.pos(end);
+        final String value;
+        if (this.arenv == null) {
+            value = "0";
+        } else {
+            value = this.arenv.getOrDefault(name, "0");
+        }
         int result;
         try {
-            result = Integer.parseInt(val.trim());
+            result = Integer.parseInt(value.trim());
         } catch (final NumberFormatException ignored) {
             result = 0;
         }
         return result;
     }
 
-    private static int readNumber(final String str, final int[] pos) {
-        final int start = pos[0];
-        final int base;
-        if (pos[0] + 1 < str.length() && str.charAt(pos[0]) == '0'
-            && (str.charAt(pos[0] + 1) == 'x' || str.charAt(pos[0] + 1) == 'X')) {
-            base = 16;
-            pos[0] = pos[0] + 2;
-        } else if (pos[0] < str.length() && str.charAt(pos[0]) == '0'
-            && pos[0] + 1 < str.length()
-            && str.charAt(pos[0] + 1) >= '0' && str.charAt(pos[0] + 1) <= '7') {
-            base = 8;
-            pos[0] = pos[0] + 1;
-        } else {
-            base = 10;
-        }
+    private static int readNumber(final ArithmeticCursor cursor) {
+        final int start = cursor.pos();
+        final int base = ArithmeticEvaluator.numberBase(cursor);
         int num = 0;
-        while (pos[0] < str.length()) {
-            final char chr = str.charAt(pos[0]);
-            final int digit;
-            if (chr >= '0' && chr <= '9') {
-                digit = chr - '0';
-            } else if (base == 16 && chr >= 'a' && chr <= 'f') {
-                digit = chr - 'a' + 10;
-            } else if (base == 16 && chr >= 'A' && chr <= 'F') {
-                digit = chr - 'A' + 10;
-            } else {
-                break;
-            }
-            if (digit >= base) {
+        while (!cursor.eof()) {
+            final int digit = ArithmeticEvaluator.digitAt(cursor, base);
+            if (digit < 0 || digit >= base) {
                 break;
             }
             num = num * base + digit;
-            pos[0] = pos[0] + 1;
+            cursor.advance();
         }
-        if (pos[0] == start) {
-            pos[0] = start + 1;
+        if (cursor.pos() == start) {
+            cursor.advance();
         }
         return num;
     }
 
-    private boolean matchOp(final String str, final int[] pos, final String op) {
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        boolean match = pos[0] + op.length() <= str.length();
-        for (int idx = 0; match && idx < op.length(); idx = idx + 1) {
-            if (str.charAt(pos[0] + idx) != op.charAt(idx)) {
-                match = false;
-            }
+    private static int numberBase(final ArithmeticCursor cursor) {
+        int base = 10;
+        if (cursor.hasPrefix("0x") || cursor.hasPrefix("0X")) {
+            base = 16;
+            cursor.advance(2);
+        } else if (cursor.hasPrefix("0") && ArithmeticEvaluator.isOctalDigit(cursor, 1)) {
+            base = 8;
+            cursor.advance();
         }
+        return base;
+    }
+
+    private static boolean isOctalDigit(final ArithmeticCursor cursor, final int offset) {
+        final char chr = cursor.charAt(offset);
+        return chr >= '0' && chr <= '7';
+    }
+
+    private static int digitAt(
+        final ArithmeticCursor cursor, final int base
+    ) {
+        final char chr = cursor.charAt(0);
+        final int digit;
+        if (chr >= '0' && chr <= '9') {
+            digit = chr - '0';
+        } else if (base == 16 && chr >= 'a' && chr <= 'f') {
+            digit = chr - 'a' + 10;
+        } else if (base == 16 && chr >= 'A' && chr <= 'F') {
+            digit = chr - 'A' + 10;
+        } else {
+            digit = -1;
+        }
+        return digit;
+    }
+
+    private static boolean matchOp(
+        final ArithmeticCursor cursor, final String oper
+    ) {
+        cursor.skipWhitespace();
+        final boolean match = cursor.hasPrefix(oper);
         if (match) {
-            pos[0] = pos[0] + op.length();
+            cursor.advance(oper.length());
         }
         return match;
     }
 
-    private boolean peekIs(final String str, final int[] pos, final char chr) {
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        return pos[0] < str.length() && str.charAt(pos[0]) == chr;
+    private static boolean peekIs(
+        final ArithmeticCursor cursor, final char chr
+    ) {
+        cursor.skipWhitespace();
+        return cursor.currentIs(chr);
     }
 
-    private boolean peekIsSingle(
-        final String str, final int[] pos, final char chr, final String avoid
+    private static boolean peekIsSingle(
+        final ArithmeticCursor cursor, final char chr,
+        final String avoid
     ) {
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        boolean result = pos[0] < str.length() && str.charAt(pos[0]) == chr;
-        if (result && pos[0] + 1 < str.length()) {
-            final char next = str.charAt(pos[0] + 1);
-            for (int idx = 1; result && idx < avoid.length(); idx = idx + 1) {
-                if (next == avoid.charAt(idx) && avoid.charAt(0) == chr) {
-                    result = false;
-                }
-            }
+        cursor.skipWhitespace();
+        boolean result = cursor.currentIs(chr);
+        if (result && avoid.indexOf(cursor.charAt(1)) >= 0) {
+            result = false;
         }
         return result;
     }
 
-    private boolean peekIsSingleNotFollowedBy(
-        final String str, final int[] pos, final char chr, final char first, final char second
+    private static boolean peekIsSingleNotFollowedBy(
+        final ArithmeticCursor cursor, final char chr,
+        final String avoid
     ) {
-        ArithmeticEvaluator.skipWhitespace(str, pos);
-        boolean result = pos[0] < str.length() && str.charAt(pos[0]) == chr;
-        if (result && pos[0] + 1 < str.length()) {
-            final char next = str.charAt(pos[0] + 1);
-            if (next == first || next == second) {
-                result = false;
-            }
-        }
-        return result;
+        return ArithmeticEvaluator.peekIsSingle(cursor, chr, avoid);
     }
 
-    private static void skipWhitespace(final String str, final int[] pos) {
-        while (pos[0] < str.length() && Character.isWhitespace(str.charAt(pos[0]))) {
-            pos[0] = pos[0] + 1;
-        }
-    }
-
-    /**
-     * Holds the data for a matched assignment-form prefix.
-     */
-    private static final class AssignmentMatch {
-        /** Target identifier. */
-        private final String name;
-        /** Operator string ({@code ""} for {@code =}, {@code "+"} for {@code +=}, ...). */
-        private final String op;
-        /** Position just past the operator. */
-        private final int afterOp;
-
-        AssignmentMatch(final String name, final String op, final int afterOp) {
-            this.name = name;
-            this.op = op;
-            this.afterOp = afterOp;
-        }
+    private record AssignmentMatch(String name, String oper, int after) {
     }
 }

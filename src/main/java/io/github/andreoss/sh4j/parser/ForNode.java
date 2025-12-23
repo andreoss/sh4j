@@ -8,19 +8,23 @@ import java.util.List;
 
 /**
  * AST node for the POSIX {@code for var in words; do body; done} loop.
+ *
  * @since 1.0
  */
 public final class ForNode extends Node {
 
     /** Loop variable name. */
     private final String variable;
+
     /** Words the loop iterates over (each iteration assigns one). */
     private final List<String> words;
+
     /** Body executed once per word. */
     private final ListNode body;
 
     /**
      * Creates a for-loop node.
+     *
      * @param variable Name of the loop variable
      * @param words    Words to iterate (already lexed, not yet expanded)
      * @param body     Body to execute per iteration
@@ -34,6 +38,7 @@ public final class ForNode extends Node {
 
     /**
      * Returns the loop variable name.
+     *
      * @return The loop variable name
      */
     public String getVariable() {
@@ -42,6 +47,7 @@ public final class ForNode extends Node {
 
     /**
      * Returns the iteration words.
+     *
      * @return The iteration words
      */
     public List<String> getWords() {
@@ -50,6 +56,7 @@ public final class ForNode extends Node {
 
     /**
      * Returns the loop body.
+     *
      * @return The loop body
      */
     public ListNode getBody() {

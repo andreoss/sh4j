@@ -8,8 +8,8 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * POSIX compliance integration tests using the Sh4j helper API.
@@ -18,28 +18,28 @@ import org.junit.Test;
  *   - 2.6 Shell Commands (control flow, pipelines, etc.)
  *   - 2.14 Special Built-ins
  *   - 2.5.3 Shell Variables
+ *
  * @since 1.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
-public final class Sh4jPosixTest {
+final class Sh4jPosixTest {
 
     // ============================================================
     // POSIX 2.5.1 Token Recognition
     // ============================================================
 
     @Test
-    public void simpleCommand() {
-        Assert.assertEquals(0, Sh4j.run("true"));
+    void simpleCommand() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("true"));
     }
 
     @Test
-    public void commandWithArguments() {
-        Assert.assertEquals("a b c\n", Sh4j.out("echo a b c"));
+    void commandWithArguments() {
+        Assertions.assertEquals(String.format("a b c%n"), Sh4j.INSTANCE.out("echo a b c"));
     }
 
     @Test
-    public void commandWithInlineAssignment() {
-        Assert.assertEquals("hello\n", Sh4j.out("X=hello echo $X"));
+    void commandWithInlineAssignment() {
+        Assertions.assertEquals(String.format("hello%n"), Sh4j.INSTANCE.out("X=hello echo $X"));
     }
 
     // ============================================================
@@ -47,25 +47,34 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void singleQuotesPreserveLiterals() {
-        Assert.assertEquals("hello * ?\n", Sh4j.out("echo 'hello * ?'"));
+    void singleQuotesPreserveLiterals() {
+        Assertions.assertEquals(
+            String.format("hello * ?%n"),
+            Sh4j.INSTANCE.out("echo 'hello * ?'")
+        );
     }
 
     @Test
-    public void doubleQuotesAllowExpansion() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void doubleQuotesAllowExpansion() {
+        final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/test");
-        Assert.assertEquals("/home/test\n", Sh4j.out(env, "echo \"$HOME\""));
+        Assertions.assertEquals(
+            String.format("/home/test%n"),
+            Sh4j.INSTANCE.out(env, "echo \"$HOME\"")
+        );
     }
 
     @Test
-    public void backslashEscapesNextChar() {
-        Assert.assertEquals("$\n", Sh4j.out("echo \\$"));
+    void backslashEscapesNextChar() {
+        Assertions.assertEquals(String.format("$%n"), Sh4j.INSTANCE.out("echo \\$"));
     }
 
     @Test
-    public void backslashNewlineContinuation() {
-        Assert.assertEquals("hello world\n", Sh4j.out("echo hello \\\nworld"));
+    void backslashNewlineContinuation() {
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            Sh4j.INSTANCE.out(String.format("echo hello \\%nworld"))
+        );
     }
 
     // ============================================================
@@ -73,19 +82,19 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void pipelineWithTrue() {
-        Assert.assertEquals(0, Sh4j.run("true | true"));
+    void pipelineWithTrue() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("true | true"));
     }
 
     @Test
-    public void pipelineWithFalse() {
-        Assert.assertEquals(0, Sh4j.run("false | true"));
+    void pipelineWithFalse() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("false | true"));
     }
 
     @Test
-    public void pipelineExitCodeIsLast() {
-        Assert.assertEquals(0, Sh4j.run("false | true"));
-        Assert.assertEquals(1, Sh4j.run("true | false"));
+    void pipelineExitCodeIsLast() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("false | true"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("true | false"));
     }
 
     // ============================================================
@@ -93,25 +102,28 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void andListShortCircuitsOnFailure() {
-        Assert.assertEquals(1, Sh4j.run("false && echo 1"));
-        Assert.assertEquals("", Sh4j.out("false && echo 1"));
+    void andListShortCircuitsOnFailure() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("false && echo 1"));
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("false && echo 1"));
     }
 
     @Test
-    public void andListContinuesOnSuccess() {
-        Assert.assertEquals("yes\n", Sh4j.out("true && echo yes"));
+    void andListContinuesOnSuccess() {
+        Assertions.assertEquals(String.format("yes%n"), Sh4j.INSTANCE.out("true && echo yes"));
     }
 
     @Test
-    public void orListShortCircuitsOnSuccess() {
-        Assert.assertEquals(0, Sh4j.run("true || echo 1"));
-        Assert.assertEquals("", Sh4j.out("true || echo 1"));
+    void orListShortCircuitsOnSuccess() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("true || echo 1"));
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("true || echo 1"));
     }
 
     @Test
-    public void orListContinuesOnFailure() {
-        Assert.assertEquals("fallback\n", Sh4j.out("false || echo fallback"));
+    void orListContinuesOnFailure() {
+        Assertions.assertEquals(
+            String.format("fallback%n"),
+            Sh4j.INSTANCE.out("false || echo fallback")
+        );
     }
 
     // ============================================================
@@ -119,20 +131,26 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void ifTrueBranch() {
-        Assert.assertEquals("yes\n", Sh4j.out("if true; then echo yes; fi"));
+    void ifTrueBranch() {
+        Assertions.assertEquals(
+            String.format("yes%n"),
+            Sh4j.INSTANCE.out("if true; then echo yes; fi")
+        );
     }
 
     @Test
-    public void ifElseBranch() {
-        Assert.assertEquals("no\n", Sh4j.out("if false; then echo yes; else echo no; fi"));
+    void ifElseBranch() {
+        Assertions.assertEquals(
+            String.format("no%n"),
+            Sh4j.INSTANCE.out("if false; then echo yes; else echo no; fi")
+        );
     }
 
     @Test
-    public void ifElifBranch() {
-        Assert.assertEquals(
-            "elif\n",
-            Sh4j.out("if false; then echo if; elif true; then echo elif; fi")
+    void ifElifBranch() {
+        Assertions.assertEquals(
+            String.format("elif%n"),
+            Sh4j.INSTANCE.out("if false; then echo if; elif true; then echo elif; fi")
         );
     }
 
@@ -141,16 +159,19 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void forLoopWithList() {
-        Assert.assertEquals("1\n2\n3\n", Sh4j.out("for i in 1 2 3; do echo $i; done"));
+    void forLoopWithList() {
+        Assertions.assertEquals(
+            String.format("1%n2%n3%n"),
+            Sh4j.INSTANCE.out("for i in 1 2 3; do echo $i; done")
+        );
     }
 
     @Test
-    public void forLoopWithPositionalParams() {
-        final Map<String, String> env = new HashMap<String, String>();
-        Assert.assertEquals(
-            "a\nb\nc\n",
-            Sh4j.out(env, "set -- a b c; for i; do echo $i; done")
+    void forLoopWithPositionalParams() {
+        final Map<String, String> env = new HashMap<>();
+        Assertions.assertEquals(
+            String.format("a%nb%nc%n"),
+            Sh4j.INSTANCE.out(env, "set -- a b c; for i; do echo $i; done")
         );
     }
 
@@ -159,18 +180,18 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void whileLoop() {
-        Assert.assertEquals(
-            "1\n2\n",
-            Sh4j.out("i=1; while [ $i -le 2 ]; do echo $i; i=$((i+1)); done")
+    void whileLoop() {
+        Assertions.assertEquals(
+            String.format("1%n2%n"),
+            Sh4j.INSTANCE.out("i=1; while [ $i -le 2 ]; do echo $i; i=$((i+1)); done")
         );
     }
 
     @Test
-    public void untilLoop() {
-        Assert.assertEquals(
-            "1\n2\n",
-            Sh4j.out("i=1; until [ $i -gt 2 ]; do echo $i; i=$((i+1)); done")
+    void untilLoop() {
+        Assertions.assertEquals(
+            String.format("1%n2%n"),
+            Sh4j.INSTANCE.out("i=1; until [ $i -gt 2 ]; do echo $i; i=$((i+1)); done")
         );
     }
 
@@ -179,26 +200,26 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void casePatternMatch() {
-        Assert.assertEquals(
-            "matched\n",
-            Sh4j.out("case foo in foo) echo matched;; esac")
+    void casePatternMatch() {
+        Assertions.assertEquals(
+            String.format("matched%n"),
+            Sh4j.INSTANCE.out("case foo in foo) echo matched;; esac")
         );
     }
 
     @Test
-    public void caseWildcardMatch() {
-        Assert.assertEquals(
-            "wild\n",
-            Sh4j.out("case bar in f*) echo foo;; *) echo wild;; esac")
+    void caseWildcardMatch() {
+        Assertions.assertEquals(
+            String.format("wild%n"),
+            Sh4j.INSTANCE.out("case bar in f*) echo foo;; *) echo wild;; esac")
         );
     }
 
     @Test
-    public void caseNoMatch() {
-        Assert.assertEquals(
+    void caseNoMatch() {
+        Assertions.assertEquals(
             "",
-            Sh4j.out("case bar in foo) echo matched;; esac")
+            Sh4j.INSTANCE.out("case bar in foo) echo matched;; esac")
         );
     }
 
@@ -207,15 +228,18 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void functionDefinitionAndCall() {
-        Assert.assertEquals("hello\n", Sh4j.out("greet() { echo hello; }; greet"));
+    void functionDefinitionAndCall() {
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.out("greet() { echo hello; }; greet")
+        );
     }
 
     @Test
-    public void functionWithArguments() {
-        Assert.assertEquals(
-            "arg1\n",
-            Sh4j.out("f() { echo $1; }; f arg1")
+    void functionWithArguments() {
+        Assertions.assertEquals(
+            String.format("arg1%n"),
+            Sh4j.INSTANCE.out("f() { echo $1; }; f arg1")
         );
     }
 
@@ -224,67 +248,70 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void setEExitsOnFailure() {
-        Assert.assertEquals(1, Sh4j.run("set -e; false; echo 1"));
+    void setEExitsOnFailure() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("set -e; false; echo 1"));
     }
 
     @Test
-    public void setEDoesNotExitOnOrList() {
-        Assert.assertEquals(0, Sh4j.run("set -e; false || true"));
+    void setEDoesNotExitOnOrList() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("set -e; false || true"));
     }
 
     @Test
-    public void andListShortCircuitsNoErrexit() {
-        Assert.assertEquals(1, Sh4j.run("set -e; false && true"));
+    void andListShortCircuitsNoErrexit() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("set -e; false && true"));
     }
 
     @Test
-    public void setEDoesNotExitInIfCondition() {
-        Assert.assertEquals(
-            "after\n",
-            Sh4j.out("set -e; if false; then echo yes; fi; echo after")
+    void setEDoesNotExitInIfCondition() {
+        Assertions.assertEquals(
+            String.format("after%n"),
+            Sh4j.INSTANCE.out("set -e; if false; then echo yes; fi; echo after")
         );
     }
 
     @Test
-    public void setEStopsAcrossSeparateCalls() {
-        Assert.assertEquals(1, Sh4j.run("set -e", "false", "echo 1"));
+    void setEStopsAcrossSeparateCalls() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("set -e", "false", "echo 1"));
     }
 
     @Test
-    public void setEStopsWithoutEchoAcrossSeparateCalls() {
-        Assert.assertEquals("", Sh4j.out("set -e", "false", "echo 1"));
+    void setEStopsWithoutEchoAcrossSeparateCalls() {
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("set -e", "false", "echo 1"));
     }
 
     @Test
-    public void setEWithPipelineLastFails() {
-        Assert.assertEquals(1, Sh4j.run("set -e; true | false"));
+    void setEWithPipelineLastFails() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("set -e; true | false"));
     }
 
     @Test
-    public void setEWithNonLastPipeStageFailsOk() {
-        Assert.assertEquals(0, Sh4j.run("set -e; false | true"));
+    void setEWithNonLastPipeStageFailsOk() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("set -e; false | true"));
     }
 
     @Test
-    public void setEWithBangInverts() {
-        Assert.assertEquals(0, Sh4j.run("set -e; ! false"));
+    void setEWithBangInverts() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("set -e; ! false"));
     }
 
     @Test
-    public void setEWithBangTrueNoExit() {
-        final String out = Sh4j.out("set -e; ! false; echo after");
-        Assert.assertEquals("after\n", out);
+    void setEWithBangTrueNoExit() {
+        final String out = Sh4j.INSTANCE.out("set -e; ! false; echo after");
+        Assertions.assertEquals(String.format("after%n"), out);
     }
 
     @Test
-    public void setEWithCompoundAndOrNoExit() {
-        Assert.assertEquals(0, Sh4j.run("set -e; false || echo ok"));
+    void setEWithCompoundAndOrNoExit() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("set -e; false || echo ok"));
     }
 
     @Test
-    public void setEWithTrueAndThenOk() {
-        Assert.assertEquals("ok\n", Sh4j.out("set -e; true && echo ok"));
+    void setEWithTrueAndThenOk() {
+        Assertions.assertEquals(
+            String.format("ok%n"),
+            Sh4j.INSTANCE.out("set -e; true && echo ok")
+        );
     }
 
     // ============================================================
@@ -292,13 +319,16 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void questionMarkIsLastExitCode() {
-        Assert.assertEquals("42\n", Sh4j.out("(exit 42)", "echo $?"));
+    void questionMarkIsLastExitCode() {
+        Assertions.assertEquals(String.format("42%n"), Sh4j.INSTANCE.out("(exit 42)", "echo $?"));
     }
 
     @Test
-    public void questionMarkUpdatedAfterSuccess() {
-        Assert.assertEquals("0\n", Sh4j.out("false", "true", "echo $?"));
+    void questionMarkUpdatedAfterSuccess() {
+        Assertions.assertEquals(
+            String.format("0%n"),
+            Sh4j.INSTANCE.out("false", "true", "echo $?")
+        );
     }
 
     // ============================================================
@@ -306,64 +336,85 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void expandVariable() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void expandVariable() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "hello");
-        Assert.assertEquals("hello\n", Sh4j.out(env, "echo $X"));
+        Assertions.assertEquals(String.format("hello%n"), Sh4j.INSTANCE.out(env, "echo $X"));
     }
 
     @Test
-    public void expandBracedVariable() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void expandBracedVariable() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "hello");
-        Assert.assertEquals("hello world\n", Sh4j.out(env, "echo ${X} world"));
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            Sh4j.INSTANCE.out(env, "echo ${X} world")
+        );
     }
 
     @Test
-    public void expandUnsetVariableIsEmpty() {
-        Assert.assertEquals("\n", Sh4j.out("echo $UNSET_VAR_XYZ"));
+    void expandUnsetVariableIsEmpty() {
+        Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out("echo $UNSET_VAR_XYZ"));
     }
 
     @Test
-    public void dashUseDefaultIfUnset() {
-        Assert.assertEquals("default\n", Sh4j.out("echo ${UNSET_XYZ-default}"));
+    void dashUseDefaultIfUnset() {
+        Assertions.assertEquals(
+            String.format("default%n"),
+            Sh4j.INSTANCE.out("echo ${UNSET_XYZ-default}")
+        );
     }
 
     @Test
-    public void dashUseDefaultIfSet() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void dashUseDefaultIfSet() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "value");
-        Assert.assertEquals("value\n", Sh4j.out(env, "echo ${X-default}"));
+        Assertions.assertEquals(
+            String.format("value%n"),
+            Sh4j.INSTANCE.out(env, "echo ${X-default}")
+        );
     }
 
     @Test
-    public void colonDashUseDefaultIfUnsetOrNull() {
-        Assert.assertEquals("default\n", Sh4j.out("echo ${UNSET_XYZ:-default}"));
+    void colonDashUseDefaultIfUnsetOrNull() {
+        Assertions.assertEquals(
+            String.format("default%n"),
+            Sh4j.INSTANCE.out("echo ${UNSET_XYZ:-default}")
+        );
     }
 
     @Test
-    public void colonDashUseDefaultIfEmpty() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void colonDashUseDefaultIfEmpty() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "");
-        Assert.assertEquals("default\n", Sh4j.out(env, "echo ${X:-default}"));
+        Assertions.assertEquals(
+            String.format("default%n"),
+            Sh4j.INSTANCE.out(env, "echo ${X:-default}")
+        );
     }
 
     @Test
-    public void plusUseAltIfSet() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void plusUseAltIfSet() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "value");
-        Assert.assertEquals("alt\n", Sh4j.out(env, "echo ${X+alt}"));
+        Assertions.assertEquals(String.format("alt%n"), Sh4j.INSTANCE.out(env, "echo ${X+alt}"));
     }
 
     @Test
-    public void plusEmptyIfUnset() {
-        Assert.assertEquals("\n", Sh4j.out("echo ${UNSET_XYZ+alt}"));
+    void plusEmptyIfUnset() {
+        Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out("echo ${UNSET_XYZ+alt}"));
     }
 
     @Test
-    public void equalsAssignDefaultIfUnset() {
-        Assert.assertEquals("default\n", Sh4j.out("echo ${UNSET_XYZ=default}"));
-        Assert.assertEquals("default", Sh4j.getVar("UNSET_XYZ", "echo ${UNSET_XYZ=default}"));
+    void equalsAssignDefaultIfUnset() {
+        Assertions.assertEquals(
+            String.format("default%n"),
+            Sh4j.INSTANCE.out("echo ${UNSET_XYZ=default}")
+        );
+        Assertions.assertEquals(
+            "default",
+            Sh4j.INSTANCE.getVar("UNSET_XYZ", "echo ${UNSET_XYZ=default}")
+        );
     }
 
     // ============================================================
@@ -371,18 +422,21 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void commandSubstitution() {
-        Assert.assertEquals("hello\n", Sh4j.out("echo $(echo hello)"));
+    void commandSubstitution() {
+        Assertions.assertEquals(String.format("hello%n"), Sh4j.INSTANCE.out("echo $(echo hello)"));
     }
 
     @Test
-    public void nestedCommandSubstitution() {
-        Assert.assertEquals("hello\n", Sh4j.out("echo $(echo $(echo hello))"));
+    void nestedCommandSubstitution() {
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.out("echo $(echo $(echo hello))")
+        );
     }
 
     @Test
-    public void backtickCommandSubstitution() {
-        Assert.assertEquals("hello\n", Sh4j.out("echo `echo hello`"));
+    void backtickCommandSubstitution() {
+        Assertions.assertEquals(String.format("hello%n"), Sh4j.INSTANCE.out("echo `echo hello`"));
     }
 
     // ============================================================
@@ -390,23 +444,26 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void arithmeticAddition() {
-        Assert.assertEquals("7\n", Sh4j.out("echo $((3 + 4))"));
+    void arithmeticAddition() {
+        Assertions.assertEquals(String.format("7%n"), Sh4j.INSTANCE.out("echo $((3 + 4))"));
     }
 
     @Test
-    public void arithmeticMultiplication() {
-        Assert.assertEquals("12\n", Sh4j.out("echo $((3 * 4))"));
+    void arithmeticMultiplication() {
+        Assertions.assertEquals(String.format("12%n"), Sh4j.INSTANCE.out("echo $((3 * 4))"));
     }
 
     @Test
-    public void arithmeticWithVariables() {
-        Assert.assertEquals("10\n", Sh4j.out("x=3; y=7; echo $((x + y))"));
+    void arithmeticWithVariables() {
+        Assertions.assertEquals(
+            String.format("10%n"),
+            Sh4j.INSTANCE.out("x=3; y=7; echo $((x + y))")
+        );
     }
 
     @Test
-    public void arithmeticNested() {
-        Assert.assertEquals("14\n", Sh4j.out("echo $((2 * (3 + 4)))"));
+    void arithmeticNested() {
+        Assertions.assertEquals(String.format("14%n"), Sh4j.INSTANCE.out("echo $((2 * (3 + 4)))"));
     }
 
     // ============================================================
@@ -414,35 +471,41 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void dollarZeroIsScriptName() {
-        Assert.assertEquals("sh\n", Sh4j.out("echo $0"));
+    void dollarZeroIsScriptName() {
+        Assertions.assertEquals(String.format("sh%n"), Sh4j.INSTANCE.out("echo $0"));
     }
 
     @Test
-    public void dollarHashIsParamCount() {
-        Assert.assertEquals("3\n", Sh4j.out("set -- a b c; echo $#"));
+    void dollarHashIsParamCount() {
+        Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out("set -- a b c; echo $#"));
     }
 
     @Test
-    public void dollarAtIsAllParams() {
-        Assert.assertEquals("a b c\n", Sh4j.out("set -- a b c; echo $@"));
+    void dollarAtIsAllParams() {
+        Assertions.assertEquals(
+            String.format("a b c%n"),
+            Sh4j.INSTANCE.out("set -- a b c; echo $@")
+        );
     }
 
     @Test
-    public void dollarStarIsAllParams() {
-        Assert.assertEquals("a b c\n", Sh4j.out("set -- a b c; echo $*"));
+    void dollarStarIsAllParams() {
+        Assertions.assertEquals(
+            String.format("a b c%n"),
+            Sh4j.INSTANCE.out("set -- a b c; echo $*")
+        );
     }
 
     @Test
-    public void dollarDollarIsCurrentPid() {
-        final String out = Sh4j.out("echo $$");
-        Assert.assertTrue(out.trim().matches("\\d+"));
+    void dollarDollarIsCurrentPid() {
+        final String out = Sh4j.INSTANCE.out("echo $$");
+        Assertions.assertTrue(out.trim().matches("\\d+"));
     }
 
     @Test
-    public void dollarBangIsLastBgPid() {
-        final String out = Sh4j.out("sleep 0 & echo $!");
-        Assert.assertTrue(out.trim().matches("\\d+"));
+    void dollarBangIsLastBgPid() {
+        final String out = Sh4j.INSTANCE.out("sleep 0 & echo $!");
+        Assertions.assertTrue(out.trim().matches("\\d+"));
     }
 
     // ============================================================
@@ -450,15 +513,15 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void exportMakesVariableInEnvironment() {
-        Assert.assertEquals("yes", Sh4j.getVar("EXPORTED", "export EXPORTED=yes"));
+    void exportMakesVariableInEnvironment() {
+        Assertions.assertEquals("yes", Sh4j.INSTANCE.getVar("EXPORTED", "export EXPORTED=yes"));
     }
 
     @Test
-    public void exportWithValue() {
-        final Sh4j.Result result = Sh4j.runFull("export X=hello", "echo $X");
-        Assert.assertEquals(0, result.exitCode());
-        Assert.assertEquals("hello\n", result.stdout());
+    void exportWithValue() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("export X=hello", "echo $X");
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     // ============================================================
@@ -466,9 +529,9 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void readonlyPreventsReassignment() {
-        final Sh4j.Result result = Sh4j.runFull("readonly R=hello", "R=world");
-        Assert.assertEquals(1, result.exitCode());
+    void readonlyPreventsReassignment() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("readonly R=hello", "R=world");
+        Assertions.assertEquals(1, result.exitCode());
     }
 
     // ============================================================
@@ -476,10 +539,10 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void unsetRemovesVariable() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void unsetRemovesVariable() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "value");
-        Assert.assertEquals("\n", Sh4j.out(env, "unset X", "echo $X"));
+        Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out(env, "unset X", "echo $X"));
     }
 
     // ============================================================
@@ -487,18 +550,18 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void cdChangesDirectory() {
-        final String out = Sh4j.out("cd /tmp", "pwd");
-        Assert.assertTrue(out.trim().startsWith("/tmp"));
+    void cdChangesDirectory() {
+        final String out = Sh4j.INSTANCE.out("cd /tmp", "pwd");
+        Assertions.assertTrue(out.trim().startsWith("/tmp"));
     }
 
     @Test
-    public void cdDashReturnsToOldPwd() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void cdDashReturnsToOldPwd() {
+        final Map<String, String> env = new HashMap<>();
         env.put("PWD", "/tmp");
         env.put("OLDPWD", "/home");
-        final String out = Sh4j.out(env, "cd -");
-        Assert.assertTrue(out.contains("/home"));
+        final String out = Sh4j.INSTANCE.out(env, "cd -");
+        Assertions.assertTrue(out.contains("/home"));
     }
 
     // ============================================================
@@ -506,13 +569,19 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void shiftRemovesFirstParam() {
-        Assert.assertEquals("b\n", Sh4j.out("set -- a b c; shift; echo $1"));
+    void shiftRemovesFirstParam() {
+        Assertions.assertEquals(
+            String.format("b%n"),
+            Sh4j.INSTANCE.out("set -- a b c; shift; echo $1")
+        );
     }
 
     @Test
-    public void shiftByN() {
-        Assert.assertEquals("c\n", Sh4j.out("set -- a b c; shift 2; echo $1"));
+    void shiftByN() {
+        Assertions.assertEquals(
+            String.format("c%n"),
+            Sh4j.INSTANCE.out("set -- a b c; shift 2; echo $1")
+        );
     }
 
     // ============================================================
@@ -520,47 +589,47 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void readSingleVar() {
-        final String input = "hello\n";
-        final Sh4j.Result result = Sh4j.runFull(
+    void readSingleVar() {
+        final String input = String.format("hello%n");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
             "read VAR",
             "echo $VAR"
         );
-        Assert.assertEquals("hello\n", result.stdout());
+        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
-    public void readMultipleVars() {
-        final String input = "a b c\n";
-        final Sh4j.Result result = Sh4j.runFull(
+    void readMultipleVars() {
+        final String input = String.format("a b c%n");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
             "read X Y Z",
             "echo $X $Y $Z"
         );
-        Assert.assertEquals("a b c\n", result.stdout());
+        Assertions.assertEquals(String.format("a b c%n"), result.stdout());
     }
 
     @Test
-    public void readRawMode() {
-        final String input = "a\\b\n";
-        final Sh4j.Result result = Sh4j.runFull(
+    void readRawMode() {
+        final String input = String.format("a\\b%n");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
             "read -r VAR",
             "echo $VAR"
         );
-        Assert.assertEquals("a\\b\n", result.stdout());
+        Assertions.assertEquals(String.format("a\\b%n"), result.stdout());
     }
 
     @Test
-    public void readWithReplay() {
-        final String input = "hello world\n";
-        final Sh4j.Result result = Sh4j.runFull(
+    void readWithReplay() {
+        final String input = String.format("hello world%n");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
             "read",
             "echo $REPLY"
         );
-        Assert.assertEquals("hello world\n", result.stdout());
+        Assertions.assertEquals(String.format("hello world%n"), result.stdout());
     }
 
     // ============================================================
@@ -568,34 +637,40 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void aliasExpands() {
-        Assert.assertEquals("hello\n", Sh4j.out("alias ll='echo hello'", "ll"));
+    void aliasExpands() {
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.out("alias ll='echo hello'", "ll")
+        );
     }
 
     @Test
-    public void aliasWithArguments() {
-        Assert.assertEquals("hello world\n", Sh4j.out("alias ll='echo'", "ll hello world"));
+    void aliasWithArguments() {
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            Sh4j.INSTANCE.out("alias ll='echo'", "ll hello world")
+        );
     }
 
     @Test
-    public void unaliasRemovesAlias() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void unaliasRemovesAlias() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "alias ll='echo hello'",
             "unalias ll",
             "ll"
         );
-        Assert.assertNotEquals(0, result.exitCode());
+        Assertions.assertNotEquals(0, result.exitCode());
     }
 
     @Test
-    public void unaliasAll() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void unaliasAll() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "alias ll='echo hello'",
             "alias la='echo world'",
             "unalias -a",
             "ll"
         );
-        Assert.assertNotEquals(0, result.exitCode());
+        Assertions.assertNotEquals(0, result.exitCode());
     }
 
     // ============================================================
@@ -603,23 +678,23 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void getoptsParsesFlags() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void getoptsParsesFlags() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "set -- -a -b val",
             "getopts ab: opt; echo $opt",
             "getopts ab: opt; echo $opt $OPTARG"
         );
-        Assert.assertEquals("a\nb val\n", result.stdout());
+        Assertions.assertEquals(String.format("a%nb val%n"), result.stdout());
     }
 
     @Test
-    public void getoptsEndsAtNonOption() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void getoptsEndsAtNonOption() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "set -- -a file",
             "getopts a opt; echo $opt",
             "getopts a opt; echo $?"
         );
-        Assert.assertEquals("a\n1\n", result.stdout());
+        Assertions.assertEquals(String.format("a%n1%n"), result.stdout());
     }
 
     // ============================================================
@@ -627,21 +702,21 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void jobsListsBackground() {
-        final String out = Sh4j.out("true & jobs");
-        Assert.assertTrue(out.contains("[1]"));
+    void jobsListsBackground() {
+        final String out = Sh4j.INSTANCE.out("true & jobs");
+        Assertions.assertTrue(out.contains("[1]"));
     }
 
     @Test
-    public void bgConfirmsJob() {
-        final String out = Sh4j.out("true & bg");
-        Assert.assertTrue(out.contains("[1]"));
+    void bgConfirmsJob() {
+        final String out = Sh4j.INSTANCE.out("true & bg");
+        Assertions.assertTrue(out.contains("[1]"));
     }
 
     @Test
-    public void fgWaitsForJob() {
-        final String out = Sh4j.out("true & fg");
-        Assert.assertTrue(out.contains("true"));
+    void fgWaitsForJob() {
+        final String out = Sh4j.INSTANCE.out("true & fg");
+        Assertions.assertTrue(out.contains("true"));
     }
 
     // ============================================================
@@ -649,18 +724,18 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void fcListsHistory() {
-        final String out = Sh4j.out("echo one", "echo two", "fc -l 1 2");
-        Assert.assertTrue(out.contains("1"));
-        Assert.assertTrue(out.contains("echo one"));
-        Assert.assertTrue(out.contains("2"));
-        Assert.assertTrue(out.contains("echo two"));
+    void fcListsHistory() {
+        final String out = Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2");
+        Assertions.assertTrue(out.contains("1"));
+        Assertions.assertTrue(out.contains("echo one"));
+        Assertions.assertTrue(out.contains("2"));
+        Assertions.assertTrue(out.contains("echo two"));
     }
 
     @Test
-    public void fcSubstitute() {
-        final String out = Sh4j.out("echo hello", "fc -s hello=world");
-        Assert.assertTrue(out.contains("echo world"));
+    void fcSubstitute() {
+        final String out = Sh4j.INSTANCE.out("echo hello", "fc -s hello=world");
+        Assertions.assertTrue(out.contains("echo world"));
     }
 
     // ============================================================
@@ -668,8 +743,8 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void linenoReflectsSourceLine() {
-        Assert.assertEquals("1", Sh4j.getVar("LINENO", "echo $LINENO"));
+    void linenoReflectsSourceLine() {
+        Assertions.assertEquals("1", Sh4j.INSTANCE.getVar("LINENO", "echo $LINENO"));
     }
 
     // ============================================================
@@ -677,33 +752,33 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void langCanBeSet() {
-        Assert.assertEquals("en_US.UTF-8", Sh4j.getVar("LANG", "LANG=en_US.UTF-8"));
+    void langCanBeSet() {
+        Assertions.assertEquals("en_US.UTF-8", Sh4j.INSTANCE.getVar("LANG", "LANG=en_US.UTF-8"));
     }
 
     @Test
-    public void lcAllCanBeSet() {
-        Assert.assertEquals("C", Sh4j.getVar("LC_ALL", "LC_ALL=C"));
+    void lcAllCanBeSet() {
+        Assertions.assertEquals("C", Sh4j.INSTANCE.getVar("LC_ALL", "LC_ALL=C"));
     }
 
     @Test
-    public void lcCollateCanBeSet() {
-        Assert.assertEquals(
+    void lcCollateCanBeSet() {
+        Assertions.assertEquals(
             "en_US.UTF-8",
-            Sh4j.getVar("LC_COLLATE", "LC_COLLATE=en_US.UTF-8")
+            Sh4j.INSTANCE.getVar("LC_COLLATE", "LC_COLLATE=en_US.UTF-8")
         );
     }
 
     @Test
-    public void lcCtypeCanBeSet() {
-        Assert.assertEquals("UTF-8", Sh4j.getVar("LC_CTYPE", "LC_CTYPE=UTF-8"));
+    void lcCtypeCanBeSet() {
+        Assertions.assertEquals("UTF-8", Sh4j.INSTANCE.getVar("LC_CTYPE", "LC_CTYPE=UTF-8"));
     }
 
     @Test
-    public void lcMessagesCanBeSet() {
-        Assert.assertEquals(
+    void lcMessagesCanBeSet() {
+        Assertions.assertEquals(
             "C",
-            Sh4j.getVar("LC_MESSAGES", "LC_MESSAGES=C")
+            Sh4j.INSTANCE.getVar("LC_MESSAGES", "LC_MESSAGES=C")
         );
     }
 
@@ -712,28 +787,31 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void outputRedirection() {
-        final Sh4j.Result result = Sh4j.runFull("echo hello > /tmp/sh4j_test.txt", "cat /tmp/sh4j_test.txt");
-        Assert.assertEquals("hello\n", result.stdout());
+    void outputRedirection() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
+            "echo hello > /tmp/sh4j_test.txt",
+            "cat /tmp/sh4j_test.txt"
+        );
+        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
-    public void inputRedirection() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void inputRedirection() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "echo hello > /tmp/sh4j_test_in.txt",
             "cat < /tmp/sh4j_test_in.txt"
         );
-        Assert.assertEquals("hello\n", result.stdout());
+        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
-    public void appendRedirection() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void appendRedirection() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "echo hello > /tmp/sh4j_test_app.txt",
             "echo world >> /tmp/sh4j_test_app.txt",
             "cat /tmp/sh4j_test_app.txt"
         );
-        Assert.assertEquals("hello\nworld\n", result.stdout());
+        Assertions.assertEquals(String.format("hello%nworld%n"), result.stdout());
     }
 
     // ============================================================
@@ -741,15 +819,15 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void subshellDoesNotAffectParent() {
-        final String out = Sh4j.out("X=outer; (X=inner); echo $X");
-        Assert.assertEquals("outer\n", out);
+    void subshellDoesNotAffectParent() {
+        final String out = Sh4j.INSTANCE.out("X=outer; (X=inner); echo $X");
+        Assertions.assertEquals(String.format("outer%n"), out);
     }
 
     @Test
-    public void subshellCanReadParentVars() {
-        final String out = Sh4j.out("X=outer; (echo $X)");
-        Assert.assertEquals("outer\n", out);
+    void subshellCanReadParentVars() {
+        final String out = Sh4j.INSTANCE.out("X=outer; (echo $X)");
+        Assertions.assertEquals(String.format("outer%n"), out);
     }
 
     // ============================================================
@@ -757,9 +835,9 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void groupingSharesEnvironment() {
-        final String out = Sh4j.out("{ X=inner; }; echo $X");
-        Assert.assertEquals("inner\n", out);
+    void groupingSharesEnvironment() {
+        final String out = Sh4j.INSTANCE.out("{ X=inner; }; echo $X");
+        Assertions.assertEquals(String.format("inner%n"), out);
     }
 
     // ============================================================
@@ -767,18 +845,18 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void ifsDefaultSplitsOnSpace() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void ifsDefaultSplitsOnSpace() {
+        final Map<String, String> env = new HashMap<>();
         env.put("X", "a b c");
-        Assert.assertEquals("3\n", Sh4j.out(env, "set -- $X; echo $#"));
+        Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out(env, "set -- $X; echo $#"));
     }
 
     @Test
-    public void ifsCustomDelimiter() {
-        final Map<String, String> env = new HashMap<String, String>();
+    void ifsCustomDelimiter() {
+        final Map<String, String> env = new HashMap<>();
         env.put("IFS", ":");
         env.put("X", "a:b:c");
-        Assert.assertEquals("3\n", Sh4j.out(env, "set -- $X; echo $#"));
+        Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out(env, "set -- $X; echo $#"));
     }
 
     // ============================================================
@@ -786,14 +864,16 @@ public final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    public void breakExitsLoop() {
-        final String out = Sh4j.out("for i in 1 2 3; do echo $i; break; echo after; done");
-        Assert.assertEquals("1\n", out);
+    void breakExitsLoop() {
+        final String out = Sh4j.INSTANCE.out("for i in 1 2 3; do echo $i; break; echo after; done");
+        Assertions.assertEquals(String.format("1%n"), out);
     }
 
     @Test
-    public void continueSkipsRestOfLoop() {
-        final String out = Sh4j.out("for i in 1 2 3; do if [ $i -eq 2 ]; then continue; fi; echo $i; done");
-        Assert.assertEquals("1\n3\n", out);
+    void continueSkipsRestOfLoop() {
+        final String out = Sh4j.INSTANCE.out(
+            "for i in 1 2 3; do if [ $i -eq 2 ]; then continue; fi; echo $i; done"
+        );
+        Assertions.assertEquals(String.format("1%n3%n"), out);
     }
 }

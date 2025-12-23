@@ -5,83 +5,129 @@
 package io.github.andreoss.sh4j.lexer;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for Token.
+ *
  * @since 1.0
  */
-@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
-public final class TokenTest {
+final class TokenTest {
 
     @Test
-    public void createsTokenWithTypeTextAndPosition() {
-        final Token tokn = new Token(TokenType.WORD, "echo", 1, 0);
-        assertThat(tokn.type(), equalTo(TokenType.WORD));
-        assertThat(tokn.text(), equalTo("echo"));
-        assertThat(tokn.line(), equalTo(1));
-        assertThat(tokn.column(), equalTo(0));
+    void createsTokenWithTypeTextAndPosition() {
+        final Token tokn = new Token(TokenType.WORD, "echo", new Position(1, 0));
+        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("echo"));
+        MatcherAssert.assertThat(tokn.line(), CoreMatchers.equalTo(1));
+        MatcherAssert.assertThat(tokn.column(), CoreMatchers.equalTo(0));
     }
 
     @Test
-    public void createsTokenFromCharReader() {
-        final Token tokn = Token.of(TokenType.WORD, "abc", new CharReader("abc"));
-        assertThat(tokn.type(), equalTo(TokenType.WORD));
-        assertThat(tokn.text(), equalTo("abc"));
-        assertThat(tokn.line(), equalTo(1));
-        assertThat(tokn.column(), equalTo(0));
+    void createsTokenFromCharReader() {
+        final Token tokn = Token.ofReader(TokenType.WORD, "abc", new CharReader("abc"));
+        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("abc"));
+        MatcherAssert.assertThat(tokn.line(), CoreMatchers.equalTo(1));
+        MatcherAssert.assertThat(tokn.column(), CoreMatchers.equalTo(0));
     }
 
     @Test
-    public void tokenEquality() {
-        assertThat(
-            new Token(TokenType.WORD, "x", 1, 0),
-            equalTo(new Token(TokenType.WORD, "x", 1, 0))
+    void tokenEquality() {
+        MatcherAssert.assertThat(
+            new Token(TokenType.WORD, "x", new Position(1, 0)),
+            CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 0)))
         );
     }
 
     @Test
-    public void tokenEqualityNegativeCases() {
-        final Token base = new Token(TokenType.WORD, "x", 1, 0);
-        assertThat(base, CoreMatchers.not(equalTo((Object)null)));
-        assertThat(base, CoreMatchers.not(equalTo("x")));
-        assertThat(
+    void tokenEqualityNegativeCases() {
+        final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
+        MatcherAssert.assertThat(
             base,
-            CoreMatchers.not(equalTo(new Token(TokenType.WORD, "y", 1, 0)))
+            CoreMatchers.not(CoreMatchers.equalTo((Object) null))
         );
-        assertThat(
+        MatcherAssert.assertThat(
             base,
-            CoreMatchers.not(equalTo(new Token(TokenType.NEWLINE, "x", 1, 0)))
+            CoreMatchers.not(CoreMatchers.equalTo("x"))
         );
-        assertThat(
+        MatcherAssert.assertThat(
             base,
-            CoreMatchers.not(equalTo(new Token(TokenType.WORD, "x", 2, 0)))
+            CoreMatchers.not(
+                CoreMatchers.equalTo(
+                    new Token(TokenType.WORD, "y", new Position(1, 0))
+                )
+            )
         );
-        assertThat(
+        MatcherAssert.assertThat(
             base,
-            CoreMatchers.not(equalTo(new Token(TokenType.WORD, "x", 1, 1)))
+            CoreMatchers.not(
+                CoreMatchers.equalTo(
+                    new Token(TokenType.NEWLINE, "x", new Position(1, 0))
+                )
+            )
         );
-        assertThat(base, equalTo(base));
+        MatcherAssert.assertThat(
+            base,
+            CoreMatchers.not(
+                CoreMatchers.equalTo(
+                    new Token(TokenType.WORD, "x", new Position(2, 0))
+                )
+            )
+        );
+        MatcherAssert.assertThat(
+            base,
+            CoreMatchers.not(
+                CoreMatchers.equalTo(
+                    new Token(TokenType.WORD, "x", new Position(1, 1))
+                )
+            )
+        );
+        MatcherAssert.assertThat(
+            base,
+            CoreMatchers.equalTo(base)
+        );
     }
 
     @Test
-    public void tokenHashCodeAndNullText() {
-        final Token first = new Token(TokenType.WORD, "x", 1, 0);
-        assertThat(first.hashCode(), equalTo(new Token(TokenType.WORD, "x", 1, 0).hashCode()));
-        assertThat(first.hashCode(), CoreMatchers.not(equalTo(new Token(TokenType.WORD, "y", 1, 0).hashCode())));
-        final Token empty = new Token(null, null, 0, 0);
-        assertThat(empty, equalTo(new Token(null, null, 0, 0)));
-        assertThat(empty, CoreMatchers.not(equalTo(first)));
-        assertThat(empty.hashCode(), equalTo(0));
+    void tokenHashCodeAndNullText() {
+        final Token first = new Token(TokenType.WORD, "x", new Position(1, 0));
+        final Token empty = new Token(null, null, new Position(0, 0));
+        MatcherAssert.assertThat(
+            first.hashCode(),
+            CoreMatchers.equalTo(
+                new Token(TokenType.WORD, "x", new Position(1, 0)).hashCode()
+            )
+        );
+        MatcherAssert.assertThat(
+            first.hashCode(),
+            CoreMatchers.not(
+                CoreMatchers.equalTo(
+                    new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode()
+                )
+            )
+        );
+        MatcherAssert.assertThat(
+            empty,
+            CoreMatchers.equalTo(
+                new Token(null, null, new Position(0, 0))
+            )
+        );
+        MatcherAssert.assertThat(
+            empty,
+            CoreMatchers.not(CoreMatchers.equalTo(first))
+        );
+        MatcherAssert.assertThat(
+            empty.hashCode(),
+            CoreMatchers.equalTo(0)
+        );
     }
 
     @Test
-    public void tokenToString() {
-        assertThat(
-            new Token(TokenType.NEWLINE, String.format("%n"), 1, 0).toString(),
+    void tokenToString() {
+        MatcherAssert.assertThat(
+            new Token(TokenType.NEWLINE, String.format("%n"), new Position(1, 0)).toString(),
             CoreMatchers.containsString("NEWLINE")
         );
     }

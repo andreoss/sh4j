@@ -4,25 +4,29 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.function.UnaryOperator;
-import org.junit.Assert;
-import org.junit.Test;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.function.UnaryOperator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for RedirectionHandler.
+ *
  * @since 1.0
  */
-@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
-public final class RedirectionHandlerTest {
+final class RedirectionHandlerTest {
 
     @Test
-    public void redirectStderrToStdout() {
+    void redirectStderrToStdout() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -34,22 +38,21 @@ public final class RedirectionHandlerTest {
             StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.asList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
-            out,
-            err,
+            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame("2>&1 should make err point to out", out, result.err);
-        Assert.assertSame(
-            "savedErr should be original err for restore",
+        Assertions.assertSame(out, result.err(), "2>&1 should make err point to out");
+        Assertions.assertSame(
             err,
-            result.savedErr
+            result.savederr(),
+            "savedErr should be original err for restore"
         );
-        Assert.assertNull("stdout untouched", result.savedOut);
+        Assertions.assertNull(result.savedout(), "stdout untouched");
     }
 
     @Test
-    public void redirectStdoutToStderr() {
+    void redirectStdoutToStderr() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -61,21 +64,20 @@ public final class RedirectionHandlerTest {
             StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.asList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
-            out,
-            err,
+            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame("1>&2 should make out point to err", err, result.out);
-        Assert.assertSame(
-            "savedOut should be original out for restore",
+        Assertions.assertSame(err, result.out(), "1>&2 should make out point to err");
+        Assertions.assertSame(
             out,
-            result.savedOut
+            result.savedout(),
+            "savedOut should be original out for restore"
         );
     }
 
     @Test
-    public void noRedirsLeavesStreamsUnchanged() {
+    void noRedirsLeavesStreamsUnchanged() {
         final PrintStream out = new PrintStream(
             new ByteArrayOutputStream(),
             true,
@@ -88,139 +90,156 @@ public final class RedirectionHandlerTest {
         );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.<Redirection>asList(),
-            out,
-            err,
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame(out, result.out);
-        Assert.assertSame(err, result.err);
-        Assert.assertNull(result.savedOut);
-        Assert.assertNull(result.savedErr);
+        Assertions.assertSame(out, result.out());
+        Assertions.assertSame(err, result.err());
+        Assertions.assertNull(result.savedout());
+        Assertions.assertNull(result.savederr());
     }
 
     @Test
-    public void heredocFileNullContent() {
-        Assert.assertNull(RedirectionHandler.heredocFile(null));
+    void heredocFileNullContent() {
+        Assertions.assertNull(RedirectionHandler.heredocFile(null));
     }
 
     @Test
-    public void heredocFileRoundtrip() throws Exception {
-        final java.io.File file = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
-        Assert.assertNotNull(file);
-        Assert.assertTrue(file.isFile());
-        Assert.assertEquals(
+    void heredocFileRoundtrip() throws Exception {
+        final File file = RedirectionHandler.heredocFile(String.format("alpha%nbeta%n"));
+        Assertions.assertNotNull(file);
+        Assertions.assertTrue(file.isFile());
+        Assertions.assertEquals(
             String.format("alpha%nbeta%n"),
-            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+            new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 
     @Test
-    public void builtinOutputFileAndLastRedirectWins() throws Exception {
-        final java.io.File first = java.io.File.createTempFile("rh-first", ".txt");
-        final java.io.File second = java.io.File.createTempFile("rh-second", ".txt");
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+    void builtinOutputFileAndLastRedirectWins() throws Exception {
+        final File first = File.createTempFile("rh-first", ".txt");
+        final File second = File.createTempFile("rh-second", ".txt");
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
                 new Redirection(1, RedirectionType.OUTPUT, first.getAbsolutePath()),
                 new Redirection(1, RedirectionType.OUTPUT, second.getAbsolutePath())
             ),
-            out,
-            err,
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame(out, swap.savedOut);
-        swap.out.println("hello");
-        swap.out.flush();
-        Assert.assertEquals(
-            "hello" + System.lineSeparator(),
-            new String(java.nio.file.Files.readAllBytes(second.toPath()), StandardCharsets.UTF_8)
+        Assertions.assertSame(out, swap.savedout());
+        swap.out().println("hello");
+        swap.out().flush();
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            new String(Files.readAllBytes(second.toPath()), StandardCharsets.UTF_8)
         );
+        err.close();
     }
 
     @Test
-    public void builtinAppendAndStderrForms() throws Exception {
-        final java.io.File file = java.io.File.createTempFile("rh-append", ".txt");
-        java.nio.file.Files.write(file.toPath(), "x".getBytes(StandardCharsets.UTF_8));
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+    void builtinAppendAndStderrForms() throws Exception {
+        final File file = File.createTempFile("rh-append", ".txt");
+        Files.write(file.toPath(), "x".getBytes(StandardCharsets.UTF_8));
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
                 new Redirection(1, RedirectionType.APPEND, file.getAbsolutePath()),
                 new Redirection(2, RedirectionType.APPEND, file.getAbsolutePath())
             ),
-            out,
-            err,
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        swap.out.print("y");
-        swap.err.print("z");
-        swap.out.flush();
-        swap.err.flush();
-        Assert.assertEquals(
+        swap.out().print("y");
+        swap.err().print("z");
+        swap.out().flush();
+        swap.err().flush();
+        Assertions.assertEquals(
             "xyz",
-            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+            new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
+        err.close();
     }
 
     @Test
-    public void builtinCloseAndDuplicateOutputForms() {
-        final PrintStream out = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-        final PrintStream err = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
+    void builtinCloseAndDuplicateOutputForms() {
+        final PrintStream out = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
+        final PrintStream err = new PrintStream(
+            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        );
         final RedirectionHandler.StreamSwap closed = RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.asList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
-            out,
-            err,
+            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame(out, closed.savedOut);
-        Assert.assertNotSame(out, closed.out);
-        final RedirectionHandler.StreamSwap closedErr = RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.asList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
-            out,
-            err,
+        Assertions.assertSame(out, closed.savedout());
+        Assertions.assertNotSame(out, closed.out());
+        final RedirectionHandler.StreamSwap closerr = RedirectionHandler.redirectOutputForBuiltin(
+            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
+            new RedirectionHandler.Streams(out, err),
             UnaryOperator.identity()
         );
-        Assert.assertSame(err, closedErr.savedErr);
-        Assert.assertNotSame(err, closedErr.err);
+        Assertions.assertSame(err, closerr.savederr());
+        Assertions.assertNotSame(err, closerr.err());
     }
 
     @Test
-    public void setupRedirectionsFileKinds() throws Exception {
-        final java.io.File file = java.io.File.createTempFile("rh-setup", ".txt");
-        final ProcessBuilder readWriteIn = new ProcessBuilder("x");
+    void setupRedirectionsFileKinds() throws Exception {
+        final File file = File.createTempFile("rh-setup", ".txt");
+        final ProcessBuilder readin = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            readWriteIn,
-            Arrays.asList(new Redirection(0, RedirectionType.READWRITE, file.getAbsolutePath())),
+            readin,
+            Collections.singletonList(
+                new Redirection(0, RedirectionType.READWRITE, file.getAbsolutePath())
+            ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(file, readWriteIn.redirectInput().file());
-        final ProcessBuilder readWriteOut = new ProcessBuilder("x");
+        Assertions.assertEquals(file, readin.redirectInput().file());
+        final ProcessBuilder readout = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            readWriteOut,
-            Arrays.asList(new Redirection(1, RedirectionType.READWRITE, file.getAbsolutePath())),
+            readout,
+            Collections.singletonList(
+                new Redirection(1, RedirectionType.READWRITE, file.getAbsolutePath())
+            ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(file, readWriteOut.redirectOutput().file());
-        final ProcessBuilder readWriteErr = new ProcessBuilder("x");
+        Assertions.assertEquals(file, readout.redirectOutput().file());
+        final ProcessBuilder readerr = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            readWriteErr,
-            Arrays.asList(new Redirection(2, RedirectionType.READWRITE, file.getAbsolutePath())),
+            readerr,
+            Collections.singletonList(
+                new Redirection(2, RedirectionType.READWRITE, file.getAbsolutePath())
+            ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(file, readWriteErr.redirectError().file());
+        Assertions.assertEquals(file, readerr.redirectError().file());
         final ProcessBuilder input = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
             input,
-            Arrays.asList(new Redirection(0, RedirectionType.INPUT, file.getAbsolutePath())),
+            Collections.singletonList(
+                new Redirection(0, RedirectionType.INPUT, file.getAbsolutePath())
+            ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(file, input.redirectInput().file());
+        Assertions.assertEquals(file, input.redirectInput().file());
     }
 
     @Test
-    public void setupRedirectionsOutputAppendAndErrors() throws Exception {
-        final java.io.File file = java.io.File.createTempFile("rh-out", ".txt");
+    void setupRedirectionsOutputAppendAndErrors() throws Exception {
+        final File file = File.createTempFile("rh-out", ".txt");
         final ProcessBuilder output = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
             output,
@@ -230,8 +249,8 @@ public final class RedirectionHandlerTest {
             ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(file, output.redirectOutput().file());
-        Assert.assertEquals(file, output.redirectError().file());
+        Assertions.assertEquals(file, output.redirectOutput().file());
+        Assertions.assertEquals(file, output.redirectError().file());
         final ProcessBuilder append = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
             append,
@@ -241,70 +260,82 @@ public final class RedirectionHandlerTest {
             ),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.APPEND, append.redirectOutput().type());
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.APPEND, append.redirectError().type());
+        Assertions.assertEquals(
+            ProcessBuilder.Redirect.Type.APPEND, append.redirectOutput().type()
+        );
+        Assertions.assertEquals(ProcessBuilder.Redirect.Type.APPEND, append.redirectError().type());
     }
 
     @Test
-    public void setupRedirectionsDupAndClose() {
-        final ProcessBuilder closeOut = new ProcessBuilder("x");
+    void setupRedirectionsDupAndClose() {
+        final ProcessBuilder closeout = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            closeOut,
-            Arrays.asList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
+            closeout,
+            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.WRITE, closeOut.redirectOutput().type());
-        final ProcessBuilder closeErr = new ProcessBuilder("x");
+        Assertions.assertEquals(
+            ProcessBuilder.Redirect.Type.WRITE, closeout.redirectOutput().type()
+        );
+        final ProcessBuilder closeerr = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            closeErr,
-            Arrays.asList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
+            closeerr,
+            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.WRITE, closeErr.redirectError().type());
-        final ProcessBuilder closeIn = new ProcessBuilder("x");
+        Assertions.assertEquals(
+            ProcessBuilder.Redirect.Type.WRITE, closeerr.redirectError().type()
+        );
+        final ProcessBuilder closein = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            closeIn,
-            Arrays.asList(new Redirection(0, RedirectionType.DUP_INPUT, "-")),
+            closein,
+            Collections.singletonList(new Redirection(0, RedirectionType.DUP_INPUT, "-")),
             UnaryOperator.identity()
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.READ, closeIn.redirectInput().type());
-        final ProcessBuilder dupErr = new ProcessBuilder("x");
+        Assertions.assertEquals(ProcessBuilder.Redirect.Type.READ, closein.redirectInput().type());
+        final ProcessBuilder duperr = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            dupErr,
-            Arrays.asList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+            duperr,
+            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
             UnaryOperator.identity()
         );
-        Assert.assertSame(dupErr.redirectOutput(), dupErr.redirectError());
-        final ProcessBuilder dupOut = new ProcessBuilder("x");
+        Assertions.assertSame(duperr.redirectOutput(), duperr.redirectError());
+        final ProcessBuilder dupout = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
-            dupOut,
-            Arrays.asList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+            dupout,
+            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
             UnaryOperator.identity()
         );
-        Assert.assertSame(dupOut.redirectError(), dupOut.redirectOutput());
+        Assertions.assertSame(dupout.redirectError(), dupout.redirectOutput());
     }
 
     @Test
-    public void setupRedirectionsHeredocQuotedAndUnquoted() {
+    void setupRedirectionsHeredocQuotedAndUnquoted() {
         final ProcessBuilder unquoted = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
             unquoted,
-            Arrays.asList(
-                new Redirection(0, RedirectionType.HERE_DOC, "EOF", "body\n", false)
+            Collections.singletonList(
+                new Redirection(
+                    0, RedirectionType.HERE_DOC,
+                    new Redirection.HereDoc("EOF", String.format("body%n"), false)
+                )
             ),
-            text -> text.toUpperCase(java.util.Locale.ROOT)
+            text -> text.toUpperCase(Locale.ROOT)
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.READ, unquoted.redirectInput().type());
+        Assertions.assertEquals(ProcessBuilder.Redirect.Type.READ, unquoted.redirectInput().type());
         final ProcessBuilder quoted = new ProcessBuilder("x");
         RedirectionHandler.setupRedirections(
             quoted,
-            Arrays.asList(
-                new Redirection(0, RedirectionType.HERE_DOC_DASH, "EOF", "body\n", true)
+            Collections.singletonList(
+                new Redirection(
+                    0, RedirectionType.HERE_DOC_DASH,
+                    new Redirection.HereDoc("EOF", String.format("body%n"), true)
+                )
             ),
             text -> {
                 throw new IllegalStateException("quoted heredoc must not expand");
             }
         );
-        Assert.assertEquals(ProcessBuilder.Redirect.Type.READ, quoted.redirectInput().type());
+        Assertions.assertEquals(ProcessBuilder.Redirect.Type.READ, quoted.redirectInput().type());
     }
 }

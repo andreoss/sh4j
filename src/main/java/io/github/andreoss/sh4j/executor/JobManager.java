@@ -8,107 +8,90 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+/**
+ * Tracks the shell's background jobs: submission, lookup by identifier or
+ * pseudo pid, waiting, and cancellation. All state transitions are guarded
+ * by a single reentrant lock.
+ *
+ * @since 1.0
+ */
 final class JobManager {
 
+    /** Base of the pseudo pids reported for background jobs. */
     static final long JOB_PID_BASE = 1_000_000_000L;
 
-    private final ExecutorService pool;
-    private final Map<Integer, Job> jobs;
-    private final AtomicInteger nextId;
-    private final ReentrantLock lock;
-
-    enum State {
-        RUNNING,
-        DONE,
-        STOPPED
-    }
-
-    static final class Job {
-        final int id;
-        final long pid;
-        final String command;
-        volatile State state;
-        volatile int exitCode;
-        final CompletableFuture<Integer> source;
-        CompletableFuture<Integer> future;
-
-        Job(final int id, final long pid, final String command,
-            final CompletableFuture<Integer> source) {
-            this.id = id;
-            this.pid = pid;
-            this.command = command;
-            this.source = source;
-            this.future = source;
-            this.state = State.RUNNING;
-            this.exitCode = -1;
-        }
-
-        int await() {
-            int code;
-            try {
-                code = this.future.get();
-                this.state = State.DONE;
-                this.exitCode = code;
-            } catch (final InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                code = 1;
-            } catch (final CancellationException | ExecutionException ex) {
-                code = 1;
-            }
-            return code;
-        }
-
-        void cancel() {
-            this.source.cancel(true);
-            this.future.cancel(true);
-        }
-    }
-
-    JobManager() {
-        this.pool = Executors.newCachedThreadPool(runnable -> {
+    /** Thread pool that runs the jobs. */
+    private final ExecutorService pool = Executors.newCachedThreadPool(
+        runnable -> {
             final Thread thread = new Thread(runnable);
             thread.setDaemon(true);
             return thread;
-        });
-        this.jobs = new LinkedHashMap<>();
-        this.nextId = new AtomicInteger(1);
-        this.lock = new ReentrantLock();
+        }
+    );
+
+    /** Jobs by identifier. */
+    private final Map<Integer, Job> jobs = new LinkedHashMap<>(0);
+
+    /** Source of job identifiers. */
+    private final AtomicInteger counter = new AtomicInteger(1);
+
+    /** Guards the job map. */
+    private final ReentrantLock lock = new ReentrantLock();
+
+    /**
+     * Checks whether a pid belongs to a shell background job.
+     *
+     * @param pid A process identifier
+     * @return True when the pid was allocated by this manager
+     */
+    static boolean isJobPid(final long pid) {
+        return pid >= JobManager.JOB_PID_BASE;
     }
 
+    /**
+     * Submits a runnable task as a background job.
+     *
+     * @param task The task to run
+     * @param command Command text reported by the job built-ins
+     * @return The job identifier
+     */
     int submit(final Runnable task, final String command) {
-        return this.submit(() -> {
-            task.run();
-            return 0;
-        }, command);
+        return this.submit(
+            () -> {
+                task.run();
+                return 0;
+            },
+            command
+        );
     }
 
+    /**
+     * Submits a task as a background job.
+     *
+     * @param task The task to run
+     * @param command Command text reported by the job built-ins
+     * @return The job identifier
+     */
     int submit(final Supplier<Integer> task, final String command) {
-        final int id = this.nextId.getAndIncrement();
-        final CompletableFuture<Integer> source = CompletableFuture.supplyAsync(
-            () -> {
-                Thread.currentThread().setName("sh-job-" + id);
-                return task.get();
-            },
-            this.pool
+        final int id = this.counter.getAndIncrement();
+        final Job job = new Job(
+            id, command,
+            CompletableFuture.supplyAsync(
+                () -> {
+                    Thread.currentThread().setName(String.format("sh-job-%d", id));
+                    return task.get();
+                },
+                this.pool
+            )
         );
-        final Job job = new Job(id, JobManager.JOB_PID_BASE + id, command, source);
-        job.future = source.whenComplete((result, ex) -> {
-            if (ex instanceof CancellationException) {
-                job.state = State.STOPPED;
-            } else {
-                job.state = State.DONE;
-                job.exitCode = result != null ? result : 1;
-            }
-        });
+        job.watch();
         this.lock.lock();
         try {
             this.jobs.put(id, job);
@@ -118,15 +101,18 @@ final class JobManager {
         return id;
     }
 
-    static boolean isJobPid(final long pid) {
-        return pid >= JobManager.JOB_PID_BASE;
-    }
-
+    /**
+     * Returns the job with the given identifier.
+     *
+     * @param id Job identifier
+     * @return The job, or null when unknown
+     */
     Job getJob(final int id) {
         this.lock.lock();
         try {
             final Job job = this.jobs.get(id);
-            if (job != null && job.state == State.RUNNING && job.future.isDone()) {
+            if (job != null && job.getState() == JobManager.State.RUNNING
+                && job.done()) {
                 job.await();
             }
             return job;
@@ -135,12 +121,18 @@ final class JobManager {
         }
     }
 
+    /**
+     * Returns the job with the given pseudo pid.
+     *
+     * @param pid Pseudo pid
+     * @return The job, or null when unknown
+     */
     Job getJobByPid(final long pid) {
         Job result = null;
         this.lock.lock();
         try {
             for (final Job job : this.jobs.values()) {
-                if (job.pid == pid) {
+                if (job.getPid() == pid) {
                     result = job;
                     break;
                 }
@@ -151,11 +143,17 @@ final class JobManager {
         return result;
     }
 
+    /**
+     * Returns every known job in submission order.
+     *
+     * @return The jobs
+     */
     List<Job> listJobs() {
         this.lock.lock();
         try {
             for (final Job job : this.jobs.values()) {
-                if (job.state == State.RUNNING && job.future.isDone()) {
+                if (job.getState() == JobManager.State.RUNNING
+                    && job.done()) {
                     job.await();
                 }
             }
@@ -165,6 +163,12 @@ final class JobManager {
         }
     }
 
+    /**
+     * Waits for the job with the given identifier.
+     *
+     * @param id Job identifier
+     * @return The job's exit status, or 127 when unknown
+     */
     int waitForJob(final int id) {
         final Job job = this.getJob(id);
         final int code;
@@ -176,6 +180,12 @@ final class JobManager {
         return code;
     }
 
+    /**
+     * Waits for the job with the given pseudo pid.
+     *
+     * @param pid Pseudo pid
+     * @return The job's exit status, or 127 when unknown
+     */
     int waitForPid(final long pid) {
         final Job job = this.getJobByPid(pid);
         final int code;
@@ -187,10 +197,13 @@ final class JobManager {
         return code;
     }
 
+    /**
+     * Waits for every running job and forgets all of them.
+     */
     void waitForAll() {
         final List<Job> all = this.listJobs();
         for (final Job job : all) {
-            if (job.state == State.RUNNING) {
+            if (job.getState() == JobManager.State.RUNNING) {
                 job.await();
             }
         }
@@ -202,7 +215,27 @@ final class JobManager {
         }
     }
 
+    /**
+     * Stops the job thread pool.
+     */
     void shutdown() {
         this.pool.shutdown();
+    }
+
+    /**
+     * Lifecycle state of a background job.
+     *
+     * @since 1.0
+     */
+    enum State {
+
+        /** Still running. */
+        RUNNING,
+
+        /** Finished normally. */
+        DONE,
+
+        /** Stopped by a signal or a cancellation. */
+        STOPPED
     }
 }

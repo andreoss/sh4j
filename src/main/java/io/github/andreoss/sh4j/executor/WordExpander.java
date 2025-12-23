@@ -4,52 +4,41 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Stateless helpers that implement POSIX 2.6 word expansion: tilde,
  * parameter, command-substitution, arithmetic, field-splitting, pathname,
  * and quote-removal. The methods cooperate with {@link BuiltinContext} to
  * read the executor's environment and signal expansion errors.
+ *
  * @since 1.0
  */
 public final class WordExpander {
 
-    /** Pattern matching bare {@code $NAME} or {@code ${NAME}} references. */
-    static final Pattern VAR_PATTERN =
-        Pattern.compile("\\$\\{?([a-zA-Z_][a-zA-Z0-9_]*)\\}?");
-
-    /** Default fallback used when {@code HOME} is unset. */
-    private static final String DEFAULT_HOME = "/root";
-
-    /**
-     * Utility class; no instances.
-     */
     @GeneratedDefensive
     private WordExpander() {
-        super();
     }
 
     /**
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
      * brace expansion, and bare variable references.
+     *
      * @param arg The source word
      * @param env Environment view for lookups
      * @param ctx Callbacks into the executor
      * @return The expanded text
      */
-    public static String expandVariablesImpl(
+    static String expandVariablesImpl(
         final String arg,
         final Map<String, String> env,
         final BuiltinContext ctx
@@ -57,20 +46,19 @@ public final class WordExpander {
         String current = expandTilde(arg, env);
         current = normaliseBackticks(current);
         final StringBuilder expanded = new StringBuilder();
-        boolean inSingle = false;
+        boolean insingle = false;
         int idx = 0;
         while (idx < current.length()) {
             final char chr = current.charAt(idx);
             if (chr == '\'') {
-                inSingle = !inSingle;
+                insingle = !insingle;
                 expanded.append(chr);
                 idx = idx + 1;
-            } else if (inSingle) {
+            } else if (insingle) {
                 expanded.append(chr);
                 idx = idx + 1;
             } else if (chr == '\\' && idx + 1 < current.length()) {
-                expanded.append(chr);
-                expanded.append(current.charAt(idx + 1));
+                expanded.append(chr).append(current.charAt(idx + 1));
                 idx = idx + 2;
             } else {
                 idx = idx + appendOneExpansion(current, idx, env, ctx, expanded);
@@ -79,11 +67,6 @@ public final class WordExpander {
         return expanded.toString();
     }
 
-    /**
-     * Consumes the expansion that starts at {@code idx} (if any) and
-     * appends its result to {@code expanded}.
-     * @return The number of source characters consumed
-     */
     private static int appendOneExpansion(
         final String arg,
         final int idx,
@@ -97,7 +80,7 @@ public final class WordExpander {
             final char next = arg.charAt(idx + 1);
             final String special = ctx.getSpecialParam(next);
             if (special != null) {
-                expanded.append(escapeForQuoteRemoval(special));
+                expanded.append(WordExpander.escapeForQuoteRemoval(special));
                 consumed = 2;
             } else if (next == '(') {
                 consumed = appendDollarParen(arg, idx, env, ctx, expanded);
@@ -108,10 +91,11 @@ public final class WordExpander {
                 while (end < arg.length() && isIdentifierPart(arg.charAt(end))) {
                     end = end + 1;
                 }
-                final String varName = arg.substring(idx + 1, end);
-                final String value = ctx.lookupVariable(varName, env);
+                final String value = ctx.lookupVariable(
+                    arg.substring(idx + 1, end), env
+                );
                 expanded.append(
-                    escapeForQuoteRemoval(value == null ? "" : value)
+                    WordExpander.escapeForQuoteRemoval(value == null ? "" : value)
                 );
                 consumed = end - idx;
             } else {
@@ -124,17 +108,13 @@ public final class WordExpander {
     }
 
     private static boolean isIdentifierStart(final char chr) {
-        return chr == '_' || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z');
+        return chr == '_' || chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z';
     }
 
     private static boolean isIdentifierPart(final char chr) {
-        return isIdentifierStart(chr) || (chr >= '0' && chr <= '9');
+        return isIdentifierStart(chr) || chr >= '0' && chr <= '9';
     }
 
-    /**
-     * Handles {@code $(...)} or {@code $((...))} starting at {@code idx}.
-     * @return Number of source characters consumed (or 1 on no match)
-     */
     private static int appendDollarParen(
         final String arg,
         final int idx,
@@ -146,13 +126,15 @@ public final class WordExpander {
         if (idx + 2 < arg.length() && arg.charAt(idx + 2) == '(') {
             final int end = findBalancedClose(arg, idx + 3, '(', ')', 2);
             if (end > 0) {
-                final String rawExpr = arg.substring(idx + 3, end - 2);
-                final String expandedExpr = removeQuotes(
-                    expandVariablesImpl(rawExpr, env, ctx)
-                );
                 expanded.append(
-                    escapeForQuoteRemoval(
-                        ctx.evalArithmetic(expandedExpr, env)
+                    WordExpander.escapeForQuoteRemoval(
+                        ctx.evalArithmetic(
+                            WordExpander.removeQuotes(
+                                WordExpander.expandVariablesImpl(
+                                    arg.substring(idx + 3, end - 2), env, ctx
+                                )
+                            ), env
+                        )
                     )
                 );
                 consumed = end - idx;
@@ -163,7 +145,7 @@ public final class WordExpander {
             final int end = findBalancedClose(arg, idx + 2, '(', ')', 1);
             if (end > 0) {
                 expanded.append(
-                    escapeForQuoteRemoval(
+                    WordExpander.escapeForQuoteRemoval(
                         ctx.executeCommandSubstitution(arg.substring(idx + 2, end - 1))
                     )
                 );
@@ -195,10 +177,6 @@ public final class WordExpander {
         return -1;
     }
 
-    /**
-     * Handles {@code ${...}} starting at {@code idx}.
-     * @return Number of source characters consumed (or 1 on no match)
-     */
     private static int appendDollarBrace(
         final String arg,
         final int idx,
@@ -209,12 +187,13 @@ public final class WordExpander {
         int consumed = 1;
         final int close = findMatchingBrace(arg, idx + 2);
         if (close > idx + 2) {
-            final String inner = arg.substring(idx + 2, close);
-            final String replacement = expandBracedImpl(inner, env, ctx);
+            final String replacement = WordExpander.expandBracedImpl(
+                arg.substring(idx + 2, close), env, ctx
+            );
             if (replacement == null) {
                 expanded.append(arg.charAt(idx));
             } else {
-                expanded.append(escapeForQuoteRemoval(replacement));
+                expanded.append(WordExpander.escapeForQuoteRemoval(replacement));
                 consumed = close - idx + 1;
             }
         } else {
@@ -223,16 +202,6 @@ public final class WordExpander {
         return consumed;
     }
 
-    /**
-     * Finds the matching close-character by counting balanced open/close.
-     * @param arg       The source string
-     * @param start     Position immediately after the opener(s)
-     * @param open      Open character
-     * @param close     Close character
-     * @param initial   Initial depth (1 for {@code $(}, 2 for {@code $((})
-     * @return The position immediately after the closing character(s), or
-     *         -1 when unbalanced
-     */
     private static int findBalancedClose(
         final String arg,
         final int start,
@@ -260,11 +229,6 @@ public final class WordExpander {
         return result;
     }
 
-    /**
-     * @param chr A character
-     * @return True when {@code chr} is one of POSIX's special parameter
-     *         characters ({@code ?}, {@code -}, {@code $}, ...)
-     */
     private static boolean isSpecialParamChar(final char chr) {
         return chr == '?' || chr == '-' || chr == '$' || chr == '!'
             || chr == '@' || chr == '*';
@@ -272,13 +236,13 @@ public final class WordExpander {
 
     /**
      * Full implementation of {@code ${...}} brace expansion.
+     *
      * @param inner The text inside the braces
      * @param env   Environment view
      * @param ctx   Executor callbacks
-     * @return The expansion, or null when the inner text doesn't match any
-     *         recognised operator
+     * @return The expansion, or null when no operator matches
      */
-    public static String expandBracedImpl(
+    static String expandBracedImpl(
         final String inner,
         final Map<String, String> env,
         final BuiltinContext ctx
@@ -295,123 +259,117 @@ public final class WordExpander {
                 return String.valueOf(ctx.positionalParamsList().size() - 1);
             }
             final String val = ctx.lookupVariable(name, env);
-            return val == null ? "0" : String.valueOf(val.length());
+            final String result;
+            if (val == null) {
+                result = "0";
+            } else {
+                result = String.valueOf(val.length());
+            }
+            return result;
         }
-        final int nameEnd = findNameEnd(inner);
-        if (nameEnd == 0) {
+        final int nameend = findNameEnd(inner);
+        if (nameend == 0) {
             return null;
         }
-        final String varName = inner.substring(0, nameEnd);
-        final String rest = inner.substring(nameEnd);
-        final String varValue = ctx.lookupVariable(varName, env);
+        final String varname = inner.substring(0, nameend);
+        final String rest = inner.substring(nameend);
+        final String varvalue = ctx.lookupVariable(varname, env);
         if (rest.isEmpty()) {
-            return varValue == null ? "" : varValue;
+            final String result;
+            if (varvalue == null) {
+                result = "";
+            } else {
+                result = varvalue;
+            }
+            return result;
         }
-        final String defaulted = applyDefaultOps(rest, varValue, varName, env, ctx);
+        final String defaulted = applyDefaultOps(rest, varvalue, varname, env, ctx);
         if (defaulted != null) {
             return defaulted;
         }
-        final String erred = applyErrorOps(rest, varValue, varName, ctx);
+        final String erred = applyErrorOps(rest, varvalue, varname, ctx);
         if (erred != null) {
             return erred;
         }
-        if (varValue == null) {
+        if (varvalue == null) {
             return "";
         }
-        return applyPatternOps(rest, varValue);
+        return applyPatternOps(rest, varvalue);
     }
 
-    /**
-     * Finds the end of the variable-name portion of an inner-brace string.
-     * @param inner The inner-brace text
-     * @return The index just past the name (0 when no valid name was found)
-     */
     private static int findNameEnd(final String inner) {
-        int nameEnd = 0;
+        int nameend = 0;
         final char first = inner.charAt(0);
         if (isSpecialParamChar(first) || first == '_' || Character.isLetter(first)) {
-            nameEnd = 1;
+            nameend = 1;
             if (!isSpecialParamChar(first)) {
-                while (nameEnd < inner.length()
-                    && (Character.isLetterOrDigit(inner.charAt(nameEnd))
-                        || inner.charAt(nameEnd) == '_')) {
-                    nameEnd = nameEnd + 1;
+                while (nameend < inner.length()
+                    && (Character.isLetterOrDigit(inner.charAt(nameend))
+                        || inner.charAt(nameend) == '_')) {
+                    nameend = nameend + 1;
                 }
             }
         } else if (Character.isDigit(first)) {
-            while (nameEnd < inner.length() && Character.isDigit(inner.charAt(nameEnd))) {
-                nameEnd = nameEnd + 1;
+            while (nameend < inner.length() && Character.isDigit(inner.charAt(nameend))) {
+                nameend = nameend + 1;
             }
         }
-        return nameEnd;
+        return nameend;
     }
 
-    /**
-     * Applies the {@code :-}, {@code -}, {@code :=}, {@code =},
-     * {@code :+}, {@code +} operators.
-     * @return The expansion, or null when no default-class operator matches
-     */
     private static String applyDefaultOps(
         final String rest,
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
         if (rest.startsWith(":-")) {
-            result = defaultOnEmpty(varValue, rest.substring(2), env, ctx);
+            result = defaultOnEmpty(varvalue, rest.substring(2), env, ctx);
         } else if (rest.startsWith("-")) {
-            result = defaultOnNull(varValue, rest.substring(1), env, ctx);
+            result = defaultOnNull(varvalue, rest.substring(1), env, ctx);
         } else if (rest.startsWith(":=")) {
-            result = assignOnEmpty(varValue, varName, rest.substring(2), env, ctx);
+            result = assignOnEmpty(varvalue, varname, rest.substring(2), env, ctx);
         } else if (rest.startsWith("=")) {
-            result = assignOnNull(varValue, varName, rest.substring(1), env, ctx);
+            result = assignOnNull(varvalue, varname, rest.substring(1), env, ctx);
         } else if (rest.startsWith(":+")) {
-            result = altOnNonEmpty(varValue, rest.substring(2), env, ctx);
+            result = altOnNonEmpty(varvalue, rest.substring(2), env, ctx);
         } else if (rest.startsWith("+")) {
-            result = altOnNonNull(varValue, rest.substring(1), env, ctx);
+            result = altOnNonNull(varvalue, rest.substring(1), env, ctx);
         } else {
             result = null;
         }
         return result;
     }
 
-    /**
-     * Applies the {@code :?} and {@code ?} error operators.
-     * @return The expansion, or null when no error-class operator matches
-     */
     private static String applyErrorOps(
         final String rest,
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final BuiltinContext ctx
     ) {
         final String result;
         if (rest.startsWith(":?")) {
-            result = errorOnEmpty(varValue, varName, rest.substring(2), ctx);
+            result = errorOnEmpty(varvalue, varname, rest.substring(2), ctx);
         } else if (rest.startsWith("?")) {
-            result = errorOnNull(varValue, varName, rest.substring(1), ctx);
+            result = errorOnNull(varvalue, varname, rest.substring(1), ctx);
         } else {
             result = null;
         }
         return result;
     }
 
-    /**
-     * Applies the {@code #}, {@code ##}, {@code %}, {@code %%}
-     * prefix/suffix-removal operators.
-     */
-    private static String applyPatternOps(final String rest, final String varValue) {
+    private static String applyPatternOps(final String rest, final String varvalue) {
         final String result;
         if (rest.startsWith("##")) {
-            result = stripLongestPrefix(varValue, rest.substring(2));
+            result = stripLongestPrefix(varvalue, rest.substring(2));
         } else if (rest.startsWith("#")) {
-            result = stripShortestPrefix(varValue, rest.substring(1));
+            result = stripShortestPrefix(varvalue, rest.substring(1));
         } else if (rest.startsWith("%%")) {
-            result = stripLongestSuffix(varValue, rest.substring(2));
+            result = stripLongestSuffix(varvalue, rest.substring(2));
         } else if (rest.startsWith("%")) {
-            result = stripShortestSuffix(varValue, rest.substring(1));
+            result = stripShortestSuffix(varvalue, rest.substring(1));
         } else {
             result = null;
         }
@@ -419,85 +377,85 @@ public final class WordExpander {
     }
 
     private static String defaultOnEmpty(
-        final String varValue,
+        final String varvalue,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null || varValue.isEmpty()) {
+        if (varvalue == null || varvalue.isEmpty()) {
             result = ctx.expandVariables(word, env);
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
     private static String defaultOnNull(
-        final String varValue,
+        final String varvalue,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null) {
+        if (varvalue == null) {
             result = ctx.expandVariables(word, env);
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
     private static String assignOnEmpty(
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null || varValue.isEmpty()) {
+        if (varvalue == null || varvalue.isEmpty()) {
             final String expanded = ctx.expandVariables(word, env);
-            if (isAssignableName(varName)) {
-                env.put(varName, expanded);
-                ctx.environmentMap().put(varName, expanded);
+            if (isAssignableName(varname)) {
+                env.put(varname, expanded);
+                ctx.environmentMap().put(varname, expanded);
             }
             result = expanded;
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
     private static String assignOnNull(
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null) {
+        if (varvalue == null) {
             final String expanded = ctx.expandVariables(word, env);
-            if (isAssignableName(varName)) {
-                env.put(varName, expanded);
-                ctx.environmentMap().put(varName, expanded);
+            if (isAssignableName(varname)) {
+                env.put(varname, expanded);
+                ctx.environmentMap().put(varname, expanded);
             }
             result = expanded;
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
     private static String altOnNonEmpty(
-        final String varValue,
+        final String varvalue,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null || varValue.isEmpty()) {
+        if (varvalue == null || varvalue.isEmpty()) {
             result = "";
         } else {
             result = ctx.expandVariables(word, env);
@@ -506,13 +464,13 @@ public final class WordExpander {
     }
 
     private static String altOnNonNull(
-        final String varValue,
+        final String varvalue,
         final String word,
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null) {
+        if (varvalue == null) {
             result = "";
         } else {
             result = ctx.expandVariables(word, env);
@@ -521,120 +479,137 @@ public final class WordExpander {
     }
 
     private static String errorOnEmpty(
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final String word,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null || varValue.isEmpty()) {
+        if (varvalue == null || varvalue.isEmpty()) {
             final String msg;
             if (word.isEmpty()) {
                 msg = "parameter null or not set";
             } else {
                 msg = word;
             }
-            ctx.errStream().println("$" + varName + ": " + msg);
-            throw new Executor.ExitSignal(1);
+            ctx.errStream().println(String.format("$%s: %s", varname, msg));
+            throw new ExitSignal(1);
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
     private static String errorOnNull(
-        final String varValue,
-        final String varName,
+        final String varvalue,
+        final String varname,
         final String word,
         final BuiltinContext ctx
     ) {
         final String result;
-        if (varValue == null) {
+        if (varvalue == null) {
             final String msg;
             if (word.isEmpty()) {
                 msg = "parameter not set";
             } else {
                 msg = word;
             }
-            ctx.errStream().println("$" + varName + ": " + msg);
-            throw new Executor.ExitSignal(1);
+            ctx.errStream().println(String.format("$%s: %s", varname, msg));
+            throw new ExitSignal(1);
         } else {
-            result = varValue;
+            result = varvalue;
         }
         return result;
     }
 
-    private static String stripLongestPrefix(final String varValue, final String pattern) {
+    private static String stripLongestPrefix(final String varvalue, final String pattern) {
         int longest = -1;
-        for (int idx = 0; idx <= varValue.length(); idx = idx + 1) {
-            if (globMatches(pattern, varValue.substring(0, idx))) {
+        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
+            if (WordExpander.globMatches(pattern, varvalue.substring(0, idx))) {
                 longest = idx;
             }
         }
-        return longest < 0 ? varValue : varValue.substring(longest);
+        final String result;
+        if (longest < 0) {
+            result = varvalue;
+        } else {
+            result = varvalue.substring(longest);
+        }
+        return result;
     }
 
-    private static String stripShortestPrefix(final String varValue, final String pattern) {
-        String result = varValue;
-        for (int idx = 0; idx <= varValue.length(); idx = idx + 1) {
-            if (globMatches(pattern, varValue.substring(0, idx))) {
-                result = varValue.substring(idx);
+    private static String stripShortestPrefix(final String varvalue, final String pattern) {
+        String result = varvalue;
+        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
+            if (WordExpander.globMatches(pattern, varvalue.substring(0, idx))) {
+                result = varvalue.substring(idx);
                 break;
             }
         }
         return result;
     }
 
-    private static String stripLongestSuffix(final String varValue, final String pattern) {
+    private static String stripLongestSuffix(final String varvalue, final String pattern) {
         int longest = -1;
-        for (int idx = 0; idx <= varValue.length(); idx = idx + 1) {
-            if (globMatches(pattern, varValue.substring(varValue.length() - idx))) {
+        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
+            if (WordExpander.globMatches(
+                pattern, varvalue.substring(varvalue.length() - idx)
+            )) {
                 longest = idx;
             }
         }
-        return longest < 0 ? varValue : varValue.substring(0, varValue.length() - longest);
+        final String result;
+        if (longest < 0) {
+            result = varvalue;
+        } else {
+            result = varvalue.substring(0, varvalue.length() - longest);
+        }
+        return result;
     }
 
-    private static String stripShortestSuffix(final String varValue, final String pattern) {
-        String result = varValue;
-        for (int idx = 0; idx <= varValue.length(); idx = idx + 1) {
-            if (globMatches(pattern, varValue.substring(varValue.length() - idx))) {
-                result = varValue.substring(0, varValue.length() - idx);
+    private static String stripShortestSuffix(final String varvalue, final String pattern) {
+        String result = varvalue;
+        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
+            if (WordExpander.globMatches(
+                pattern, varvalue.substring(varvalue.length() - idx)
+            )) {
+                result = varvalue.substring(0, varvalue.length() - idx);
                 break;
             }
         }
         return result;
     }
 
-    private static boolean isAssignableName(final String varName) {
-        return varName.chars()
+    private static boolean isAssignableName(final String varname) {
+        return varname.chars()
             .allMatch(chr -> Character.isLetterOrDigit(chr) || chr == '_');
     }
 
     /**
      * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
+     *
      * @param arg The word to expand
      * @param env Environment view (HOME, PWD)
      * @return The word with the leading tilde resolved
      */
-    public static String expandTilde(final String arg, final Map<String, String> env) {
+    static String expandTilde(final String arg, final Map<String, String> env) {
         final String result;
         if (arg.isEmpty() || arg.charAt(0) != '~') {
             result = arg;
         } else {
             final int slash = arg.indexOf('/');
-            final String tildePart;
+            final String tildepart;
             final String rest;
             if (slash >= 0) {
-                tildePart = arg.substring(0, slash);
+                tildepart = arg.substring(0, slash);
                 rest = arg.substring(slash);
             } else {
-                tildePart = arg;
+                tildepart = arg;
                 rest = "";
             }
-            if ("~".equals(tildePart)) {
-                result = env.getOrDefault("HOME", DEFAULT_HOME) + rest;
-            } else if ("~+".equals(tildePart)) {
+            if ("~".equals(tildepart)) {
+                result = env.getOrDefault("HOME", "/root") + rest;
+            } else if ("~+".equals(tildepart)) {
                 result = env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
             } else {
                 result = arg;
@@ -646,10 +621,11 @@ public final class WordExpander {
     /**
      * Rewrites backtick command substitutions as {@code $(...)} so they
      * can be handled by the rest of the expansion pipeline uniformly.
+     *
      * @param arg The input word
      * @return The rewritten word
      */
-    public static String normaliseBackticks(final String arg) {
+    static String normaliseBackticks(final String arg) {
         final StringBuilder result = new StringBuilder();
         int idx = 0;
         boolean single = false;
@@ -670,11 +646,6 @@ public final class WordExpander {
         return result.toString();
     }
 
-    /**
-     * Normalises one source position (a backtick, a {@code $(...)} chunk,
-     * a {@code ${...}} chunk, or a literal character).
-     * @return Number of source characters consumed
-     */
     private static int normaliseOne(final String arg, final int idx, final StringBuilder result) {
         final char chr = arg.charAt(idx);
         int consumed = 1;
@@ -695,37 +666,30 @@ public final class WordExpander {
         return consumed;
     }
 
-    /**
-     * Copies a balanced {@code $(...)} or {@code ${...}} chunk verbatim
-     * into the result buffer.
-     * @return Number of source characters consumed
-     */
     private static int copyBalanced(
         final String arg,
-        final int innerStart,
+        final int innerstart,
         final char open,
         final char close,
         final StringBuilder result,
         final String full,
-        final int chunkStart
+        final int chunkstart
     ) {
-        final int end = findBalancedClose(arg, innerStart, open, close, 1);
+        final int end = findBalancedClose(arg, innerstart, open, close, 1);
         final int consumed;
         if (end > 0) {
-            result.append(full, chunkStart, end);
-            consumed = end - chunkStart;
+            result.append(full, chunkstart, end);
+            consumed = end - chunkstart;
         } else {
-            result.append(full.charAt(chunkStart));
+            result.append(full.charAt(chunkstart));
             consumed = 1;
         }
         return consumed;
     }
 
-    /**
-     * Rewrites one backtick chunk as a {@code $(...)} substitution.
-     * @return Number of source characters consumed (always 1+content_length)
-     */
-    private static int rewriteBacktick(final String arg, final int idx, final StringBuilder result) {
+    private static int rewriteBacktick(
+        final String arg, final int idx, final StringBuilder result
+    ) {
         int cur = idx + 1;
         final StringBuilder content = new StringBuilder();
         boolean found = false;
@@ -736,14 +700,11 @@ public final class WordExpander {
                 if (nextc == '`' || nextc == '$' || nextc == '\\') {
                     content.append(nextc);
                 } else {
-                    content.append(chr);
-                    content.append(nextc);
+                    content.append(chr).append(nextc);
                 }
                 cur = cur + 2;
             } else if (chr == '`') {
-                result.append("$(");
-                result.append(content);
-                result.append(')');
+                result.append("$(").append(content).append(')');
                 cur = cur + 1;
                 found = true;
                 break;
@@ -753,8 +714,7 @@ public final class WordExpander {
             }
         }
         if (!found) {
-            result.append('`');
-            result.append(content);
+            result.append('`').append(content);
         }
         return cur - idx;
     }
@@ -762,50 +722,51 @@ public final class WordExpander {
     /**
      * Field splitting (POSIX 2.6.5). Returns the fields {@code value} is
      * broken into according to the IFS characters.
+     *
      * @param value The post-expansion text
      * @param ifs   The IFS value (each character is a separator)
      * @return One field per non-IFS run
      */
-    public static List<String> splitFields(final String value, final String ifs) {
+    static List<String> splitFields(final String value, final String ifs) {
         if (ifs == null || ifs.isEmpty()) {
-            return Arrays.asList(value);
+            return Collections.singletonList(value);
         }
-        final StringBuilder wsBuf = new StringBuilder();
-        final StringBuilder nwsBuf = new StringBuilder();
+        final StringBuilder wsbuf = new StringBuilder();
+        final StringBuilder nwsbuf = new StringBuilder();
         for (int idx = 0; idx < ifs.length(); idx = idx + 1) {
             final char chr = ifs.charAt(idx);
             if (chr == ' ' || chr == '\t' || chr == '\n') {
-                wsBuf.append(chr);
+                wsbuf.append(chr);
             } else {
-                nwsBuf.append(chr);
+                nwsbuf.append(chr);
             }
         }
-        final String wsChars = wsBuf.toString();
-        final String nwsChars = nwsBuf.toString();
-        final List<String> result = new ArrayList<>();
+        final String wschars = wsbuf.toString();
+        final String nwschars = nwsbuf.toString();
+        final List<String> result = new ArrayList<>(0);
         StringBuilder field = new StringBuilder();
-        boolean inField = false;
+        boolean infield = false;
         for (int idx = 0; idx < value.length(); idx = idx + 1) {
             final char chr = value.charAt(idx);
-            if (nwsChars.indexOf(chr) >= 0) {
+            if (nwschars.indexOf(chr) >= 0) {
                 result.add(field.toString());
                 field = new StringBuilder();
-                inField = false;
-            } else if (wsChars.indexOf(chr) >= 0) {
-                if (inField) {
+                infield = false;
+            } else if (wschars.indexOf(chr) >= 0) {
+                if (infield) {
                     result.add(field.toString());
                     field = new StringBuilder();
-                    inField = false;
+                    infield = false;
                 }
             } else {
                 field.append(chr);
-                inField = true;
+                infield = true;
             }
         }
-        if (inField) {
+        if (infield) {
             result.add(field.toString());
-        } else if (!nwsChars.isEmpty() && !value.isEmpty()
-            && nwsChars.indexOf(value.charAt(value.length() - 1)) >= 0) {
+        } else if (!nwschars.isEmpty() && !value.isEmpty()
+            && nwschars.indexOf(value.charAt(value.length() - 1)) >= 0) {
             result.add(field.toString());
         }
         return result;
@@ -813,19 +774,19 @@ public final class WordExpander {
 
     /**
      * Checks whether the word is quoted.
+     *
      * @param arg Any word
-     * @return True when the word is surrounded by matching single or double
-     *         quotes
+     * @return True when the word is quoted
      */
-    public static boolean isQuoted(final String arg) {
+    static boolean isQuoted(final String arg) {
         final boolean result;
         if (arg == null || arg.length() < 2) {
             result = false;
         } else {
             final char first = arg.charAt(0);
             final char last = arg.charAt(arg.length() - 1);
-            result = (first == '"' && last == '"')
-                || (first == '\'' && last == '\'');
+            result = first == '"' && last == '"'
+                || first == '\'' && last == '\'';
         }
         return result;
     }
@@ -836,10 +797,11 @@ public final class WordExpander {
      * removal acts only on quotes that were in the original word, not on
      * data produced by expansions. Doubles every backslash and prefixes
      * every literal single/double quote with a backslash.
+     *
      * @param value Expansion-produced text
      * @return The escaped text safe to feed back through removeQuotes
      */
-    public static String escapeForQuoteRemoval(final String value) {
+    static String escapeForQuoteRemoval(final String value) {
         if (value == null || value.isEmpty()) {
             return value;
         }
@@ -857,34 +819,35 @@ public final class WordExpander {
     /**
      * Quote removal (POSIX 2.6.7). Strips the outer single/double quotes
      * and resolves backslash-escapes inside double quotes.
+     *
      * @param word The source word
      * @return The de-quoted text
      */
-    public static String removeQuotes(final String word) {
+    static String removeQuotes(final String word) {
         final StringBuilder result = new StringBuilder();
-        boolean inSingle = false;
-        boolean inDouble = false;
+        boolean insingle = false;
+        boolean indouble = false;
         int idx = 0;
         while (idx < word.length()) {
             final char chr = word.charAt(idx);
-            if (inSingle) {
+            if (insingle) {
                 if (chr == '\'') {
-                    inSingle = false;
+                    insingle = false;
                 } else {
                     result.append(chr);
                 }
                 idx = idx + 1;
-            } else if (inDouble) {
+            } else if (indouble) {
                 idx = appendDoubleQuoted(word, idx, result);
                 if (idx < 0) {
-                    inDouble = false;
+                    indouble = false;
                     idx = -idx;
                 }
             } else if (chr == '\'') {
-                inSingle = true;
+                insingle = true;
                 idx = idx + 1;
             } else if (chr == '"') {
-                inDouble = true;
+                indouble = true;
                 idx = idx + 1;
             } else if (chr == '\\' && idx + 1 < word.length()) {
                 result.append(word.charAt(idx + 1));
@@ -897,11 +860,9 @@ public final class WordExpander {
         return result.toString();
     }
 
-    /**
-     * Appends one character of a double-quoted span; returns the new index
-     * (negated when the closing quote was consumed).
-     */
-    private static int appendDoubleQuoted(final String word, final int idx, final StringBuilder result) {
+    private static int appendDoubleQuoted(
+        final String word, final int idx, final StringBuilder result
+    ) {
         final char chr = word.charAt(idx);
         final int next;
         if (chr == '"') {
@@ -922,24 +883,26 @@ public final class WordExpander {
      * Pathname expansion (POSIX 2.6.6): replaces any field containing
      * glob characters with the alphabetic list of matching files (or the
      * literal field when no match).
+     *
      * @param fields The post-IFS fields
      * @return The post-glob fields
      */
-    public static List<String> pathnameExpand(final List<String> fields) {
+    static List<String> pathnameExpand(final List<String> fields) {
         return pathnameExpand(fields, new File(System.getProperty("user.dir")));
     }
 
     /**
      * Pathname expansion relative to a specific directory. Dotfiles are
      * skipped unless the final pattern segment starts with a dot.
+     *
      * @param fields The post-IFS fields
      * @param cwd Directory used for relative patterns
      * @return The post-glob fields
      */
-    public static List<String> pathnameExpand(
+    static List<String> pathnameExpand(
         final List<String> fields, final File cwd
     ) {
-        final List<String> result = new ArrayList<>();
+        final List<String> result = new ArrayList<>(0);
         for (final String field : fields) {
             if (containsGlobChars(field)) {
                 final List<String> matches = globFiles(field, cwd);
@@ -958,24 +921,35 @@ public final class WordExpander {
 
     /**
      * Checks whether the string contains glob characters.
+     *
      * @param str Any string
-     * @return True when {@code str} contains any of {@code *}, {@code ?},
-     *         or {@code [}
+     * @return True when the string contains glob characters
      */
-    public static boolean containsGlobChars(final String str) {
+    static boolean containsGlobChars(final String str) {
         return str.indexOf('*') >= 0 || str.indexOf('?') >= 0 || str.indexOf('[') >= 0;
     }
 
     /**
      * Returns the files matching a glob pattern.
+     *
      * @param pattern A glob pattern
      * @param cwd     Directory used for relative patterns
      * @return The matching files
      */
     static List<String> globFiles(final String pattern, final File cwd) {
         final int slash = pattern.lastIndexOf('/');
-        final String prefix = slash < 0 ? "" : pattern.substring(0, slash);
-        final String segment = slash < 0 ? pattern : pattern.substring(slash + 1);
+        final String prefix;
+        if (slash < 0) {
+            prefix = "";
+        } else {
+            prefix = pattern.substring(0, slash);
+        }
+        final String segment;
+        if (slash < 0) {
+            segment = pattern;
+        } else {
+            segment = pattern.substring(slash + 1);
+        }
         final File dir;
         if (prefix.isEmpty()) {
             dir = cwd;
@@ -985,26 +959,26 @@ public final class WordExpander {
             dir = new File(cwd, prefix);
         }
         final String[] files = dir.list();
-        final List<String> matches = new ArrayList<>();
+        final List<String> matches = new ArrayList<>(0);
         if (files == null) {
             return matches;
         }
         final PathMatcher matcher;
         try {
-            matcher = FileSystems.getDefault().getPathMatcher("glob:" + segment);
-        } catch (final java.util.regex.PatternSyntaxException ignored) {
+            matcher = FileSystems.getDefault().getPathMatcher(String.format("glob:%s", segment));
+        } catch (final PatternSyntaxException ignored) {
             return matches;
         }
-        final boolean dotPattern = segment.startsWith(".");
+        final boolean dotpattern = segment.startsWith(".");
         for (final String name : files) {
-            if (name.startsWith(".") && !dotPattern) {
+            if (name.startsWith(".") && !dotpattern) {
                 continue;
             }
             if (matcher.matches(Paths.get(name))) {
                 if (prefix.isEmpty()) {
                     matches.add(name);
                 } else {
-                    matches.add(prefix + "/" + name);
+                    matches.add(String.format("%s/%s", prefix, name));
                 }
             }
         }
@@ -1013,11 +987,12 @@ public final class WordExpander {
 
     /**
      * Checks whether a glob pattern matches a string.
+     *
      * @param pattern A glob pattern
      * @param str     The candidate text
      * @return True when {@code pattern} matches {@code str}
      */
-    public static boolean globMatches(final String pattern, final String str) {
+    static boolean globMatches(final String pattern, final String str) {
         final StringBuilder regex = new StringBuilder();
         int idx = 0;
         while (idx < pattern.length()) {

@@ -4,92 +4,239 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.lexer.CharReader;
+import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.Parser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import io.github.andreoss.sh4j.lexer.CharReader;
-import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.parser.ListNode;
-import io.github.andreoss.sh4j.parser.Parser;
+import java.util.Optional;
 
 /**
  * Holds the executor's table of built-in commands and routes calls to the
  * matching {@link Builtin}. Every built-in registered here keeps its own
  * lambda body; the dispatcher itself stays generic.
+ *
  * @since 1.0
  */
 final class BuiltinDispatcher {
 
-    /** Default IFS value (space, tab, newline). */
-    private static final String DEFAULT_IFS = " \t\n";
-    /** {@code -} sentinel used by {@code cd}. */
-    private static final String DASH = "-";
-
     /** Map from built-in name to its implementation. */
-    private final Map<String, Builtin> registry;
+    private final Map<String, Builtin> registry = buildRegistry();
 
     /**
      * Builds the dispatcher and registers every shell built-in.
      */
     BuiltinDispatcher() {
-        super();
-        this.registry = new HashMap<>();
-        this.register("true", (self, args, env, assigns) -> 0);
-        this.register("false", (self, args, env, assigns) -> 1);
-        this.register(":", (self, args, env, assigns) -> 0);
-        this.register("break", (self, args, env, assigns) -> {
-            throw new Executor.BreakSignal(parseLoopLevels(args));
-        });
-        this.register("continue", (self, args, env, assigns) -> {
-            throw new Executor.ContinueSignal(parseLoopLevels(args));
-        });
-        this.register("return", (self, args, env, assigns) -> {
-            int code = 0;
-            if (!args.isEmpty()) {
-                try {
-                    code = Integer.parseInt(args.get(0));
-                } catch (final NumberFormatException ignored) {
-                    code = 0;
-                }
+    }
+
+    private static Map<String, Builtin> buildRegistry() {
+        final Map<String, Builtin> registry = new HashMap<>();
+        registry.put("true", (self, call) -> 0);
+        registry.put("false", (self, call) -> 1);
+        registry.put(":", (self, call) -> 0);
+        registry.put(
+            "break",
+            (self, call) -> {
+                throw new BreakSignal(parseLoopLevels(call.arguments()));
             }
-            throw new Executor.ReturnSignal(code);
-        });
-        this.register("unset", BuiltinDispatcher::doUnset);
-        this.register("export", BuiltinDispatcher::doExport);
-        this.register("cd", BuiltinDispatcher::doCd);
-        this.register("pwd", BuiltinDispatcher::doPwd);
-        this.register("echo", BuiltinDispatcher::doEcho);
-        this.register("eval", BuiltinDispatcher::doEval);
-        this.register("exit", BuiltinDispatcher::doExit);
-        this.register("type", BuiltinDispatcher::doType);
-        this.register("command", BuiltinDispatcher::doCommand);
-        this.register("wait", BuiltinDispatcher::doWait);
-        this.register("hash", BuiltinDispatcher::doHash);
-        this.register("kill", BuiltinDispatcher::doKill);
-        this.register("umask", BuiltinDispatcher::doUmask);
-        this.register("shift", BuiltinDispatcher::doShift);
-        this.register("read", BuiltinDispatcher::doRead);
-        this.register("alias", BuiltinDispatcher::doAlias);
-        this.register("unalias", BuiltinDispatcher::doUnalias);
-        this.register("getopts", BuiltinDispatcher::doGetopts);
-        this.register("jobs", BuiltinDispatcher::doJobs);
-        this.register("bg", BuiltinDispatcher::doBg);
-        this.register("fg", BuiltinDispatcher::doFg);
-        this.register("fc", BuiltinDispatcher::doFc);
-        this.register("set", BuiltinDispatcher::doSet);
-        this.register("readonly", BuiltinDispatcher::doReadonly);
-        this.register("trap", BuiltinDispatcher::doTrap);
-        this.register("times", BuiltinDispatcher::doTimes);
-        this.register(".", BuiltinDispatcher::doDot);
+        );
+        registry.put(
+            "continue",
+            (self, call) -> {
+                throw new ContinueSignal(parseLoopLevels(call.arguments()));
+            }
+        );
+        registry.put(
+            "return",
+            (self, call) -> {
+                final List<String> args = call.arguments();
+                int code = 0;
+                if (!args.isEmpty()) {
+                    try {
+                        code = Integer.parseInt(args.get(0));
+                    } catch (final NumberFormatException ignored) {
+                        code = 0;
+                    }
+                }
+                throw new ReturnSignal(code);
+            }
+        );
+        registry.put(
+            "unset",
+            (self, call) -> BuiltinDispatcher.doUnset(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "export",
+            (self, call) -> BuiltinDispatcher.doExport(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "cd",
+            (self, call) -> BuiltinDispatcher.doCd(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "pwd",
+            (self, call) -> BuiltinDispatcher.doPwd(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "echo",
+            (self, call) -> BuiltinDispatcher.doEcho(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "eval",
+            (self, call) -> BuiltinDispatcher.doEval(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "exit",
+            (self, call) -> BuiltinDispatcher.doExit(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "type",
+            (self, call) -> BuiltinDispatcher.doType(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "command",
+            (self, call) -> BuiltinDispatcher.doCommand(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "wait",
+            (self, call) -> BuiltinDispatcher.doWait(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "hash",
+            (self, call) -> BuiltinDispatcher.doHash(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "kill",
+            (self, call) -> BuiltinDispatcher.doKill(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "umask",
+            (self, call) -> BuiltinDispatcher.doUmask(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "shift",
+            (self, call) -> BuiltinDispatcher.doShift(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "read",
+            (self, call) -> BuiltinDispatcher.doRead(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "alias",
+            (self, call) -> BuiltinDispatcher.doAlias(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "unalias",
+            (self, call) -> BuiltinDispatcher.doUnalias(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "getopts",
+            (self, call) -> BuiltinDispatcher.doGetopts(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "jobs",
+            (self, call) -> BuiltinDispatcher.doJobs(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "bg",
+            (self, call) -> BuiltinDispatcher.doBg(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "fg",
+            (self, call) -> BuiltinDispatcher.doFg(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "fc",
+            (self, call) -> BuiltinDispatcher.doFc(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "set",
+            (self, call) -> BuiltinDispatcher.doSet(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "readonly",
+            (self, call) -> BuiltinDispatcher.doReadonly(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "trap",
+            (self, call) -> BuiltinDispatcher.doTrap(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            "times",
+            (self, call) -> BuiltinDispatcher.doTimes(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        registry.put(
+            ".",
+            (self, call) -> BuiltinDispatcher.doDot(
+                self, call.arguments(), call.env(), call.assignments()
+            )
+        );
+        return registry;
     }
 
     /**
      * Registers a built-in by name.
+     *
      * @param name    The command name (as written in source)
      * @param builtin The implementation
      */
@@ -99,6 +246,7 @@ final class BuiltinDispatcher {
 
     /**
      * Checks whether a built-in is registered.
+     *
      * @param name A command name
      * @return True when a built-in is registered under {@code name}
      */
@@ -109,6 +257,7 @@ final class BuiltinDispatcher {
     /**
      * Dispatches to the matching built-in, or returns null when no entry
      * exists (the executor then resolves an external command).
+     *
      * @param name        The command name
      * @param self        Narrow façade over the executor
      * @param arguments   Command arguments (excluding the name)
@@ -128,41 +277,46 @@ final class BuiltinDispatcher {
         if (builtin == null) {
             code = null;
         } else {
-            code = builtin.invoke(self, arguments, env, assignments);
+            code = builtin.invoke(self, new Invocation(arguments, env, assignments));
         }
         return code;
     }
 
     /**
      * Implementation of {@code unset NAME ...}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doUnset(
+    static int doUnset(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        boolean removeFunction = false;
+        boolean removefunc = false;
         int idx = 0;
         while (idx < args.size() && args.get(idx).startsWith("-")) {
             if ("-f".equals(args.get(idx))) {
-                removeFunction = true;
+                removefunc = true;
             } else if (!"-v".equals(args.get(idx)) && !"--".equals(args.get(idx))) {
                 break;
             }
             idx = idx + 1;
         }
-        int code = 0;
         for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
             final String name = args.get(aidx);
-            if (removeFunction) {
+            if (removefunc) {
                 self.functionsMap().remove(name);
             } else if (!self.unsetVariable(name)) {
-                self.errStream().println("sh: " + name + ": readonly variable");
-                throw new Executor.ExitSignal(1);
+                self.errStream().println(String.format("sh: %s: readonly variable", name));
+                throw new ExitSignal(1);
             }
         }
-        return code;
+        return 0;
     }
 
     private static int parseLoopLevels(final List<String> args) {
@@ -182,8 +336,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code export NAME[=VALUE] ...}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doExport(
+    static int doExport(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -196,14 +356,16 @@ final class BuiltinDispatcher {
         }
         if (names.isEmpty()) {
             for (final Map.Entry<String, String> entry : self.exportedEnvironment().entrySet()) {
-                self.outStream().println("export " + entry.getKey() + "=" + entry.getValue());
+                self.outStream().println(
+                    String.format("export %s=%s", entry.getKey(), entry.getValue())
+                );
             }
         }
         for (final String arg : names) {
-            final int eqIdx = arg.indexOf('=');
-            if (eqIdx >= 0) {
-                final String name = arg.substring(0, eqIdx);
-                final String expanded = self.expandVariables(arg.substring(eqIdx + 1), env);
+            final int eqidx = arg.indexOf('=');
+            if (eqidx >= 0) {
+                final String name = arg.substring(0, eqidx);
+                final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
                 environment.put(name, WordExpander.removeQuotes(expanded));
                 self.markExported(name);
             } else {
@@ -216,8 +378,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code cd [target]}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doCd(
+    static int doCd(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -233,7 +401,7 @@ final class BuiltinDispatcher {
             }
         } else {
             target = self.expandVariables(args.get(0), env);
-            if (DASH.equals(target)) {
+            if ("-".equals(target)) {
                 final String old = environment.get("OLDPWD");
                 if (old == null) {
                     code = 1;
@@ -256,16 +424,17 @@ final class BuiltinDispatcher {
     }
 
     /**
-     * pwd built-in. POSIX 2.14: writes the current working directory.
+     * Pwd built-in. POSIX 2.14: writes the current working directory.
      * {@code -L} (default) prefers the {@code PWD} env value; {@code -P}
-     * resolves symlinks via {@link java.nio.file.Path#toRealPath}.
+     * resolves symlinks via {@link Path#toRealPath}.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on IO error
+     * @return The exit code: 0 on success, 1 on IO error
      */
-    private static int doPwd(
+    static int doPwd(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -287,7 +456,7 @@ final class BuiltinDispatcher {
         if (physical) {
             try {
                 self.outStream().println(
-                    java.nio.file.Path.of(logical).toRealPath().toString()
+                    Path.of(logical).toRealPath().toString()
                 );
             } catch (final IOException ex) {
                 code = 1;
@@ -298,12 +467,6 @@ final class BuiltinDispatcher {
         return code;
     }
 
-    /**
-     * Mutates PWD/OLDPWD and {@code user.dir} for a successful cd.
-     * @param environment The live env map
-     * @param dir         The directory being entered
-     * @return The cd exit code (always 0 here)
-     */
     private static int applyChdir(final Map<String, String> environment, final File dir) {
         String abs;
         try {
@@ -311,9 +474,9 @@ final class BuiltinDispatcher {
         } catch (final IOException ex) {
             abs = dir.getAbsolutePath();
         }
-        final String oldPwd = environment.get("PWD");
-        if (oldPwd != null) {
-            environment.put("OLDPWD", oldPwd);
+        final String oldpwd = environment.get("PWD");
+        if (oldpwd != null) {
+            environment.put("OLDPWD", oldpwd);
         }
         environment.put("PWD", abs);
         return 0;
@@ -321,8 +484,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code echo [-n] ARG ...}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doEcho(
+    static int doEcho(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -334,14 +503,14 @@ final class BuiltinDispatcher {
             newline = false;
             start = 1;
         }
-        boolean firstField = true;
+        boolean firstfield = true;
         for (int idx = start; idx < args.size(); idx = idx + 1) {
             for (final String field : self.expandArguments(args.get(idx), env)) {
-                if (!firstField) {
+                if (!firstfield) {
                     self.outStream().print(" ");
                 }
                 self.outStream().print(field);
-                firstField = false;
+                firstfield = false;
             }
         }
         if (newline) {
@@ -352,8 +521,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code eval STRING ...}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doEval(
+    static int doEval(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -371,16 +546,23 @@ final class BuiltinDispatcher {
         if (input.isEmpty()) {
             code = 0;
         } else {
-            final ListNode ast = new Parser(new Lexer(new CharReader(input))).parse();
-            code = self.execute(ast);
+            code = self.execute(
+                new Parser(new Lexer(new CharReader(input))).parse()
+            );
         }
         return code;
     }
 
     /**
      * Implementation of {@code exit [STATUS]}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doExit(
+    static int doExit(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -394,13 +576,19 @@ final class BuiltinDispatcher {
                 code = 1;
             }
         }
-        throw new Executor.ExitSignal(code);
+        throw new ExitSignal(code);
     }
 
     /**
      * Implementation of {@code type NAME ...}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doType(
+    static int doType(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -410,15 +598,15 @@ final class BuiltinDispatcher {
         for (final String arg : args) {
             final String expanded = self.expandVariables(arg, env);
             if (self.functionsMap().containsKey(expanded)) {
-                self.outStream().println(expanded + " is a function");
+                self.outStream().println(String.format("%s is a function", expanded));
             } else if (self.isBuiltinName(expanded)) {
-                self.outStream().println(expanded + " is a shell built-in");
+                self.outStream().println(String.format("%s is a shell built-in", expanded));
             } else {
                 final String resolved = self.resolveCommand(expanded);
                 if (resolved == null) {
                     code = 1;
                 } else {
-                    self.outStream().println(expanded + " is " + resolved);
+                    self.outStream().println(String.format("%s is %s", expanded, resolved));
                 }
             }
         }
@@ -431,19 +619,20 @@ final class BuiltinDispatcher {
      * prints a verbose description; without flags, invokes NAME
      * bypassing function lookup. {@code -p} (default-PATH) is
      * accepted but treated as a no-op (the configured PATH is used).
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
      * @return Resolved command exit code (1 if NAME not found with -v/-V)
      */
-    private static int doCommand(
+    static int doCommand(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        int code = 0;
+        int code;
         int idx = 0;
         boolean verbose = false;
         boolean locate = false;
@@ -457,7 +646,11 @@ final class BuiltinDispatcher {
             idx += 1;
         }
         if (idx >= args.size()) {
-            code = locate || verbose ? 1 : 0;
+            if (locate || verbose) {
+                code = 1;
+            } else {
+                code = 0;
+            }
         } else {
             final String name = self.expandVariables(args.get(idx), env);
             if (locate || verbose) {
@@ -471,26 +664,19 @@ final class BuiltinDispatcher {
         return code;
     }
 
-    /**
-     * Helper for {@code command -v} / {@code command -V}.
-     * @param self    Builtin context
-     * @param name    Command name
-     * @param verbose true for -V (descriptive), false for -v (location)
-     * @return 0 if found, 1 if not
-     */
     private static int describeCommand(
         final BuiltinContext self, final String name, final boolean verbose
     ) {
         int code = 0;
         if (self.functionsMap().containsKey(name)) {
             if (verbose) {
-                self.outStream().println(name + " is a function");
+                self.outStream().println(String.format("%s is a function", name));
             } else {
                 self.outStream().println(name);
             }
         } else if (self.isBuiltinName(name)) {
             if (verbose) {
-                self.outStream().println(name + " is a shell built-in");
+                self.outStream().println(String.format("%s is a shell built-in", name));
             } else {
                 self.outStream().println(name);
             }
@@ -499,7 +685,7 @@ final class BuiltinDispatcher {
             if (resolved == null) {
                 code = 1;
             } else if (verbose) {
-                self.outStream().println(name + " is " + resolved);
+                self.outStream().println(String.format("%s is %s", name, resolved));
             } else {
                 self.outStream().println(resolved);
             }
@@ -515,13 +701,14 @@ final class BuiltinDispatcher {
      * Without args, prints the current mask. With a mode, sets it
      * (octal only — symbolic mode is rejected with exit 1). {@code -S}
      * formats the mask symbolically (POSIX 2.14 "Symbolic Output").
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on parse error
+     * @return The exit code: 0 on success, 1 on parse error
      */
-    private static int doUmask(
+    static int doUmask(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -543,10 +730,14 @@ final class BuiltinDispatcher {
                 self.outStream().println(current);
             }
         } else {
-            final String mode = self.expandVariables(args.get(idx), env);
             try {
-                final int value = Integer.parseInt(mode, 8);
-                environment.put("SH4J_UMASK", String.format("%04o", value));
+                environment.put(
+                    "SH4J_UMASK",
+                    String.format(
+                        "%04o",
+                        Integer.parseInt(self.expandVariables(args.get(idx), env), 8)
+                    )
+                );
             } catch (final NumberFormatException ex) {
                 code = 1;
             }
@@ -554,11 +745,6 @@ final class BuiltinDispatcher {
         return code;
     }
 
-    /**
-     * Formats an octal umask string as POSIX symbolic mode.
-     * @param mask Octal 4-digit umask (e.g. "0022")
-     * @return Symbolic representation (e.g. "u=rwx,g=rx,o=rx")
-     */
     private static String umaskSymbolic(final String mask) {
         final int value;
         try {
@@ -566,21 +752,15 @@ final class BuiltinDispatcher {
         } catch (final NumberFormatException ex) {
             return "u=,g=,o=";
         }
-        final int allBits = 7;
-        final int user = allBits & ~((value >> 6) & allBits);
-        final int group = allBits & ~((value >> 3) & allBits);
-        final int other = allBits & ~(value & allBits);
+        final int allbits = 7;
         return String.format(
             "u=%s,g=%s,o=%s",
-            umaskBitsToString(user), umaskBitsToString(group), umaskBitsToString(other)
+            umaskBitsToString(allbits & ~((value >> 6) & allbits)),
+            umaskBitsToString(allbits & ~((value >> 3) & allbits)),
+            umaskBitsToString(allbits & ~(value & allbits))
         );
     }
 
-    /**
-     * Maps a 3-bit permission triple to {@code rwx} chars.
-     * @param bits 0..7
-     * @return Permission string
-     */
     private static String umaskBitsToString(final int bits) {
         final StringBuilder out = new StringBuilder(3);
         final int rbit = 4;
@@ -604,13 +784,14 @@ final class BuiltinDispatcher {
      * (destroy) and KILL (destroyForcibly); other signals are
      * accepted at the command line but mapped to TERM (which is the
      * POSIX default) and a soft warning is not emitted.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on usage error, 127 if any PID cannot be signalled
+     * @return The exit code: 0 on success, 1 on usage error, 127 if any PID cannot be signalled
      */
-    private static int doKill(
+    static int doKill(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -645,20 +826,14 @@ final class BuiltinDispatcher {
         return code;
     }
 
-    /**
-     * Helper for {@link #doKill}: send a signal to a single PID.
-     * @param pidStr   Decimal PID
-     * @param forcibly true for SIGKILL, false for SIGTERM
-     * @return 0 on success, 127 if no such process or non-numeric PID
-     */
-    private static int signalOne(final String pidStr, final boolean forcibly) {
+    private static int signalOne(final String pidstr, final boolean forcibly) {
         int code;
         try {
-            final long pid = Long.parseLong(pidStr);
+            final long pid = Long.parseLong(pidstr);
             if (JobManager.isJobPid(pid)) {
                 return 127;
             }
-            final java.util.Optional<ProcessHandle> handle = ProcessHandle.of(pid);
+            final Optional<ProcessHandle> handle = ProcessHandle.of(pid);
             if (handle.isPresent()) {
                 final boolean sent;
                 if (forcibly) {
@@ -666,7 +841,11 @@ final class BuiltinDispatcher {
                 } else {
                     sent = handle.get().destroy();
                 }
-                code = sent ? 0 : 127;
+                if (sent) {
+                    code = 0;
+                } else {
+                    code = 127;
+                }
             } else {
                 code = 127;
             }
@@ -679,18 +858,19 @@ final class BuiltinDispatcher {
     /**
      * Implementation of {@code hash [-r] [name...]}.
      * POSIX 2.14. sh4j has no command-lookup cache, so:
-     *   - {@code hash} with no args prints nothing and returns 0
-     *     (cache is empty by definition)
-     *   - {@code hash -r} returns 0 (no-op)
-     *   - {@code hash NAME ...} verifies each NAME resolves on PATH;
-     *     returns 0 if all do, 127 if any cannot be found
+     * - {@code hash} with no args prints nothing and returns 0
+     * (cache is empty by definition)
+     * - {@code hash -r} returns 0 (no-op)
+     * - {@code hash NAME ...} verifies each NAME resolves on PATH;
+     * returns 0 if all do, 127 if any cannot be found
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 127 when a named utility is not found
+     * @return The exit code: 0 on success, 127 when a named utility is not found
      */
-    private static int doHash(
+    static int doHash(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -714,13 +894,14 @@ final class BuiltinDispatcher {
      * POSIX 2.14: without args, waits for all background jobs (exit 0).
      * With PID, waits for that bg job if known (exit 0), else returns 127
      * (POSIX "unknown process" status).
+     *
      * @param self    Builtin context
      * @param args    Args after the command name (PIDs)
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 127 when a named PID is not a known bg job
+     * @return The exit code: 0 on success, 127 when a named PID is not a known bg job
      */
-    private static int doWait(
+    static int doWait(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -744,8 +925,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code shift [N]}.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
+     * @return The exit code (0 on success)
      */
-    private static int doShift(
+    static int doShift(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -779,13 +966,14 @@ final class BuiltinDispatcher {
      * POSIX 2.14: reads one line from stdin, splits by IFS into variables.
      * The last variable receives all remaining fields.
      * If no variables are given, stores the line in {@code REPLY}.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on EOF
+     * @return The exit code: 0 on success, 1 on EOF
      */
-    private static int doRead(
+    static int doRead(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -813,13 +1001,13 @@ final class BuiltinDispatcher {
             environment.put("REPLY", processed);
             return 0;
         }
-        final String ifs = env.getOrDefault("IFS", DEFAULT_IFS);
-        final char firstIfs = ifs.charAt(0);
-        final List<String> fields = splitReadFields(processed, ifs, firstIfs);
+        final String ifs = env.getOrDefault("IFS", String.format(" \t%n"));
+        final char firstifs = ifs.charAt(0);
+        final List<String> fields = splitReadFields(processed, ifs, firstifs);
         for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
             final String name = names.get(vdx);
             if (vdx == names.size() - 1) {
-                environment.put(name, joinReadFields(fields, vdx, firstIfs));
+                environment.put(name, joinReadFields(fields, vdx, firstifs));
             } else if (vdx < fields.size()) {
                 environment.put(name, fields.get(vdx));
             } else {
@@ -829,25 +1017,18 @@ final class BuiltinDispatcher {
         return 0;
     }
 
-    /**
-     * Processes backslash escapes in a read line (non-raw mode).
-     * Backslash-newline is removed; backslash before any other char
-     * preserves that char literally.
-     * @param line The raw input line
-     * @return The processed line
-     */
     private static String processReadEscapes(final String line) {
         final StringBuilder out = new StringBuilder(line.length());
         boolean escaped = false;
         for (int idx = 0; idx < line.length(); idx = idx + 1) {
-            final char ch = line.charAt(idx);
+            final char chr = line.charAt(idx);
             if (escaped) {
-                out.append(ch);
+                out.append(chr);
                 escaped = false;
-            } else if (ch == '\\') {
+            } else if (chr == '\\') {
                 escaped = true;
             } else {
-                out.append(ch);
+                out.append(chr);
             }
         }
         if (escaped) {
@@ -856,20 +1037,10 @@ final class BuiltinDispatcher {
         return out.toString();
     }
 
-    /**
-     * Splits a read line into fields per POSIX read semantics.
-     * Leading IFS whitespace is stripped; remaining fields separated
-     * by IFS whitespace; the first non-whitespace IFS char in the
-     * original string also acts as a delimiter.
-     * @param line     The processed input line
-     * @param ifs      The IFS string
-     * @param firstIfs The first IFS char (the delimiter char)
-     * @return Split fields
-     */
     private static List<String> splitReadFields(
-        final String line, final String ifs, final char firstIfs
+        final String line, final String ifs, final char firstifs
     ) {
-        final List<String> fields = new ArrayList<>();
+        final List<String> fields = new ArrayList<>(0);
         int pos = 0;
         while (pos < line.length() && ifs.indexOf(line.charAt(pos)) >= 0
             && (line.charAt(pos) == ' ' || line.charAt(pos) == '\t')) {
@@ -877,11 +1048,11 @@ final class BuiltinDispatcher {
         }
         final StringBuilder current = new StringBuilder();
         while (pos < line.length()) {
-            final char ch = line.charAt(pos);
-            if (ch == firstIfs && firstIfs != ' ' && firstIfs != '\t') {
+            final char chr = line.charAt(pos);
+            if (chr == firstifs && firstifs != ' ' && firstifs != '\t') {
                 fields.add(current.toString());
                 current.setLength(0);
-            } else if (ifs.indexOf(ch) >= 0) {
+            } else if (ifs.indexOf(chr) >= 0) {
                 fields.add(current.toString());
                 current.setLength(0);
                 while (pos + 1 < line.length()
@@ -889,33 +1060,26 @@ final class BuiltinDispatcher {
                     pos = pos + 1;
                 }
             } else {
-                current.append(ch);
+                current.append(chr);
             }
             pos = pos + 1;
         }
-        final boolean trailingWhitespace = current.length() == 0 && pos > 0
+        final boolean trailws = current.length() == 0 && pos > 0
             && (line.charAt(pos - 1) == ' ' || line.charAt(pos - 1) == '\t');
-        if (!trailingWhitespace || fields.isEmpty()) {
+        if (!trailws || fields.isEmpty()) {
             fields.add(current.toString());
         }
         return fields;
     }
 
-    /**
-     * Joins remaining fields starting at {@code start} using IFS.
-     * @param fields  All split fields
-     * @param start   Index of first field to join
-     * @param firstIfs The first IFS char
-     * @return Joined string
-     */
     private static String joinReadFields(
         final List<String> fields, final int start,
-        final char firstIfs
+        final char firstifs
     ) {
         final StringBuilder out = new StringBuilder();
         for (int idx = start; idx < fields.size(); idx = idx + 1) {
             if (idx > start) {
-                out.append(firstIfs);
+                out.append(firstifs);
             }
             out.append(fields.get(idx));
         }
@@ -926,13 +1090,14 @@ final class BuiltinDispatcher {
      * Implementation of {@code alias [name[=value]...]}.
      * POSIX 2.14: without args, prints all aliases.
      * With name=value, sets an alias. With plain name, prints that alias.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 if any named alias is undefined
+     * @return The exit code: 0 on success, 1 if any named alias is undefined
      */
-    private static int doAlias(
+    static int doAlias(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -940,11 +1105,11 @@ final class BuiltinDispatcher {
     ) {
         final Map<String, String> aliases = self.aliases();
         int code = 0;
-        final boolean hasArgs = !args.isEmpty() || !assigns.isEmpty();
-        if (!hasArgs) {
+        final boolean hasargs = !args.isEmpty() || !assigns.isEmpty();
+        if (!hasargs) {
             for (final Map.Entry<String, String> entry : aliases.entrySet()) {
                 self.outStream().println(
-                    entry.getKey() + "='" + entry.getValue() + "'"
+                    String.format("%s='%s'", entry.getKey(), entry.getValue())
                 );
             }
         } else {
@@ -958,31 +1123,23 @@ final class BuiltinDispatcher {
         return code;
     }
 
-    /**
-     * Processes a single alias argument (name or name=value).
-     * @param self    Builtin context (for printing)
-     * @param aliases The alias table
-     * @param arg     The argument text
-     * @param code    Current exit code
-     * @return Updated exit code
-     */
     private static int applyAliasArg(
         final BuiltinContext self, final Map<String, String> aliases,
         final String arg, final int code
     ) {
         int result = code;
-        final int eqIdx = arg.indexOf('=');
-        if (eqIdx >= 0) {
-            String value = arg.substring(eqIdx + 1);
+        final int eqidx = arg.indexOf('=');
+        if (eqidx >= 0) {
+            String value = arg.substring(eqidx + 1);
             if (value.length() >= 2
-                && ((value.startsWith("'") && value.endsWith("'"))
-                || (value.startsWith("\"") && value.endsWith("\"")))) {
+                && (value.startsWith("'") && value.endsWith("'")
+                || value.startsWith("\"") && value.endsWith("\""))) {
                 value = value.substring(1, value.length() - 1);
             }
-            aliases.put(arg.substring(0, eqIdx), value);
+            aliases.put(arg.substring(0, eqidx), value);
         } else if (aliases.containsKey(arg)) {
             self.outStream().println(
-                arg + "='" + aliases.get(arg) + "'"
+                String.format("%s='%s'", arg, aliases.get(arg))
             );
         } else {
             result = 1;
@@ -993,13 +1150,14 @@ final class BuiltinDispatcher {
     /**
      * Implementation of {@code unalias [-a] name...}.
      * POSIX 2.14: removes named aliases, or all aliases with -a.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 if any named alias doesn't exist
+     * @return The exit code: 0 on success, 1 if any named alias doesn't exist
      */
-    private static int doUnalias(
+    static int doUnalias(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1032,13 +1190,14 @@ final class BuiltinDispatcher {
      * Implementation of {@code getopts optstring var [args...]}.
      * POSIX 2.14: parses option characters from positional parameters
      * (or optional args). Uses OPTIND/OPTARG/OPTERR env vars for state.
+     *
      * @param self    Builtin context
      * @param args    Args: optstring, var, optional positional replacement
      * @param env     Environment for OPTIND/OPTARG access
      * @param assigns Inline assignments (unused)
-     * @return 0 if an option was found, 1 if all options processed
+     * @return The exit code: 0 if an option was found, 1 if all options processed
      */
-    private static int doGetopts(
+    static int doGetopts(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1048,7 +1207,7 @@ final class BuiltinDispatcher {
             return 1;
         }
         final String optstring = args.get(0);
-        final String varName = args.get(1);
+        final String varname = args.get(1);
         final List<String> pargs;
         if (args.size() > 2) {
             pargs = args.subList(2, args.size());
@@ -1067,34 +1226,33 @@ final class BuiltinDispatcher {
             optind = 1;
         }
         if (optind > pargs.size()) {
-            environment.put(varName, "?");
+            environment.put(varname, "?");
             environment.put("OPTIND", String.valueOf(pargs.size() + 1));
             return 1;
         }
         final String current = pargs.get(optind - 1);
         if ("--".equals(current)) {
             environment.put("OPTIND", String.valueOf(optind + 1));
-            environment.put(varName, "?");
+            environment.put(varname, "?");
             return 1;
         }
         if (current.length() < 2 || current.charAt(0) != '-') {
-            environment.put(varName, "?");
+            environment.put(varname, "?");
             return 1;
         }
         int optpos = environment.containsKey("OPTIND_POS")
             ? Integer.parseInt(environment.get("OPTIND_POS")) : 1;
         if (optpos >= current.length()) {
             optind = optind + 1;
-            optpos = 1;
             environment.put("OPTIND", String.valueOf(optind));
             if (optind > pargs.size()) {
-                environment.put(varName, "?");
+                environment.put(varname, "?");
                 environment.remove("OPTIND_POS");
                 return 1;
             }
             final String next = pargs.get(optind - 1);
             if (next.length() < 2 || next.charAt(0) != '-') {
-                environment.put(varName, "?");
+                environment.put(varname, "?");
                 environment.remove("OPTIND_POS");
                 return 1;
             }
@@ -1103,23 +1261,23 @@ final class BuiltinDispatcher {
         }
         final char optchar = current.charAt(optpos);
         environment.put("OPTIND_POS", String.valueOf(optpos + 1));
-        final int optIdx = optstring.indexOf(optchar);
-        if (optIdx < 0) {
+        final int optidx = optstring.indexOf(optchar);
+        if (optidx < 0) {
             if (optstring.length() > 0 && optstring.charAt(0) == ':') {
-                environment.put(varName, "?");
+                environment.put(varname, "?");
                 environment.put("OPTARG", String.valueOf(optchar));
             } else {
                 self.errStream().println(
-                    "sh: illegal option -- " + optchar
+                    String.format("sh: illegal option -- %s", optchar)
                 );
-                environment.put(varName, "?");
+                environment.put(varname, "?");
                 environment.put("OPTARG", String.valueOf(optchar));
             }
             return 0;
         }
-        final boolean takesArg = optIdx + 1 < optstring.length()
-            && optstring.charAt(optIdx + 1) == ':';
-        if (takesArg) {
+        final boolean takesarg = optidx + 1 < optstring.length()
+            && optstring.charAt(optidx + 1) == ':';
+        if (takesarg) {
             environment.put("OPTIND", String.valueOf(optind + 1));
             if (optpos + 1 < current.length()) {
                 environment.put(
@@ -1132,12 +1290,12 @@ final class BuiltinDispatcher {
                 environment.put("OPTIND", String.valueOf(optind + 2));
             } else {
                 if (optstring.length() > 0 && optstring.charAt(0) == ':') {
-                    environment.put(varName, ":");
+                    environment.put(varname, ":");
                 } else {
                     self.errStream().println(
-                        "sh: option requires an argument -- " + optchar
+                        String.format("sh: option requires an argument -- %s", optchar)
                     );
-                    environment.put(varName, "?");
+                    environment.put(varname, "?");
                 }
                 environment.put("OPTARG", "");
                 environment.remove("OPTIND_POS");
@@ -1147,20 +1305,14 @@ final class BuiltinDispatcher {
         } else {
             environment.put("OPTARG", "");
         }
-        environment.put(varName, String.valueOf(optchar));
-        if (!takesArg && optpos + 1 >= current.length()) {
+        environment.put(varname, String.valueOf(optchar));
+        if (!takesarg && optpos + 1 >= current.length()) {
             environment.put("OPTIND", String.valueOf(optind + 1));
             environment.remove("OPTIND_POS");
         }
         return 0;
     }
 
-    /**
-     * Parses a job id that may be specified as {@code %n} or as a bare
-     * decimal number.
-     * @param arg The argument string
-     * @return The integer job id, or -1 when the input is not valid
-     */
     private static int parseJobId(final String arg) {
         final String digits;
         if (arg.startsWith("%")) {
@@ -1179,41 +1331,42 @@ final class BuiltinDispatcher {
      * Implementation of {@code jobs [%n...]}.
      * POSIX 2.14: without args, lists all background jobs with their
      * state and command line.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job ids)
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0
+     * @return The exit code: 0
      */
-    private static int doJobs(
+    static int doJobs(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
         final List<String> assigns
     ) {
         final JobManager mgr = self.jobManager();
-        final List<JobManager.Job> all;
+        final List<Job> all;
         if (args.isEmpty()) {
             all = mgr.listJobs();
         } else {
-            all = new ArrayList<>();
+            all = new ArrayList<>(0);
             for (final String arg : args) {
                 final int id = parseJobId(arg);
                 if (id > 0) {
-                    final JobManager.Job job = mgr.getJob(id);
+                    final Job job = mgr.getJob(id);
                     if (job != null) {
                         all.add(job);
                     }
                 }
             }
         }
-        for (final JobManager.Job job : all) {
-            final String state = switch (job.state) {
+        for (final Job job : all) {
+            final String state = switch (job.getState()) {
                 case RUNNING -> "Running";
                 case DONE -> "Done";
                 default -> "Stopped";
             };
-            self.outStream().printf("[%d] %s %s%n", job.id, state, job.command);
+            self.outStream().printf("[%d] %s %s%n", job.getId(), state, job.getCommand());
         }
         return 0;
     }
@@ -1222,43 +1375,44 @@ final class BuiltinDispatcher {
      * Implementation of {@code bg [%n...]}.
      * POSIX 2.14: resumes suspended jobs in the background. Without args,
      * operates on the most recent job. Prints a confirmation line.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job ids)
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 if no matching job
+     * @return The exit code: 0 on success, 1 if no matching job
      */
-    private static int doBg(
+    static int doBg(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
         final List<String> assigns
     ) {
         final JobManager mgr = self.jobManager();
-        final List<Integer> ids = new ArrayList<>();
+        final List<Integer> ids = new ArrayList<>(0);
         if (args.isEmpty()) {
-            final List<JobManager.Job> all = mgr.listJobs();
+            final List<Job> all = mgr.listJobs();
             if (all.isEmpty()) {
                 self.errStream().println("sh: bg: no current job");
                 return 1;
             }
-            ids.add(all.get(all.size() - 1).id);
+            ids.add(all.get(all.size() - 1).getId());
         } else {
             for (final String arg : args) {
                 final int id = parseJobId(arg);
                 if (id <= 0 || mgr.getJob(id) == null) {
-                    self.errStream().println("sh: bg: " + arg + ": no such job");
+                    self.errStream().println(String.format("sh: bg: %s: no such job", arg));
                     return 1;
                 }
                 ids.add(id);
             }
         }
         for (final int id : ids) {
-            final JobManager.Job job = mgr.getJob(id);
-            if (job != null && job.state == JobManager.State.STOPPED) {
-                job.state = JobManager.State.RUNNING;
+            final Job job = mgr.getJob(id);
+            if (job != null && job.getState() == JobManager.State.STOPPED) {
+                job.resume();
             }
-            self.outStream().printf("[%d] %s%n", id, job != null ? job.command : "");
+            self.outStream().printf("[%d] %s%n", id, job != null ? job.getCommand() : "");
         }
         return 0;
     }
@@ -1267,13 +1421,14 @@ final class BuiltinDispatcher {
      * Implementation of {@code fg [%n]}.
      * POSIX 2.14: brings a background job to the foreground, waiting for
      * it to complete. Without args, operates on the most recent job.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job id)
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
      * @return The job's exit code, or 1 on error
      */
-    private static int doFg(
+    static int doFg(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1282,25 +1437,25 @@ final class BuiltinDispatcher {
         final JobManager mgr = self.jobManager();
         final int id;
         if (args.isEmpty()) {
-            final List<JobManager.Job> all = mgr.listJobs();
+            final List<Job> all = mgr.listJobs();
             if (all.isEmpty()) {
                 self.errStream().println("sh: fg: no current job");
                 return 1;
             }
-            id = all.get(all.size() - 1).id;
+            id = all.get(all.size() - 1).getId();
         } else {
             id = parseJobId(args.get(0));
             if (id <= 0) {
-                self.errStream().println("sh: fg: " + args.get(0) + ": no such job");
+                self.errStream().println(String.format("sh: fg: %s: no such job", args.get(0)));
                 return 1;
             }
         }
-        final JobManager.Job job = mgr.getJob(id);
+        final Job job = mgr.getJob(id);
         if (job == null) {
             self.errStream().printf("sh: fg: %d: no such job%n", id);
             return 1;
         }
-        self.outStream().println(job.command);
+        self.outStream().println(job.getCommand());
         return mgr.waitForJob(id);
     }
 
@@ -1309,39 +1464,40 @@ final class BuiltinDispatcher {
      * POSIX 2.14: lists or re-executes history entries.
      * {@code -l} lists entries (default), {@code -n} suppresses numbers,
      * {@code -s pat=rep} substitutes and re-executes the last command.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on error
+     * @return The exit code: 0 on success, 1 on error
      */
-    private static int doFc(
+    static int doFc(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
         final List<String> assigns
     ) {
-        boolean listMode = true;
-        boolean noNumbers = false;
+        boolean listmode = true;
+        boolean nonumbers = false;
         String substitute = null;
         int idx = 0;
         while (idx < args.size() && args.get(idx).startsWith("-")
             && !args.get(idx).matches("-\\d+")) {
             final String flag = args.get(idx);
             for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
-                final char ch = flag.charAt(fidx);
-                if (ch == 'l') {
-                    listMode = true;
-                } else if (ch == 'n') {
-                    noNumbers = true;
-                } else if (ch == 'e') {
+                final char chr = flag.charAt(fidx);
+                if (chr == 'l') {
+                    listmode = true;
+                } else if (chr == 'n') {
+                    nonumbers = true;
+                } else if (chr == 'e') {
                     idx = idx + 1;
                     if (idx >= args.size()) {
                         self.errStream().println("sh: fc: -e requires argument");
                         return 1;
                     }
-                } else if (ch == 's') {
-                    listMode = false;
+                } else if (chr == 's') {
+                    listmode = false;
                     if (idx + 1 < args.size() && args.get(idx + 1).contains("=")) {
                         substitute = args.get(idx + 1);
                         idx = idx + 1;
@@ -1353,7 +1509,7 @@ final class BuiltinDispatcher {
                     }
                     fidx = flag.length();
                 } else {
-                    self.errStream().println("sh: fc: unknown option -" + ch);
+                    self.errStream().println(String.format("sh: fc: unknown option -%s", chr));
                     return 1;
                 }
             }
@@ -1383,17 +1539,12 @@ final class BuiltinDispatcher {
         if (substitute != null) {
             return fcSubstitute(self, hist, substitute, first);
         }
-        if (listMode) {
-            return fcList(self, hist, first, last, noNumbers);
+        if (listmode) {
+            return fcList(self, hist, first, last, nonumbers);
         }
         return 0;
     }
 
-    /**
-     * Parses an {@code fc} range argument (number or negative for relative).
-     * @param arg The argument string
-     * @return The resolved history number, or -1 on parse error
-     */
     private static int parseFcNumber(final String arg) {
         try {
             return Integer.parseInt(arg);
@@ -1402,23 +1553,14 @@ final class BuiltinDispatcher {
         }
     }
 
-    /**
-     * Lists history entries in the given range.
-     * @param self      Builtin context for output
-     * @param hist      The command history
-     * @param first     Start of range
-     * @param last      End of range
-     * @param noNumbers True to suppress history numbers
-     * @return 0
-     */
     private static int fcList(
         final BuiltinContext self, final CommandHistory hist,
-        final int first, final int last, final boolean noNumbers
+        final int first, final int last, final boolean nonumbers
     ) {
-        final List<CommandHistory.Entry> entries = hist.list(first, last);
-        for (final CommandHistory.Entry entry : entries) {
-            if (noNumbers) {
-                self.outStream().println("\t" + entry.command());
+        final List<HistoryEntry> entries = hist.list(first, last);
+        for (final HistoryEntry entry : entries) {
+            if (nonumbers) {
+                self.outStream().println(String.format("\t%s", entry.command()));
             } else {
                 self.outStream().printf("%d\t%s%n", entry.number(), entry.command());
             }
@@ -1426,48 +1568,40 @@ final class BuiltinDispatcher {
         return 0;
     }
 
-    /**
-     * Substitutes a pattern in a history command and re-executes it.
-     * @param self      Builtin context for execution
-     * @param hist      The command history
-     * @param pattern   The substitution pattern (old=new)
-     * @param number    History number to operate on
-     * @return 0 on success, 1 on error
-     */
     private static int fcSubstitute(
         final BuiltinContext self, final CommandHistory hist,
         final String pattern, final int number
     ) {
-        final int eqIdx = pattern.indexOf('=');
-        if (eqIdx < 0) {
+        final int eqidx = pattern.indexOf('=');
+        if (eqidx < 0) {
             self.errStream().println("sh: fc: invalid substitution pattern");
             return 1;
         }
-        final String oldStr = pattern.substring(0, eqIdx);
-        final String newStr = pattern.substring(eqIdx + 1);
+        final String oldstr = pattern.substring(0, eqidx);
+        final String newstr = pattern.substring(eqidx + 1);
         final String cmd = hist.get(number);
         if (cmd == null) {
             self.errStream().printf("sh: fc: %d: no such history entry%n", number);
             return 1;
         }
-        final String replaced = cmd.replace(oldStr, newStr);
+        final String replaced = cmd.replace(oldstr, newstr);
         self.outStream().println(replaced);
-        final ListNode ast = new Parser(
-            new Lexer(new CharReader(replaced))
-        ).parse();
-        return self.execute(ast);
+        return self.execute(
+            new Parser(new Lexer(new CharReader(replaced))).parse()
+        );
     }
 
     /**
      * Implementation of {@code set [-efux] [--] [arg...]}.
      * POSIX 2.14: sets shell options and positional parameters.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0
+     * @return The exit code: 0
      */
-    private static int doSet(
+    static int doSet(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1475,17 +1609,17 @@ final class BuiltinDispatcher {
     ) {
         String flags = self.shellFlags();
         int idx = 0;
-        boolean sawDashDash = false;
+        boolean sawdash = false;
         while (idx < args.size()) {
             final String flag = args.get(idx);
             if ("--".equals(flag)) {
                 idx = idx + 1;
-                sawDashDash = true;
+                sawdash = true;
                 break;
             }
             if (("-o".equals(flag) || "+o".equals(flag)) && idx + 1 < args.size()) {
                 final String option = args.get(idx + 1);
-                final char opt = setOptionFlag(option);
+                final char opt = optionFlag(option);
                 if (opt != 0) {
                     if ("-o".equals(flag)) {
                         if (flags.indexOf(opt) < 0) {
@@ -1504,18 +1638,18 @@ final class BuiltinDispatcher {
             }
             final boolean enable = "-".equals(flag.substring(0, 1));
             for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
-                final char ch = flag.charAt(fidx);
-                if (enable && flags.indexOf(ch) < 0) {
-                    flags = flags + ch;
+                final char chr = flag.charAt(fidx);
+                if (enable && flags.indexOf(chr) < 0) {
+                    flags = flags + chr;
                 } else if (!enable) {
-                    flags = flags.replace(String.valueOf(ch), "");
+                    flags = flags.replace(String.valueOf(chr), "");
                 }
             }
             idx = idx + 1;
         }
         self.setShellFlags(flags);
-        if (sawDashDash || idx < args.size()) {
-            final List<String> params = new ArrayList<>();
+        if (sawdash || idx < args.size()) {
+            final List<String> params = new ArrayList<>(0);
             for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
                 params.addAll(self.expandArguments(args.get(aidx), env));
             }
@@ -1524,12 +1658,7 @@ final class BuiltinDispatcher {
         return 0;
     }
 
-    /**
-     * Maps a {@code set -o} option name to its single-character flag.
-     * @param option Option name
-     * @return Flag character, or 0 when unsupported
-     */
-    private static char setOptionFlag(final String option) {
+    private static char optionFlag(final String option) {
         final char flag;
         if ("errexit".equals(option)) {
             flag = 'e';
@@ -1555,13 +1684,14 @@ final class BuiltinDispatcher {
      * Implementation of {@code trap [action signal ...]}.
      * Only the EXIT trap is executed by the executor; other signals are
      * recorded but the JDK does not expose portable signal handlers.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
-     * @return 0
+     * @return The exit code: 0
      */
-    private static int doTrap(
+    static int doTrap(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1571,20 +1701,20 @@ final class BuiltinDispatcher {
         if (args.isEmpty()) {
             for (final Map.Entry<String, String> entry : self.traps().entrySet()) {
                 self.outStream().println(
-                    "trap -- '" + entry.getValue() + "' " + entry.getKey()
+                    String.format("trap -- '%s' %s", entry.getValue(), entry.getKey())
                 );
             }
             code = 0;
         } else if ("-".equals(args.get(0))) {
             for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                self.setTrap(args.get(idx).toUpperCase(java.util.Locale.ROOT), null);
+                self.setTrap(args.get(idx).toUpperCase(Locale.ROOT), null);
             }
             code = 0;
         } else {
             final String action = WordExpander.removeQuotes(args.get(0));
             for (int idx = 1; idx < args.size(); idx = idx + 1) {
                 self.setTrap(
-                    args.get(idx).toUpperCase(java.util.Locale.ROOT), action
+                    args.get(idx).toUpperCase(Locale.ROOT), action
                 );
             }
             code = 0;
@@ -1594,13 +1724,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code times}.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
-     * @return 0
+     * @return The exit code: 0
      */
-    private static int doTimes(
+    static int doTimes(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1613,13 +1744,14 @@ final class BuiltinDispatcher {
 
     /**
      * Implementation of {@code . file [args...]}.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
      * @param assigns Inline assignments (unused)
      * @return The sourced script's exit status, or 1 on IO/parse failure
      */
-    private static int doDot(
+    static int doDot(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1634,22 +1766,22 @@ final class BuiltinDispatcher {
             );
             try {
                 final File raw = new File(path);
-                final File script = raw.isAbsolute()
-                    ? raw : new File(self.currentDirectory(), path);
                 final String source = new String(
-                    Files.readAllBytes(script.toPath()), StandardCharsets.UTF_8
+                    Files.readAllBytes(
+                        (raw.isAbsolute() ? raw : new File(self.currentDirectory(), path))
+                            .toPath()
+                    ), StandardCharsets.UTF_8
                 );
                 final List<String> saved = new ArrayList<>(self.positionalParamsList());
                 if (args.size() > 1) {
                     self.setPositionalParams(args.subList(1, args.size()));
                 }
                 try {
-                    final ListNode ast = new Parser(
-                        new Lexer(new CharReader(source))
-                    ).parse();
                     try {
-                        code = self.execute(ast);
-                    } catch (final Executor.ReturnSignal ex) {
+                        code = self.execute(
+                            new Parser(new Lexer(new CharReader(source))).parse()
+                        );
+                    } catch (final ReturnSignal ex) {
                         code = ex.getCode();
                     }
                 } finally {
@@ -1657,7 +1789,7 @@ final class BuiltinDispatcher {
                     self.positionalParamsList().addAll(saved);
                 }
             } catch (final IOException ex) {
-                self.errStream().println("sh: " + path + ": cannot open");
+                self.errStream().println(String.format("sh: %s: cannot open", path));
                 code = 1;
             }
         }
@@ -1667,13 +1799,14 @@ final class BuiltinDispatcher {
     /**
      * Implementation of {@code readonly [-p] [name[=value]...]}.
      * POSIX 2.14: marks variables as read-only.
+     *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
      * @param assigns Inline assignments (unused)
-     * @return 0 on success, 1 on error
+     * @return The exit code: 0 on success, 1 on error
      */
-    private static int doReadonly(
+    static int doReadonly(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env,
@@ -1689,17 +1822,17 @@ final class BuiltinDispatcher {
             for (final Map.Entry<String, String> entry : environment.entrySet()) {
                 if (self.isReadonly(entry.getKey())) {
                     self.outStream().println(
-                        "readonly " + entry.getKey() + "=" + entry.getValue()
+                        String.format("readonly %s=%s", entry.getKey(), entry.getValue())
                     );
                 }
             }
             return 0;
         }
         for (final String arg : all) {
-            final int eqIdx = arg.indexOf('=');
-            if (eqIdx >= 0) {
-                final String name = arg.substring(0, eqIdx);
-                final String expanded = self.expandVariables(arg.substring(eqIdx + 1), env);
+            final int eqidx = arg.indexOf('=');
+            if (eqidx >= 0) {
+                final String name = arg.substring(0, eqidx);
+                final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
                 environment.put(name, WordExpander.removeQuotes(expanded));
                 self.markReadonly(name);
             } else {

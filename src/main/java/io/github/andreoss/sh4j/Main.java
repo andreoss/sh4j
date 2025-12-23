@@ -4,30 +4,27 @@
  */
 package io.github.andreoss.sh4j;
 
-import java.util.List;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.executor.Executor;
+import java.util.List;
 
 /**
  * Command-line entry point for sh4j. Dispatches to either script mode (a
  * single filename argument plus positional parameters) or interactive
  * mode (read-eval-print loop over stdin).
+ *
  * @since 1.0
  */
 public final class Main {
 
-    /**
-     * Utility class; the constructor exists only to enforce non-instantiation
-     * and is annotated as defensive code for JaCoCo's filter.
-     */
     @GeneratedDefensive
     private Main() {
-        super();
     }
 
     /**
      * Standard {@code main} entry. Delegates to {@link #exitCode(String[])}
      * and feeds the result to {@link System#exit(int)}.
+     *
      * @param args The CLI arguments
      */
     @GeneratedDefensive
@@ -37,6 +34,7 @@ public final class Main {
 
     /**
      * Computes the process exit code for the given CLI arguments.
+     *
      * @param args The CLI arguments (script path first, then positional args)
      * @return The exit status the JVM should report
      */
@@ -46,6 +44,7 @@ public final class Main {
 
     /**
      * Parses and executes shell source text.
+     *
      * @param source The shell source
      * @param params Positional parameters ({@code $0} first)
      * @return Exit status
@@ -56,6 +55,7 @@ public final class Main {
 
     /**
      * Runs a script with the script name as its sole positional parameter.
+     *
      * @param filename The script path
      * @return The script's exit status
      */
@@ -65,25 +65,28 @@ public final class Main {
 
     /**
      * Runs a script with the given positional parameters.
+     *
      * @param filename   The script path
-     * @param scriptArgs The positional parameters (including {@code $0})
+     * @param args The positional parameters (including {@code $0})
      * @return The script's exit status
      */
-    static int runScript(final String filename, final List<String> scriptArgs) {
-        return MainRunner.runScript(filename, scriptArgs);
+    static int runScript(final String filename, final List<String> args) {
+        return MainRunner.runScript(filename, args);
     }
 
     /**
      * Runs the interactive REPL with a specific ENV startup file.
-     * @param envFile The ENV startup file path (may be null)
+     *
+     * @param envpath The ENV startup file path (may be null)
      * @return Always 0; failures are surfaced via the prompt
      */
-    static int interactive(final String envFile) {
-        return MainRepl.interactive(envFile);
+    static int interactive(final String envpath) {
+        return MainRepl.interactive(envpath);
     }
 
     /**
      * Executes a single command line in the interactive shell.
+     *
      * @param executor The shell executor
      * @param line The command line to execute
      */
@@ -93,6 +96,7 @@ public final class Main {
 
     /**
      * Checks if a command string is incomplete (needs more input).
+     *
      * @param input The command text accumulated so far
      * @return True when the input appears to be an incomplete command
      */
@@ -102,10 +106,11 @@ public final class Main {
 
     /**
      * Executes the ENV startup file if it exists.
+     *
      * @param executor The executor to run the file with
-     * @param envFile  The path to the startup file
+     * @param envpath  The path to the startup file
      */
-    static void runStartupFile(final Executor executor, final String envFile) {
-        MainRepl.runStartupFile(executor, envFile);
+    static void runStartupFile(final Executor executor, final String envpath) {
+        MainRepl.runStartupFile(executor, envpath);
     }
 }

@@ -11,111 +11,149 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests for PosixConformance.
+ *
  * @since 1.0
  */
-@SuppressWarnings("PMD.TooManyMethods")
-public final class PosixConformanceTest {
+final class PosixConformanceTest {
 
-    @Rule
-    public TemporaryFolder tempdir = new TemporaryFolder();
-
-    @Test
-    public void positionalParamCount() throws Exception {
-        assertThat(run(String.format("echo $#%n"), "a", "b", "c").trim(), equalTo("3"));
-    }
+    @TempDir
+    private static Path root;
 
     @Test
-    public void positionalParamAt() throws Exception {
-        assertThat(run(String.format("echo $@%n"), "x", "y", "z").trim(), equalTo("x y z"));
-    }
-
-    @Test
-    public void positionalFirstParam() throws Exception {
-        assertThat(run(String.format("echo $1%n"), "hello").trim(), equalTo("hello"));
-    }
-
-    @Test
-    public void paramDefaultWhenUnset() throws Exception {
-        assertThat(run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim(), equalTo("fallback"));
-    }
-
-    @Test
-    public void paramLengthOfVar() throws Exception {
-        assertThat(run(String.format("V=hello; echo ${#V}%n")).trim(), equalTo("5"));
-    }
-
-    @Test
-    public void arithmeticPrecedence() throws Exception {
-        assertThat(run(String.format("echo $((1 + 2 * 3))%n")).trim(), equalTo("7"));
-    }
-
-    @Test
-    public void arithmeticParens() throws Exception {
-        assertThat(run(String.format("echo $(((1 + 2) * 3))%n")).trim(), equalTo("9"));
-    }
-
-    @Test
-    public void commandSubstitutionDollarParen() throws Exception {
-        assertThat(run(String.format("echo a$(echo b)c%n")).trim(), equalTo("abc"));
-    }
-
-    @Test
-    public void backtickSubstitution() throws Exception {
-        assertThat(run(String.format("echo a`echo b`c%n")).trim(), equalTo("abc"));
-    }
-
-    @Test
-    public void ifThenElse() throws Exception {
-        assertThat(run(String.format("if true; then echo yes; else echo no; fi%n")).trim(), equalTo("yes"));
-    }
-
-    @Test
-    public void forLoopBody() throws Exception {
-        assertThat(run(String.format("for i in a b c; do echo $i; done%n")).trim(), equalTo(String.format("a%nb%nc")));
-    }
-
-    @Test
-    public void caseExact() throws Exception {
-        assertThat(
-            run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim(),
-            equalTo("YES")
+    void positionalParamCount() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo $#%n"), "a", "b", "c").trim(),
+            CoreMatchers.equalTo("3")
         );
     }
 
     @Test
-    public void echoWithDoubleQuotes() throws Exception {
-        assertThat(run(String.format("echo \"hello world\"%n")).trim(), equalTo("hello world"));
+    void positionalParamAt() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo $@%n"), "x", "y", "z").trim(),
+            CoreMatchers.equalTo("x y z")
+        );
     }
 
     @Test
-    public void hereDocContent() throws Exception {
-        assertThat(
-            run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim(),
-            equalTo(String.format("line1%nline2"))
+    void positionalFirstParam() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo $1%n"), "hello").trim(),
+            CoreMatchers.equalTo("hello")
+        );
+    }
+
+    @Test
+    void paramDefaultWhenUnset() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo ${UNSET_XYZ:-fallback}%n")).trim(),
+            CoreMatchers.equalTo("fallback")
+        );
+    }
+
+    @Test
+    void paramLengthOfVar() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("V=hello; echo ${#V}%n")).trim(),
+            CoreMatchers.equalTo("5")
+        );
+    }
+
+    @Test
+    void arithmeticPrecedence() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo $((1 + 2 * 3))%n")).trim(),
+            CoreMatchers.equalTo("7")
+        );
+    }
+
+    @Test
+    void arithmeticParens() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo $(((1 + 2) * 3))%n")).trim(),
+            CoreMatchers.equalTo("9")
+        );
+    }
+
+    @Test
+    void commandSubstitutionDollarParen() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo a$(echo b)c%n")).trim(),
+            CoreMatchers.equalTo("abc")
+        );
+    }
+
+    @Test
+    void backtickSubstitution() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo a`echo b`c%n")).trim(),
+            CoreMatchers.equalTo("abc")
+        );
+    }
+
+    @Test
+    void ifThenElse() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("if true; then echo yes; else echo no; fi%n")).trim(),
+            CoreMatchers.equalTo("yes")
+        );
+    }
+
+    @Test
+    void forLoopBody() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("for i in a b c; do echo $i; done%n")).trim(),
+            CoreMatchers.equalTo(String.format("a%nb%nc"))
+        );
+    }
+
+    @Test
+    void caseExact() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("case foo in bar) echo NO;; foo) echo YES;; esac%n")).trim(),
+            CoreMatchers.equalTo("YES")
+        );
+    }
+
+    @Test
+    void echoWithDoubleQuotes() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo \"hello world\"%n")).trim(),
+            CoreMatchers.equalTo("hello world")
+        );
+    }
+
+    @Test
+    void hereDocContent() throws Exception {
+        MatcherAssert.assertThat(
+            this.run(String.format("cat <<EOF%nline1%nline2%nEOF%n")).trim(),
+            CoreMatchers.equalTo(String.format("line1%nline2"))
         );
     }
 
     private String run(final String script, final String... args) throws Exception {
-        final File str = this.tempdir.newFile("c.sh");
+        final File str = TempDirs.file(PosixConformanceTest.root, "c.sh");
         try (BufferedWriter w = Files.newBufferedWriter(str.toPath(), StandardCharsets.UTF_8)) {
             w.write(script);
         }
-        final java.util.List<String> cmd = new java.util.ArrayList<>(7);
+        final List<String> cmd = new ArrayList<>(7);
         cmd.add(String.format("%s/bin/java", System.getProperty("java.home")));
         cmd.add("-cp");
         cmd.add(System.getProperty("java.class.path"));
         cmd.add("io.github.andreoss.sh4j.Main");
         cmd.add(str.getAbsolutePath());
-        cmd.addAll(java.util.Arrays.asList(args));
+        cmd.addAll(Arrays.asList(args));
         final ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -123,13 +161,13 @@ public final class PosixConformanceTest {
         return new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
     }
 
-    private static byte[] readAllBytes(final InputStream in) throws IOException {
+    private static byte[] readAllBytes(final InputStream input) throws IOException {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final byte[] buf = new byte[8192];
-        int n = in.read(buf);
-        while (n != -1) {
-            bos.write(buf, 0, n);
-            n = in.read(buf);
+        int num = input.read(buf);
+        while (num != -1) {
+            bos.write(buf, 0, num);
+            num = input.read(buf);
         }
         return bos.toByteArray();
     }

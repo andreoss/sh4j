@@ -6,581 +6,630 @@ package io.github.andreoss.sh4j.executor;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for ArithmeticEvaluator.
+ *
  * @since 1.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts", "PMD.ExcessivePublicCount"})
-public final class ArithmeticEvaluatorTest {
+final class ArithmeticEvaluatorTest {
 
     /** Tests addition. */
     @Test
-    public void add() {
-        assertThat(
+    void add() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("3 + 4", new HashMap<>()),
-            equalTo("7")
+            CoreMatchers.equalTo("7")
         );
     }
 
     @Test
-    public void sub() {
-        assertThat(
+    void sub() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("7 - 4", new HashMap<>()),
-            equalTo("3")
+            CoreMatchers.equalTo("3")
         );
     }
 
     @Test
-    public void mul() {
-        assertThat(
+    void mul() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("3 * 4", new HashMap<>()),
-            equalTo("12")
+            CoreMatchers.equalTo("12")
         );
     }
 
     @Test
-    public void div() {
-        assertThat(
+    void div() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("9 / 4", new HashMap<>()),
-            equalTo("2")
+            CoreMatchers.equalTo("2")
         );
     }
 
     @Test
-    public void mod() {
-        assertThat(
+    void mod() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("9 % 4", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void precedence() {
-        assertThat(
+    void precedence() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2 + 3 * 4", new HashMap<>()),
-            equalTo("14")
+            CoreMatchers.equalTo("14")
         );
     }
 
     @Test
-    public void parens() {
-        assertThat(
+    void parens() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("(2 + 3) * 4", new HashMap<>()),
-            equalTo("20")
+            CoreMatchers.equalTo("20")
         );
     }
 
     @Test
-    public void shiftLeft() {
-        assertThat(
+    void shiftLeft() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("4 << 3", new HashMap<>()),
-            equalTo("32")
+            CoreMatchers.equalTo("32")
         );
     }
 
     @Test
-    public void shiftRight() {
-        assertThat(
+    void shiftRight() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("32 >> 3", new HashMap<>()),
-            equalTo("4")
+            CoreMatchers.equalTo("4")
         );
     }
 
     @Test
-    public void ltOperator() {
-        assertThat(
+    void ltOperator() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("3 < 5", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void geOperator() {
-        assertThat(
+    void geOperator() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("5 >= 5", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void eqEq() {
-        assertThat(
+    void eqEq() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("5 == 5", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void neq() {
-        assertThat(
+    void neq() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("5 != 4", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void bitAnd() {
-        assertThat(
+    void bitAnd() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("12 & 6", new HashMap<>()),
-            equalTo("4")
+            CoreMatchers.equalTo("4")
         );
     }
 
     @Test
-    public void bitOr() {
-        assertThat(
+    void bitOr() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("12 | 6", new HashMap<>()),
-            equalTo("14")
+            CoreMatchers.equalTo("14")
         );
     }
 
     @Test
-    public void bitXor() {
-        assertThat(
+    void bitXor() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("12 ^ 6", new HashMap<>()),
-            equalTo("10")
+            CoreMatchers.equalTo("10")
         );
     }
 
     @Test
-    public void logicalAnd() {
-        assertThat(
+    void logicalAnd() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("1 && 2", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void logicalOr() {
-        assertThat(
+    void logicalOr() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0 || 5", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void unaryNot() {
-        assertThat(
+    void unaryNot() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("!0", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void unaryBitNot() {
-        assertThat(
+    void unaryBitNot() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("~0", new HashMap<>()),
-            equalTo("-1")
+            CoreMatchers.equalTo("-1")
         );
     }
 
     @Test
-    public void ternaryTrue() {
-        assertThat(
+    void ternaryTrue() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("1 ? 10 : 20", new HashMap<>()),
-            equalTo("10")
+            CoreMatchers.equalTo("10")
         );
     }
 
     @Test
-    public void ternaryFalse() {
-        assertThat(
+    void ternaryFalse() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0 ? 10 : 20", new HashMap<>()),
-            equalTo("20")
+            CoreMatchers.equalTo("20")
         );
     }
 
     @Test
-    public void assign() {
+    void assign() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("x = 5", new HashMap<>()),
+            CoreMatchers.equalTo("5")
+        );
+    }
+
+    @Test
+    void assignStoresValue() {
         final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x = 5", env),
-            equalTo("5")
-        );
-        assertThat(env.get("x"), equalTo("5"));
+        new ArithmeticEvaluator().evalArithmetic("x = 5", env);
+        MatcherAssert.assertThat(env.get("x"), CoreMatchers.equalTo("5"));
     }
 
     @Test
-    public void plusAssign() {
+    void plusAssign() {
         final Map<String, String> env = new HashMap<>();
         env.put("y", "10");
-        assertThat(
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("y += 3", env),
-            equalTo("13")
+            CoreMatchers.equalTo("13")
         );
-        assertThat(env.get("y"), equalTo("13"));
     }
 
     @Test
-    public void shortCircuitAndSuppressesAssignment() {
+    void plusAssignStoresValue() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("y", "10");
+        new ArithmeticEvaluator().evalArithmetic("y += 3", env);
+        MatcherAssert.assertThat(env.get("y"), CoreMatchers.equalTo("13"));
+    }
+
+    @Test
+    void shortCircuitAndSuppressesAssignment() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("0 && (z = 99)", env);
-        assertThat(env.get("z"), nullValue());
+        MatcherAssert.assertThat(env.get("z"), CoreMatchers.nullValue());
     }
 
     @Test
-    public void shortCircuitOrSuppressesAssignment() {
+    void shortCircuitOrSuppressesAssignment() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("1 || (q = 99)", env);
-        assertThat(env.get("q"), nullValue());
+        MatcherAssert.assertThat(env.get("q"), CoreMatchers.nullValue());
     }
 
     @Test
-    public void varNameResolvesToEnvValue() {
+    void varNameResolvesToEnvValue() {
         final Map<String, String> env = new HashMap<>();
         env.put("v", "7");
-        assertThat(
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("v + 2", env),
-            equalTo("9")
+            CoreMatchers.equalTo("9")
         );
     }
 
     @Test
-    public void nonNumericVarResolvesToZero() {
+    void nonNumericVarResolvesToZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("v", "abc");
-        assertThat(
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("v + 2", env),
-            equalTo("2")
+            CoreMatchers.equalTo("2")
         );
     }
 
     @Test
-    public void divByZeroIsZero() {
-        assertThat(
+    void divByZeroIsZero() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("5 / 0", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
     }
 
     @Test
-    public void modByZeroIsZero() {
-        assertThat(
+    void modByZeroIsZero() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("5 % 0", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
     }
 
     @Test
-    public void emptyExprIsZero() {
-        assertThat(
+    void emptyExprIsZero() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
     }
 
     @Test
-    public void whitespaceOnlyIsZero() {
-        assertThat(
+    void whitespaceOnlyIsZero() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("   ", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
     }
 
     @Test
-    public void unmatchedParenStillEvalsInner() {
-        assertThat(
+    void unmatchedParenStillEvalsInner() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("(1+2", new HashMap<>()),
-            equalTo("3")
+            CoreMatchers.equalTo("3")
         );
     }
 
     @Test
-    public void leadingPlus() {
-        assertThat(
+    void leadingPlus() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("+5", new HashMap<>()),
-            equalTo("5")
+            CoreMatchers.equalTo("5")
         );
     }
 
     @Test
-    public void doubleNegation() {
-        assertThat(
+    void doubleNegation() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("--5", new HashMap<>()),
-            equalTo("5")
+            CoreMatchers.equalTo("5")
         );
     }
 
     @Test
-    public void doubleBitwiseNot() {
-        assertThat(
+    void doubleBitwiseNot() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("~~5", new HashMap<>()),
-            equalTo("5")
+            CoreMatchers.equalTo("5")
         );
     }
 
     @Test
-    public void doubleLogicalNot() {
-        assertThat(
+    void doubleLogicalNot() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("!!5", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void compoundAssignToUnsetVar() {
+    void compoundAssignToUnsetVar() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("new += 5", new HashMap<>()),
+            CoreMatchers.equalTo("5")
+        );
+    }
+
+    @Test
+    void compoundAssignStoresValue() {
         final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("new += 5", env),
-            equalTo("5")
-        );
-        assertThat(env.get("new"), equalTo("5"));
+        new ArithmeticEvaluator().evalArithmetic("new += 5", env);
+        MatcherAssert.assertThat(env.get("new"), CoreMatchers.equalTo("5"));
     }
 
     @Test
-    public void chainedAssignmentRightAssoc() {
+    void chainedAssignmentRightAssoc() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("a = b = c = 7", new HashMap<>()),
+            CoreMatchers.equalTo("7")
+        );
+    }
+
+    @Test
+    void chainedAssignmentStoresB() {
         final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("a = b = c = 7", env),
-            equalTo("7")
-        );
-        assertThat(env.get("a"), equalTo("7"));
-        assertThat(env.get("b"), equalTo("7"));
-        assertThat(env.get("c"), equalTo("7"));
+        new ArithmeticEvaluator().evalArithmetic("a = b = c = 7", env);
+        MatcherAssert.assertThat(env.get("b"), CoreMatchers.equalTo("7"));
     }
 
     @Test
-    public void ternaryFalseEvaluatesElseOnly() {
+    void chainedAssignmentStoresC() {
+        final Map<String, String> env = new HashMap<>();
+        new ArithmeticEvaluator().evalArithmetic("a = b = c = 7", env);
+        MatcherAssert.assertThat(env.get("c"), CoreMatchers.equalTo("7"));
+    }
+
+    @Test
+    void ternaryFalseEvaluatesElseOnly() {
         final Map<String, String> env = new HashMap<>();
         new ArithmeticEvaluator().evalArithmetic("0 ? (z = 1) : (z = 2)", env);
-        assertThat(env.get("z"), equalTo("2"));
+        MatcherAssert.assertThat(env.get("z"), CoreMatchers.equalTo("2"));
     }
 
     @Test
-    public void numericLiteralWithLeadingZeros() {
-        assertThat(
+    void numericLiteralWithLeadingZeros() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("042", new HashMap<>()),
-            equalTo("34")
+            CoreMatchers.equalTo("34")
         );
     }
 
     @Test
-    public void assignmentWithWhitespace() {
-        final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x = 5", env),
-            equalTo("5")
+    void assignmentWithWhitespace() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("x = 5", new HashMap<>()),
+            CoreMatchers.equalTo("5")
         );
-        assertThat(env.get("x"), equalTo("5"));
-        assertThat(
+    }
+
+    @Test
+    void assignWithWhitespaceStoresValue() {
+        final Map<String, String> env = new HashMap<>();
+        new ArithmeticEvaluator().evalArithmetic("x = 5", env);
+        MatcherAssert.assertThat(env.get("x"), CoreMatchers.equalTo("5"));
+    }
+
+    @Test
+    void compoundAssignWithWhitespace() {
+        final Map<String, String> env = new HashMap<>();
+        new ArithmeticEvaluator().evalArithmetic("x = 5", env);
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("x += 3", env),
-            equalTo("8")
+            CoreMatchers.equalTo("8")
         );
-        assertThat(env.get("x"), equalTo("8"));
     }
 
     @Test
-    public void shiftAssignments() {
+    void compoundAssignStoresSum() {
         final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x = 2", env),
-            equalTo("2")
+        new ArithmeticEvaluator().evalArithmetic("x = 5", env);
+        new ArithmeticEvaluator().evalArithmetic("x += 3", env);
+        MatcherAssert.assertThat(env.get("x"), CoreMatchers.equalTo("8"));
+    }
+
+    @Test
+    void shiftAssignments() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("x = 2", new HashMap<>()),
+            CoreMatchers.equalTo("2")
         );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x <<= 3", env),
-            equalTo("16")
-        );
-        assertThat(env.get("x"), equalTo("16"));
-        assertThat(
+    }
+
+    @Test
+    void shiftAssignStoresValue() {
+        final Map<String, String> env = new HashMap<>();
+        new ArithmeticEvaluator().evalArithmetic("x = 2", env);
+        new ArithmeticEvaluator().evalArithmetic("x <<= 3", env);
+        MatcherAssert.assertThat(env.get("x"), CoreMatchers.equalTo("16"));
+    }
+
+    @Test
+    void shiftAssignRightStoresValue() {
+        final Map<String, String> env = new HashMap<>();
+        new ArithmeticEvaluator().evalArithmetic("x = 2", env);
+        new ArithmeticEvaluator().evalArithmetic("x <<= 3", env);
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("x >>= 1", env),
-            equalTo("8")
+            CoreMatchers.equalTo("8")
         );
     }
 
     @Test
-    public void relationalSingleCharacterOperators() {
-        assertThat(
+    void relationalSingleCharacterOperators() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2<3", new HashMap<>()),
-            equalTo("1")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("3>2", new HashMap<>()),
-            equalTo("1")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("2<1", new HashMap<>()),
-            equalTo("0")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("2>3", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void ternaryWithoutColon() {
-        assertThat(
+    void ternaryWithoutColon() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("1?5", new HashMap<>()),
-            equalTo("5")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("0?5", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("5")
         );
     }
 
     @Test
-    public void unaryOperators() {
-        assertThat(
+    void unaryOperators() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("+3", new HashMap<>()),
-            equalTo("3")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("-3", new HashMap<>()),
-            equalTo("-3")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("!0", new HashMap<>()),
-            equalTo("1")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("!2", new HashMap<>()),
-            equalTo("0")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("~0", new HashMap<>()),
-            equalTo("-1")
+            CoreMatchers.equalTo("3")
         );
     }
 
     @Test
-    public void unbalancedParenAndTrailingWhitespace() {
-        assertThat(
+    void unbalancedParenAndTrailingWhitespace() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("(2+3", new HashMap<>()),
-            equalTo("5")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("2 + 3   ", new HashMap<>()),
-            equalTo("5")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("5")
         );
     }
 
     @Test
-    public void numberBasesAndInvalidDigits() {
-        assertThat(
+    void numberBasesAndInvalidDigits() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0Xf", new HashMap<>()),
-            equalTo("15")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("077", new HashMap<>()),
-            equalTo("63")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("09", new HashMap<>()),
-            equalTo("9")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("@", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("15")
         );
     }
 
     @Test
-    public void invalidEnvValueBecomesZero() {
+    void invalidEnvValueBecomesZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "not-a-number");
-        assertThat(
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("x", env),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
     }
 
     @Test
-    public void compoundAssignmentVersusShift() {
+    void compoundAssignmentAssignsValue() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("x = 1", new HashMap<>()),
+            CoreMatchers.equalTo("1")
+        );
+    }
+
+    @Test
+    void compoundAssignmentVersusShift() {
         final Map<String, String> env = new HashMap<>();
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x = 1", env),
-            equalTo("1")
-        );
-        assertThat(
+        env.put("x", "1");
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("x <<= 1", env),
-            equalTo("2")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("x <= 2", env),
-            equalTo("1")
+            CoreMatchers.equalTo("2")
         );
     }
 
     @Test
-    public void readNumberBoundaryForms() {
-        assertThat(
+    void readNumberBoundaryFormsZeroHex() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0x0", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
-        assertThat(
+    }
+
+    @Test
+    void readNumberBoundaryFormsUpperHex() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0XABC", new HashMap<>()),
-            equalTo("2748")
+            CoreMatchers.equalTo("2748")
         );
-        assertThat(
+    }
+
+    @Test
+    void readNumberBoundaryFormsOctalEight() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("08", new HashMap<>()),
-            equalTo("8")
+            CoreMatchers.equalTo("8")
         );
-        assertThat(
+    }
+
+    @Test
+    void readNumberBoundaryFormsZero() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("0", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
-        assertThat(
+    }
+
+    @Test
+    void readNumberBoundaryFormsSuffix() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("123abc", new HashMap<>()),
-            equalTo("123")
+            CoreMatchers.equalTo("123")
         );
     }
 
     @Test
-    public void trailingOperatorsAndSpacedTernary() {
-        assertThat(
+    void trailingPlusOperator() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("1+", new HashMap<>()),
-            equalTo("1")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1*", new HashMap<>()),
-            equalTo("0")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1<", new HashMap<>()),
-            equalTo("0")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1 ? 2 : 3", new HashMap<>()),
-            equalTo("2")
-        );
-        assertThat(
-            new ArithmeticEvaluator().evalArithmetic("0 ? 2 : 3", new HashMap<>()),
-            equalTo("3")
+            CoreMatchers.equalTo("1")
         );
     }
 
     @Test
-    public void singleCharacterRelationalBranches() {
-        assertThat(
+    void trailingMultiplyOperator() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("1*", new HashMap<>()),
+            CoreMatchers.equalTo("0")
+        );
+    }
+
+    @Test
+    void trailingLessThanOperator() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("1<", new HashMap<>()),
+            CoreMatchers.equalTo("0")
+        );
+    }
+
+    @Test
+    void spacedTernaryTrueBranch() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("1 ? 2 : 3", new HashMap<>()),
+            CoreMatchers.equalTo("2")
+        );
+    }
+
+    @Test
+    void spacedTernaryFalseBranch() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("0 ? 2 : 3", new HashMap<>()),
+            CoreMatchers.equalTo("3")
+        );
+    }
+
+    @Test
+    void singleCharacterRelationalBranches() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2<<1", new HashMap<>()),
-            equalTo("4")
+            CoreMatchers.equalTo("4")
         );
-        assertThat(
+    }
+
+    @Test
+    void relationalLessOrEqualTrue() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2<=2", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
-        assertThat(
+    }
+
+    @Test
+    void relationalLessThanFalse() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2<1", new HashMap<>()),
-            equalTo("0")
+            CoreMatchers.equalTo("0")
         );
-        assertThat(
+    }
+
+    @Test
+    void relationalGreaterThanTrue() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2>1", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
-        assertThat(
+    }
+
+    @Test
+    void relationalGreaterOrEqualTrue() {
+        MatcherAssert.assertThat(
             new ArithmeticEvaluator().evalArithmetic("2>=2", new HashMap<>()),
-            equalTo("1")
+            CoreMatchers.equalTo("1")
         );
     }
 }

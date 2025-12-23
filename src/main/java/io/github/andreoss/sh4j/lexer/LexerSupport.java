@@ -6,28 +6,26 @@ package io.github.andreoss.sh4j.lexer;
 
 /**
  * Static word-classification helpers for {@link Lexer}.
+ *
  * @since 1.0
  */
 final class LexerSupport {
 
-    /**
-     * Utility class; no instances.
-     */
     private LexerSupport() {
-        super();
     }
 
     /**
      * Checks whether a word is a POSIX assignment.
+     *
      * @param text Any word
      * @return True when the word is a valid assignment
      */
     static boolean isAssignmentWord(final String text) {
         boolean result = false;
         if (!text.isEmpty() && !"=".equals(text)) {
-            final int eqIndex = text.indexOf('=');
-            if (eqIndex > 0) {
-                result = LexerSupport.isValidVarName(text.substring(0, eqIndex));
+            final int equal = text.indexOf('=');
+            if (equal > 0) {
+                result = LexerSupport.isValidVarName(text.substring(0, equal));
             }
         }
         return result;
@@ -35,6 +33,7 @@ final class LexerSupport {
 
     /**
      * Checks whether a name is a valid POSIX variable name.
+     *
      * @param name A candidate identifier
      * @return True when the name is valid
      */
@@ -53,6 +52,7 @@ final class LexerSupport {
 
     /**
      * Checks whether a string is non-empty and contains only digits.
+     *
      * @param text Any string
      * @return True when the string contains only digits
      */
@@ -68,11 +68,23 @@ final class LexerSupport {
 
     /**
      * Checks whether a character is a POSIX operator character.
+     *
      * @param chr A character
      * @return True when the character ends a word
      */
     static boolean isOperatorChar(final int chr) {
-        return chr == '&' || chr == '|' || chr == ';' || chr == '<' || chr == '>'
-            || chr == '(' || chr == ')' || chr == '{' || chr == '}';
+        return LexerSupport.isRedirectionChar(chr) || LexerSupport.isGroupingChar(chr);
+    }
+
+    private static boolean isRedirectionChar(final int chr) {
+        return LexerSupport.isControlChar(chr) || chr == '<' || chr == '>';
+    }
+
+    private static boolean isControlChar(final int chr) {
+        return chr == '&' || chr == '|' || chr == ';';
+    }
+
+    private static boolean isGroupingChar(final int chr) {
+        return chr == '(' || chr == ')' || chr == '{' || chr == '}';
     }
 }

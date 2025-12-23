@@ -4,30 +4,34 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.parser.FunctionNode;
 import java.util.List;
 import java.util.Map;
-import io.github.andreoss.sh4j.parser.FunctionNode;
 
 /**
  * Variable and parameter state exposed to built-ins.
+ *
  * @since 1.0
  */
 interface BuiltinVariables {
 
     /**
      * Marks a variable for export to child processes.
+     *
      * @param name Variable name
      */
     void markExported(String name);
 
     /**
      * Marks a variable read-only.
+     *
      * @param name Variable name
      */
     void markReadonly(String name);
 
     /**
      * Checks whether a variable is read-only.
+     *
      * @param name Variable name
      * @return True when the variable is read-only
      */
@@ -35,6 +39,7 @@ interface BuiltinVariables {
 
     /**
      * Removes a variable unless it is read-only.
+     *
      * @param name Variable name
      * @return True when the variable was removed
      */
@@ -42,31 +47,36 @@ interface BuiltinVariables {
 
     /**
      * Returns the live positional-parameter list.
+     *
      * @return The live positional-parameter list
      */
     List<String> positionalParamsList();
 
     /**
      * Replaces the positional parameters with the given list.
+     *
      * @param params The new positional parameters (excluding $0)
      */
     void setPositionalParams(List<String> params);
 
     /**
      * Returns the live function map.
+     *
      * @return The live function-name to {@link FunctionNode} map
      */
     Map<String, FunctionNode> functionsMap();
 
     /**
      * Returns the live alias table.
-     * @return The live alias table (name → replacement text)
+     *
+     * @return The live alias table (name to replacement text)
      */
     Map<String, String> aliases();
 
     /**
      * Reads one line from the executor's stdin without buffering past the
      * newline.
+     *
      * @return The line without its terminator, or null on EOF
      */
     String readInputLine();

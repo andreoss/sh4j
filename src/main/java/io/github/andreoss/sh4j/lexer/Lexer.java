@@ -9,6 +9,7 @@ package io.github.andreoss.sh4j.lexer;
  * from a {@link CharReader} and emits {@link Token} instances; one call
  * to {@link #nextToken()} yields the next token (or
  * {@link TokenType#END_OF_FILE} when the input is exhausted).
+ *
  * @since 1.0
  */
 public final class Lexer {
@@ -18,6 +19,7 @@ public final class Lexer {
 
     /**
      * Creates a lexer over the given character source.
+     *
      * @param reader The input cursor
      */
     public Lexer(final CharReader reader) {
@@ -26,6 +28,7 @@ public final class Lexer {
 
     /**
      * Returns the next token. Skips whitespace before classifying.
+     *
      * @return The next token, or an END_OF_FILE token at end-of-input
      */
     public Token nextToken() {
@@ -33,10 +36,10 @@ public final class Lexer {
         this.skipComment();
         final Token result;
         if (this.reader.isEof()) {
-            result = Token.of(TokenType.END_OF_FILE, "", this.reader);
+            result = Token.ofReader(TokenType.END_OF_FILE, "", this.reader);
         } else if (this.reader.peek() == '\n') {
             this.reader.consume();
-            result = Token.of(TokenType.NEWLINE, "\n", this.reader);
+            result = Token.ofReader(TokenType.NEWLINE, String.format("%n"), this.reader);
         } else {
             final Token operator = LexerOperators.tryOperator(this.reader);
             if (operator == null) {
@@ -52,38 +55,34 @@ public final class Lexer {
      * Reads the body of a here-document up to (but not including) the
      * closing delimiter line. POSIX 2.7.4: each line ends with a newline,
      * including the last line before the delimiter.
+     *
      * @param delimiter The heredoc delimiter
-     * @param stripTabs True for {@code <<-} (strip leading tabs on each line)
+     * @param strip True for {@code <<-} (strip leading tabs on each line)
      * @return The heredoc content with trailing newline per POSIX
      */
-    public String readHereDocContent(final String delimiter, final boolean stripTabs) {
+    public String readHereDocContent(final String delimiter, final boolean strip) {
         final StringBuilder content = new StringBuilder();
         if (this.reader.peek() == '\n') {
             this.reader.consume();
         }
         boolean done = false;
         while (!done && !this.reader.isEof()) {
-            final String lineStr = this.readHereDocLine(stripTabs);
+            final String text = this.readHereDocLine(strip);
             if (!this.reader.isEof()) {
                 this.reader.consume();
             }
-            if (lineStr.equals(delimiter)) {
+            if (text.equals(delimiter)) {
                 done = true;
             } else {
-                content.append(lineStr).append('\n');
+                content.append(text).append('\n');
             }
         }
         return content.toString();
     }
 
-    /**
-     * Reads one line of heredoc body, optionally stripping leading tabs.
-     * @param stripTabs True to strip leading tabs (for {@code <<-})
-     * @return The line text (without the trailing newline)
-     */
-    private String readHereDocLine(final boolean stripTabs) {
+    private String readHereDocLine(final boolean strip) {
         final StringBuilder line = new StringBuilder();
-        boolean stripping = stripTabs;
+        boolean stripping = strip;
         boolean exit = false;
         while (!exit && !this.reader.isEof()) {
             final int chr = this.reader.peek();
@@ -99,10 +98,6 @@ public final class Lexer {
         return line.toString();
     }
 
-    /**
-     * Consumes a comment when {@code #} starts a token position (POSIX
-     * 2.10.1). A {@code #} inside a word stays a literal character.
-     */
     private void skipComment() {
         while (!this.reader.isEof() && this.reader.peek() == '#') {
             while (!this.reader.isEof() && this.reader.peek() != '\n') {
@@ -112,9 +107,6 @@ public final class Lexer {
         }
     }
 
-    /**
-     * Consumes spaces and tabs.
-     */
     private void skipWhitespace() {
         while (!this.reader.isEof()
             && (this.reader.peek() == ' ' || this.reader.peek() == '\t')) {

@@ -7,142 +7,162 @@ package io.github.andreoss.sh4j;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests for Posix.
+ *
  * @since 1.0
  */
-@SuppressWarnings("PMD.TooManyMethods")
-public final class PosixTests {
+final class PosixTests {
 
-    @Rule
-    public TemporaryFolder tempdir = new TemporaryFolder();
+    @TempDir
+    private static Path root;
 
     @Test
-    public void trueExitZero() throws IOException {
-        assertThat(this.run(String.format("true%n")), is(0));
+    void trueExitZero() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("true%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void falseExitOne() throws IOException {
-        assertThat(this.run(String.format("false%n")), is(1));
+    void falseExitOne() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("false%n")), CoreMatchers.is(1));
     }
 
     @Test
-    public void exitFortyTwo() throws IOException {
-        assertThat(this.run(String.format("exit 42%n")), is(42));
+    void exitFortyTwo() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("exit 42%n")), CoreMatchers.is(42));
     }
 
     @Test
-    public void exitZero() throws IOException {
-        assertThat(this.run(String.format("exit 0%n")), is(0));
+    void exitZero() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("exit 0%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void exitOne() throws IOException {
-        assertThat(this.run(String.format("exit 1%n")), is(1));
+    void exitOne() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("exit 1%n")), CoreMatchers.is(1));
     }
 
     @Test
-    public void echoHello() throws IOException {
-        assertThat(this.run(String.format("echo hello%n")), is(0));
+    void echoHello() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("echo hello%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void echoArgs() throws IOException {
-        assertThat(this.run(String.format("echo a b c%n")), is(0));
+    void echoArgs() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("echo a b c%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void pipeline() throws IOException {
-        assertThat(this.run(String.format("echo hello | cat%n")), is(0));
+    void pipeline() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("echo hello | cat%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void pipelineMulti() throws IOException {
-        assertThat(this.run(String.format("echo hello | cat | wc -c%n")), is(0));
+    void pipelineMulti() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("echo hello | cat | wc -c%n")),
+            CoreMatchers.is(0)
+        );
     }
 
     @Test
-    public void andIf() throws IOException {
-        assertThat(this.run(String.format("true && echo ok%n")), is(0));
+    void andIf() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("true && echo ok%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void andIfStop() throws IOException {
-        assertThat(this.run(String.format("false && echo nope%n")), is(1));
+    void andIfStop() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("false && echo nope%n")),
+            CoreMatchers.is(1)
+        );
     }
 
     @Test
-    public void orIf() throws IOException {
-        assertThat(this.run(String.format("false || echo ok%n")), is(0));
+    void orIf() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("false || echo ok%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void orIfStop() throws IOException {
-        assertThat(this.run(String.format("true || echo nope%n")), is(0));
+    void orIfStop() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("true || echo nope%n")),
+            CoreMatchers.is(0)
+        );
     }
 
     @Test
-    public void bangFalse() throws IOException {
-        assertThat(this.run(String.format("! false%n")), is(0));
+    void bangFalse() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("! false%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void bangTrue() throws IOException {
-        assertThat(this.run(String.format("! true%n")), is(1));
+    void bangTrue() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("! true%n")), CoreMatchers.is(1));
     }
 
     @Test
-    public void semicolon() throws IOException {
-        assertThat(this.run(String.format("true; false%n")), is(1));
+    void semicolon() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("true; false%n")), CoreMatchers.is(1));
     }
 
     @Test
-    public void background() throws IOException {
-        assertThat(this.run(String.format("sleep 0 &%n")), is(0));
+    void background() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("sleep 0 &%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void assignThenCmd() throws IOException {
-        assertThat(this.run(String.format("MSG=hello echo $MSG%n")), is(0));
+    void assignThenCmd() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("MSG=hello echo $MSG%n")),
+            CoreMatchers.is(0)
+        );
     }
 
     @Test
-    public void assignOnly() throws IOException {
-        assertThat(this.run(String.format("MSG=hello%necho $MSG%n")), is(0));
+    void assignOnly() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("MSG=hello%necho $MSG%n")),
+            CoreMatchers.is(0)
+        );
     }
 
     @Test
-    public void multiAssign() throws IOException {
-        assertThat(this.run(String.format("A=1 B=2%n")), is(0));
+    void multiAssign() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("A=1 B=2%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void varExpand() throws IOException {
-        assertThat(this.run(String.format("echo $HOME%n")), is(0));
+    void varExpand() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("echo $HOME%n")), CoreMatchers.is(0));
     }
 
     @Test
-    public void cmdNotFound() throws IOException {
-        assertThat(this.run(String.format("nonexistent_cmd_xyz%n")), is(127));
+    void cmdNotFound() throws IOException {
+        MatcherAssert.assertThat(
+            this.run(String.format("nonexistent_cmd_xyz%n")),
+            CoreMatchers.is(127)
+        );
     }
 
     @Test
-    public void pwd() throws IOException {
-        assertThat(this.run(String.format("pwd%n")), is(0));
+    void pwd() throws IOException {
+        MatcherAssert.assertThat(this.run(String.format("pwd%n")), CoreMatchers.is(0));
     }
 
     private int run(final String script) throws IOException {
-        final File file = this.tempdir.newFile("t.sh");
+        final File file = TempDirs.file(PosixTests.root, "t.sh");
         Files.writeString(file.toPath(), script);
-        return Main.runScript(file.getAbsolutePath(), Collections.singletonList(file.getAbsolutePath()));
+        return Main.runScript(
+            file.getAbsolutePath(),
+            Collections.singletonList(file.getAbsolutePath())
+        );
     }
 }

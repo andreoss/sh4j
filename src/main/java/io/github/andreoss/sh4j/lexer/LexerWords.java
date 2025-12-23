@@ -6,19 +6,17 @@ package io.github.andreoss.sh4j.lexer;
 
 /**
  * Word tokenisation for {@link Lexer}.
+ *
  * @since 1.0
  */
 final class LexerWords {
 
-    /**
-     * Utility class; no instances.
-     */
     private LexerWords() {
-        super();
     }
 
     /**
      * Reads a single WORD token.
+     *
      * @param reader Input cursor
      * @return The next word token
      */
@@ -40,77 +38,84 @@ final class LexerWords {
         } else {
             type = TokenType.WORD;
         }
-        return new Token(type, text, pos.line(), pos.column());
+        return new Token(type, text, new Position(pos.line(), pos.column()));
     }
 
-    /**
-     * Consumes one character into the word buffer.
-     * @param reader Input cursor
-     * @param buf Accumulator
-     * @param quotes Quote-state flags
-     * @return True when the word ends
-     */
     private static boolean readWordChar(
-        final CharReader reader, final StringBuilder buf,
-        final QuoteState quotes
+        final CharReader reader, final StringBuilder buf, final QuoteState quotes
     ) {
-        final int chr = reader.peek();
-        boolean done = false;
-        if (chr == '\\' && !quotes.inSingle && !quotes.inDouble) {
-            LexerWordChars.consumeBackslash(reader, buf);
-        } else if (chr == '\'' && !quotes.inDouble) {
-            reader.consume();
-            buf.append('\'');
-            quotes.inSingle = !quotes.inSingle;
-        } else if (chr == '"' && !quotes.inSingle) {
-            reader.consume();
-            buf.append('"');
-            quotes.inDouble = !quotes.inDouble;
-        } else if (quotes.inSingle) {
-            buf.append((char) reader.consume());
-        } else if (quotes.inDouble) {
-            LexerWordChars.consumeDoubleQuoted(reader, buf, chr);
-        } else if (chr == '$') {
-            LexerWordChars.consumeDollar(reader, buf);
-        } else if (chr == '`') {
-            LexerWordChars.consumeBackticks(reader, buf);
-        } else if (chr == '\n' || chr == ' ' || chr == '\t'
-            || LexerSupport.isOperatorChar(chr)) {
-            done = true;
+        final boolean done;
+        if (quotes.isSquote()) {
+            done = LexerWords.readInSingle(reader, buf, quotes);
+        } else if (quotes.isDquote()) {
+            done = LexerWords.readInDouble(reader, buf, quotes);
         } else {
-            buf.append((char) reader.consume());
+            done = LexerWords.readBare(reader, buf, quotes);
         }
         return done;
     }
 
-    /**
-     * Captured source position.
-     * @param line Source line
-     * @param column Source column
-     */
-    private record Position(int line, int column) {
+    private static boolean readInSingle(
+        final CharReader reader, final StringBuilder buf, final QuoteState quotes
+    ) {
+        final int chr = reader.peek();
+        reader.consume();
+        buf.append((char) chr);
+        if (chr == '\'') {
+            quotes.setSquote(false);
+        }
+        return false;
     }
 
-    /**
-     * Mutable holder for the current quoting state.
-     * @since 1.0
-     */
-    private static final class QuoteState {
-
-        /**
-         * True while inside single quotes.
-         */
-        private boolean inSingle;
-        /**
-         * True while inside double quotes.
-         */
-        private boolean inDouble;
-
-        /**
-         * Default constructor; both flags start false.
-         */
-        QuoteState() {
-            super();
+    private static boolean readInDouble(
+        final CharReader reader, final StringBuilder buf, final QuoteState quotes
+    ) {
+        final int chr = reader.peek();
+        if (chr == '"') {
+            reader.consume();
+            buf.append('"');
+            quotes.setDquote(false);
+        } else {
+            LexerWordChars.consumeDoubleQuoted(reader, buf, chr);
         }
+        return false;
+    }
+
+    private static boolean readBare(
+        final CharReader reader, final StringBuilder buf, final QuoteState quotes
+    ) {
+        final int chr = reader.peek();
+        final boolean done;
+        if (chr == '\\') {
+            LexerWordChars.consumeBackslash(reader, buf);
+            done = false;
+        } else if (chr == '\'') {
+            reader.consume();
+            buf.append('\'');
+            quotes.setSquote(true);
+            done = false;
+        } else if (chr == '"') {
+            reader.consume();
+            buf.append('"');
+            quotes.setDquote(true);
+            done = false;
+        } else if (chr == '$') {
+            LexerWordChars.consumeDollar(reader, buf);
+            done = false;
+        } else if (chr == '`') {
+            LexerWordChars.consumeBackticks(reader, buf);
+            done = false;
+        } else if (LexerWords.isTerminator(chr)) {
+            done = true;
+        } else {
+            buf.append((char) reader.consume());
+            done = false;
+        }
+        return done;
+    }
+
+    private static boolean isTerminator(final int chr) {
+        return chr == '\n' || chr == ' ' || chr == '\t'
+            || LexerSupport.isOperatorChar(chr);
     }
 }

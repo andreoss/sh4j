@@ -14,14 +14,13 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit.version>4.13.2</junit.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -58,7 +57,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.6.0</version>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -155,56 +154,9 @@
             <plugin>
                 <groupId>com.qulice</groupId>
                 <artifactId>qulice-maven-plugin</artifactId>
-                <version>0.27.6</version>
+                <version>0.36.0</version>
                 <configuration>
                     <license>none</license>
-                    <excludes>
-                        <exclude>checkstyle:.*/sh4j/lexer/Lexer\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/parser/Parser\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/executor/ArithmeticEvaluator\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/executor/BuiltinDispatcher\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/executor/Executor\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/executor/RedirectionHandler\.java</exclude>
-                        <exclude>checkstyle:.*/sh4j/executor/WordExpander\.java</exclude>
-                        <exclude>pmd:.*/sh4j/parser/Parser\.java</exclude>
-                        <exclude>pmd:.*/sh4j/executor/ArithmeticEvaluator\.java</exclude>
-                        <exclude>pmd:.*/sh4j/executor/BuiltinDispatcher\.java</exclude>
-                        <exclude>pmd:.*/sh4j/executor/Executor\.java</exclude>
-                        <exclude>pmd:.*/sh4j/executor/RedirectionHandler\.java</exclude>
-                        <exclude>pmd:.*/sh4j/executor/WordExpander\.java</exclude>
-                         <exclude>checkstyle:.*/src/main/java/.*</exclude>
-                         <exclude>pmd:.*/sh4j/BuiltinMutationTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/executor/ExecutorTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/executor/RedirectionHandlerTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/executor/WordExpanderTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/IntegrationTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/MainTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/parser/ParserTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/PosixRegressionTest\.java</exclude>
-                         <exclude>pmd:.*/sh4j/Sh4j\.java</exclude>
-                         <exclude>pmd:.*/sh4j/Sh4jPosixTest\.java</exclude>
-                        <exclude>checkstyle:.*ExecutorTest\.java</exclude>
-                         <exclude>checkstyle:.*/IntegrationTest\.java</exclude>
-                         <exclude>checkstyle:.*/CommandHistoryTest\.java</exclude>
-                         <exclude>checkstyle:.*/MainTest\.java</exclude>
-                        <exclude>checkstyle:.*/PosixConformanceTest\.java</exclude>
-                        <exclude>checkstyle:.*/PosixTests\.java</exclude>
-                        <exclude>checkstyle:.*/ArithmeticEvaluatorTest\.java</exclude>
-                        <exclude>checkstyle:.*/BuiltinDispatcherTest\.java</exclude>
-                        <exclude>checkstyle:.*/RedirectionHandlerTest\.java</exclude>
-                        <exclude>checkstyle:.*/WordExpanderTest\.java</exclude>
-                        <exclude>checkstyle:.*/CharReaderTest\.java</exclude>
-                        <exclude>checkstyle:.*/LexerTest\.java</exclude>
-                        <exclude>checkstyle:.*/TokenTest\.java</exclude>
-                        <exclude>checkstyle:.*/TokenTypeTest\.java</exclude>
-                        <exclude>checkstyle:.*/ParserTest\.java</exclude>
-                        <exclude>checkstyle:.*/Sh4j\.java</exclude>
-                        <exclude>checkstyle:.*/Sh4jPosixTest\.java</exclude>
-                        <exclude>checkstyle:.*/PosixRegressionTest\.java</exclude>
-                        <exclude>checkstyle:.*/BuiltinMutationTest\.java</exclude>
-                        <exclude>checkstyle:.*/ExecutorMutationTest\.java</exclude>
-                        <exclude>checkstyle:.*/JobManagerTest\.java</exclude>
-                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

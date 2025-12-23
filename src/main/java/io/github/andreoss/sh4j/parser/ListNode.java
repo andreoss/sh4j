@@ -11,30 +11,37 @@ import java.util.List;
  * AST node for a sequence of pipelines joined by separators. This is the
  * top-level shape returned by {@link Parser#parse()}; nested constructs
  * (then-bodies, loop bodies, case-arm bodies, ...) are also ListNodes.
+ *
  * @since 1.0
  */
 public final class ListNode extends Node {
 
     /**
      * How two pipelines are joined.
+     *
      * @since 1.0
      */
     public enum Separator {
 
         /** No explicit separator (last pipeline of the list). */
         NONE,
+
         /** Sequential execution: {@code ;}. */
         SEMI,
+
         /** Background execution: {@code &}. */
         AMP,
+
         /** Short-circuit AND: {@code &&}. */
         AND_IF,
+
         /** Short-circuit OR: {@code ||}. */
         OR_IF
     }
 
     /** Pipelines in source order. */
     private final List<Pipeline> pipelines;
+
     /** Separator that follows each pipeline (parallel to {@link #pipelines}). */
     private final List<Separator> separators;
 
@@ -44,12 +51,13 @@ public final class ListNode extends Node {
      */
     public ListNode() {
         super();
-        this.pipelines = new ArrayList<>();
-        this.separators = new ArrayList<>();
+        this.pipelines = new ArrayList<>(0);
+        this.separators = new ArrayList<>(0);
     }
 
     /**
      * Returns the pipelines in source order.
+     *
      * @return The pipelines in source order
      */
     public List<Pipeline> getPipelines() {
@@ -58,6 +66,7 @@ public final class ListNode extends Node {
 
     /**
      * Returns the separator slots.
+     *
      * @return Separator slots, parallel to {@link #getPipelines()}
      */
     public List<Separator> getSeparators() {
@@ -66,6 +75,7 @@ public final class ListNode extends Node {
 
     /**
      * Appends a pipeline and its trailing separator.
+     *
      * @param pipeline The pipeline to append
      * @param sep      The separator that follows it (or {@link Separator#NONE})
      */

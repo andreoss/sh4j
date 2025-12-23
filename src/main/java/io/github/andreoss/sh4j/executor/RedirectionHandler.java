@@ -4,288 +4,250 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.function.UnaryOperator;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * Stateless helpers that translate {@link Redirection} AST nodes into the
  * concrete I/O wiring the executor needs: stream swaps for built-ins and
  * {@link ProcessBuilder} redirects for external commands.
+ *
  * @since 1.0
  */
 public final class RedirectionHandler {
 
     /** Sentinel target value indicating {@code &-} (close fd). */
     private static final String CLOSE = "-";
+
     /** Sentinel target value indicating fd 1. */
     private static final String STDOUT_FD = "1";
+
     /** Sentinel target value indicating fd 2. */
     private static final String STDERR_FD = "2";
+
     /** Path that acts as a black-hole sink for the close-fd duplicate. */
     private static final String DEV_NULL = "/dev/null";
 
-    /**
-     * Utility class; no instances.
-     */
     @GeneratedDefensive
     private RedirectionHandler() {
-        super();
-    }
-
-    /**
-     * The new and saved stdout/stderr pair returned by
-     * {@link #redirectOutputForBuiltin(List, PrintStream, PrintStream, UnaryOperator)}.
-     */
-    public static final class StreamSwap {
-        /** The new live stdout. */
-        public final PrintStream out;
-        /** The new live stderr. */
-        public final PrintStream err;
-        /** The pre-call stdout (null when not swapped). */
-        public final PrintStream savedOut;
-        /** The pre-call stderr (null when not swapped). */
-        public final PrintStream savedErr;
-        /** True when a redirection target could not be opened. */
-        public final boolean failed;
-
-        /**
-         * Creates a stream swap record.
-         * @param out      The new live stdout
-         * @param err      The new live stderr
-         * @param savedOut The pre-call stdout (null when not swapped)
-         * @param savedErr The pre-call stderr (null when not swapped)
-         * @param failed   True when a redirection target could not be opened
-         */
-        public StreamSwap(
-            final PrintStream out,
-            final PrintStream err,
-            final PrintStream savedOut,
-            final PrintStream savedErr,
-            final boolean failed
-        ) {
-            this.out = out;
-            this.err = err;
-            this.savedOut = savedOut;
-            this.savedErr = savedErr;
-            this.failed = failed;
-        }
     }
 
     /**
      * Computes the stdout/stderr swap that an executor built-in must apply
      * before running, given the redirections attached to the command.
-     * @param redirs     The redirections attached to the built-in invocation
-     * @param currentOut The executor's current stdout
-     * @param currentErr The executor's current stderr
-     * @param expander   The executor's word-expansion callback
-     * @return The new live + saved stream pair
+     *
+     * @param redirs The redirections attached to the built-in invocation
+     * @param streams The executor's current stdout and stderr
+     * @param expander The executor's word-expansion callback
+     * @return The new live and saved stream pair
      */
-    public static StreamSwap redirectOutputForBuiltin(
-        final List<Redirection> redirs,
-        final PrintStream currentOut,
-        final PrintStream currentErr,
+    static StreamSwap redirectOutputForBuiltin(
+        final List<Redirection> redirs, final Streams streams,
         final UnaryOperator<String> expander
     ) {
-        return redirectOutputForBuiltin(
-            redirs, currentOut, currentErr, expander, null,
-            java.util.Collections.<Integer, PrintStream>emptyMap()
+        return RedirectionHandler.redirectOutputForBuiltin(
+            redirs, streams,
+            new RedirectionHandler.RedirectContext(
+                expander, null, Collections.emptyMap()
+            )
         );
     }
 
     /**
-     * Same as the four-argument form, but resolves relative redirection
-     * targets against { base} and accepts descriptors bound by a
-     * previous redirection-only { exec}.
-     * @param redirs      The redirections attached to the invocation
-     * @param currentOut  The executor current stdout
-     * @param currentErr  The executor current stderr
-     * @param expander    Word-expansion callback
-     * @param base        Directory for relative targets (null = process cwd)
-     * @param descriptors Output descriptors bound by { exec N>file}
-     * @return The new live + saved stream pair
+     * Same as the three-argument form, but resolves relative redirection
+     * targets against {@code base} and accepts descriptors bound by a
+     * previous redirection-only {@code exec}.
+     *
+     * @param redirs The redirections attached to the invocation
+     * @param streams The executor's current stdout and stderr
+     * @param context Expansion, base directory, and bound descriptors
+     * @return The new live and saved stream pair
      */
-    public static StreamSwap redirectOutputForBuiltin(
-        final List<Redirection> redirs,
-        final PrintStream currentOut,
-        final PrintStream currentErr,
-        final UnaryOperator<String> expander,
-        final File base,
-        final java.util.Map<Integer, PrintStream> descriptors
+    static StreamSwap redirectOutputForBuiltin(
+        final List<Redirection> redirs, final Streams streams,
+        final RedirectionHandler.RedirectContext context
     ) {
-        PrintStream out = currentOut;
-        PrintStream err = currentErr;
-        PrintStream savedOut = null;
-        PrintStream savedErr = null;
-        boolean failed = false;
+        final RedirectionState state =
+            new RedirectionState(
+                streams.out(), streams.err(), context
+            );
         for (final Redirection redir : redirs) {
-            final RedirectionType type = redir.getType();
-            final int desc = redir.getFd();
-            final String target = expander.apply(redir.getTarget());
-            if (type == RedirectionType.OUTPUT || type == RedirectionType.CLOBBER) {
-                final PrintStream fileOut = openForWrite(target, false, base);
-                if (fileOut != null) {
-                    if (desc == 1) {
-                        if (savedOut == null) {
-                            savedOut = out;
-                        }
-                        out = fileOut;
-                    } else if (desc == 2) {
-                        if (savedErr == null) {
-                            savedErr = err;
-                        }
-                        err = fileOut;
-                    }
-                } else {
-                    failed = true;
-                }
-            } else if (type == RedirectionType.APPEND) {
-                final PrintStream fileOut = openForWrite(target, true, base);
-                if (fileOut != null) {
-                    if (desc == 1) {
-                        if (savedOut == null) {
-                            savedOut = out;
-                        }
-                        out = fileOut;
-                    } else if (desc == 2) {
-                        if (savedErr == null) {
-                            savedErr = err;
-                        }
-                        err = fileOut;
-                    }
-                } else {
-                    failed = true;
-                }
-            } else if (type == RedirectionType.DUP_OUTPUT) {
-                if (CLOSE.equals(target)) {
-                    final PrintStream nullPs = openForWrite(DEV_NULL, false, base);
-                    if (nullPs != null) {
-                        if (desc == 1) {
-                            if (savedOut == null) {
-                                savedOut = out;
-                            }
-                            out = nullPs;
-                        } else if (desc == 2) {
-                            if (savedErr == null) {
-                                savedErr = err;
-                            }
-                            err = nullPs;
-                        }
-                    } else {
-                        failed = true;
-                    }
-                } else if (STDOUT_FD.equals(target) && desc == 2) {
-                    if (savedErr == null) {
-                        savedErr = err;
-                    }
-                    err = out;
-                } else if (STDERR_FD.equals(target) && desc == 1) {
-                    if (savedOut == null) {
-                        savedOut = out;
-                    }
-                    out = err;
-                } else {
-                    final PrintStream bound = descriptor(descriptors, target);
-                    if (bound == null) {
-                        failed = true;
-                    } else if (desc == 1) {
-                        if (savedOut == null) {
-                            savedOut = out;
-                        }
-                        out = bound;
-                    } else if (desc == 2) {
-                        if (savedErr == null) {
-                            savedErr = err;
-                        }
-                        err = bound;
-                    }
-                }
-            }
+            RedirectionHandler.applyRedirect(state, redir);
         }
-        return new StreamSwap(out, err, savedOut, savedErr, failed);
+        return state.swap();
     }
 
     /**
      * Applies redirections to a {@link ProcessBuilder} so an external
      * command honours them.
-     * @param builder      The process builder to mutate
+     *
+     * @param builder The process builder to mutate
      * @param redirections The redirections in source order
-     * @param expander     Word-expansion callback for the targets
+     * @param expander Word-expansion callback for the targets
      */
-    public static void setupRedirections(
-        final ProcessBuilder builder,
-        final List<Redirection> redirections,
+    static void setupRedirections(
+        final ProcessBuilder builder, final List<Redirection> redirections,
         final UnaryOperator<String> expander
     ) {
-        setupRedirections(builder, redirections, expander, null);
+        RedirectionHandler.setupRedirections(
+            builder, redirections,
+            new RedirectionHandler.RedirectContext(
+                expander, null, Collections.emptyMap()
+            )
+        );
     }
 
     /**
      * Same as the three-argument form, resolving relative targets against
-     * { base}.
-     * @param builder      The process builder to mutate
+     * {@code base}.
+     *
+     * @param builder The process builder to mutate
      * @param redirections The redirections in source order
-     * @param expander     Word-expansion callback for the targets
-     * @param base         Directory for relative targets (null = process cwd)
+     * @param context Expansion, base directory, and bound descriptors
      */
-    public static void setupRedirections(
-        final ProcessBuilder builder,
-        final List<Redirection> redirections,
-        final UnaryOperator<String> expander,
-        final File base
+    static void setupRedirections(
+        final ProcessBuilder builder, final List<Redirection> redirections,
+        final RedirectionHandler.RedirectContext context
     ) {
         for (final Redirection redir : redirections) {
-            applyOne(builder, redir, expander, base);
+            RedirectionHandler.applyOne(builder, redir, context);
         }
     }
 
     /**
      * Writes the heredoc body to a temp file the caller can pass to
      * {@link ProcessBuilder#redirectInput(File)}.
+     *
      * @param content The heredoc body (may be null)
-     * @return The temp file, or null when content is null / IO failed
+     * @return The temp file, or null when content is null or IO failed
      */
     static File heredocFile(final String content) {
-        File result = null;
+        final File result;
         if (content != null) {
-            try {
-                final File temp = File.createTempFile("sh4j_heredoc", ".tmp");
-                temp.deleteOnExit();
-                try (FileWriter writer = new FileWriter(temp, StandardCharsets.UTF_8)) {
-                    writer.write(content);
-                }
-                result = temp;
-            } catch (final IOException ex) {
-                result = heredocFileIoFailure();
-            }
+            result = RedirectionHandler.createHeredocFile(content);
+        } else {
+            result = null;
         }
         return result;
     }
 
-    /**
-     * Defensive fallback when the heredoc temp file cannot be created;
-     * factored out so JaCoCo can exclude it via {@link GeneratedDefensive}.
-     * @return Null
-     */
+    private static File createHeredocFile(final String content) {
+        try {
+            final File temp = File.createTempFile("sh4j_heredoc", ".tmp");
+            temp.deleteOnExit();
+            try (
+                Writer writer = Files.newBufferedWriter(
+                    temp.toPath(),
+                    StandardCharsets.UTF_8
+                )
+            ) {
+                writer.write(content);
+            }
+            return temp;
+        } catch (final IOException ex) {
+            return RedirectionHandler.heredocFileIoFailure();
+        }
+    }
+
+    private static void applyRedirect(
+        final RedirectionState state,
+        final Redirection redir
+    ) {
+        final RedirectionType type = redir.getType();
+        if (type == RedirectionType.OUTPUT
+            || type == RedirectionType.CLOBBER
+            || type == RedirectionType.APPEND) {
+            RedirectionHandler.applyOutput(state, redir);
+        } else if (type == RedirectionType.DUP_OUTPUT) {
+            RedirectionHandler.applyDup(state, redir);
+        }
+    }
+
+    private static void applyOutput(
+        final RedirectionState state,
+        final Redirection redir
+    ) {
+        RedirectionHandler.assign(
+            state,
+            RedirectionHandler.openForWrite(
+                state.expand(redir.getTarget()),
+                redir.getType() == RedirectionType.APPEND,
+                state.base()
+            ),
+            redir.getFd()
+        );
+    }
+
+    private static void applyDup(
+        final RedirectionState state,
+        final Redirection redir
+    ) {
+        final String target = state.expand(redir.getTarget());
+        final int desc = redir.getFd();
+        if (RedirectionHandler.CLOSE.equals(target)) {
+            RedirectionHandler.applyClose(state, desc);
+        } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
+            state.dupErrToOut();
+        } else if (RedirectionHandler.STDERR_FD.equals(target) && desc == 1) {
+            state.dupOutToErr();
+        } else {
+            RedirectionHandler.applyBound(state, target, desc);
+        }
+    }
+
+    private static void applyClose(
+        final RedirectionState state, final int desc
+    ) {
+        RedirectionHandler.assign(
+            state,
+            RedirectionHandler.openForWrite(
+                RedirectionHandler.DEV_NULL, false, state.base()
+            ),
+            desc
+        );
+    }
+
+    private static void applyBound(
+        final RedirectionState state,
+        final String target, final int desc
+    ) {
+        RedirectionHandler.assign(
+            state,
+            RedirectionHandler.descriptor(state.descriptors(), target),
+            desc
+        );
+    }
+
+    private static void assign(
+        final RedirectionState state,
+        final PrintStream stream, final int desc
+    ) {
+        if (stream == null) {
+            state.fail();
+        } else if (desc == 1) {
+            state.replaceOut(stream);
+        } else if (desc == 2) {
+            state.replaceErr(stream);
+        }
+    }
+
     @GeneratedDefensive
     private static File heredocFileIoFailure() {
         return null;
     }
 
-    /**
-     * Resolves a redirection target against the shell working directory.
-     * @param target The redirection target as written
-     * @param base Shell working directory, or null to keep the path as written
-     * @return The resolved file
-     */
     private static File resolve(final String target, final File base) {
         final File file = new File(target);
         final File result;
@@ -298,7 +260,7 @@ public final class RedirectionHandler {
     }
 
     private static PrintStream descriptor(
-        final java.util.Map<Integer, PrintStream> descriptors, final String target
+        final Map<Integer, PrintStream> descriptors, final String target
     ) {
         PrintStream result = null;
         try {
@@ -314,8 +276,18 @@ public final class RedirectionHandler {
     ) {
         PrintStream result;
         try {
+            final StandardOpenOption mode;
+            if (append) {
+                mode = StandardOpenOption.APPEND;
+            } else {
+                mode = StandardOpenOption.TRUNCATE_EXISTING;
+            }
             result = new PrintStream(
-                new FileOutputStream(resolve(target, base), append),
+                Files.newOutputStream(
+                    RedirectionHandler.resolve(target, base).toPath(),
+                    StandardOpenOption.CREATE,
+                    mode
+                ),
                 false,
                 StandardCharsets.UTF_8
             );
@@ -325,120 +297,166 @@ public final class RedirectionHandler {
         return result;
     }
 
-    /**
-     * Applies a single redirection to the process builder.
-     * @param builder  The builder to mutate
-     * @param redir    The redirection to apply
-     * @param expander Word-expansion callback
-     * @param base     Directory for relative targets (null = process cwd)
-     */
     private static void applyOne(
-        final ProcessBuilder builder,
-        final Redirection redir,
-        final UnaryOperator<String> expander,
-        final File base
+        final ProcessBuilder builder, final Redirection redir,
+        final RedirectionHandler.RedirectContext context
     ) {
-        final int desc = redir.getFd();
         final RedirectionType type = redir.getType();
-        final String rawTarget = redir.getTarget();
         if (type == RedirectionType.DUP_INPUT) {
-            if (CLOSE.equals(rawTarget) && desc == 0) {
-                builder.redirectInput(new File(DEV_NULL));
-            }
+            RedirectionHandler.applyDupInput(builder, redir);
         } else if (type == RedirectionType.DUP_OUTPUT) {
-            applyDupOutput(builder, desc, rawTarget);
-        } else if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
-            applyHereDoc(builder, desc, redir, expander);
+            RedirectionHandler.applyDupOutput(builder, redir);
+        } else if (type == RedirectionType.HERE_DOC
+            || type == RedirectionType.HERE_DOC_DASH) {
+            RedirectionHandler.applyHereDoc(builder, redir, context.expander());
         } else {
-            final File file = resolve(expander.apply(rawTarget), base);
-            applyFileRedirect(builder, desc, type, file);
+            RedirectionHandler.applyFileRedirect(
+                builder, redir,
+                RedirectionHandler.resolve(
+                    context.expander().apply(redir.getTarget()), context.base()
+                )
+            );
         }
     }
 
-    /**
-     * Applies a {@code DUP_OUTPUT} redirection to the process builder.
-     * @param builder The builder to mutate
-     * @param desc    The file descriptor
-     * @param target  The duplicate target ({@code -}, {@code 1}, {@code 2}, ...)
-     */
-    private static void applyDupOutput(
-        final ProcessBuilder builder,
-        final int desc,
-        final String target
+    private static void applyDupInput(
+        final ProcessBuilder builder, final Redirection redir
     ) {
-        if (CLOSE.equals(target)) {
+        if (RedirectionHandler.CLOSE.equals(redir.getTarget())
+            && redir.getFd() == 0) {
+            builder.redirectInput(new File(RedirectionHandler.DEV_NULL));
+        }
+    }
+
+    private static void applyDupOutput(
+        final ProcessBuilder builder, final Redirection redir
+    ) {
+        final int desc = redir.getFd();
+        final String target = redir.getTarget();
+        if (RedirectionHandler.CLOSE.equals(target)) {
             if (desc == 1) {
-                builder.redirectOutput(new File(DEV_NULL));
+                builder.redirectOutput(new File(RedirectionHandler.DEV_NULL));
             } else if (desc == 2) {
-                builder.redirectError(new File(DEV_NULL));
+                builder.redirectError(new File(RedirectionHandler.DEV_NULL));
             }
-        } else if (STDOUT_FD.equals(target) && desc == 2) {
+        } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
             builder.redirectError(builder.redirectOutput());
-        } else if (STDERR_FD.equals(target) && desc == 1) {
+        } else if (RedirectionHandler.STDERR_FD.equals(target) && desc == 1) {
             builder.redirectOutput(builder.redirectError());
         }
     }
 
-    /**
-     * Applies a here-document redirection to the process builder.
-     * @param builder  The builder to mutate
-     * @param desc     The file descriptor (only fd 0 is honoured)
-     * @param redir    The redirection node
-     * @param expander Word-expansion callback for the heredoc body
-     */
     private static void applyHereDoc(
-        final ProcessBuilder builder,
-        final int desc,
-        final Redirection redir,
+        final ProcessBuilder builder, final Redirection redir,
         final UnaryOperator<String> expander
     ) {
         String content = redir.getHereDocContent();
         if (content != null && !redir.isHereDocQuoted()) {
             content = expander.apply(content);
         }
-        final File src = heredocFile(content);
-        if (src != null && desc == 0) {
+        final File src = RedirectionHandler.heredocFile(content);
+        if (src != null && redir.getFd() == 0) {
             builder.redirectInput(src);
         }
     }
 
-    /**
-     * Applies a file-based input/output/append/readwrite redirection.
-     * @param builder The builder to mutate
-     * @param desc    The file descriptor
-     * @param type    The redirection kind
-     * @param file    The target file
-     */
     private static void applyFileRedirect(
-        final ProcessBuilder builder,
-        final int desc,
-        final RedirectionType type,
-        final File file
+        final ProcessBuilder builder, final Redirection redir, final File file
     ) {
+        final RedirectionType type = redir.getType();
         if (type == RedirectionType.READWRITE) {
-            if (desc == 0) {
-                builder.redirectInput(file);
-            } else if (desc == 1) {
-                builder.redirectOutput(ProcessBuilder.Redirect.to(file));
-            } else if (desc == 2) {
-                builder.redirectError(ProcessBuilder.Redirect.to(file));
-            }
+            RedirectionHandler.applyReadWrite(builder, redir, file);
         } else if (type == RedirectionType.INPUT) {
-            if (desc == 0) {
-                builder.redirectInput(file);
-            }
-        } else if (type == RedirectionType.OUTPUT || type == RedirectionType.CLOBBER) {
-            if (desc == 1) {
-                builder.redirectOutput(ProcessBuilder.Redirect.to(file));
-            } else if (desc == 2) {
-                builder.redirectError(ProcessBuilder.Redirect.to(file));
-            }
+            RedirectionHandler.applyInput(builder, redir, file);
+        } else if (type == RedirectionType.OUTPUT
+            || type == RedirectionType.CLOBBER) {
+            RedirectionHandler.applyTruncate(builder, redir, file);
         } else if (type == RedirectionType.APPEND) {
-            if (desc == 1) {
-                builder.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
-            } else if (desc == 2) {
-                builder.redirectError(ProcessBuilder.Redirect.appendTo(file));
-            }
+            RedirectionHandler.applyAppend(builder, redir, file);
         }
+    }
+
+    private static void applyInput(
+        final ProcessBuilder builder, final Redirection redir, final File file
+    ) {
+        if (redir.getFd() == 0) {
+            builder.redirectInput(file);
+        }
+    }
+
+    private static void applyReadWrite(
+        final ProcessBuilder builder, final Redirection redir, final File file
+    ) {
+        final int desc = redir.getFd();
+        if (desc == 0) {
+            builder.redirectInput(file);
+        } else if (desc == 1) {
+            builder.redirectOutput(ProcessBuilder.Redirect.to(file));
+        } else if (desc == 2) {
+            builder.redirectError(ProcessBuilder.Redirect.to(file));
+        }
+    }
+
+    private static void applyTruncate(
+        final ProcessBuilder builder, final Redirection redir, final File file
+    ) {
+        final int desc = redir.getFd();
+        if (desc == 1) {
+            builder.redirectOutput(ProcessBuilder.Redirect.to(file));
+        } else if (desc == 2) {
+            builder.redirectError(ProcessBuilder.Redirect.to(file));
+        }
+    }
+
+    private static void applyAppend(
+        final ProcessBuilder builder, final Redirection redir, final File file
+    ) {
+        final int desc = redir.getFd();
+        if (desc == 1) {
+            builder.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
+        } else if (desc == 2) {
+            builder.redirectError(ProcessBuilder.Redirect.appendTo(file));
+        }
+    }
+
+    /**
+     * The executor's current stdout and stderr.
+     *
+     * @param out Current stdout
+     * @param err Current stderr
+     * @since 1.0
+     */
+    public record Streams(PrintStream out, PrintStream err) {
+    }
+
+    /**
+     * Redirection configuration shared by the built-in and process-builder
+     * paths.
+     *
+     * @param expander Word-expansion callback for the targets
+     * @param base Directory for relative targets (null = process cwd)
+     * @param descriptors Output descriptors bound by previous redirections
+     * @since 1.0
+     */
+    public record RedirectContext(
+        UnaryOperator<String> expander, File base,
+        Map<Integer, PrintStream> descriptors
+    ) {
+    }
+
+    /**
+     * The new and saved stdout/stderr pair returned by the built-in path.
+     *
+     * @param out The new live stdout
+     * @param err The new live stderr
+     * @param savedout The pre-call stdout (null when not swapped)
+     * @param savederr The pre-call stderr (null when not swapped)
+     * @param failed True when a redirection target could not be opened
+     * @since 1.0
+     */
+    public record StreamSwap(
+        PrintStream out, PrintStream err, PrintStream savedout,
+        PrintStream savederr, boolean failed
+    ) {
     }
 }

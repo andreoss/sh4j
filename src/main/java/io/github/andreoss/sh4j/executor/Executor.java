@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.CaseItem;
 import io.github.andreoss.sh4j.parser.CaseNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
@@ -44,9 +45,10 @@ import io.github.andreoss.sh4j.parser.WhileNode;
  * dispatch lives here; subsystems delegate to {@link WordExpander},
  * {@link ArithmeticEvaluator}, {@link RedirectionHandler}, and
  * {@link BuiltinDispatcher}.
+ *
  * @since 1.0
  */
-public class Executor implements BuiltinContext {
+public final class Executor implements BuiltinContext {
 
     /**
      * POSIX 2.14 special built-in utilities — these take priority over user-
@@ -59,73 +61,93 @@ public class Executor implements BuiltinContext {
 
     /** Default IFS value (space, tab, newline). */
     private static final String DEFAULT_IFS = " \t\n";
+
     /** Default fallback PATH when none is set. */
     private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
 
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
+
     /** Exit code for a command that exists but cannot be executed. */
     private static final int EXIT_COMMAND_NOT_EXECUTABLE = 126;
 
     /** Live shell-variable table. */
     private final Map<String, String> environment;
+
     /** Names of variables visible to child processes. */
     private final Set<String> exported;
+
     /** Names of read-only variables. */
     private final Set<String> readonly;
+
     /** Trap actions keyed by signal name (EXIT is the only executed one). */
     private final Map<String, String> traps;
+
     /** Per-executor current working directory. */
     private File cwd;
+
     /** Defined shell functions keyed by name. */
     private final Map<String, FunctionNode> functions;
+
     /** {@code $0}..{@code $N} positional parameters (index 0 = script name). */
-    private final List<String> positionalParams;
+    private final List<String> params;
+
     /** Background-job threads spawned by {@code &}. */
-    private final JobManager jobManager;
+    private final JobManager jobs;
+
     /** Dispatcher for shell built-ins. */
     private final BuiltinDispatcher dispatcher;
+
     /** Arithmetic-expansion evaluator. */
     private final ArithmeticEvaluator arith;
 
     /** Most recent foreground exit code ({@code $?}). */
-    private int lastExitCode;
+    private int lastcode;
+
     /** Current shell-flag string ({@code $-}). */
-    private String shellFlags;
+    private String flags;
+
     /** Most recent background-job PID ({@code $!}). */
-    private int lastBgPid;
+    private int bgpid;
+
     /** Live stdout used by built-ins. */
     private PrintStream out;
+
     /** Live stderr used by built-ins. */
     private PrintStream err;
+
     /** Live stdin used by built-ins (read, etc.). */
-    private InputStream in;
+    private InputStream inStream;
+
     /** Alias table (alias name → replacement text). */
     private Map<String, String> aliases;
+
     /** Command history for fc built-in. */
     private final CommandHistory history;
+
     /** Nesting depth of {@link #execute(ListNode)} calls. */
-    private int executeDepth;
+    private int depth;
+
     /** Alias table captured when the current source line started. */
-    private Map<String, String> aliasSnapshot;
+    private Map<String, String> snapshot;
+
     /** Source line the alias snapshot belongs to. */
-    private int aliasSnapshotLine;
+    private int snapshotLine;
 
     /** Exit status of the last command substitution (-1 when none ran). */
-    private int substitutionStatus = -1;
+    private int substat = -1;
 
     /** Input streams bound to descriptors by a redirection-only {@code exec}. */
     private final Map<Integer, InputStream> descriptors = new HashMap<>();
 
     /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintStream> outDescriptors = new HashMap<>();
-
+    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
 
     /** True when the current input swap borrowed a descriptor stream. */
-    private boolean inputBorrowed;
+    private boolean borrowed;
 
     /** Nesting depth of active loop bodies. */
-    private int loopDepth;
+    private int loops;
 
     /**
      * Builds an executor seeded with the current process environment.
@@ -136,6 +158,7 @@ public class Executor implements BuiltinContext {
 
     /**
      * Builds an executor with the given environment view.
+     *
      * @param environment Environment variables (copied, not aliased)
      */
     public Executor(final Map<String, String> environment) {
@@ -144,12 +167,13 @@ public class Executor implements BuiltinContext {
 
     /**
      * Builds an executor with the given environment and positional params.
+     *
      * @param environment       Environment variables (copied)
-     * @param positionalParams  Positional parameters ({@code $0} first)
+     * @param params  Positional parameters ({@code $0} first)
      */
     public Executor(
         final Map<String, String> environment,
-        final List<String> positionalParams
+        final List<String> params
     ) {
         super();
         this.environment = new HashMap<>(environment);
@@ -158,16 +182,16 @@ public class Executor implements BuiltinContext {
         this.traps = new HashMap<>();
         this.cwd = new File(System.getProperty("user.dir", "/")).getAbsoluteFile();
         this.functions = new HashMap<>();
-        this.positionalParams = new ArrayList<>(positionalParams);
-        this.jobManager = new JobManager();
+        this.params = new ArrayList<>(params);
+        this.jobs = new JobManager();
         this.dispatcher = new BuiltinDispatcher();
         this.arith = new ArithmeticEvaluator();
-        this.lastExitCode = 0;
-        this.shellFlags = "";
-        this.lastBgPid = 0;
+        this.lastcode = 0;
+        this.flags = "";
+        this.bgpid = 0;
         this.out = System.out;
         this.err = System.err;
-        this.in = System.in;
+        this.inStream = System.in;
         this.aliases = new HashMap<>();
         this.history = new CommandHistory();
         this.setDefaults();
@@ -196,6 +220,7 @@ public class Executor implements BuiltinContext {
     /**
      * Creates a subshell with the same variables, functions, aliases,
      * positional parameters, flags, traps, and working directory.
+     *
      * @return A new child executor
      */
     private Executor subshell() {
@@ -208,14 +233,14 @@ public class Executor implements BuiltinContext {
         child.traps.putAll(this.traps);
         child.functions.putAll(this.functions);
         child.aliases.putAll(this.aliases);
-        child.positionalParams.clear();
-        child.positionalParams.addAll(this.positionalParams);
-        child.shellFlags = this.shellFlags;
+        child.params.clear();
+        child.params.addAll(this.params);
+        child.flags = this.flags;
         child.cwd = this.cwd;
         child.out = this.out;
         child.err = this.err;
-        child.in = this.in;
-        child.lastExitCode = this.lastExitCode;
+        child.inStream = this.inStream;
+        child.lastcode = this.lastcode;
         return child;
     }
 
@@ -279,10 +304,10 @@ public class Executor implements BuiltinContext {
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         String line = null;
         try {
-            int read = this.in.read();
+            int read = this.inStream.read();
             while (read != -1 && read != '\n') {
                 buffer.write(read);
-                read = this.in.read();
+                read = this.inStream.read();
             }
             if (read != -1 || buffer.size() > 0) {
                 line = buffer.toString(StandardCharsets.UTF_8);
@@ -311,22 +336,22 @@ public class Executor implements BuiltinContext {
      * Runs and removes the EXIT trap using the last exit status.
      */
     public void runExitTrap() {
-        this.runExitTrap(this.lastExitCode);
+        this.runExitTrap(this.lastcode);
     }
 
     /**
      * Runs and removes the EXIT trap with the status the shell exits with.
+     *
      * @param status The shell exit status the trap observes as {@code $?}
      */
     public void runExitTrap(final int status) {
-        this.lastExitCode = status;
+        this.lastcode = status;
         final String action = this.traps.remove("EXIT");
         if (action != null && !action.isEmpty() && !"-".equals(action)) {
             try {
-                final ListNode ast = new Parser(
-                    new Lexer(new CharReader(action))
-                ).parse();
-                this.execute(ast);
+                this.execute(
+                    new Parser(new Lexer(new CharReader(action))).parse()
+                );
             } catch (final RuntimeException ex) {
                 this.err.println("sh: trap: " + ex.getMessage());
             }
@@ -335,6 +360,7 @@ public class Executor implements BuiltinContext {
 
     /**
      * Returns a variable's current value.
+     *
      * @param name A variable name
      * @return The variable's current value, or null when unset
      */
@@ -345,6 +371,7 @@ public class Executor implements BuiltinContext {
     /**
      * Redirects subsequent stdout into the given buffer (used by command
      * substitution).
+     *
      * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
@@ -353,6 +380,7 @@ public class Executor implements BuiltinContext {
 
     /**
      * Overrides the executor's stdout.
+     *
      * @param outStream The new live stdout
      */
     public void setOutputStream(final PrintStream outStream) {
@@ -361,6 +389,7 @@ public class Executor implements BuiltinContext {
 
     /**
      * Overrides the executor's stderr.
+     *
      * @param errStream The new live stderr
      */
     public void setErrorStream(final PrintStream errStream) {
@@ -369,22 +398,20 @@ public class Executor implements BuiltinContext {
 
     /**
      * Overrides the executor's stdin.
+     *
      * @param inputStream The new live stdin
      */
     public void setInputStream(final InputStream inputStream) {
-        this.in = inputStream;
+        this.inStream = inputStream;
     }
 
     @Override
     public String executeCommandSubstitution(final String text) {
-        final CharReader reader = new CharReader(text);
-        final Lexer lexer = new Lexer(reader);
-        final Parser parser = new Parser(lexer);
-        final ListNode ast = parser.parse();
+        final ListNode ast = new Parser(new Lexer(new CharReader(text))).parse();
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final Executor sub = this.subshell();
         sub.setCaptureStream(baos);
-        this.substitutionStatus = sub.execute(ast);
+        this.substat = sub.execute(ast);
         String captured = baos.toString(StandardCharsets.UTF_8);
         while (captured.endsWith("\n")) {
             captured = captured.substring(0, captured.length() - 1);
@@ -399,11 +426,11 @@ public class Executor implements BuiltinContext {
 
     @Override
     public int execute(final ListNode list) {
-        if (this.executeDepth == 0) {
-            this.aliasSnapshot = null;
-            this.aliasSnapshotLine = -1;
+        if (this.depth == 0) {
+            this.snapshot = null;
+            this.snapshotLine = -1;
         }
-        this.executeDepth = this.executeDepth + 1;
+        this.depth = this.depth + 1;
         int code;
         try {
             code = 0;
@@ -411,28 +438,28 @@ public class Executor implements BuiltinContext {
                 code = this.runPipelineList(list);
             }
         } catch (final ExitSignal ex) {
-            if (this.executeDepth > 1) {
+            if (this.depth > 1) {
                 throw ex;
             }
             code = ex.getCode();
         } catch (final ReturnSignal ex) {
-            if (this.executeDepth > 1) {
+            if (this.depth > 1) {
                 throw ex;
             }
             this.err.println("sh: return: not in a function");
             code = ex.getCode();
         } catch (final BreakSignal ex) {
-            if (this.executeDepth > 1) {
+            if (this.depth > 1) {
                 throw ex;
             }
             code = 0;
         } catch (final ContinueSignal ex) {
-            if (this.executeDepth > 1) {
+            if (this.depth > 1) {
                 throw ex;
             }
             code = 0;
         } finally {
-            this.executeDepth = this.executeDepth - 1;
+            this.depth = this.depth - 1;
         }
         return code;
     }
@@ -446,36 +473,36 @@ public class Executor implements BuiltinContext {
             final Pipeline pipeline = pipelines.get(idx);
             final ListNode.Separator sep = separators.get(idx);
             final boolean run = idx == 0 || shouldRunNext(
-                separators.get(idx - 1), this.lastExitCode
+                separators.get(idx - 1), this.lastcode
             );
             if (run) {
                 if (sep == ListNode.Separator.AMP) {
                     this.executeAsync(pipeline);
-                    this.lastExitCode = 0;
+                    this.lastcode = 0;
                 } else {
                     final int exitCode;
                     try {
                         exitCode = this.executePipeline(pipeline);
                     } catch (final BreakSignal ex) {
-                        if (this.loopDepth > 0) {
+                        if (this.loops > 0) {
                             throw ex;
                         }
                         this.err.println("sh: break: not in a loop");
-                        this.lastExitCode = 0;
+                        this.lastcode = 0;
                         idx = idx + 1;
                         continue;
                     } catch (final ContinueSignal ex) {
-                        if (this.loopDepth > 0) {
+                        if (this.loops > 0) {
                             throw ex;
                         }
                         this.err.println("sh: continue: not in a loop");
-                        this.lastExitCode = 0;
+                        this.lastcode = 0;
                         idx = idx + 1;
                         continue;
                     }
-                    this.lastExitCode = exitCode;
+                    this.lastcode = exitCode;
                     this.history.add(pipelineToString(pipeline));
-                    if (this.shellFlags.indexOf('e') >= 0 && exitCode != 0
+                    if (this.flags.indexOf('e') >= 0 && exitCode != 0
                         && sep != ListNode.Separator.AND_IF
                         && sep != ListNode.Separator.OR_IF) {
                         stopped = true;
@@ -484,7 +511,7 @@ public class Executor implements BuiltinContext {
             }
             idx = idx + 1;
         }
-        return this.lastExitCode;
+        return this.lastcode;
     }
 
     private static boolean shouldRunNext(
@@ -504,23 +531,26 @@ public class Executor implements BuiltinContext {
     private void executeAsync(final Pipeline pipeline) {
         final String cmdStr = pipelineToString(pipeline);
         final Executor parent = this;
-        final int jobId = this.jobManager.submit(() -> {
-            final Executor bgExecutor = parent.subshell();
-            bgExecutor.out = parent.out;
-            bgExecutor.err = parent.err;
-            return bgExecutor.executePipeline(pipeline);
-        }, cmdStr);
-        this.lastBgPid = (int) (JobManager.JOB_PID_BASE + jobId);
+        final int jobId = this.jobs.submit(
+            () -> {
+                final Executor bgexecutor = parent.subshell();
+                bgexecutor.out = parent.out;
+                bgexecutor.err = parent.err;
+                return bgexecutor.executePipeline(pipeline);
+            },
+            cmdStr
+        );
+        this.bgpid = (int) (JobManager.JOB_PID_BASE + jobId);
     }
 
     @Override
     public int lastBackgroundPid() {
-        return this.lastBgPid;
+        return this.bgpid;
     }
 
     @Override
     public void waitForBackgroundJobs() {
-        this.jobManager.waitForAll();
+        this.jobs.waitForAll();
     }
 
     @Override
@@ -574,7 +604,7 @@ public class Executor implements BuiltinContext {
         if (node instanceof SimpleCommand cmd) {
             this.refreshAliases(cmd);
             this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
-            if (this.shellFlags.indexOf('x') >= 0) {
+            if (this.flags.indexOf('x') >= 0) {
                 this.err.println("+ " + cmd);
             }
             code = this.executeCommand(cmd);
@@ -618,15 +648,15 @@ public class Executor implements BuiltinContext {
     }
 
     private int runFor(final ForNode node) {
-        this.loopDepth = this.loopDepth + 1;
+        this.loops = this.loops + 1;
         int lastExit = 0;
         boolean broken = false;
         final List<String> words;
         if (node.getWords() == null) {
-            words = this.positionalParams.size() <= 1
+            words = this.params.size() <= 1
                 ? new ArrayList<>()
                 : new ArrayList<>(
-                    this.positionalParams.subList(1, this.positionalParams.size())
+                    this.params.subList(1, this.params.size())
                 );
         } else {
             words = new ArrayList<>();
@@ -653,12 +683,12 @@ public class Executor implements BuiltinContext {
                 lastExit = 0;
             }
         }
-        this.loopDepth = this.loopDepth - 1;
+        this.loops = this.loops - 1;
         return lastExit;
     }
 
     private int runWhile(final WhileNode node) {
-        this.loopDepth = this.loopDepth + 1;
+        this.loops = this.loops + 1;
         int lastExit = 0;
         boolean running = true;
         while (running) {
@@ -682,7 +712,7 @@ public class Executor implements BuiltinContext {
                 }
             }
         }
-        this.loopDepth = this.loopDepth - 1;
+        this.loops = this.loops - 1;
         return lastExit;
     }
 
@@ -692,7 +722,7 @@ public class Executor implements BuiltinContext {
         );
         int code = 0;
         boolean matched = false;
-        for (final CaseNode.CaseItem item : node.getItems()) {
+        for (final CaseItem item : node.getItems()) {
             if (matched) {
                 break;
             }
@@ -731,10 +761,12 @@ public class Executor implements BuiltinContext {
             final int index = idx;
             final boolean last = index == count - 1;
             final Executor child = this.subshell();
-            child.in = index == 0 ? this.in : inputs[index];
+            child.inStream = index == 0 ? this.inStream : inputs[index];
             child.out = last
                 ? this.out
-                : new PrintStream(outputs[index], true, StandardCharsets.UTF_8);
+                : new PrintStream(
+                    outputs[index], true, StandardCharsets.UTF_8
+                );
             child.err = this.err;
             final Node node = commands.get(index);
             threads[index] = new Thread(() -> {
@@ -771,14 +803,14 @@ public class Executor implements BuiltinContext {
 
     private int executeCommand(final SimpleCommand cmd) {
         final Map<String, String> cmdEnv = new HashMap<>(this.environment);
-        this.substitutionStatus = -1;
+        this.substat = -1;
         final int assignCode = this.processAssignments(cmd.getAssignments(), cmdEnv);
         final String name = cmd.getName();
         final int code;
         if (name == null || name.isEmpty()) {
             this.environment.putAll(cmdEnv);
-            if (this.substitutionStatus >= 0) {
-                code = this.substitutionStatus;
+            if (this.substat >= 0) {
+                code = this.substat;
             } else {
                 code = assignCode;
             }
@@ -795,14 +827,14 @@ public class Executor implements BuiltinContext {
     }
 
     private Map<String, String> aliasTable() {
-        return this.aliasSnapshot == null ? this.aliases : this.aliasSnapshot;
+        return this.snapshot == null ? this.aliases : this.snapshot;
     }
 
     private void refreshAliases(final SimpleCommand cmd) {
         final int line = cmd.getLineNumber();
-        if (this.aliasSnapshot == null || line != this.aliasSnapshotLine) {
-            this.aliasSnapshot = new HashMap<>(this.aliases);
-            this.aliasSnapshotLine = line;
+        if (this.snapshot == null || line != this.snapshotLine) {
+            this.snapshot = new HashMap<>(this.aliases);
+            this.snapshotLine = line;
         }
     }
 
@@ -816,24 +848,27 @@ public class Executor implements BuiltinContext {
             for (final String arg : cmd.getArguments()) {
                 line.append(' ').append(arg);
             }
-            final ListNode ast = new Parser(
-                new Lexer(new CharReader(line.toString()))
-            ).parse();
-            return this.execute(ast);
+            return this.execute(
+                new Parser(new Lexer(new CharReader(line.toString()))).parse()
+            );
         }
         if ("exec".equals(name)) {
             return this.runExec(cmd, cmdEnv);
         }
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
-            cmd.getRedirections(), this.out, this.err,
-            text -> this.expandVariables(text, this.environment), this.cwd, this.outDescriptors
+            cmd.getRedirections(),
+            new RedirectionHandler.Streams(this.out, this.err),
+            new RedirectionHandler.RedirectContext(
+                text -> this.expandVariables(text, this.environment),
+                this.cwd, this.outdescs
+            )
         );
-        this.out = swap.out;
-        this.err = swap.err;
+        this.out = swap.out();
+        this.err = swap.err();
         final InputStream savedIn = this.swapInputForBuiltin(cmd.getRedirections());
         final int code;
         try {
-            if (swap.failed) {
+            if (swap.failed()) {
                 code = 1;
             } else if (!bypassFunctions && this.functions.containsKey(name)
                 && !isSpecialBuiltin(name)) {
@@ -854,27 +889,27 @@ public class Executor implements BuiltinContext {
             }
         } finally {
             if (savedIn != null) {
-                if (!this.inputBorrowed) {
+                if (!this.borrowed) {
                     try {
-                        this.in.close();
+                        this.inStream.close();
                     } catch (final IOException ignored) {
                         // The borrowed stream is closed on a best-effort basis.
                     }
                 }
-                this.inputBorrowed = false;
-                this.in = savedIn;
+                this.borrowed = false;
+                this.inStream = savedIn;
             }
-            if (swap.savedOut != null) {
+            if (swap.savedout() != null) {
                 if (this.out != this.err) {
                     this.out.close();
                 }
-                this.out = swap.savedOut;
+                this.out = swap.savedout();
             }
-            if (swap.savedErr != null) {
+            if (swap.savederr() != null) {
                 if (this.err != this.out) {
                     this.err.close();
                 }
-                this.err = swap.savedErr;
+                this.err = swap.savederr();
             }
         }
         return code;
@@ -883,6 +918,7 @@ public class Executor implements BuiltinContext {
     /**
      * Expands a redirection target into a file resolved against the shell's
      * working directory.
+     *
      * @param redir The redirection whose target is expanded
      * @return The resolved file
      */
@@ -901,6 +937,7 @@ public class Executor implements BuiltinContext {
      * Implements {@code exec}: redirection-only calls persist the stream
      * changes; a command replaces the shell semantically by unwinding with
      * the child's status.
+     *
      * @param cmd The exec command node
      * @param cmdEnv Expansion environment
      * @return 0 for redirection-only exec
@@ -910,11 +947,15 @@ public class Executor implements BuiltinContext {
         if (cmd.getArguments().isEmpty()) {
             final RedirectionHandler.StreamSwap swap =
                 RedirectionHandler.redirectOutputForBuiltin(
-                    cmd.getRedirections(), this.out, this.err,
-                    text -> this.expandVariables(text, this.environment), this.cwd, this.outDescriptors
+                    cmd.getRedirections(),
+                    new RedirectionHandler.Streams(this.out, this.err),
+                    new RedirectionHandler.RedirectContext(
+                        text -> this.expandVariables(text, this.environment),
+                        this.cwd, this.outdescs
+                    )
                 );
-            this.out = swap.out;
-            this.err = swap.err;
+            this.out = swap.out();
+            this.err = swap.err();
             final InputStream saved = this.swapInputForBuiltin(cmd.getRedirections());
             if (saved != null && saved != System.in) {
                 try {
@@ -923,7 +964,7 @@ public class Executor implements BuiltinContext {
                     // The temporary input stream is closed on a best-effort basis.
                 }
             }
-            boolean bound = !swap.failed;
+            boolean bound = !swap.failed();
             for (final Redirection redir : cmd.getRedirections()) {
                 final RedirectionType type = redir.getType();
                 final int desc = redir.getFd();
@@ -932,7 +973,7 @@ public class Executor implements BuiltinContext {
                     final File target = this.redirectionFile(redir);
                     try {
                         if (type == RedirectionType.READWRITE) {
-                            this.outDescriptors.put(
+                            this.outdescs.put(
                                 desc,
                                 new PrintStream(
                                     new FileOutputStream(target, true), false,
@@ -948,7 +989,7 @@ public class Executor implements BuiltinContext {
                     || type == RedirectionType.CLOBBER || type == RedirectionType.APPEND)) {
                     final File target = this.redirectionFile(redir);
                     try {
-                        this.outDescriptors.put(
+                        this.outdescs.put(
                             desc,
                             new PrintStream(
                                 new FileOutputStream(target, type == RedirectionType.APPEND),
@@ -970,7 +1011,7 @@ public class Executor implements BuiltinContext {
                     }
                 } else if (desc > 0 && type == RedirectionType.DUP_OUTPUT
                     && "-".equals(redir.getTarget())) {
-                    final PrintStream closed = this.outDescriptors.remove(desc);
+                    final PrintStream closed = this.outdescs.remove(desc);
                     if (closed != null) {
                         closed.close();
                     }
@@ -999,7 +1040,7 @@ public class Executor implements BuiltinContext {
     private int invokeFunction(
         final FunctionNode func, final SimpleCommand cmd, final Map<String, String> cmdEnv
     ) {
-        final List<String> savedParams = new ArrayList<>(this.positionalParams);
+        final List<String> savedParams = new ArrayList<>(this.params);
         final List<String> funcArgs = new ArrayList<>();
         for (final String arg : cmd.getArguments()) {
             funcArgs.addAll(this.expandArguments(arg, cmdEnv));
@@ -1010,8 +1051,8 @@ public class Executor implements BuiltinContext {
         } catch (final ReturnSignal ex) {
             return ex.getCode();
         } finally {
-            this.positionalParams.clear();
-            this.positionalParams.addAll(savedParams);
+            this.params.clear();
+            this.params.addAll(savedParams);
         }
     }
 
@@ -1042,7 +1083,7 @@ public class Executor implements BuiltinContext {
                 );
                 if (bound != null) {
                     replacement = bound;
-                    this.inputBorrowed = true;
+                    this.borrowed = true;
                 }
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
                 final File target = this.redirectionFile(redir);
@@ -1056,13 +1097,14 @@ public class Executor implements BuiltinContext {
         if (replacement == null) {
             return null;
         }
-        final InputStream saved = this.in;
-        this.in = replacement;
+        final InputStream saved = this.inStream;
+        this.inStream = replacement;
         return saved;
     }
 
     /**
      * Parses a redirection descriptor target such as {@code 3}.
+     *
      * @param text The expanded redirection target
      * @return The descriptor number, or -1 when it is not numeric
      */
@@ -1087,8 +1129,10 @@ public class Executor implements BuiltinContext {
             final ProcessBuilder builder = this.createProcessBuilder(resolved, cmd, cmdEnv);
             RedirectionHandler.setupRedirections(
                 builder, cmd.getRedirections(),
-                text -> this.expandVariables(text, this.environment),
-                this.cwd
+                new RedirectionHandler.RedirectContext(
+                    text -> this.expandVariables(text, this.environment),
+                    this.cwd, java.util.Collections.emptyMap()
+                )
             );
             code = this.startAndAwaitOne(builder);
         }
@@ -1102,7 +1146,7 @@ public class Executor implements BuiltinContext {
         final ProcessBuilder.Redirect output = builder.redirectOutput();
         final ProcessBuilder.Redirect error = builder.redirectError();
         final ProcessBuilder.Redirect input = builder.redirectInput();
-        if (ProcessBuilder.Redirect.PIPE.equals(input) && this.in == System.in) {
+        if (ProcessBuilder.Redirect.PIPE.equals(input) && this.inStream == System.in) {
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
         }
         int code;
@@ -1112,23 +1156,32 @@ public class Executor implements BuiltinContext {
             Thread inThread = null;
             if (ProcessBuilder.Redirect.PIPE.equals(error)
                 && process.getErrorStream() != null) {
-                errThread = new Thread(() -> {
-                    try (InputStream stream = process.getErrorStream()) {
-                        stream.transferTo(this.err);
-                    } catch (final IOException ignored) {
-                        this.err.flush();
-                    }
-                }, "sh-stderr");
+                errThread = new Thread(
+                    () -> {
+                        try (InputStream stream = process.getErrorStream()) {
+                            stream.transferTo(this.err);
+                        } catch (final IOException ignored) {
+                            this.err.flush();
+                        }
+                    },
+                    "sh-stderr"
+                );
                 errThread.start();
             }
-            if (ProcessBuilder.Redirect.PIPE.equals(input) && this.in != System.in) {
-                inThread = new Thread(() -> {
-                    try (java.io.OutputStream stream = process.getOutputStream()) {
-                        this.in.transferTo(stream);
-                    } catch (final IOException ignored) {
-                        this.err.flush();
-                    }
-                }, "sh-stdin");
+            if (ProcessBuilder.Redirect.PIPE.equals(input)
+                && this.inStream != System.in) {
+                inThread = new Thread(
+                    () -> {
+                        try (
+                            java.io.OutputStream stream = process.getOutputStream()
+                        ) {
+                            this.inStream.transferTo(stream);
+                        } catch (final IOException ignored) {
+                            this.err.flush();
+                        }
+                    },
+                    "sh-stdin"
+                );
                 inThread.start();
             }
             if (ProcessBuilder.Redirect.PIPE.equals(output)) {
@@ -1156,6 +1209,7 @@ public class Executor implements BuiltinContext {
 
     /**
      * Applies variable assignments to the environment.
+     *
      * @param assignments Assignment strings
      * @param source Source environment
      */
@@ -1177,7 +1231,6 @@ public class Executor implements BuiltinContext {
     private int processAssignments(
         final List<String> assignments, final Map<String, String> targetEnv
     ) {
-        int code = 0;
         for (final String assignment : assignments) {
             final int eqIndex = assignment.indexOf('=');
             if (eqIndex > 0) {
@@ -1191,7 +1244,7 @@ public class Executor implements BuiltinContext {
                 targetEnv.put(varName, WordExpander.removeQuotes(expanded));
             }
         }
-        return code;
+        return 0;
     }
 
     @Override
@@ -1203,7 +1256,7 @@ public class Executor implements BuiltinContext {
     public List<String> expandArguments(final String arg, final Map<String, String> env) {
         List<String> fields = this.expandFields(arg, env);
         if (arg != null && !WordExpander.isQuoted(arg)
-            && this.shellFlags.indexOf('f') < 0) {
+            && this.flags.indexOf('f') < 0) {
             fields = WordExpander.pathnameExpand(fields, this.cwd);
         }
         return fields;
@@ -1216,8 +1269,8 @@ public class Executor implements BuiltinContext {
             return fields;
         }
         if ("\"$@\"".equals(arg) || "\"${@}\"".equals(arg)) {
-            if (this.positionalParams.size() > 1) {
-                fields.addAll(this.positionalParams.subList(1, this.positionalParams.size()));
+            if (this.params.size() > 1) {
+                fields.addAll(this.params.subList(1, this.params.size()));
             }
         } else {
             final String expanded = this.expandVariables(arg, env);
@@ -1247,12 +1300,12 @@ public class Executor implements BuiltinContext {
         if (result == null) {
             if (name.chars().allMatch(Character::isDigit)) {
                 final int idx = Integer.parseInt(name);
-                if (idx < this.positionalParams.size()) {
-                    result = this.positionalParams.get(idx);
+                if (idx < this.params.size()) {
+                    result = this.params.get(idx);
                 }
             } else {
                 result = env.get(name);
-                if (result == null && this.shellFlags.indexOf('u') >= 0) {
+                if (result == null && this.flags.indexOf('u') >= 0) {
                     this.err.println("sh: " + name + ": parameter not set");
                     throw new ExitSignal(1);
                 }
@@ -1264,11 +1317,11 @@ public class Executor implements BuiltinContext {
     @Override
     public String getSpecialParam(final char name) {
         return switch (name) {
-            case '?' -> String.valueOf(this.lastExitCode);
-            case '-' -> this.shellFlags;
+            case '?' -> String.valueOf(this.lastcode);
+            case '-' -> this.flags;
             case '$' -> String.valueOf(ProcessHandle.current().pid());
-            case '!' -> String.valueOf(this.lastBgPid);
-            case '#' -> String.valueOf(this.positionalParams.size() - 1);
+            case '!' -> String.valueOf(this.bgpid);
+            case '#' -> String.valueOf(this.params.size() - 1);
             case '@', '*' -> this.positionalParamsJoined();
             default -> this.positionalParamForDigit(name);
         };
@@ -1276,7 +1329,7 @@ public class Executor implements BuiltinContext {
 
     private String positionalParamsJoined() {
         final String joined;
-        if (this.positionalParams.size() <= 1) {
+        if (this.params.size() <= 1) {
             joined = "";
         } else {
             String separator = " ";
@@ -1286,7 +1339,7 @@ public class Executor implements BuiltinContext {
             }
             joined = String.join(
                 separator,
-                this.positionalParams.subList(1, this.positionalParams.size())
+                this.params.subList(1, this.params.size())
             );
         }
         return joined;
@@ -1296,8 +1349,8 @@ public class Executor implements BuiltinContext {
         String result = null;
         if (chr >= '0' && chr <= '9') {
             final int idx = chr - '0';
-            if (idx < this.positionalParams.size()) {
-                result = this.positionalParams.get(idx);
+            if (idx < this.params.size()) {
+                result = this.params.get(idx);
             } else {
                 result = "";
             }
@@ -1363,7 +1416,7 @@ public class Executor implements BuiltinContext {
     ) {
         final List<String> command = new ArrayList<>();
         command.add(resolved);
-        final boolean globbing = this.shellFlags.indexOf('f') < 0;
+        final boolean globbing = this.flags.indexOf('f') < 0;
         for (final String arg : cmd.getArguments()) {
             List<String> fields = this.expandFields(arg, env);
             if (!WordExpander.isQuoted(arg) && globbing) {
@@ -1396,126 +1449,11 @@ public class Executor implements BuiltinContext {
 
     /**
      * Returns the most recent background-job PID.
+     *
      * @return The most recent background-job PID ({@code $!})
      */
     int getLastBgPid() {
-        return this.lastBgPid;
-    }
-
-    /**
-     * Throwable used to unwind a {@code break N} from N nested loops.
-     * @since 1.0
-     */
-    static class BreakSignal extends RuntimeException {
-
-        /** Serial version. */
-        private static final long serialVersionUID = 1L;
-
-        /** Remaining loop levels to break out of. */
-        private final int levels;
-
-        /**
-         * @param levels Number of loop levels to break out of
-         */
-        BreakSignal(final int levels) {
-            super();
-            this.levels = levels;
-        }
-
-        /**
-         * Returns the remaining loop levels to break out of.
-         * @return Remaining loop levels to break out of
-         */
-        int getLevels() {
-            return this.levels;
-        }
-    }
-
-    /**
-     * Throwable used to unwind a {@code continue N} from N nested loops.
-     * @since 1.0
-     */
-    static class ContinueSignal extends RuntimeException {
-
-        /** Serial version. */
-        private static final long serialVersionUID = 1L;
-
-        /** Remaining loop levels to continue at. */
-        private final int levels;
-
-        /**
-         * @param levels Number of loop levels to skip over
-         */
-        ContinueSignal(final int levels) {
-            super();
-            this.levels = levels;
-        }
-
-        /**
-         * Returns the remaining loop levels to skip over.
-         * @return Remaining loop levels to skip over
-         */
-        int getLevels() {
-            return this.levels;
-        }
-    }
-
-    /**
-     * Throwable used to unwind {@code exit} to the shell boundary.
-     * @since 1.0
-     */
-    public static class ExitSignal extends RuntimeException {
-
-        /** Serial version. */
-        private static final long serialVersionUID = 1L;
-
-        /** Requested exit status. */
-        private final int code;
-
-        /**
-         * @param code Requested exit status
-         */
-        ExitSignal(final int code) {
-            super();
-            this.code = code;
-        }
-
-        /**
-         * Returns the requested exit status.
-         * @return Requested exit status
-         */
-        int getCode() {
-            return this.code;
-        }
-    }
-
-    /**
-     * Throwable used to unwind a {@code return N} from a function body.
-     * @since 1.0
-     */
-    static class ReturnSignal extends RuntimeException {
-
-        /** Serial version. */
-        private static final long serialVersionUID = 1L;
-
-        /** The exit status that the function should yield. */
-        private final int code;
-
-        /**
-         * @param code The exit status to yield
-         */
-        ReturnSignal(final int code) {
-            super();
-            this.code = code;
-        }
-
-        /**
-         * Returns the exit status to yield.
-         * @return The exit status to yield
-         */
-        int getCode() {
-            return this.code;
-        }
+        return this.bgpid;
     }
 
     @Override
@@ -1525,7 +1463,7 @@ public class Executor implements BuiltinContext {
 
     @Override
     public List<String> positionalParamsList() {
-        return this.positionalParams;
+        return this.params;
     }
 
     @Override
@@ -1540,7 +1478,7 @@ public class Executor implements BuiltinContext {
 
     @Override
     public JobManager jobManager() {
-        return this.jobManager;
+        return this.jobs;
     }
 
     @Override
@@ -1560,20 +1498,20 @@ public class Executor implements BuiltinContext {
 
     @Override
     public String shellFlags() {
-        return this.shellFlags;
+        return this.flags;
     }
 
     @Override
     public void setShellFlags(final String flags) {
-        this.shellFlags = flags;
+        this.flags = flags;
     }
 
     @Override
     public void setPositionalParams(final List<String> params) {
-        final String script = this.positionalParams.isEmpty()
-            ? "" : this.positionalParams.get(0);
-        this.positionalParams.clear();
-        this.positionalParams.add(script);
-        this.positionalParams.addAll(params);
+        final String script = this.params.isEmpty()
+            ? "" : this.params.get(0);
+        this.params.clear();
+        this.params.add(script);
+        this.params.addAll(params);
     }
 }

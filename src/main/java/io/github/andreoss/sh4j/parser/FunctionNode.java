@@ -6,17 +6,20 @@ package io.github.andreoss.sh4j.parser;
 
 /**
  * AST node for a function definition: {@code name() compound-command}.
+ *
  * @since 1.0
  */
 public final class FunctionNode extends Node {
 
     /** Function name as written in source. */
     private final String name;
+
     /** The compound command that runs when the function is invoked. */
     private final Node body;
 
     /**
      * Creates a function-definition node.
+     *
      * @param name Function name
      * @param body The function's compound body
      */
@@ -28,6 +31,7 @@ public final class FunctionNode extends Node {
 
     /**
      * Returns the function name.
+     *
      * @return The function name
      */
     public String getName() {
@@ -36,6 +40,7 @@ public final class FunctionNode extends Node {
 
     /**
      * Returns the function body.
+     *
      * @return The function body
      */
     public Node getBody() {

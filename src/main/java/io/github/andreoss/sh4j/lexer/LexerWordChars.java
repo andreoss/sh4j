@@ -6,19 +6,17 @@ package io.github.andreoss.sh4j.lexer;
 
 /**
  * Quoting and expansion consumers for {@link LexerWords}.
+ *
  * @since 1.0
  */
 final class LexerWordChars {
 
-    /**
-     * Utility class; no instances.
-     */
     private LexerWordChars() {
-        super();
     }
 
     /**
      * Handles a backslash outside quotes.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      */
@@ -38,6 +36,7 @@ final class LexerWordChars {
 
     /**
      * Handles a character inside double quotes.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      * @param chr Current character
@@ -62,6 +61,7 @@ final class LexerWordChars {
 
     /**
      * Handles a dollar-introduced expansion.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      */
@@ -79,6 +79,7 @@ final class LexerWordChars {
 
     /**
      * Handles a {@code $(...)} or {@code $((...))} expansion.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      */
@@ -107,6 +108,7 @@ final class LexerWordChars {
 
     /**
      * Handles a {@code ${...}} expansion.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      */
@@ -129,6 +131,7 @@ final class LexerWordChars {
 
     /**
      * Handles a backtick-delimited command substitution.
+     *
      * @param reader Input cursor
      * @param buf Accumulator
      */

@@ -7,36 +7,35 @@ package io.github.andreoss.sh4j.lexer;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TokenType.
+ *
  * @since 1.0
  */
-public final class TokenTypeTest {
+final class TokenTypeTest {
 
     @Test
-    public void allEnumValuesPresent() {
-        assertThat(
+    void allEnumValuesPresent() {
+        MatcherAssert.assertThat(
             "TokenType should declare at least one constant",
             TokenType.values().length,
-            not(equalTo(0))
+            CoreMatchers.not(CoreMatchers.equalTo(0))
         );
     }
 
     @Test
-    public void valueOfAllTypes() {
-        assertThat(
+    void valueOfAllTypes() {
+        MatcherAssert.assertThat(
             "every enum constant should round-trip through valueOf",
             Stream.of(TokenType.values())
                 .map(TokenType::name)
                 .map(TokenType::valueOf)
                 .collect(Collectors.toList()),
-            equalTo(Arrays.asList(TokenType.values()))
+            CoreMatchers.equalTo(Arrays.asList(TokenType.values()))
         );
     }
 }

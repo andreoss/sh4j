@@ -10,36 +10,43 @@ import java.util.List;
 /**
  * AST node for a single command invocation: a name, its arguments, any
  * inline assignments, and any redirections.
+ *
  * @since 1.0
  */
 public final class SimpleCommand extends Node {
 
     /** Command name as parsed; may be null for assignment-only commands. */
     private final String name;
+
     /** Positional arguments in source order. */
     private final List<String> arguments;
+
     /** Redirections in source order. */
     private final List<Redirection> redirections;
+
     /** Inline {@code KEY=VALUE} assignments in source order. */
     private final List<String> assignments;
-    /** 1-based source line number where this command starts. */
-    private int lineNumber;
+
+    /** One-based source line number where this command starts. */
+    private int line;
 
     /**
      * Creates a simple-command node.
+     *
      * @param name The command name (may be null for assignment-only commands)
      */
     public SimpleCommand(final String name) {
         super();
         this.name = name;
-        this.arguments = new ArrayList<>();
-        this.redirections = new ArrayList<>();
-        this.assignments = new ArrayList<>();
-        this.lineNumber = 1;
+        this.arguments = new ArrayList<>(0);
+        this.redirections = new ArrayList<>(0);
+        this.assignments = new ArrayList<>(0);
+        this.line = 1;
     }
 
     /**
      * Returns the command name.
+     *
      * @return The command name (may be null)
      */
     public String getName() {
@@ -48,22 +55,25 @@ public final class SimpleCommand extends Node {
 
     /**
      * Returns the source line number.
-     * @return 1-based source line number
+     *
+     * @return One-based source line number
      */
     public int getLineNumber() {
-        return this.lineNumber;
+        return this.line;
     }
 
     /**
      * Sets the source line number.
-     * @param line 1-based line number
+     *
+     * @param value One-based line number
      */
-    public void setLineNumber(final int line) {
-        this.lineNumber = line;
+    public void setLineNumber(final int value) {
+        this.line = value;
     }
 
     /**
      * Returns the positional arguments.
+     *
      * @return Positional arguments
      */
     public List<String> getArguments() {
@@ -72,6 +82,7 @@ public final class SimpleCommand extends Node {
 
     /**
      * Returns the inline redirections.
+     *
      * @return Inline redirections
      */
     public List<Redirection> getRedirections() {
@@ -80,6 +91,7 @@ public final class SimpleCommand extends Node {
 
     /**
      * Returns the inline assignments.
+     *
      * @return Inline assignments ({@code KEY=VALUE} strings)
      */
     public List<String> getAssignments() {
@@ -88,6 +100,7 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends a positional argument.
+     *
      * @param arg The argument text
      */
     public void addArgument(final String arg) {
@@ -96,6 +109,7 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends a redirection.
+     *
      * @param redir The redirection to attach
      */
     public void addRedirection(final Redirection redir) {
@@ -104,6 +118,7 @@ public final class SimpleCommand extends Node {
 
     /**
      * Appends an inline assignment.
+     *
      * @param assignment The {@code KEY=VALUE} string
      */
     public void addAssignment(final String assignment) {

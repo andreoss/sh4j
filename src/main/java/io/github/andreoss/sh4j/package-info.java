@@ -7,6 +7,7 @@
  * Java (JDK-only) and compilable to a GraalVM native image.
  * {@link io.github.andreoss.sh4j.Main} is the CLI entry point and dispatches to the lexer,
  * parser, and executor subpackages.
+ *
  * @since 1.0
  */
 package io.github.andreoss.sh4j;

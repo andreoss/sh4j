@@ -4,6 +4,12 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.lexer.CharReader;
+import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.ListNode;
+import io.github.andreoss.sh4j.parser.Parser;
+import io.github.andreoss.sh4j.parser.Pipeline;
+import io.github.andreoss.sh4j.parser.SimpleCommand;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,32 +21,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
-import io.github.andreoss.sh4j.lexer.CharReader;
-import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.parser.ListNode;
-import io.github.andreoss.sh4j.parser.Parser;
-import io.github.andreoss.sh4j.parser.Pipeline;
-import io.github.andreoss.sh4j.parser.SimpleCommand;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for Executor.
+ *
  * @since 1.0
- * @checkstyle MethodCountCheck (500 lines)
- * @checkstyle FileLength (3000 lines)
  */
-@SuppressWarnings({
-    "PMD.GodClass", "PMD.TooManyMethods",
-    "PMD.UnitTestContainsTooManyAsserts", "PMD.UnnecessaryLocalRule",
-    "PMD.AvoidDuplicateLiterals", "PMD.UseUnderscoresInNumericLiterals",
-    "PMD.NcssCount", "PMD.RelianceOnDefaultCharset"
-})
-public final class ExecutorTest {
+final class ExecutorTest {
 
     /** PATH_KEY constant. */
     private static final String PATH_KEY = "PATH";
@@ -88,619 +81,631 @@ public final class ExecutorTest {
     private static final String HELLO_WORLD = "hello world";
 
     @Test
-    public void executeSimpleEcho() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello")));
+    void executeSimpleEcho() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello")));
     }
 
     @Test
-    public void executePwd() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("pwd")));
+    void executePwd() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("pwd")));
     }
 
     @Test
-    public void executeTrue() {
-        Assert.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
+    void executeTrue() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
-    public void executeFalse() {
-        Assert.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
+    void executeFalse() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
     }
 
     @Test
-    public void executeWithArguments() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo a b c")));
+    void executeWithArguments() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo a b c")));
     }
 
     @Test
-    public void executeSemicolonSeparator() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo a; echo b")));
+    void executeSemicolonSeparator() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo a; echo b")));
     }
 
     @Test
-    public void executeAndIf() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo a && echo b")));
+    void executeAndIf() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo a && echo b")));
     }
 
     @Test
-    public void executeOrIf() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("false || echo b")));
+    void executeOrIf() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("false || echo b")));
     }
 
     @Test
-    public void executeAndIfStopsOnFailure() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("false && echo not reached")));
+    void executeAndIfStopsOnFailure() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("false && echo not reached")));
     }
 
     @Test
-    public void executeOrIfStopsOnSuccess() {
-        Assert.assertEquals(
+    void executeOrIfStopsOnSuccess() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo success || echo not reached"))
         );
     }
 
     @Test
-    public void executeEmptyList() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("")));
+    void executeEmptyList() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("")));
     }
 
     @Test
-    public void executeAssignmentOnly() {
+    void executeAssignmentOnly() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("FOO=bar")));
-        Assert.assertEquals("bar", executor.getVariable("FOO"));
+        Assertions.assertEquals(0, executor.execute(this.parse("FOO=bar")));
+        Assertions.assertEquals("bar", executor.getVariable("FOO"));
     }
 
     @Test
-    public void executeAssignmentWithCommand() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("FOO=hello echo $FOO")));
+    void executeAssignmentWithCommand() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("FOO=hello echo $FOO")));
     }
 
     @Test
-    public void executeMultipleAssignments() {
+    void executeMultipleAssignments() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("A=1 B=2")));
-        Assert.assertEquals("1", executor.getVariable("A"));
-        Assert.assertEquals("2", executor.getVariable("B"));
+        Assertions.assertEquals(0, executor.execute(this.parse("A=1 B=2")));
+        Assertions.assertEquals("1", executor.getVariable("A"));
+        Assertions.assertEquals("2", executor.getVariable("B"));
     }
 
     @Test
-    public void executeVariableExpansion() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo $HOME")));
+    void executeVariableExpansion() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo $HOME")));
     }
 
     @Test
-    public void executeOutputRedirection() throws Exception {
-        Assert.assertEquals(
+    void executeOutputRedirection() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo test > /tmp/sh4j_test_output"))
         );
     }
 
     @Test
-    public void executeInputRedirection() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("cat < /dev/null")));
+    void executeInputRedirection() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("cat < /dev/null")));
     }
 
     @Test
-    public void executePipeline() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello | cat")));
+    void executePipeline() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello | cat")));
     }
 
     @Test
-    public void executeBackground() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello &")));
+    void executeBackground() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello &")));
     }
 
     @Test
-    public void executeBackgroundSetsLastBgPid() {
+    void executeBackgroundSetsLastBgPid() {
         final Executor executor = new Executor();
         executor.execute(this.parse("echo hello &"));
-        Assert.assertTrue(
-            "lastBgPid should be > 0 after & command", executor.getLastBgPid() > 0
+        Assertions.assertTrue(
+            executor.getLastBgPid() > 0,
+            "lastBgPid should be > 0 after & command"
         );
     }
 
     @Test
-    public void executeBackgroundAndSequential() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo bg1 & echo seq1")));
+    void executeBackgroundAndSequential() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo bg1 & echo seq1")));
     }
 
     @Test
-    public void executeClobberRedirection() throws Exception {
-        Assert.assertEquals(
+    void executeClobberRedirection() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo test >| /tmp/sh4j_clobber_test"))
         );
     }
 
     @Test
-    public void executeBuiltinStderrRedirect() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello 2>/dev/null")));
+    void executeBuiltinStderrRedirect() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello 2>/dev/null")));
     }
 
     @Test
-    public void executeBuiltinStderrToStdout() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello 2>&1")));
+    void executeBuiltinStderrToStdout() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello 2>&1")));
     }
 
     @Test
-    public void executeBuiltinStderrRedirectToFile() throws Exception {
-        Assert.assertEquals(
+    void executeBuiltinStderrRedirectToFile() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo hello 2>/tmp/sh4j_stderr_test"))
         );
     }
 
     @Test
-    public void executeBuiltinStderrAppendToFile() throws Exception {
+    void executeBuiltinStderrAppendToFile() throws Exception {
         final String file = String.format("/tmp/sh4j_stderr_append_%s", System.nanoTime());
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("echo hello 2>>%s", file)))
         );
-        new java.io.File(file).delete();
+        new File(file).delete();
     }
 
     @Test
-    public void executeBuiltinStdoutAppendToFile() throws Exception {
+    void executeBuiltinStdoutAppendToFile() throws Exception {
         final String file = String.format("/tmp/sh4j_stdout_append_%s", System.nanoTime());
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("echo hello >>%s", file)))
         );
-        new java.io.File(file).delete();
+        new File(file).delete();
     }
 
     @Test
-    public void executeBuiltinStdoutRedirectIoException() throws Exception {
-        Assert.assertEquals(
+    void executeBuiltinStdoutRedirectIoException() throws Exception {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("echo hello >/dev/null/no_such_path_xyz"))
         );
     }
 
     @Test
-    public void executeBuiltinStderrRedirectIoException() throws Exception {
-        Assert.assertEquals(
+    void executeBuiltinStderrRedirectIoException() throws Exception {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("echo hello 2>/dev/null/no_such_stderr_xyz"))
         );
     }
 
     @Test
-    public void executeBuiltinStdoutAppendIoException() throws Exception {
-        Assert.assertEquals(
+    void executeBuiltinStdoutAppendIoException() throws Exception {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("echo hello >>/dev/null/no_such_append_xyz"))
         );
     }
 
     @Test
-    public void executeBuiltinStderrAppendIoException() throws Exception {
-        Assert.assertEquals(
+    void executeBuiltinStderrAppendIoException() throws Exception {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("echo hello 2>>/dev/null/no_such_eappend_xyz"))
         );
     }
 
     @Test
-    public void executeBuiltinCloseStdout() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello >&-")));
+    void executeBuiltinCloseStdout() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello >&-")));
     }
 
     @Test
-    public void executeMultiplePipelines() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo a; echo b; echo c")));
+    void executeMultiplePipelines() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo a; echo b; echo c")));
     }
 
     @Test
-    public void executeBangPipeline() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("! false")));
+    void executeBangPipeline() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("! false")));
     }
 
     @Test
-    public void executeVariableWithEmptyValue() {
+    void executeVariableWithEmptyValue() {
         final Map<String, String> env = new HashMap<>();
         env.put("EMPTY_VAR", "");
-        Assert.assertEquals(0, new Executor(env).execute(this.parse("echo $EMPTY_VAR")));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("echo $EMPTY_VAR")));
     }
 
     @Test
-    public void executeCommandNotFound() {
-        Assert.assertEquals(127, new Executor().execute(this.parse("nonexistent_command_xyz")));
+    void executeCommandNotFound() {
+        Assertions.assertEquals(127, new Executor().execute(this.parse("nonexistent_command_xyz")));
     }
 
     @Test
-    public void executeCommandNotFoundReturnsNotFound() {
-        Assert.assertEquals(127, new Executor().execute(this.parse("nonexistent_cmd_xyz_127")));
+    void executeCommandNotFoundReturnsNotFound() {
+        Assertions.assertEquals(127, new Executor().execute(this.parse("nonexistent_cmd_xyz_127")));
     }
 
     @Test
-    public void executeBangWithTrue() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("! true")));
+    void executeBangWithTrue() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("! true")));
     }
 
     @Test
-    public void executeExitZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("exit 0")));
+    void executeExitZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("exit 0")));
     }
 
     @Test
-    public void executeExitOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("exit 1")));
+    void executeExitOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("exit 1")));
     }
 
     @Test
-    public void executeEchoAbc() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo abc")));
+    void executeEchoAbc() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo abc")));
     }
 
     @Test
-    public void executeEmptyListNode() {
-        Assert.assertEquals(0, new Executor().execute(new ListNode()));
+    void executeEmptyListNode() {
+        Assertions.assertEquals(0, new Executor().execute(new ListNode()));
     }
 
     @Test
-    public void executePipelineWithNoCommands() {
+    void executePipelineWithNoCommands() {
         final ListNode list = new ListNode();
         list.addPipeline(new Pipeline(false), ListNode.Separator.NONE);
-        Assert.assertEquals(0, new Executor().execute(list));
+        Assertions.assertEquals(0, new Executor().execute(list));
     }
 
     @Test
-    public void executeAppendRedirection() throws Exception {
-        Assert.assertEquals(
+    void executeAppendRedirection() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo test >> /tmp/sh4j_append_test"))
         );
     }
 
     @Test
-    public void executeStderrRedirect() throws Exception {
-        Assert.assertEquals(
+    void executeStderrRedirect() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("echo test 2>/tmp/sh4j_test_stderr"))
         );
     }
 
     @Test
-    public void executeStderrToStdout() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo test 2>&1")));
+    void executeStderrToStdout() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo test 2>&1")));
     }
 
     @Test
-    public void executeCloseStdin() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
+    void executeCloseStdin() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
     }
 
     @Test
-    public void executeCloseStdout() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo test >&-")));
+    void executeCloseStdout() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo test >&-")));
     }
 
     @Test
-    public void executeReadWriteRedirect() throws Exception {
-        Assert.assertEquals(0, new Executor().execute(this.parse("cat <> /dev/null")));
+    void executeReadWriteRedirect() throws Exception {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("cat <> /dev/null")));
     }
 
     @Test
-    public void executeExitNoArgs() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("exit")));
+    void executeExitNoArgs() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("exit")));
     }
 
     @Test
-    public void executeExitWithNonNumericArg() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("exit xyz")));
+    void executeExitWithNonNumericArg() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("exit xyz")));
     }
 
     @Test
-    public void executePipelineWithNullCommand() {
+    void executePipelineWithNullCommand() {
         final Pipeline pipeline = new Pipeline(false);
         pipeline.getCommands().add(null);
         final ListNode list = new ListNode();
         list.addPipeline(pipeline, ListNode.Separator.NONE);
-        Assert.assertEquals(0, new Executor().execute(list));
+        Assertions.assertEquals(0, new Executor().execute(list));
     }
 
     @Test
-    public void executeCommandWithNullName() {
+    void executeCommandWithNullName() {
         final Pipeline pipeline = new Pipeline(false);
         pipeline.addCommand(new SimpleCommand(null));
         final ListNode list = new ListNode();
         list.addPipeline(pipeline, ListNode.Separator.NONE);
-        Assert.assertEquals(0, new Executor().execute(list));
+        Assertions.assertEquals(0, new Executor().execute(list));
     }
 
     @Test
-    public void executeAssignmentWithNoEquals() {
+    void executeAssignmentWithNoEquals() {
         final SimpleCommand cmd = new SimpleCommand("echo");
         cmd.getAssignments().add("INVALID");
         final Pipeline pipeline = new Pipeline(false);
         pipeline.addCommand(cmd);
         final ListNode list = new ListNode();
         list.addPipeline(pipeline, ListNode.Separator.NONE);
-        Assert.assertEquals(0, new Executor().execute(list));
+        Assertions.assertEquals(0, new Executor().execute(list));
     }
 
     @Test
-    public void executePipelineWithFailingCommand() {
+    void executePipelineWithFailingCommand() {
         final Executor executor = new Executor();
         final int code = executor.execute(
             this.parse("echo hello | nonexistent_cmd_xyz_fail | echo done")
         );
-        Assert.assertTrue(
+        Assertions.assertTrue(
+            code == 0,
             String.format(
                 "Pipeline with missing middle stage must exit with POSIX command-not-found(127) or not-executable(126); got %s",
                 code
-            ),
-            code == 0
+            )
         );
     }
 
     @Test
-    public void executeSubshell() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("(echo hello)")));
+    void executeSubshell() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("(echo hello)")));
     }
 
     @Test
-    public void executeSubshellWithMultiplePipelines() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("(echo a; echo b)")));
+    void executeSubshellWithMultiplePipelines() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("(echo a; echo b)")));
     }
 
     @Test
-    public void executeSubshellInPipeline() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo foo | (cat) | wc")));
+    void executeSubshellInPipeline() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo foo | (cat) | wc")));
     }
 
     @Test
-    public void executeSubshellWithExit() {
-        Assert.assertEquals(42, new Executor().execute(this.parse("(exit 42)")));
+    void executeSubshellWithExit() {
+        Assertions.assertEquals(42, new Executor().execute(this.parse("(exit 42)")));
     }
 
     @Test
-    public void executeGrouping() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("{ echo hello; }")));
+    void executeGrouping() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("{ echo hello; }")));
     }
 
     @Test
-    public void executeGroupingInPipeline() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo foo | { cat; } | wc")));
+    void executeGroupingInPipeline() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo foo | { cat; } | wc")));
     }
 
     @Test
-    public void executeGroupingSharesEnvironment() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("FOO=bar; { echo $FOO; }")));
+    void executeGroupingSharesEnvironment() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("FOO=bar; { echo $FOO; }")));
     }
 
     @Test
-    public void executeIfTrueThen() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("if true; then echo hi; fi")));
+    void executeIfTrueThen() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("if true; then echo hi; fi")));
     }
 
     @Test
-    public void executeIfFalseElse() {
-        Assert.assertEquals(
+    void executeIfFalseElse() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("if false; then echo a; else echo b; fi"))
         );
     }
 
     @Test
-    public void executeIfTrueThenElseNotExecuted() {
-        Assert.assertEquals(
+    void executeIfTrueThenElseNotExecuted() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("if true; then echo hi; else false; fi"))
         );
     }
 
     @Test
-    public void executeForDoDone() {
-        Assert.assertEquals(
+    void executeForDoDone() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("for var in a b c; do echo $var; done"))
         );
     }
 
     @Test
-    public void executeWhileFalse() {
-        Assert.assertEquals(
+    void executeWhileFalse() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("while false; do echo hi; done"))
         );
     }
 
     @Test
-    public void executeUntilTrue() {
-        Assert.assertEquals(
+    void executeUntilTrue() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("until true; do echo hi; done"))
         );
     }
 
     @Test
-    public void executeCaseMatch() {
-        Assert.assertEquals(
+    void executeCaseMatch() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("case a in a) echo match;; esac"))
         );
     }
 
     @Test
-    public void executeCaseNoMatch() {
-        Assert.assertEquals(
+    void executeCaseNoMatch() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("case a in b) echo nomatch;; esac"))
         );
     }
 
     @Test
-    public void executeCaseDefaultStar() {
-        Assert.assertEquals(
+    void executeCaseDefaultStar() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("case a in *) echo default;; esac"))
         );
     }
 
     @Test
-    public void executeCasePipePattern() {
-        Assert.assertEquals(
+    void executeCasePipePattern() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("case a in b|c|a) echo match;; esac"))
         );
     }
 
     @Test
-    public void executeCaseFirstMatchOnly() {
-        Assert.assertEquals(
+    void executeCaseFirstMatchOnly() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("case a in a) echo first;; b) echo second;; esac"))
         );
     }
 
     @Test
-    public void executeFunctionDefinitionStored() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("foo() { echo hello; }")));
+    void executeFunctionDefinitionStored() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("foo() { echo hello; }")));
     }
 
     @Test
-    public void executeFunctionCall() {
-        Assert.assertEquals(
+    void executeFunctionCall() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("foo() { echo hello; }; foo"))
         );
     }
 
     @Test
-    public void executeFunctionSubshellBody() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("foo() (echo hello); foo")));
+    void executeFunctionSubshellBody() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("foo() (echo hello); foo")));
     }
 
     @Test
-    public void executeWhileLoop() {
-        Assert.assertEquals(
+    void executeWhileLoop() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("while false; do echo body; done"))
         );
     }
 
     @Test
-    public void executeUntilLoop() {
-        Assert.assertEquals(
+    void executeUntilLoop() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("until true; do echo body; done"))
         );
     }
 
     @Test
-    public void executeWhileBodyRunsOnce() {
+    void executeWhileBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             1,
             executor.execute(this.parse("i=; while [ -z \"$i\" ]; do echo ran; i=1; false; done"))
         );
-        Assert.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void executeUntilBodyRunsOnce() {
+    void executeUntilBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("i=; until [ -n \"$i\" ]; do echo ran; i=1; true; done"))
         );
-        Assert.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void executeWhileBodyExitCodePropagated() {
-        Assert.assertEquals(
+    void executeWhileBodyExitCodePropagated() {
+        Assertions.assertEquals(
             42,
             new Executor().execute(this.parse("i=; while [ -z \"$i\" ]; do i=1; (exit 42); done"))
         );
     }
 
     @Test
-    public void commandInterruptedException() {
+    void commandInterruptedException() {
         Thread.currentThread().interrupt();
-        Assert.assertEquals(1, new Executor().execute(this.parse("ls")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("ls")));
     }
 
     @Test
-    public void pipelineInterruptedException() {
+    void pipelineInterruptedException() {
         Thread.currentThread().interrupt();
-        Assert.assertEquals(1, new Executor().execute(this.parse("ls | cat")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("ls | cat")));
     }
 
     @Test
-    public void waitForBackgroundJobsInterrupted() {
+    void waitForBackgroundJobsInterrupted() {
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
         executor.execute(this.parse("sleep 1 &"));
-        Assert.assertTrue(
-            "InterruptedException catch should re-set interrupt flag",
-            Thread.interrupted()
+        Assertions.assertTrue(
+            Thread.interrupted(),
+            "InterruptedException catch should re-set interrupt flag"
         );
     }
 
     @Test
-    public void exportNoArgs() {
+    void exportNoArgs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
         final Executor executor = new Executor(env);
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("export")));
-        Assert.assertTrue(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("export")));
+        Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello")
         );
+        stream.close();
     }
 
     @Test
-    public void executeIfFalseNoElse() {
-        Assert.assertEquals(
+    void executeIfFalseNoElse() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse("if false; then echo yes; fi"))
         );
     }
 
     @Test
-    public void executeElifWhenIfFalse() {
+    void executeElifWhenIfFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("if false; then echo no; elif true; then echo yes; fi"))
         );
-        Assert.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void executeElifChainFalseFalse() {
+    void executeElifChainFalseFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0,
             executor.execute(
                 this.parse("if false; then echo a; elif false; then echo b; else echo c; fi")
             )
         );
-        Assert.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void executeElifChainSecondElifTrue() {
+    void executeElifChainSecondElifTrue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0,
             executor.execute(
                 this.parse(
@@ -708,78 +713,79 @@ public final class ExecutorTest {
                 )
             )
         );
-        Assert.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void executeRedirectStdoutToStderr() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo test 1>&2")));
+    void executeRedirectStdoutToStderr() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo test 1>&2")));
     }
 
     @Test
-    public void executeHereDoc() {
-        Assert.assertEquals(
+    void executeHereDoc() {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat << EOF%nhello%nEOF%n")))
         );
     }
 
     @Test
-    public void heredocExpansion() {
+    void heredocExpansion() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_HVAR", "expanded");
         final Executor executor = new Executor(env);
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("cat << EOF%nhello $TEST_HVAR%nEOF%n")))
         );
-        Assert.assertEquals("hello expanded", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals("hello expanded", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void redirectTargetExpansionOutput() throws Exception {
-        final java.io.File file = new java.io.File("/tmp/sh4j_redir_expand_test.txt");
+    void redirectTargetExpansionOutput() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_expand_test.txt");
         file.delete();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor(env).execute(this.parse("echo hello > $TEST_FILE"))
         );
-        Assert.assertTrue(file.exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(file.exists());
+        Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+            new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
         file.delete();
     }
 
     @Test
-    public void redirectTargetExpansionAppend() throws Exception {
-        final java.io.File file = new java.io.File("/tmp/sh4j_redir_append_expand.txt");
+    void redirectTargetExpansionAppend() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_append_expand.txt");
         file.delete();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor(env).execute(this.parse("echo hello >> $TEST_FILE"))
         );
-        Assert.assertTrue(file.exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(file.exists());
+        Assertions.assertEquals(
             String.format("hello%n"),
-            new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+            new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
         file.delete();
     }
 
     @Test
-    public void redirectTargetExpansionInput() throws Exception {
-        final java.io.File file = new java.io.File("/tmp/sh4j_redir_input_expand.txt");
+    void redirectTargetExpansionInput() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_input_expand.txt");
         file.delete();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
+            BufferedWriter w = Files.newBufferedWriter(
                 file.toPath(),
                 StandardCharsets.UTF_8
             )
@@ -791,55 +797,55 @@ public final class ExecutorTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(env);
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("cat < $TEST_FILE")));
-        Assert.assertEquals("hello from file", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(0, executor.execute(this.parse("cat < $TEST_FILE")));
+        Assertions.assertEquals("hello from file", bos.toString(StandardCharsets.UTF_8).trim());
         file.delete();
     }
 
     @Test
-    public void executeNonExecutableCommand() throws Exception {
-        final java.io.File file = new java.io.File("/tmp/sh4j_nonexec_test.sh");
+    void executeNonExecutableCommand() throws Exception {
+        final File file = new File("/tmp/sh4j_nonexec_test.sh");
         file.createNewFile();
         file.setExecutable(false);
-        Assert.assertEquals(126, new Executor().execute(this.parse(file.getAbsolutePath())));
+        Assertions.assertEquals(126, new Executor().execute(this.parse(file.getAbsolutePath())));
     }
 
     @Test
-    public void expandDollarQuestion() {
+    void expandDollarQuestion() {
         final Executor executor = new Executor();
         executor.execute(this.parse(ExecutorTest.FALSE_CMD));
-        Assert.assertEquals("1", executor.expandVariables("$?", new HashMap<>()));
+        Assertions.assertEquals("1", executor.expandVariables("$?", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarQuestionAfterSuccess() {
+    void expandDollarQuestionAfterSuccess() {
         final Executor executor = new Executor();
         executor.execute(this.parse(ExecutorTest.TRUE_CMD));
-        Assert.assertEquals("0", executor.expandVariables("$?", new HashMap<>()));
+        Assertions.assertEquals("0", executor.expandVariables("$?", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarHyphen() {
-        Assert.assertEquals("", new Executor().expandVariables("$-", new HashMap<>()));
+    void expandDollarHyphen() {
+        Assertions.assertEquals("", new Executor().expandVariables("$-", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarQuestionBraced() {
+    void expandDollarQuestionBraced() {
         final Executor executor = new Executor();
         executor.execute(this.parse(ExecutorTest.FALSE_CMD));
-        Assert.assertEquals("1", executor.expandVariables("${?}", new HashMap<>()));
+        Assertions.assertEquals("1", executor.expandVariables("${?}", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarQuestionInString() {
+    void expandDollarQuestionInString() {
         final Executor executor = new Executor();
         executor.execute(this.parse(ExecutorTest.FALSE_CMD));
-        Assert.assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
+        Assertions.assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarHash() {
-        Assert.assertEquals(
+    void expandDollarHash() {
+        Assertions.assertEquals(
             "3",
             new Executor(
                 new HashMap<>(),
@@ -849,8 +855,8 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandDollarAt() {
-        Assert.assertEquals(
+    void expandDollarAt() {
+        Assertions.assertEquals(
             ExecutorTest.A_B_C,
             new Executor(
                 new HashMap<>(),
@@ -860,8 +866,8 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandDollarStar() {
-        Assert.assertEquals(
+    void expandDollarStar() {
+        Assertions.assertEquals(
             ExecutorTest.A_B_C,
             new Executor(
                 new HashMap<>(),
@@ -871,19 +877,19 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandDollarZero() {
-        Assert.assertEquals(
+    void expandDollarZero() {
+        Assertions.assertEquals(
             "my_script",
             new Executor(
                 new HashMap<>(),
-                Arrays.asList("my_script")
+                Collections.singletonList("my_script")
             ).expandVariables("$0", new HashMap<>())
         );
     }
 
     @Test
-    public void expandDollarOne() {
-        Assert.assertEquals(
+    void expandDollarOne() {
+        Assertions.assertEquals(
             "first",
             new Executor(
                 new HashMap<>(),
@@ -893,8 +899,8 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandDollarNine() {
-        Assert.assertEquals(
+    void expandDollarNine() {
+        Assertions.assertEquals(
             "i",
             new Executor(
                 new HashMap<>(),
@@ -904,8 +910,8 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandBracedMultiDigit() {
-        Assert.assertEquals(
+    void expandBracedMultiDigit() {
+        Assertions.assertEquals(
             "j",
             new Executor(
                 new HashMap<>(),
@@ -915,742 +921,742 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandDollarHashNone() {
-        Assert.assertEquals("0", new Executor().expandVariables("$#", new HashMap<>()));
+    void expandDollarHashNone() {
+        Assertions.assertEquals("0", new Executor().expandVariables("$#", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarAtEmpty() {
-        Assert.assertEquals("", new Executor().expandVariables("$@", new HashMap<>()));
+    void expandDollarAtEmpty() {
+        Assertions.assertEquals("", new Executor().expandVariables("$@", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarDollar() {
+    void expandDollarDollar() {
         final Executor executor = new Executor();
         final String pid = executor.expandVariables("$$", new HashMap<>());
-        Assert.assertNotNull(pid);
-        Assert.assertFalse(pid.isEmpty());
+        Assertions.assertNotNull(pid);
+        Assertions.assertFalse(pid.isEmpty());
         final String jvm = ManagementFactory.getRuntimeMXBean().getName();
-        Assert.assertEquals(
+        Assertions.assertEquals(
             String.valueOf(Long.parseLong(jvm.substring(0, jvm.indexOf('@')))),
             pid
         );
     }
 
     @Test
-    public void expandDollarBang() {
-        Assert.assertEquals("0", new Executor().expandVariables("$!", new HashMap<>()));
+    void expandDollarBang() {
+        Assertions.assertEquals("0", new Executor().expandVariables("$!", new HashMap<>()));
     }
 
     @Test
-    public void expandDollarBangBraced() {
-        Assert.assertEquals("0", new Executor().expandVariables("${!}", new HashMap<>()));
+    void expandDollarBangBraced() {
+        Assertions.assertEquals("0", new Executor().expandVariables("${!}", new HashMap<>()));
     }
 
     @Test
-    public void expandTildeToHome() {
+    void expandTildeToHome() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/home/testuser");
-        Assert.assertEquals("/home/testuser", WordExpander.expandTilde("~", env));
+        Assertions.assertEquals("/home/testuser", WordExpander.expandTilde("~", env));
     }
 
     @Test
-    public void expandTildeWithPath() {
+    void expandTildeWithPath() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/home/testuser");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "/home/testuser/file.txt",
             WordExpander.expandTilde("~/file.txt", env)
         );
     }
 
     @Test
-    public void expandTildePlus() {
+    void expandTildePlus() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PWD_KEY, "/current/dir");
-        Assert.assertEquals("/current/dir", WordExpander.expandTilde("~+", env));
+        Assertions.assertEquals("/current/dir", WordExpander.expandTilde("~+", env));
     }
 
     @Test
-    public void expandTildeNone() {
-        Assert.assertEquals("/foo/bar", WordExpander.expandTilde("/foo/bar", new HashMap<>()));
+    void expandTildeNone() {
+        Assertions.assertEquals("/foo/bar", WordExpander.expandTilde("/foo/bar", new HashMap<>()));
     }
 
     @Test
-    public void expandVarDefault() {
-        Assert.assertEquals(
+    void expandVarDefault() {
+        Assertions.assertEquals(
             "default",
             new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, new HashMap<>())
         );
     }
 
     @Test
-    public void expandVarDefaultSet() {
+    void expandVarDefaultSet() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "actual");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "actual",
             new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
         );
     }
 
     @Test
-    public void expandVarDefaultEmpty() {
+    void expandVarDefaultEmpty() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "default",
             new Executor().expandVariables(ExecutorTest.VAR_DEFAULT_EXPR, env)
         );
     }
 
     @Test
-    public void expandVarDefaultNullOnly() {
-        Assert.assertEquals(
+    void expandVarDefaultNullOnly() {
+        Assertions.assertEquals(
             "default",
             new Executor().expandVariables("${var-default}", new HashMap<>())
         );
     }
 
     @Test
-    public void expandVarDefaultNullOnlySetSkips() {
+    void expandVarDefaultNullOnlySetSkips() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.VALUE);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             ExecutorTest.VALUE,
             new Executor().expandVariables("${var-default}", env)
         );
     }
 
     @Test
-    public void expandVarDefaultNullOnlyEmptySkips() {
+    void expandVarDefaultNullOnlyEmptySkips() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "");
-        Assert.assertEquals("", new Executor().expandVariables("${var-default}", env));
+        Assertions.assertEquals("", new Executor().expandVariables("${var-default}", env));
     }
 
     @Test
-    public void expandVarAssignDefault() {
+    void expandVarAssignDefault() {
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "assigned",
             new Executor().expandVariables("${var:=assigned}", env)
         );
-        Assert.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
+        Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
-    public void expandVarAlternate() {
+    void expandVarAlternate() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "x");
-        Assert.assertEquals("alt", new Executor().expandVariables("${var:+alt}", env));
+        Assertions.assertEquals("alt", new Executor().expandVariables("${var:+alt}", env));
     }
 
     @Test
-    public void expandVarAlternateUnset() {
-        Assert.assertEquals("", new Executor().expandVariables("${var:+alt}", new HashMap<>()));
+    void expandVarAlternateUnset() {
+        Assertions.assertEquals("", new Executor().expandVariables("${var:+alt}", new HashMap<>()));
     }
 
     @Test
-    public void expandVarAssignNullOnly() {
+    void expandVarAssignNullOnly() {
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("assigned", new Executor().expandVariables("${var=assigned}", env));
-        Assert.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
+        Assertions.assertEquals("assigned", new Executor().expandVariables("${var=assigned}", env));
+        Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
-    public void expandVarAssignNullOnlySetSkips() {
+    void expandVarAssignNullOnlySetSkips() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "existing");
-        Assert.assertEquals("existing", new Executor().expandVariables("${var=assigned}", env));
-        Assert.assertEquals("existing", env.get(ExecutorTest.VAR_NAME));
+        Assertions.assertEquals("existing", new Executor().expandVariables("${var=assigned}", env));
+        Assertions.assertEquals("existing", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
-    public void expandVarAlternateNullOnly() {
+    void expandVarAlternateNullOnly() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "x");
-        Assert.assertEquals("alt", new Executor().expandVariables("${var+alt}", env));
+        Assertions.assertEquals("alt", new Executor().expandVariables("${var+alt}", env));
     }
 
     @Test
-    public void expandVarAlternateNullOnlyUnset() {
-        Assert.assertEquals("", new Executor().expandVariables("${var+alt}", new HashMap<>()));
+    void expandVarAlternateNullOnlyUnset() {
+        Assertions.assertEquals("", new Executor().expandVariables("${var+alt}", new HashMap<>()));
     }
 
     @Test
-    public void expandVarLength() {
+    void expandVarLength() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
-        Assert.assertEquals("5", new Executor().expandVariables("${#var}", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("${#var}", env));
     }
 
     @Test
-    public void expandVarLengthUnset() {
-        Assert.assertEquals("0", new Executor().expandVariables("${#var}", new HashMap<>()));
+    void expandVarLengthUnset() {
+        Assertions.assertEquals("0", new Executor().expandVariables("${#var}", new HashMap<>()));
     }
 
     @Test
-    public void expandVarSuffixShort() {
+    void expandVarSuffixShort() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "file.txt");
-        Assert.assertEquals("file", new Executor().expandVariables("${var%.*}", env));
+        Assertions.assertEquals("file", new Executor().expandVariables("${var%.*}", env));
     }
 
     @Test
-    public void expandVarSuffixLong() {
+    void expandVarSuffixLong() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "a.b.c.txt");
-        Assert.assertEquals("a", new Executor().expandVariables("${var%%.*}", env));
+        Assertions.assertEquals("a", new Executor().expandVariables("${var%%.*}", env));
     }
 
     @Test
-    public void expandVarPrefixShort() {
+    void expandVarPrefixShort() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
-        Assert.assertEquals("bar/baz", new Executor().expandVariables("${var#*/}", env));
+        Assertions.assertEquals("bar/baz", new Executor().expandVariables("${var#*/}", env));
     }
 
     @Test
-    public void expandVarPrefixLong() {
+    void expandVarPrefixLong() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "foo/bar/baz");
-        Assert.assertEquals("baz", new Executor().expandVariables("${var##*/}", env));
+        Assertions.assertEquals("baz", new Executor().expandVariables("${var##*/}", env));
     }
 
     @Test
-    public void expandVarPatternNoMatch() {
+    void expandVarPatternNoMatch() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, ExecutorTest.HELLO);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             ExecutorTest.HELLO,
             new Executor().expandVariables("${var%x}", env)
         );
     }
 
     @Test
-    public void commandSubstitutionEcho() {
-        Assert.assertEquals(
+    void commandSubstitutionEcho() {
+        Assertions.assertEquals(
             ExecutorTest.HELLO,
             new Executor().expandVariables("$(echo hello)", new HashMap<>())
         );
     }
 
     @Test
-    public void commandSubstitutionInString() {
-        Assert.assertEquals(
+    void commandSubstitutionInString() {
+        Assertions.assertEquals(
             "msg=hi",
             new Executor().expandVariables("msg=$(echo hi)", new HashMap<>())
         );
     }
 
     @Test
-    public void backtickSubstitution() {
-        Assert.assertEquals(
+    void backtickSubstitution() {
+        Assertions.assertEquals(
             ExecutorTest.HELLO,
             new Executor().expandVariables("`echo hello`", new HashMap<>())
         );
     }
 
     @Test
-    public void backtickSubstitutionInString() {
-        Assert.assertEquals(
+    void backtickSubstitutionInString() {
+        Assertions.assertEquals(
             "msg=hi",
             new Executor().expandVariables("msg=`echo hi`", new HashMap<>())
         );
     }
 
     @Test
-    public void normaliseBackticksSimple() {
-        Assert.assertEquals("$(echo hello)", WordExpander.normaliseBackticks("`echo hello`"));
+    void normaliseBackticksSimple() {
+        Assertions.assertEquals("$(echo hello)", WordExpander.normaliseBackticks("`echo hello`"));
     }
 
     @Test
-    public void normaliseBackticksNoChange() {
-        Assert.assertEquals(
+    void normaliseBackticksNoChange() {
+        Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             WordExpander.normaliseBackticks(ExecutorTest.HELLO_WORLD)
         );
     }
 
     @Test
-    public void normaliseBackticksSkipsDollarParen() {
-        Assert.assertEquals("$(echo hi)", WordExpander.normaliseBackticks("$(echo hi)"));
+    void normaliseBackticksSkipsDollarParen() {
+        Assertions.assertEquals("$(echo hi)", WordExpander.normaliseBackticks("$(echo hi)"));
     }
 
     @Test
-    public void normaliseBackticksEscaped() {
-        Assert.assertEquals("$(echo `hi`)", WordExpander.normaliseBackticks("`echo \\`hi\\``"));
+    void normaliseBackticksEscaped() {
+        Assertions.assertEquals("$(echo `hi`)", WordExpander.normaliseBackticks("`echo \\`hi\\``"));
     }
 
     @Test
-    public void normaliseBackticksDollarEscape() {
-        Assert.assertEquals("$(echo $PATH)", WordExpander.normaliseBackticks("`echo \\$PATH`"));
+    void normaliseBackticksDollarEscape() {
+        Assertions.assertEquals("$(echo $PATH)", WordExpander.normaliseBackticks("`echo \\$PATH`"));
     }
 
     @Test
-    public void normaliseBackticksBackslashEscape() {
-        Assert.assertEquals("$(echo a\\b)", WordExpander.normaliseBackticks("`echo a\\\\b`"));
+    void normaliseBackticksBackslashEscape() {
+        Assertions.assertEquals("$(echo a\\b)", WordExpander.normaliseBackticks("`echo a\\\\b`"));
     }
 
     @Test
-    public void normaliseBackticksNonSpecialEscape() {
-        Assert.assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\\\n`"));
+    void normaliseBackticksNonSpecialEscape() {
+        Assertions.assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\\\n`"));
     }
 
     @Test
-    public void normaliseBackticksUnclosed() {
-        Assert.assertEquals("`echo hello", WordExpander.normaliseBackticks("`echo hello"));
+    void normaliseBackticksUnclosed() {
+        Assertions.assertEquals("`echo hello", WordExpander.normaliseBackticks("`echo hello"));
     }
 
     @Test
-    public void normaliseBackticksSkipsDollarBrace() {
-        Assert.assertEquals(
+    void normaliseBackticksSkipsDollarBrace() {
+        Assertions.assertEquals(
             ExecutorTest.VAR_DEFAULT_EXPR,
             WordExpander.normaliseBackticks(ExecutorTest.VAR_DEFAULT_EXPR)
         );
     }
 
     @Test
-    public void normaliseBackticksSkipsNestedDollarBrace() {
-        Assert.assertEquals(
+    void normaliseBackticksSkipsNestedDollarBrace() {
+        Assertions.assertEquals(
             "${var:-${other}}",
             WordExpander.normaliseBackticks("${var:-${other}}")
         );
     }
 
     @Test
-    public void normaliseBackticksSkipsTripleNestedDollarBrace() {
-        Assert.assertEquals(
+    void normaliseBackticksSkipsTripleNestedDollarBrace() {
+        Assertions.assertEquals(
             "${a:-${b:-${c}}}",
             WordExpander.normaliseBackticks("${a:-${b:-${c}}}")
         );
     }
 
     @Test
-    public void normaliseBackticksDollarAtEnd() {
-        Assert.assertEquals("foo$", WordExpander.normaliseBackticks("foo$"));
+    void normaliseBackticksDollarAtEnd() {
+        Assertions.assertEquals("foo$", WordExpander.normaliseBackticks("foo$"));
     }
 
     @Test
-    public void normaliseBackticksUnmatchedDollarBrace() {
-        Assert.assertEquals("${unclosed", WordExpander.normaliseBackticks("${unclosed"));
+    void normaliseBackticksUnmatchedDollarBrace() {
+        Assertions.assertEquals("${unclosed", WordExpander.normaliseBackticks("${unclosed"));
     }
 
     @Test
-    public void normaliseBackticksDollarFollowedByLetter() {
-        Assert.assertEquals("$VAR", WordExpander.normaliseBackticks("$VAR"));
+    void normaliseBackticksDollarFollowedByLetter() {
+        Assertions.assertEquals("$VAR", WordExpander.normaliseBackticks("$VAR"));
     }
 
     @Test
-    public void normaliseBackticksBackslashAtEndOfInput() {
-        Assert.assertEquals("`abc\\", WordExpander.normaliseBackticks("`abc\\"));
+    void normaliseBackticksBackslashAtEndOfInput() {
+        Assertions.assertEquals("`abc\\", WordExpander.normaliseBackticks("`abc\\"));
     }
 
     @Test
-    public void globMatchesQuestionMarkInCase() {
+    void globMatchesQuestionMarkInCase() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case ab in a?) echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("MATCHED"));
+        Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void globMatchesQuestionMarkNoMatch() {
+    void globMatchesQuestionMarkNoMatch() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case abc in a?) echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("NO"));
+        Assertions.assertTrue("NO".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void globMatchesCharClassInCase() {
+    void globMatchesCharClassInCase() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case b in [abc]) echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("MATCHED"));
+        Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void globMatchesCharClassNoMatch() {
+    void globMatchesCharClassNoMatch() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case z in [abc]) echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("NO"));
+        Assertions.assertTrue("NO".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void globMatchesCharClassRangeInCase() {
+    void globMatchesCharClassRangeInCase() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case m in [a-z]) echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("MATCHED"));
+        Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void globMatchesUnclosedBracketInCase() {
+    void globMatchesUnclosedBracketInCase() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("case '[abc' in '[abc') echo MATCHED;; *) echo NO;; esac"))
         );
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).trim().equals("MATCHED"));
+        Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    public void backtickNestedNormalise() {
-        Assert.assertEquals(
+    void backtickNestedNormalise() {
+        Assertions.assertEquals(
             "$(echo `echo hi`)",
             WordExpander.normaliseBackticks("`echo \\`echo hi\\``")
         );
     }
 
     @Test
-    public void echoBuiltin() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello")));
+    void echoBuiltin() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello")));
     }
 
     @Test
-    public void echoBuiltinArgs() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo hello world")));
+    void echoBuiltinArgs() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello world")));
     }
 
     @Test
-    public void echoBuiltinNoNewline() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo -n hello")));
+    void echoBuiltinNoNewline() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo -n hello")));
     }
 
     @Test
-    public void echoBuiltinEmpty() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo")));
+    void echoBuiltinEmpty() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo")));
     }
 
     @Test
-    public void arithmeticSimple() {
-        Assert.assertEquals("7", new Executor().expandVariables("$((3 + 4))", new HashMap<>()));
+    void arithmeticSimple() {
+        Assertions.assertEquals("7", new Executor().expandVariables("$((3 + 4))", new HashMap<>()));
     }
 
     @Test
-    public void arithmeticMul() {
-        Assert.assertEquals(
+    void arithmeticMul() {
+        Assertions.assertEquals(
             "15",
             new Executor().expandVariables("$((3 * 5))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticVar() {
+    void arithmeticVar() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assert.assertEquals("15", new Executor().expandVariables("$((x + 5))", env));
+        Assertions.assertEquals("15", new Executor().expandVariables("$((x + 5))", env));
     }
 
     @Test
-    public void arithmeticNested() {
-        Assert.assertEquals(
+    void arithmeticNested() {
+        Assertions.assertEquals(
             "14",
             new Executor().expandVariables("$((2 * (3 + 4)))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticShiftLeft() {
-        Assert.assertEquals(
+    void arithmeticShiftLeft() {
+        Assertions.assertEquals(
             "32",
             new Executor().expandVariables("$((4 << 3))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticShiftRight() {
-        Assert.assertEquals(
+    void arithmeticShiftRight() {
+        Assertions.assertEquals(
             "4",
             new Executor().expandVariables("$((32 >> 3))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticLessThan() {
+    void arithmeticLessThan() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((3 < 5))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((5 < 3))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((3 < 5))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((5 < 3))", env));
     }
 
     @Test
-    public void arithmeticLessEqual() {
+    void arithmeticLessEqual() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((5 <= 5))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((6 <= 5))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((5 <= 5))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((6 <= 5))", env));
     }
 
     @Test
-    public void arithmeticGreaterThan() {
+    void arithmeticGreaterThan() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((5 > 3))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((3 > 5))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((5 > 3))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((3 > 5))", env));
     }
 
     @Test
-    public void arithmeticGreaterEqual() {
+    void arithmeticGreaterEqual() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((5 >= 5))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((4 >= 5))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((5 >= 5))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((4 >= 5))", env));
     }
 
     @Test
-    public void arithmeticEqualEqual() {
+    void arithmeticEqualEqual() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((7 == 7))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((7 == 8))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((7 == 7))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((7 == 8))", env));
     }
 
     @Test
-    public void arithmeticNotEqual() {
+    void arithmeticNotEqual() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((7 != 8))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((7 != 7))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((7 != 8))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((7 != 7))", env));
     }
 
     @Test
-    public void arithmeticBitAnd() {
-        Assert.assertEquals(
+    void arithmeticBitAnd() {
+        Assertions.assertEquals(
             "4",
             new Executor().expandVariables("$((12 & 6))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticBitXor() {
-        Assert.assertEquals(
+    void arithmeticBitXor() {
+        Assertions.assertEquals(
             "10",
             new Executor().expandVariables("$((12 ^ 6))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticBitOr() {
-        Assert.assertEquals(
+    void arithmeticBitOr() {
+        Assertions.assertEquals(
             "14",
             new Executor().expandVariables("$((12 | 6))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticLogicalAnd() {
+    void arithmeticLogicalAnd() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((1 && 2))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((0 && 2))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((1 && 2))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((0 && 2))", env));
     }
 
     @Test
-    public void arithmeticLogicalOr() {
+    void arithmeticLogicalOr() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((0 || 5))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((0 || 0))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((0 || 5))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((0 || 0))", env));
     }
 
     @Test
-    public void arithmeticUnaryNot() {
+    void arithmeticUnaryNot() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((!0))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((!5))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((!0))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((!5))", env));
     }
 
     @Test
-    public void arithmeticUnaryBitNot() {
+    void arithmeticUnaryBitNot() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("-1", executor.expandVariables("$((~0))", env));
-        Assert.assertEquals("-6", executor.expandVariables("$((~5))", env));
+        Assertions.assertEquals("-1", executor.expandVariables("$((~0))", env));
+        Assertions.assertEquals("-6", executor.expandVariables("$((~5))", env));
     }
 
     @Test
-    public void arithmeticTernaryTrue() {
-        Assert.assertEquals(
+    void arithmeticTernaryTrue() {
+        Assertions.assertEquals(
             "10",
             new Executor().expandVariables("$((1 ? 10 : 20))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticTernaryFalse() {
-        Assert.assertEquals(
+    void arithmeticTernaryFalse() {
+        Assertions.assertEquals(
             "20",
             new Executor().expandVariables("$((0 ? 10 : 20))", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticTernaryNested() {
+    void arithmeticTernaryNested() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("30", executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env));
-        Assert.assertEquals("40", executor.expandVariables("$((1 ? 0 ? 30 : 40 : 50))", env));
-        Assert.assertEquals("50", executor.expandVariables("$((0 ? 30 : 40 ? 50 : 60))", env));
+        Assertions.assertEquals("30", executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env));
+        Assertions.assertEquals("40", executor.expandVariables("$((1 ? 0 ? 30 : 40 : 50))", env));
+        Assertions.assertEquals("50", executor.expandVariables("$((0 ? 30 : 40 ? 50 : 60))", env));
     }
 
     @Test
-    public void arithmeticTernaryWithComparison() {
+    void arithmeticTernaryWithComparison() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "5");
-        Assert.assertEquals("1", executor.expandVariables("$((x > 3 ? 1 : 0))", env));
-        Assert.assertEquals("0", executor.expandVariables("$((x > 10 ? 1 : 0))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((x > 3 ? 1 : 0))", env));
+        Assertions.assertEquals("0", executor.expandVariables("$((x > 10 ? 1 : 0))", env));
     }
 
     @Test
-    public void arithmeticTernaryArithmeticBranches() {
+    void arithmeticTernaryArithmeticBranches() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("7", executor.expandVariables("$((1 ? 3 + 4 : 99))", env));
-        Assert.assertEquals("99", executor.expandVariables("$((0 ? 3 + 4 : 99))", env));
+        Assertions.assertEquals("7", executor.expandVariables("$((1 ? 3 + 4 : 99))", env));
+        Assertions.assertEquals("99", executor.expandVariables("$((0 ? 3 + 4 : 99))", env));
     }
 
     @Test
-    public void arithmeticAssign() {
+    void arithmeticAssign() {
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("5", new Executor().expandVariables("$((x = 5))", env));
-        Assert.assertEquals("5", env.get("x"));
+        Assertions.assertEquals("5", new Executor().expandVariables("$((x = 5))", env));
+        Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
-    public void arithmeticPlusAssign() {
-        final Map<String, String> env = new HashMap<>();
-        env.put("x", "10");
-        Assert.assertEquals("13", new Executor().expandVariables("$((x += 3))", env));
-        Assert.assertEquals("13", env.get("x"));
-    }
-
-    @Test
-    public void arithmeticMinusAssign() {
+    void arithmeticPlusAssign() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assert.assertEquals("7", new Executor().expandVariables("$((x -= 3))", env));
-        Assert.assertEquals("7", env.get("x"));
+        Assertions.assertEquals("13", new Executor().expandVariables("$((x += 3))", env));
+        Assertions.assertEquals("13", env.get("x"));
     }
 
     @Test
-    public void arithmeticMulDivModAssign() {
+    void arithmeticMinusAssign() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        Assertions.assertEquals("7", new Executor().expandVariables("$((x -= 3))", env));
+        Assertions.assertEquals("7", env.get("x"));
+    }
+
+    @Test
+    void arithmeticMulDivModAssign() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assert.assertEquals("30", executor.expandVariables("$((x *= 3))", env));
+        Assertions.assertEquals("30", executor.expandVariables("$((x *= 3))", env));
         env.put("y", "20");
-        Assert.assertEquals("4", executor.expandVariables("$((y /= 5))", env));
+        Assertions.assertEquals("4", executor.expandVariables("$((y /= 5))", env));
         env.put("z", "23");
-        Assert.assertEquals("3", executor.expandVariables("$((z %= 5))", env));
+        Assertions.assertEquals("3", executor.expandVariables("$((z %= 5))", env));
     }
 
     @Test
-    public void arithmeticShiftAssign() {
+    void arithmeticShiftAssign() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "4");
-        Assert.assertEquals("32", executor.expandVariables("$((x <<= 3))", env));
+        Assertions.assertEquals("32", executor.expandVariables("$((x <<= 3))", env));
         env.put("y", "32");
-        Assert.assertEquals("4", executor.expandVariables("$((y >>= 3))", env));
+        Assertions.assertEquals("4", executor.expandVariables("$((y >>= 3))", env));
     }
 
     @Test
-    public void arithmeticBitAssign() {
+    void arithmeticBitAssign() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "12");
-        Assert.assertEquals("4", executor.expandVariables("$((x &= 6))", env));
+        Assertions.assertEquals("4", executor.expandVariables("$((x &= 6))", env));
         env.put("y", "12");
-        Assert.assertEquals("10", executor.expandVariables("$((y ^= 6))", env));
+        Assertions.assertEquals("10", executor.expandVariables("$((y ^= 6))", env));
         env.put("z", "12");
-        Assert.assertEquals("14", executor.expandVariables("$((z |= 6))", env));
+        Assertions.assertEquals("14", executor.expandVariables("$((z |= 6))", env));
     }
 
     @Test
-    public void arithmeticAssignRightAssoc() {
+    void arithmeticAssignRightAssoc() {
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("7", new Executor().expandVariables("$((a = b = 7))", env));
-        Assert.assertEquals("7", env.get("a"));
-        Assert.assertEquals("7", env.get("b"));
+        Assertions.assertEquals("7", new Executor().expandVariables("$((a = b = 7))", env));
+        Assertions.assertEquals("7", env.get("a"));
+        Assertions.assertEquals("7", env.get("b"));
     }
 
     @Test
-    public void arithmeticShortCircuitAndSuppressesAssignment() {
+    void arithmeticShortCircuitAndSuppressesAssignment() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         executor.expandVariables("$((0 && (x = 99)))", env);
-        Assert.assertEquals(null, env.get("x"));
+        Assertions.assertEquals(null, env.get("x"));
     }
 
     @Test
-    public void arithmeticShortCircuitOrSuppressesAssignment() {
+    void arithmeticShortCircuitOrSuppressesAssignment() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         executor.expandVariables("$((1 || (x = 99)))", env);
-        Assert.assertEquals(null, env.get("x"));
+        Assertions.assertEquals(null, env.get("x"));
     }
 
     @Test
-    public void arithmeticTernaryShortCircuit() {
+    void arithmeticTernaryShortCircuit() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
-        Assert.assertEquals("1", env.get("a"));
-        Assert.assertEquals(null, env.get("b"));
+        Assertions.assertEquals("1", env.get("a"));
+        Assertions.assertEquals(null, env.get("b"));
         executor.expandVariables("$((0 ? (c = 3) : (d = 4)))", env);
-        Assert.assertEquals(null, env.get("c"));
-        Assert.assertEquals("4", env.get("d"));
+        Assertions.assertEquals(null, env.get("c"));
+        Assertions.assertEquals("4", env.get("d"));
     }
 
     @Test
-    public void captureStreamFromPipeline() throws Exception {
+    void captureStreamFromPipeline() throws Exception {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         executor.setCaptureStream(bos);
         executor.execute(this.parse("echo capture-me | cat"));
-        Assert.assertTrue(
-            String.format("captureStream: %s", bos),
-            bos.toString(StandardCharsets.UTF_8).contains("capture-me")
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("capture-me"),
+            String.format("captureStream: %s", bos)
         );
     }
 
     @Test
-    public void resolveCommandWithCustomPathDirInPath() throws Exception {
-        final java.io.File dir = java.nio.file.Files.createTempDirectory(
+    void resolveCommandWithCustomPathDirInPath() throws Exception {
+        final File dir = Files.createTempDirectory(
             "sh4j_custompath_"
         ).toFile();
         dir.deleteOnExit();
-        final java.io.File bin = new java.io.File(dir, "myhello");
+        final File bin = new File(dir, "myhello");
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)
+            BufferedWriter w = Files.newBufferedWriter(bin.toPath(), StandardCharsets.UTF_8)
         ) {
             w.write(String.format("#!/bin/sh%necho ok%n"));
         }
@@ -1658,58 +1664,58 @@ public final class ExecutorTest {
         bin.deleteOnExit();
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, dir.getAbsolutePath());
-        Assert.assertEquals(0, new Executor(env).execute(this.parse("myhello")));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("myhello")));
     }
 
     @Test
-    public void externalCloseStdin() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
+    void externalCloseStdin() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
     }
 
     @Test
-    public void externalStdoutToStderr() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("true 1>&2")));
+    void externalStdoutToStderr() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true 1>&2")));
     }
 
     @Test
-    public void externalReadWriteFdZero() throws Exception {
-        final java.io.File file = java.io.File.createTempFile("sh4j_rw_0_", ".dat");
+    void externalReadWriteFdZero() throws Exception {
+        final File file = File.createTempFile("sh4j_rw_0_", ".dat");
         file.deleteOnExit();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
+            BufferedWriter w = Files.newBufferedWriter(
                 file.toPath(),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(String.format("seed%n"));
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat <>%s", file.getAbsolutePath())))
         );
     }
 
     @Test
-    public void externalHeredocDashStripsTabs() throws Exception {
-        Assert.assertEquals(
+    void externalHeredocDashStripsTabs() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat <<-EOF%n\t\thello%nEOF%n")))
         );
     }
 
     @Test
-    public void exportArgWithEqualsNonStandardName() throws Exception {
+    void exportArgWithEqualsNonStandardName() throws Exception {
         final Executor executor = new Executor(new HashMap<>());
-        Assert.assertEquals(0, executor.execute(this.parse("export 1foo=bar")));
-        Assert.assertEquals("bar", executor.getVariable("1foo"));
+        Assertions.assertEquals(0, executor.execute(this.parse("export 1foo=bar")));
+        Assertions.assertEquals("bar", executor.getVariable("1foo"));
     }
 
     @Test
-    public void execNonExecutableFileTriggersIoException() throws Exception {
-        final java.io.File nonexec = java.io.File.createTempFile("sh4j_nonexec_", ".dat");
+    void execNonExecutableFileTriggersIoException() throws Exception {
+        final File nonexec = File.createTempFile("sh4j_nonexec_", ".dat");
         nonexec.deleteOnExit();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
+            BufferedWriter w = Files.newBufferedWriter(
                 nonexec.toPath(),
                 StandardCharsets.UTF_8
             )
@@ -1721,24 +1727,27 @@ public final class ExecutorTest {
         final int code = executor.execute(
             this.parser(String.format("exec %s", nonexec.getAbsolutePath())).parse()
         );
-        Assert.assertTrue(String.format("non-executable should fail; got %s", code), code != 0);
+        Assertions.assertTrue(
+            code != 0,
+            String.format("non-executable should fail; got %s", code)
+        );
     }
 
     @Test
-    public void execInterruptedException() {
+    void execInterruptedException() {
         final Executor executor = new Executor();
         Thread.currentThread().interrupt();
         final int code = executor.execute(this.parse("exec sleep 1"));
         Thread.interrupted();
-        Assert.assertEquals(1, code);
+        Assertions.assertEquals(1, code);
     }
 
     @Test
-    public void externalNonExecutableFileTriggersIoException() throws Exception {
-        final java.io.File nonexec = java.io.File.createTempFile("sh4j_ext_nonexec_", ".dat");
+    void externalNonExecutableFileTriggersIoException() throws Exception {
+        final File nonexec = File.createTempFile("sh4j_ext_nonexec_", ".dat");
         nonexec.deleteOnExit();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
+            BufferedWriter w = Files.newBufferedWriter(
                 nonexec.toPath(),
                 StandardCharsets.UTF_8
             )
@@ -1748,399 +1757,402 @@ public final class ExecutorTest {
         nonexec.setExecutable(false);
         final Executor executor = new Executor();
         final int code = executor.execute(this.parse(nonexec.getAbsolutePath()));
-        Assert.assertTrue(
-            String.format("non-executable external should fail; got %s", code),
-            code != 0
+        Assertions.assertTrue(
+            code != 0,
+            String.format("non-executable external should fail; got %s", code)
         );
     }
 
     @Test
-    public void arithmeticAssignDivByZero() {
+    void arithmeticAssignDivByZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assert.assertEquals("0", new Executor().expandVariables("$((x /= 0))", env));
-        Assert.assertEquals("0", env.get("x"));
+        Assertions.assertEquals("0", new Executor().expandVariables("$((x /= 0))", env));
+        Assertions.assertEquals("0", env.get("x"));
     }
 
     @Test
-    public void arithmeticAssignModByZero() {
+    void arithmeticAssignModByZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assert.assertEquals("0", new Executor().expandVariables("$((x %= 0))", env));
+        Assertions.assertEquals("0", new Executor().expandVariables("$((x %= 0))", env));
     }
 
     @Test
-    public void arithmeticAssignNonNumericEnvTreatedAsZero() {
+    void arithmeticAssignNonNumericEnvTreatedAsZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abc");
-        Assert.assertEquals("5", new Executor().expandVariables("$((x += 5))", env));
-        Assert.assertEquals("5", env.get("x"));
+        Assertions.assertEquals("5", new Executor().expandVariables("$((x += 5))", env));
+        Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
-    public void arithmeticAssignWithUnderscoreName() {
+    void arithmeticAssignWithUnderscoreName() {
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("42", new Executor().expandVariables("$((_foo = 42))", env));
-        Assert.assertEquals("42", env.get("_foo"));
+        Assertions.assertEquals("42", new Executor().expandVariables("$((_foo = 42))", env));
+        Assertions.assertEquals("42", env.get("_foo"));
     }
 
     @Test
-    public void externalReadWriteRedirectFdTwo() throws Exception {
+    void externalReadWriteRedirectFdTwo() throws Exception {
         final String path = String.format("/tmp/sh4j_rw_fd2_%s", System.nanoTime());
-        new java.io.File(path).delete();
-        Assert.assertNotEquals(
+        new File(path).delete();
+        Assertions.assertNotEquals(
             0,
             new Executor().execute(this.parse(String.format("cat /nonexistent_xyz 2<>%s", path)))
         );
-        new java.io.File(path).delete();
+        new File(path).delete();
     }
 
     @Test
-    public void externalHereDocRedirect() throws Exception {
-        Assert.assertEquals(
+    void externalHereDocRedirect() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat <<EOF%nhello world%nEOF%n")))
         );
     }
 
     @Test
-    public void externalHereDocDashRedirect() throws Exception {
-        Assert.assertEquals(
+    void externalHereDocDashRedirect() throws Exception {
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat <<-EOF%n\thello dashed%nEOF%n")))
         );
     }
 
     @Test
-    public void shiftLargerThanPositionalCount() {
-        Assert.assertEquals(
+    void shiftLargerThanPositionalCount() {
+        Assertions.assertEquals(
             1,
             new Executor(
                 new HashMap<>(),
-                java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b")
+                Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b")
             ).execute(this.parse("shift 100"))
         );
     }
 
     @Test
-    public void execWithMultipleArgs() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("exec true arg1 arg2 arg3")));
+    void execWithMultipleArgs() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("exec true arg1 arg2 arg3")));
     }
 
     @Test
-    public void positionalParamIndexOutOfRangeIsEmpty() {
-        Assert.assertEquals(
+    void positionalParamIndexOutOfRangeIsEmpty() {
+        Assertions.assertEquals(
             "",
             new Executor(
                 new HashMap<>(),
-                java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b")
+                Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b")
             ).expandVariables("$9", new HashMap<>())
         );
     }
 
     @Test
-    public void normaliseBackticksBackslashNonSpecialChar() {
-        Assert.assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\n`"));
+    void normaliseBackticksBackslashNonSpecialChar() {
+        Assertions.assertEquals("$(echo \\n)", WordExpander.normaliseBackticks("`echo \\n`"));
     }
 
     @Test
-    public void whileLoopWithContinue() {
+    void whileLoopWithContinue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(
             this.parse("c=true; while $c; do c=false; continue; echo unreached; done")
         );
-        Assert.assertTrue(
-            String.format("continue should skip body, got: %s", bos),
-            bos.toString(StandardCharsets.UTF_8).trim().isEmpty()
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).isBlank(),
+            String.format("continue should skip body, got: %s", bos)
         );
     }
 
     @Test
-    public void typeForExternalNonBuiltinCommand() {
+    void typeForExternalNonBuiltinCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("type ls")));
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("ls is"));
+        Assertions.assertEquals(0, executor.execute(this.parse("type ls")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("ls is"));
     }
 
     @Test
-    public void exitWithValidIntegerAndWordExpansionError() {
-        Assert.assertEquals(
+    void exitWithValidIntegerAndWordExpansionError() {
+        Assertions.assertEquals(
             1,
             new Executor(new HashMap<>()).execute(this.parse("exit 5${UNSET_FOR_EXIT_999:?msg}"))
         );
     }
 
     @Test
-    public void expandBracedMultiDigitPositionalOutOfRange() {
-        Assert.assertEquals(
+    void expandBracedMultiDigitPositionalOutOfRange() {
+        Assertions.assertEquals(
             "",
             new Executor(
                 new HashMap<>(),
-                java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+                Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
             ).expandVariables("${10}", new HashMap<>())
         );
     }
 
     @Test
-    public void expandBracedMultiDigitPositionalInRange() {
-        Assert.assertEquals(
+    void expandBracedMultiDigitPositionalInRange() {
+        Assertions.assertEquals(
             "b",
             new Executor(
                 new HashMap<>(),
-                java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+                Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
             ).expandVariables("${2}", new HashMap<>())
         );
     }
 
     @Test
-    public void expandBracedLeadingHashVar() {
+    void expandBracedLeadingHashVar() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.HELLO);
-        Assert.assertEquals("5", new Executor().expandVariables("${#x}", env));
+        Assertions.assertEquals("5", new Executor().expandVariables("${#x}", env));
     }
 
     @Test
-    public void expandBracedLeadingHashUnsetVar() {
-        Assert.assertEquals(
+    void expandBracedLeadingHashUnsetVar() {
+        Assertions.assertEquals(
             "0",
             new Executor().expandVariables("${#UNSET_HASH_TEST_xyz}", new HashMap<>())
         );
     }
 
     @Test
-    public void specialParamShellFlags() {
-        Assert.assertEquals("", new Executor().expandVariables("$-", new HashMap<>()));
+    void specialParamShellFlags() {
+        Assertions.assertEquals("", new Executor().expandVariables("$-", new HashMap<>()));
     }
 
     @Test
-    public void specialParamBackgroundPidBeforeAnyJob() {
-        Assert.assertEquals("0", new Executor().expandVariables("$!", new HashMap<>()));
+    void specialParamBackgroundPidBeforeAnyJob() {
+        Assertions.assertEquals("0", new Executor().expandVariables("$!", new HashMap<>()));
     }
 
     @Test
-    public void ppidIsSetToParentProcessIdOnInit() {
+    void ppidIsSetToParentProcessIdOnInit() {
         final String ppid = new Executor().getVariable("PPID");
-        Assert.assertNotNull(ppid);
+        Assertions.assertNotNull(ppid);
         final long parsed = Long.parseLong(ppid);
-        Assert.assertTrue("PPID should be a positive PID", parsed > 0L);
+        Assertions.assertTrue(parsed > 0L, "PPID should be a positive PID");
         final long expected = ProcessHandle.current()
             .parent().orElse(ProcessHandle.current()).pid();
-        Assert.assertEquals(expected, parsed);
+        Assertions.assertEquals(expected, parsed);
     }
 
     @Test
-    public void ppidPreservedAcrossSubshellExecutor() {
+    void ppidPreservedAcrossSubshellExecutor() {
         final Executor parent = new Executor();
         final String parentppid = parent.getVariable("PPID");
-        final Executor sub = new Executor(parent.environmentMap(), java.util.Arrays.asList("sub"));
-        Assert.assertEquals(parentppid, sub.getVariable("PPID"));
+        final Executor sub = new Executor(
+            parent.environmentMap(),
+            Collections.singletonList("sub")
+        );
+        Assertions.assertEquals(parentppid, sub.getVariable("PPID"));
     }
 
     @Test
-    public void ppidExpandsAsParameter() {
+    void ppidExpandsAsParameter() {
         final Executor executor = new Executor();
         final String expanded = executor.expandVariables("$PPID", executor.environmentMap());
-        Assert.assertTrue("$PPID should expand to digits", expanded.matches("\\d+"));
+        Assertions.assertTrue(expanded.matches("\\d+"), "$PPID should expand to digits");
     }
 
     @Test
-    public void specialParamAtStarWithPositionals() {
+    void specialParamAtStarWithPositionals() {
         final Executor executor = new Executor(
             new HashMap<>(),
-            java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+            Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
         );
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
-        Assert.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
+        Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
+        Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
     }
 
     @Test
-    public void specialParamAtStarEmpty() {
-        Assert.assertEquals(
+    void specialParamAtStarEmpty() {
+        Assertions.assertEquals(
             "",
             new Executor(
                 new HashMap<>(),
-                java.util.Arrays.asList(ExecutorTest.SCRIPT_KEY)
+                Collections.singletonList(ExecutorTest.SCRIPT_KEY)
             ).expandVariables("$@", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticFactorNonNumericEnvAsZero() {
+    void arithmeticFactorNonNumericEnvAsZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abc");
-        Assert.assertEquals("1", new Executor().expandVariables("$((x + 1))", env));
+        Assertions.assertEquals("1", new Executor().expandVariables("$((x + 1))", env));
     }
 
     @Test
-    public void resolveCommandPathNullReturnsNull() {
+    void resolveCommandPathNullReturnsNull() {
         final Map<String, String> empty = new HashMap<>();
         empty.put(ExecutorTest.PATH_KEY, "");
         final Executor executor = new Executor(empty);
         executor.expandVariables("", empty);
-        Assert.assertEquals(127, executor.execute(this.parse("nonexistent_xyz_zzz_cmd_abc")));
+        Assertions.assertEquals(127, executor.execute(this.parse("nonexistent_xyz_zzz_cmd_abc")));
     }
 
     @Test
-    public void resolveCommandWithEmptyDirInPath() {
+    void resolveCommandWithEmptyDirInPath() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, ":/usr/bin");
-        Assert.assertEquals(0, new Executor(env).execute(this.parse(ExecutorTest.TRUE_CMD)));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
-    public void createProcessBuilderWithQuotedArg() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("true \"quoted arg\"")));
+    void createProcessBuilderWithQuotedArg() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true \"quoted arg\"")));
     }
 
     @Test
-    public void forLoopWithContinue() {
+    void forLoopWithContinue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("for i in 1 2 3; do continue; echo $i; done"))
         );
-        Assert.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void typeForExternalCommand() {
+    void typeForExternalCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("type true")));
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is"));
+        Assertions.assertEquals(0, executor.execute(this.parse("type true")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is"));
     }
 
     @Test
-    public void exitWithWordExpansionError() {
-        Assert.assertEquals(
+    void exitWithWordExpansionError() {
+        Assertions.assertEquals(
             1,
             new Executor(new HashMap<>()).execute(this.parse("exit ${UNSET_FOR_EXIT_8x9:?errmsg}"))
         );
     }
 
     @Test
-    public void exportArgWithEquals() {
+    void exportArgWithEquals() {
         final Executor executor = new Executor(new HashMap<>());
-        Assert.assertEquals(0, executor.execute(this.parse("export FOO=hello")));
-        Assert.assertEquals(ExecutorTest.HELLO, executor.getVariable("FOO"));
+        Assertions.assertEquals(0, executor.execute(this.parse("export FOO=hello")));
+        Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("FOO"));
     }
 
     @Test
-    public void expandBracedColonEqWhenSet() {
+    void expandBracedColonEqWhenSet() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "set");
-        Assert.assertEquals("set", new Executor().expandVariables("${x:=default}", env));
+        Assertions.assertEquals("set", new Executor().expandVariables("${x:=default}", env));
     }
 
     @Test
-    public void expandBracedQuestionWhenSet() {
+    void expandBracedQuestionWhenSet() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             ExecutorTest.VALUE,
             new Executor().expandVariables("${x?msg}", env)
         );
     }
 
     @Test
-    public void expandBracedPrefixHashNoMatch() {
+    void expandBracedPrefixHashNoMatch() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abcdef");
-        Assert.assertEquals("abcdef", new Executor().expandVariables("${x#zzz}", env));
+        Assertions.assertEquals("abcdef", new Executor().expandVariables("${x#zzz}", env));
     }
 
     @Test
-    public void expandBracedUnknownOperatorFallsThrough() {
+    void expandBracedUnknownOperatorFallsThrough() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", ExecutorTest.VALUE);
-        Assert.assertEquals("${x@weird}", new Executor().expandVariables("${x@weird}", env));
+        Assertions.assertEquals("${x@weird}", new Executor().expandVariables("${x@weird}", env));
     }
 
     @Test
-    public void tildeUserNameFallthrough() {
-        Assert.assertEquals(
+    void tildeUserNameFallthrough() {
+        Assertions.assertEquals(
             "~nonexistentuser123",
             new Executor().expandVariables("~nonexistentuser123", new HashMap<>())
         );
     }
 
     @Test
-    public void arithmeticPrecedenceMixed() {
+    void arithmeticPrecedenceMixed() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
-        Assert.assertEquals("1", executor.expandVariables("$((1 + 2 == 3))", env));
-        Assert.assertEquals("1", executor.expandVariables("$((1 < 2 && 3 < 4))", env));
-        Assert.assertEquals("7", executor.expandVariables("$((1 | 2 | 4 & 6))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((1 + 2 == 3))", env));
+        Assertions.assertEquals("1", executor.expandVariables("$((1 < 2 && 3 < 4))", env));
+        Assertions.assertEquals("7", executor.expandVariables("$((1 | 2 | 4 & 6))", env));
     }
 
     @Test
-    public void defaultIfsSet() {
-        Assert.assertEquals(
+    void defaultIfsSet() {
+        Assertions.assertEquals(
             String.format(ExecutorTest.IFS_TAB_NL),
             new Executor().getVariable("IFS")
         );
     }
 
     @Test
-    public void defaultHomeSet() {
-        Assert.assertEquals(
+    void defaultHomeSet() {
+        Assertions.assertEquals(
             System.getProperty("user.home"),
             new Executor().getVariable(ExecutorTest.HOME_KEY)
         );
     }
 
     @Test
-    public void defaultPathSet() {
+    void defaultPathSet() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, "");
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "/usr/local/bin:/usr/bin:/bin",
             new Executor(env).getVariable(ExecutorTest.PATH_KEY)
         );
     }
 
     @Test
-    public void defaultsDoNotOverrideExistingEnv() {
+    void defaultsDoNotOverrideExistingEnv() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/custom/home");
         env.put(ExecutorTest.PATH_KEY, "/custom/path");
         final Executor executor = new Executor(env);
-        Assert.assertEquals("/custom/home", executor.getVariable(ExecutorTest.HOME_KEY));
-        Assert.assertEquals("/custom/path", executor.getVariable(ExecutorTest.PATH_KEY));
-        Assert.assertEquals(
+        Assertions.assertEquals("/custom/home", executor.getVariable(ExecutorTest.HOME_KEY));
+        Assertions.assertEquals("/custom/path", executor.getVariable(ExecutorTest.PATH_KEY));
+        Assertions.assertEquals(
             String.format(ExecutorTest.IFS_TAB_NL),
             executor.getVariable("IFS")
         );
     }
 
     @Test
-    public void commandFoundInPath() {
-        Assert.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
+    void commandFoundInPath() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
-    public void commandNotFoundReturnsNotFound() {
-        Assert.assertEquals(127, new Executor().execute(this.parse("nonexistent_cmd_xyz_127")));
+    void commandNotFoundReturnsNotFound() {
+        Assertions.assertEquals(127, new Executor().execute(this.parse("nonexistent_cmd_xyz_127")));
     }
 
     @Test
-    public void commandWithSlashFound() {
-        Assert.assertEquals(
+    void commandWithSlashFound() {
+        Assertions.assertEquals(
             0,
             new Executor(new HashMap<>()).execute(this.parse("/usr/bin/env true"))
         );
     }
 
     @Test
-    public void commandFoundInCustomPath() throws IOException {
+    void commandFoundInCustomPath() throws IOException {
         final File dir = new File(String.format("/tmp/sh4j_path_test_%s", System.nanoTime()));
         dir.mkdirs();
         dir.deleteOnExit();
@@ -2152,18 +2164,18 @@ public final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, dir.getAbsolutePath());
         dir.delete();
-        Assert.assertEquals(42, new Executor(env).execute(this.parse("mycmd")));
+        Assertions.assertEquals(42, new Executor(env).execute(this.parse("mycmd")));
     }
 
     @Test
-    public void commandNotFoundEmptyPath() {
+    void commandNotFoundEmptyPath() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.PATH_KEY, "");
-        Assert.assertEquals(127, new Executor(env).execute(this.parse("somecmd")));
+        Assertions.assertEquals(127, new Executor(env).execute(this.parse("somecmd")));
     }
 
     @Test
-    public void commandFoundInSecondPathDir() throws IOException {
+    void commandFoundInSecondPathDir() throws IOException {
         final File dir = new File(String.format("/tmp/sh4j_path_test2_%s", System.nanoTime()));
         dir.mkdirs();
         dir.deleteOnExit();
@@ -2178,342 +2190,357 @@ public final class ExecutorTest {
             String.format("/nonexistent_test_dir_xyz:%s", dir.getAbsolutePath())
         );
         dir.delete();
-        Assert.assertEquals(7, new Executor(env).execute(this.parse("mycmd2")));
+        Assertions.assertEquals(7, new Executor(env).execute(this.parse("mycmd2")));
     }
 
     @Test
-    public void commandWithSlashNotFound() {
-        Assert.assertEquals(
+    void commandWithSlashNotFound() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("/nonexistent_path_xyz_abc/cmd"))
         );
     }
 
     @Test
-    public void exportWithValue() {
+    void exportWithValue() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("export FOO=bar")));
-        Assert.assertEquals("bar", executor.getVariable("FOO"));
+        Assertions.assertEquals(0, executor.execute(this.parse("export FOO=bar")));
+        Assertions.assertEquals("bar", executor.getVariable("FOO"));
     }
 
     @Test
-    public void exportExistingVariable() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("export FOO")));
+    void exportExistingVariable() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("export FOO")));
     }
 
     @Test
-    public void exportThenVariableExpands() {
+    void exportThenVariableExpands() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("export MSG=hello; echo $MSG")));
-        Assert.assertEquals(ExecutorTest.HELLO, executor.getVariable("MSG"));
+        Assertions.assertEquals(0, executor.execute(this.parse("export MSG=hello; echo $MSG")));
+        Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("MSG"));
     }
 
     @Test
-    public void splitFieldsDefaultIfs() {
-        Assert.assertEquals(
+    void splitFieldsDefaultIfs() {
+        Assertions.assertEquals(
             Arrays.asList("a", "b", "c"),
             WordExpander.splitFields(ExecutorTest.A_B_C, String.format(ExecutorTest.IFS_TAB_NL))
         );
     }
 
     @Test
-    public void splitFieldsMultipleWs() {
-        Assert.assertEquals(
+    void splitFieldsMultipleWs() {
+        Assertions.assertEquals(
             Arrays.asList("a", "b"),
             WordExpander.splitFields("a   b", String.format(ExecutorTest.IFS_TAB_NL))
         );
     }
 
     @Test
-    public void splitFieldsLeadingWs() {
-        Assert.assertEquals(
+    void splitFieldsLeadingWs() {
+        Assertions.assertEquals(
             Arrays.asList("a", "b"),
             WordExpander.splitFields("  a b", String.format(ExecutorTest.IFS_TAB_NL))
         );
     }
 
     @Test
-    public void splitFieldsTrailingWs() {
-        Assert.assertEquals(
+    void splitFieldsTrailingWs() {
+        Assertions.assertEquals(
             Arrays.asList("a", "b"),
             WordExpander.splitFields("a b  ", String.format(ExecutorTest.IFS_TAB_NL))
         );
     }
 
     @Test
-    public void splitFieldsColon() {
-        Assert.assertEquals(Arrays.asList("a", "b", "c"), WordExpander.splitFields("a:b:c", ":"));
+    void splitFieldsColon() {
+        Assertions.assertEquals(
+            Arrays.asList("a", "b", "c"),
+            WordExpander.splitFields("a:b:c", ":")
+        );
     }
 
     @Test
-    public void splitFieldsEmptyBetweenColons() {
-        Assert.assertEquals(Arrays.asList("a", "", "b"), WordExpander.splitFields("a::b", ":"));
+    void splitFieldsEmptyBetweenColons() {
+        Assertions.assertEquals(Arrays.asList("a", "", "b"), WordExpander.splitFields("a::b", ":"));
     }
 
     @Test
-    public void splitFieldsOnlyColons() {
-        Assert.assertEquals(Arrays.asList("", ""), WordExpander.splitFields(":", ":"));
+    void splitFieldsOnlyColons() {
+        Assertions.assertEquals(Arrays.asList("", ""), WordExpander.splitFields(":", ":"));
     }
 
     @Test
-    public void splitFieldsDoubleColon() {
-        Assert.assertEquals(Arrays.asList("", "", ""), WordExpander.splitFields("::", ":"));
+    void splitFieldsDoubleColon() {
+        Assertions.assertEquals(Arrays.asList("", "", ""), WordExpander.splitFields("::", ":"));
     }
 
     @Test
-    public void splitFieldsNoDelim() {
-        Assert.assertEquals(
-            Arrays.asList(ExecutorTest.HELLO),
+    void splitFieldsNoDelim() {
+        Assertions.assertEquals(
+            Collections.singletonList(ExecutorTest.HELLO),
             WordExpander.splitFields(ExecutorTest.HELLO, ":")
         );
     }
 
     @Test
-    public void splitFieldsEmptyIfs() {
-        Assert.assertEquals(
-            Arrays.asList(ExecutorTest.HELLO_WORLD),
+    void splitFieldsEmptyIfs() {
+        Assertions.assertEquals(
+            Collections.singletonList(ExecutorTest.HELLO_WORLD),
             WordExpander.splitFields(ExecutorTest.HELLO_WORLD, "")
         );
     }
 
     @Test
-    public void splitFieldsNullIfs() {
-        Assert.assertEquals(
-            Arrays.asList(ExecutorTest.HELLO),
+    void splitFieldsNullIfs() {
+        Assertions.assertEquals(
+            Collections.singletonList(ExecutorTest.HELLO),
             WordExpander.splitFields(ExecutorTest.HELLO, null)
         );
     }
 
     @Test
-    public void splitFieldsEmptyValue() {
-        Assert.assertEquals(
+    void splitFieldsEmptyValue() {
+        Assertions.assertEquals(
             Arrays.asList(),
             WordExpander.splitFields("", String.format(ExecutorTest.IFS_TAB_NL))
         );
     }
 
     @Test
-    public void splitFieldsMixedWsNws() {
-        Assert.assertEquals(Arrays.asList("a", "", "b"), WordExpander.splitFields("a :b", " :"));
+    void splitFieldsMixedWsNws() {
+        Assertions.assertEquals(
+            Arrays.asList("a", "", "b"),
+            WordExpander.splitFields("a :b", " :")
+        );
     }
 
     @Test
-    public void splitFieldsTrailingColon() {
-        Assert.assertEquals(Arrays.asList("a", ""), WordExpander.splitFields("a:", ":"));
+    void splitFieldsTrailingColon() {
+        Assertions.assertEquals(Arrays.asList("a", ""), WordExpander.splitFields("a:", ":"));
     }
 
     @Test
-    public void splitFieldsCustomNws() {
-        Assert.assertEquals(Arrays.asList("a", "b", "c"), WordExpander.splitFields("a,b,c", ","));
+    void splitFieldsCustomNws() {
+        Assertions.assertEquals(
+            Arrays.asList("a", "b", "c"),
+            WordExpander.splitFields("a,b,c", ",")
+        );
     }
 
     @Test
-    public void isQuotedDoubleQuotes() {
-        Assert.assertTrue(WordExpander.isQuoted("\"hello\""));
+    void isQuotedDoubleQuotes() {
+        Assertions.assertTrue(WordExpander.isQuoted("\"hello\""));
     }
 
     @Test
-    public void isQuotedSingleQuotes() {
-        Assert.assertTrue(WordExpander.isQuoted("'hello'"));
+    void isQuotedSingleQuotes() {
+        Assertions.assertTrue(WordExpander.isQuoted("'hello'"));
     }
 
     @Test
-    public void isQuotedNoQuotes() {
-        Assert.assertFalse(WordExpander.isQuoted(ExecutorTest.HELLO));
+    void isQuotedNoQuotes() {
+        Assertions.assertFalse(WordExpander.isQuoted(ExecutorTest.HELLO));
     }
 
     @Test
-    public void isQuotedPartial() {
-        Assert.assertFalse(WordExpander.isQuoted("a\"b\"c"));
+    void isQuotedPartial() {
+        Assertions.assertFalse(WordExpander.isQuoted("a\"b\"c"));
     }
 
     @Test
-    public void removeQuotesNoop() {
-        Assert.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes(ExecutorTest.HELLO));
+    void removeQuotesNoop() {
+        Assertions.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes(ExecutorTest.HELLO));
     }
 
     @Test
-    public void removeQuotesDouble() {
-        Assert.assertEquals(
+    void removeQuotesDouble() {
+        Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             WordExpander.removeQuotes("\"hello world\"")
         );
     }
 
     @Test
-    public void removeQuotesSingle() {
-        Assert.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes("'hello'"));
+    void removeQuotesSingle() {
+        Assertions.assertEquals(ExecutorTest.HELLO, WordExpander.removeQuotes("'hello'"));
     }
 
     @Test
-    public void removeQuotesPartialDouble() {
-        Assert.assertEquals("foovaluebar", WordExpander.removeQuotes("foo\"value\"bar"));
+    void removeQuotesPartialDouble() {
+        Assertions.assertEquals("foovaluebar", WordExpander.removeQuotes("foo\"value\"bar"));
     }
 
     @Test
-    public void removeQuotesPartialSingle() {
-        Assert.assertEquals("helloworld", WordExpander.removeQuotes("hello'world'"));
+    void removeQuotesPartialSingle() {
+        Assertions.assertEquals("helloworld", WordExpander.removeQuotes("hello'world'"));
     }
 
     @Test
-    public void removeQuotesApostropheInsideDouble() {
-        Assert.assertEquals("it's", WordExpander.removeQuotes("\"it's\""));
+    void removeQuotesApostropheInsideDouble() {
+        Assertions.assertEquals("it's", WordExpander.removeQuotes("\"it's\""));
     }
 
     @Test
-    public void removeQuotesNestedQuotes() {
-        Assert.assertEquals(
+    void removeQuotesNestedQuotes() {
+        Assertions.assertEquals(
             "hello \"there\" world",
             WordExpander.removeQuotes("\"hello \\\"there\\\" world\"")
         );
     }
 
     @Test
-    public void removeQuotesBackslashOutside() {
-        Assert.assertEquals(
+    void removeQuotesBackslashOutside() {
+        Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             WordExpander.removeQuotes("hello\\ world")
         );
     }
 
     @Test
-    public void removeQuotesBackslashInDouble() {
-        Assert.assertEquals("hello\"world", WordExpander.removeQuotes("\"hello\\\"world\""));
+    void removeQuotesBackslashInDouble() {
+        Assertions.assertEquals("hello\"world", WordExpander.removeQuotes("\"hello\\\"world\""));
     }
 
     @Test
-    public void removeQuotesEmptyQuotes() {
-        Assert.assertEquals("", WordExpander.removeQuotes("\"\""));
-        Assert.assertEquals("", WordExpander.removeQuotes("''"));
+    void removeQuotesEmptyQuotes() {
+        Assertions.assertEquals("", WordExpander.removeQuotes("\"\""));
+        Assertions.assertEquals("", WordExpander.removeQuotes("''"));
     }
 
     @Test
-    public void echoQuotedVarNoSplit() {
-        Assert.assertEquals(
+    void echoQuotedVarNoSplit() {
+        Assertions.assertEquals(
             0,
             new Executor(new HashMap<>()).execute(this.parse("MSG=\"hello  world\"; echo \"$MSG\""))
         );
     }
 
     @Test
-    public void echoUnquotedVarSplit() {
-        Assert.assertEquals(
+    void echoUnquotedVarSplit() {
+        Assertions.assertEquals(
             0,
             new Executor(new HashMap<>()).execute(this.parse("MSG=\"hello  world\"; echo $MSG"))
         );
     }
 
     @Test
-    public void echoQuotedLiteralNoSplit() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo \"hello   world\"")));
+    void echoQuotedLiteralNoSplit() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo \"hello   world\"")));
     }
 
     @Test
-    public void echoCustomIfsColon() {
+    void echoCustomIfsColon() {
         final Map<String, String> env = new HashMap<>();
         env.put("IFS", ":");
-        Assert.assertEquals(0, new Executor(env).execute(this.parse("echo a:b:c")));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("echo a:b:c")));
     }
 
     @Test
-    public void echoEmptyIfsNoSplit() {
+    void echoEmptyIfsNoSplit() {
         final Map<String, String> env = new HashMap<>();
         env.put("IFS", "");
-        Assert.assertEquals(0, new Executor(env).execute(this.parse("echo hello   world")));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("echo hello   world")));
     }
 
     @Test
-    public void splitFieldsTabIfs() {
-        Assert.assertEquals(Arrays.asList("a", "b"), WordExpander.splitFields("a\tb", "\t"));
+    void splitFieldsTabIfs() {
+        Assertions.assertEquals(Arrays.asList("a", "b"), WordExpander.splitFields("a\tb", "\t"));
     }
 
     @Test
-    public void splitFieldsMixedIfs() {
-        Assert.assertEquals(Arrays.asList("a", "b", "c"), WordExpander.splitFields("a:b c", ": "));
-    }
-
-    @Test
-    public void containsGlobCharsStar() {
-        Assert.assertTrue(WordExpander.containsGlobChars("*.txt"));
-    }
-
-    @Test
-    public void containsGlobCharsQuestion() {
-        Assert.assertTrue(WordExpander.containsGlobChars("file?"));
-    }
-
-    @Test
-    public void containsGlobCharsBracket() {
-        Assert.assertTrue(WordExpander.containsGlobChars("[ab]"));
-    }
-
-    @Test
-    public void containsGlobCharsNone() {
-        Assert.assertFalse(WordExpander.containsGlobChars("hello.txt"));
-    }
-
-    @Test
-    public void pathnameExpandNoGlob() {
-        Assert.assertEquals(
-            Arrays.asList(ExecutorTest.HELLO),
-            WordExpander.pathnameExpand(Arrays.asList(ExecutorTest.HELLO))
+    void splitFieldsMixedIfs() {
+        Assertions.assertEquals(
+            Arrays.asList("a", "b", "c"),
+            WordExpander.splitFields("a:b c", ": ")
         );
     }
 
     @Test
-    public void pathnameExpandGlobNoMatchKeepsPattern() {
-        Assert.assertEquals(
-            Arrays.asList("__no_match__xyz__"),
-            WordExpander.pathnameExpand(Arrays.asList("__no_match__xyz__"))
+    void containsGlobCharsStar() {
+        Assertions.assertTrue(WordExpander.containsGlobChars("*.txt"));
+    }
+
+    @Test
+    void containsGlobCharsQuestion() {
+        Assertions.assertTrue(WordExpander.containsGlobChars("file?"));
+    }
+
+    @Test
+    void containsGlobCharsBracket() {
+        Assertions.assertTrue(WordExpander.containsGlobChars("[ab]"));
+    }
+
+    @Test
+    void containsGlobCharsNone() {
+        Assertions.assertFalse(WordExpander.containsGlobChars("hello.txt"));
+    }
+
+    @Test
+    void pathnameExpandNoGlob() {
+        Assertions.assertEquals(
+            Collections.singletonList(ExecutorTest.HELLO),
+            WordExpander.pathnameExpand(Collections.singletonList(ExecutorTest.HELLO))
         );
     }
 
     @Test
-    public void pathnameExpandGlobWithMatch() {
-        Assert.assertEquals(
-            Arrays.asList("pom.xml"),
-            WordExpander.pathnameExpand(Arrays.asList("pom.xml"))
+    void pathnameExpandGlobNoMatchKeepsPattern() {
+        Assertions.assertEquals(
+            Collections.singletonList("__no_match__xyz__"),
+            WordExpander.pathnameExpand(Collections.singletonList("__no_match__xyz__"))
         );
     }
 
     @Test
-    public void pathnameExpandWildcardMatch() {
-        Assert.assertTrue(WordExpander.pathnameExpand(Arrays.asList("*.xml")).contains("pom.xml"));
+    void pathnameExpandGlobWithMatch() {
+        Assertions.assertEquals(
+            Collections.singletonList("pom.xml"),
+            WordExpander.pathnameExpand(Collections.singletonList("pom.xml"))
+        );
     }
 
     @Test
-    public void pathnameExpandGlobQuoted() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo \"*.java\"")));
+    void pathnameExpandWildcardMatch() {
+        Assertions.assertTrue(
+            WordExpander.pathnameExpand(Collections.singletonList("*.xml"))
+                .contains("pom.xml")
+        );
     }
 
     @Test
-    public void pathnameExpandGlobUnquoted() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("echo *.java")));
+    void pathnameExpandGlobQuoted() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo \"*.java\"")));
     }
 
     @Test
-    public void expandBracedColonQuestionUnset() {
+    void pathnameExpandGlobUnquoted() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("echo *.java")));
+    }
+
+    @Test
+    void expandBracedColonQuestionUnset() {
         try {
             new Executor(new HashMap<>()).expandVariables("${x:?my error}", new HashMap<>());
-            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final Executor.ExitSignal ex) {
-            Assert.assertEquals(1, ex.getCode());
+            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final ExitSignal ex) {
+            Assertions.assertEquals(1, ex.getCode());
         }
     }
 
     @Test
-    public void expandBracedQuestionUnset() {
+    void expandBracedQuestionUnset() {
         try {
             new Executor(new HashMap<>()).expandVariables("${x?my error}", new HashMap<>());
-            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final Executor.ExitSignal ex) {
-            Assert.assertEquals(1, ex.getCode());
+            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final ExitSignal ex) {
+            Assertions.assertEquals(1, ex.getCode());
         }
     }
 
     @Test
-    public void expandBracedColonQuestionSet() {
-        Assert.assertEquals(
+    void expandBracedColonQuestionSet() {
+        Assertions.assertEquals(
             ExecutorTest.VALUE,
             new Executor(
                 new HashMap<>()
@@ -2522,341 +2549,386 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void expandBracedColonQuestionDefaultMsg() {
+    void expandBracedColonQuestionDefaultMsg() {
         try {
             new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>());
-            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final Executor.ExitSignal ex) {
-            Assert.assertEquals(1, ex.getCode());
+            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final ExitSignal ex) {
+            Assertions.assertEquals(1, ex.getCode());
         }
     }
 
     @Test
-    public void expandBracedColonQuestionErrorStream() {
+    void expandBracedColonQuestionErrorStream() {
         final Executor executor = new Executor(new HashMap<>());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setErrorStream(stream);
         try {
             executor.expandVariables("${x:?my error}", new HashMap<>());
-            Assert.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final Executor.ExitSignal ex) {
-            Assert.assertEquals(1, ex.getCode());
+            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
+        } catch (final ExitSignal ex) {
+            Assertions.assertEquals(1, ex.getCode());
         }
-        Assert.assertTrue(
-            "error message should go to injected stream",
-            bos.toString(StandardCharsets.UTF_8).trim().contains("my error")
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),
+            "error message should go to injected stream"
         );
+        stream.close();
     }
 
     @Test
-    public void pwdPrintsCurrentDirectory() {
+    void pwdPrintsCurrentDirectory() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("pwd")));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd")));
+        Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
+        stream.close();
     }
 
     @Test
-    public void pwdLogicalFlagPrintsPwdEnv() {
+    void pwdLogicalFlagPrintsPwdEnv() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("pwd -L")));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd -L")));
+        Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
+        stream.close();
     }
 
     @Test
-    public void commandDashVOnBuiltinPrintsName() {
+    void commandDashVOnBuiltinPrintsName() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("command -v echo")));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("command -v echo")));
+        Assertions.assertEquals(
             ExecutorTest.HELLO.replace(ExecutorTest.HELLO, "echo"),
             bos.toString(StandardCharsets.UTF_8).trim()
         );
+        stream.close();
     }
 
     @Test
-    public void commandDashUppervOnBuiltinDescribes() {
+    void commandDashUppervOnBuiltinDescribes() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("command -V true")));
-        Assert.assertTrue(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("command -V true")));
+        Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("shell built-in")
         );
+        stream.close();
     }
 
     @Test
-    public void commandWithoutFlagsRunsCommand() {
+    void commandWithoutFlagsRunsCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("command echo hi")));
-        Assert.assertEquals("hi", bos.toString(StandardCharsets.UTF_8).trim());
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("command echo hi")));
+        Assertions.assertEquals("hi", bos.toString(StandardCharsets.UTF_8).trim());
+        stream.close();
     }
 
     @Test
-    public void umaskNoArgsPrintsDefault() {
+    void umaskNoArgsPrintsDefault() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("umask")));
-        Assert.assertEquals("0022", bos.toString(StandardCharsets.UTF_8).trim());
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        Assertions.assertEquals("0022", bos.toString(StandardCharsets.UTF_8).trim());
+        stream.close();
     }
 
     @Test
-    public void umaskSetThenReadEchoesValue() {
+    void umaskSetThenReadEchoesValue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("umask 077")));
-        Assert.assertEquals(0, executor.execute(this.parse("umask")));
-        Assert.assertEquals("0077", bos.toString(StandardCharsets.UTF_8).trim());
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("umask 077")));
+        Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        Assertions.assertEquals("0077", bos.toString(StandardCharsets.UTF_8).trim());
+        stream.close();
     }
 
     @Test
-    public void umaskDashSPrintsSymbolic() {
+    void umaskDashSPrintsSymbolic() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("umask -S")));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("umask -S")));
+        Assertions.assertEquals(
             "u=rwx,g=rx,o=rx", bos.toString(StandardCharsets.UTF_8).trim()
         );
+        stream.close();
     }
 
     @Test
-    public void umaskNonOctalReturnsOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("umask zzz")));
+    void umaskNonOctalReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("umask zzz")));
     }
 
     @Test
-    public void killDashLListsSignals() {
+    void killDashLListsSignals() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("kill -l")));
-        Assert.assertTrue(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("kill -l")));
+        Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("TERM")
         );
+        stream.close();
     }
 
     @Test
-    public void killNoArgsReturnsOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("kill")));
+    void killNoArgsReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("kill")));
     }
 
     @Test
-    public void killUnknownPidReturns127() {
-        Assert.assertEquals(
+    void killUnknownPidReturnsError() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("kill 999999999"))
         );
     }
 
     @Test
-    public void killDashSWithNonNumericPidReturns127() {
-        Assert.assertEquals(
+    void killDashSWithNonNumericPidReturnsError() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("kill -s TERM notapid"))
         );
     }
 
     @Test
-    public void hashNoArgsReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("hash")));
+    void hashNoArgsReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash")));
     }
 
     @Test
-    public void hashDashRReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("hash -r")));
+    void hashDashRReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash -r")));
     }
 
     @Test
-    public void hashWithKnownBuiltinReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("hash echo")));
+    void hashWithKnownBuiltinReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("hash echo")));
     }
 
     @Test
-    public void hashWithUnknownNameReturns127() {
-        Assert.assertEquals(
+    void hashWithUnknownNameReturnsError() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("hash sh4j_no_such_cmd_xyz"))
         );
     }
 
     @Test
-    public void waitNoArgsReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("wait")));
+    void waitNoArgsReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("wait")));
     }
 
     @Test
-    public void waitOnKnownBgPidReturnsZero() {
+    void waitOnKnownBgPidReturnsZero() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 &")));
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 &")));
         final int pid = executor.lastBackgroundPid();
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("wait %d", pid)))
         );
     }
 
     @Test
-    public void waitOnUnknownPidReturns127() {
-        Assert.assertEquals(
+    void waitOnUnknownPidReturnsError() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("wait 999999"))
         );
     }
 
     @Test
-    public void jobsListsBackgroundJobs() {
+    void jobsListsBackgroundJobs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected [1] in output, got: " + output,
-            output.contains("[1]")
+        Assertions.assertTrue(
+            output.contains("[1]"),
+            String.format("expected [1] in output, got: %s", output)
         );
-        Assert.assertTrue(
-            "expected 'sleep 0' in output, got: " + output,
-            output.contains("sleep 0")
+        Assertions.assertTrue(
+            output.contains("sleep 0"),
+            String.format("expected 'sleep 0' in output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void jobsWithPercentId() {
+    void jobsWithPercentId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs %1")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs %1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected [1] in output, got: " + output,
-            output.contains("[1]")
+        Assertions.assertTrue(
+            output.contains("[1]"),
+            String.format("expected [1] in output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void jobsEmptyWhenNoBackgroundJobs() {
+    void jobsEmptyWhenNoBackgroundJobs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("jobs")));
-        Assert.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("jobs")));
+        Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
+        stream.close();
     }
 
     @Test
-    public void jobsWithNumericId() {
+    void jobsWithNumericId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 1")));
-        Assert.assertTrue(
-            "output was: " + bos,
-            bos.toString(StandardCharsets.UTF_8).contains("[1]")
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 1")));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("[1]"),
+            String.format("output was: %s", bos)
         );
+        stream.close();
     }
 
     @Test
-    public void jobsWithNonExistentJobId() {
+    void jobsWithNonExistentJobId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 99999")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 99999")));
+        stream.close();
     }
 
     @Test
-    public void jobsWithInvalidJobIdReturnsZero() {
+    void jobsWithInvalidJobIdReturnsZero() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs notanumber")));
-        Assert.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs notanumber")));
+        Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
+        stream.close();
     }
 
     @Test
-    public void jobsShowsDoneForCompletedJob() {
+    void jobsShowsDoneForCompletedJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         final int id = executor.jobManager().submit(() -> { }, "test-cmd");
         executor.jobManager().waitForJob(id);
         executor.execute(this.parse("jobs"));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected Done state in jobs output, got: " + output,
-            output.contains("Done")
+        Assertions.assertTrue(
+            output.contains("Done"),
+            String.format("expected Done state in jobs output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void bgConfirmsBackgroundJob() {
+    void bgConfirmsBackgroundJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & bg")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected [1] in output, got: " + output,
-            output.contains("[1]")
+        Assertions.assertTrue(
+            output.contains("[1]"),
+            String.format("expected [1] in output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void bgNoJobsReturnsError() {
+    void bgNoJobsReturnsError() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(1, executor.execute(this.parse("bg")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(1, executor.execute(this.parse("bg")));
+        stream.close();
     }
 
     @Test
-    public void bgWithPercentId() {
+    void bgWithPercentId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & bg %1")));
-        Assert.assertTrue(
-            "output was: " + bos,
-            bos.toString(StandardCharsets.UTF_8).contains("[1]")
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg %1")));
+        Assertions.assertTrue(
+            bos.toString(StandardCharsets.UTF_8).contains("[1]"),
+            String.format("output was: %s", bos)
         );
+        stream.close();
     }
 
     @Test
-    public void bgWithInvalidJobIdReturnsError() {
+    void bgWithInvalidJobIdReturnsError() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(1, executor.execute(this.parse("sleep 0 & bg 99999")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg 99999")));
+        stream.close();
     }
 
     @Test
-    public void bgWithInvalidJobSyntaxReturnsError() {
+    void bgWithInvalidJobSyntaxReturnsError() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(1, executor.execute(this.parse("sleep 0 & bg notanumber")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg notanumber")));
+        stream.close();
     }
 
     @Test
-    public void bgResumesStoppedJob() {
+    void bgResumesStoppedJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         final JobManager mgr = executor.jobManager();
         final int id = mgr.submit(
             () -> {
@@ -2868,220 +2940,255 @@ public final class ExecutorTest {
             },
             "test-cmd"
         );
-        final JobManager.Job job = mgr.getJob(id);
+        final Job job = mgr.getJob(id);
         job.cancel();
-        Assert.assertEquals(0, executor.execute(this.parse("bg " + id)));
-        final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected bg confirmation in output, got: " + output,
-            output.contains("[" + id + "]")
+        Assertions.assertEquals(
+            0,
+            executor.execute(this.parse(String.format("bg %d", id)))
         );
-    }
-
-    @Test
-    public void fgBringsJobToForeground() {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & fg")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected 'sleep 0' in output, got: " + output,
-            output.contains("sleep 0")
+        Assertions.assertTrue(
+            output.contains(String.format("[%s]", id)),
+            String.format("expected bg confirmation in output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void fgWithSpecificJobId() {
+    void fgBringsJobToForeground() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 & fg %1")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected 'sleep 0' in output, got: " + output,
-            output.contains("sleep 0")
+        Assertions.assertTrue(
+            output.contains("sleep 0"),
+            String.format("expected 'sleep 0' in output, got: %s", output)
         );
+        stream.close();
     }
 
     @Test
-    public void fgNoJobsReturnsError() {
-        final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("fg")));
-    }
-
-    @Test
-    public void fgUnknownJobReturnsError() {
-        final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("fg 99999")));
-    }
-
-    @Test
-    public void fgWithInvalidJobSyntaxReturnsError() {
+    void fgWithSpecificJobId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(1, executor.execute(this.parse("fg notajob")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg %1")));
+        final String output = bos.toString(StandardCharsets.UTF_8);
+        Assertions.assertTrue(
+            output.contains("sleep 0"),
+            String.format("expected 'sleep 0' in output, got: %s", output)
+        );
+        stream.close();
     }
 
     @Test
-    public void fcListsHistoryEntries() {
+    void fgNoJobsReturnsError() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(1, executor.execute(this.parse("fg")));
+    }
+
+    @Test
+    void fgUnknownJobReturnsError() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(1, executor.execute(this.parse("fg 99999")));
+    }
+
+    @Test
+    void fgWithInvalidJobSyntaxReturnsError() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(1, executor.execute(this.parse("fg notajob")));
+        stream.close();
+    }
+
+    @Test
+    void fcListsHistoryEntries() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo one"));
         executor.execute(this.parse("echo two"));
         executor.execute(this.parse("echo three"));
-        Assert.assertEquals(0, executor.execute(this.parse("fc -l 1 3")));
+        Assertions.assertEquals(0, executor.execute(this.parse("fc -l 1 3")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(output.contains("1\techo one"));
-        Assert.assertTrue(output.contains("2\techo two"));
-        Assert.assertTrue(output.contains("3\techo three"));
+        Assertions.assertTrue(output.contains("1\techo one"));
+        Assertions.assertTrue(output.contains("2\techo two"));
+        Assertions.assertTrue(output.contains("3\techo three"));
+        stream.close();
     }
 
     @Test
-    public void fcListsNoNumbers() {
+    void fcListsNoNumbers() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
-        Assert.assertEquals(0, executor.execute(this.parse("fc -ln 1 1")));
+        Assertions.assertEquals(0, executor.execute(this.parse("fc -ln 1 1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(output.contains("\techo hello"));
-        Assert.assertFalse(output.contains("1\t"));
+        Assertions.assertTrue(output.contains("\techo hello"));
+        Assertions.assertFalse(output.contains("1\t"));
+        stream.close();
     }
 
     @Test
-    public void fcListsLastEntry() {
+    void fcListsLastEntry() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo first"));
         executor.execute(this.parse("echo second"));
-        Assert.assertEquals(0, executor.execute(this.parse("fc -l -1 -1")));
+        Assertions.assertEquals(0, executor.execute(this.parse("fc -l -1 -1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(output.contains("echo second"));
-        Assert.assertFalse(output.contains("echo first"));
+        Assertions.assertTrue(output.contains("echo second"));
+        Assertions.assertFalse(output.contains("echo first"));
+        stream.close();
     }
 
     @Test
-    public void fcEmptyHistoryReturnsError() {
+    void fcEmptyHistoryReturnsError() {
         final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("fc -l")));
+        Assertions.assertEquals(1, executor.execute(this.parse("fc -l")));
     }
 
     @Test
-    public void fcSubstituteAndReExecute() {
+    void fcSubstituteAndReExecute() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
-        Assert.assertEquals(0, executor.execute(this.parse("fc -s hello=world")));
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("echo world"));
+        Assertions.assertEquals(0, executor.execute(this.parse("fc -s hello=world")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("echo world"));
+        stream.close();
     }
 
     @Test
-    public void fcSubstituteInvalidPattern() {
+    void fcSubstituteInvalidPattern() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
-        Assert.assertEquals(1, executor.execute(this.parse("fc -s nosign")));
+        Assertions.assertEquals(1, executor.execute(this.parse("fc -s nosign")));
+        stream.close();
     }
 
     @Test
-    public void fcUnknownOptionReturnsError() {
+    void fcUnknownOptionReturnsError() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
-        Assert.assertEquals(1, executor.execute(this.parse("fc -z")));
+        Assertions.assertEquals(1, executor.execute(this.parse("fc -z")));
+        stream.close();
     }
 
     @Test
-    public void fcSubstituteNonExistentNumber() {
+    void fcSubstituteNonExistentNumber() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
-        Assert.assertEquals(1, executor.execute(this.parse("fc -s hello=world 999")));
+        Assertions.assertEquals(1, executor.execute(this.parse("fc -s hello=world 999")));
+        stream.close();
     }
 
     @Test
-    public void fcDefaultRangeListsLast16() {
+    void fcDefaultRangeListsLastItem() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         for (int i = 1; i <= 5; i = i + 1) {
-            executor.execute(this.parse("echo cmd" + i));
+            executor.execute(
+                this.parse(String.format("echo cmd%d", i))
+            );
         }
-        Assert.assertEquals(0, executor.execute(this.parse("fc -l")));
+        Assertions.assertEquals(0, executor.execute(this.parse("fc -l")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(output.contains("echo cmd1"));
-        Assert.assertTrue(output.contains("echo cmd5"));
+        Assertions.assertTrue(output.contains("echo cmd1"));
+        Assertions.assertTrue(output.contains("echo cmd5"));
+        stream.close();
     }
 
     @Test
-    public void linenoReflectsSourceLine() {
+    void linenoReflectsSourceLine() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO"))
         );
-        Assert.assertEquals("1\n", bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(String.format("1%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void linenoUpdatesPerCommand() {
+    void linenoUpdatesPerCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO; echo $LINENO"))
         );
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(output.contains("1\n"));
-        Assert.assertTrue(output.contains("1\n1\n") || output.split("\n").length >= 2);
+        Assertions.assertTrue(output.contains(String.format("1%n")));
+        Assertions.assertTrue(
+            output.contains(String.format("1%n1%n"))
+                || output.split(String.format("%n")).length >= 2
+        );
+        stream.close();
     }
 
     @Test
-    public void langVariableCanBeSet() {
+    void langVariableCanBeSet() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("LANG=en_US.UTF-8")));
-        Assert.assertEquals("en_US.UTF-8", executor.getVariable("LANG"));
+        Assertions.assertEquals(0, executor.execute(this.parse("LANG=en_US.UTF-8")));
+        Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LANG"));
     }
 
     @Test
-    public void lcAllVariableOverridesOthers() {
+    void lcAllVariableOverridesOthers() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("LC_ALL=C")));
-        Assert.assertEquals("C", executor.getVariable("LC_ALL"));
+        Assertions.assertEquals(0, executor.execute(this.parse("LC_ALL=C")));
+        Assertions.assertEquals("C", executor.getVariable("LC_ALL"));
     }
 
     @Test
-    public void lcCollateVariableCanBeSet() {
+    void lcCollateVariableCanBeSet() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("LC_COLLATE=en_US.UTF-8")));
-        Assert.assertEquals("en_US.UTF-8", executor.getVariable("LC_COLLATE"));
+        Assertions.assertEquals(0, executor.execute(this.parse("LC_COLLATE=en_US.UTF-8")));
+        Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_COLLATE"));
     }
 
     @Test
-    public void lcCtypeVariableCanBeSet() {
+    void lcCtypeVariableCanBeSet() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("LC_CTYPE=en_US.UTF-8")));
-        Assert.assertEquals("en_US.UTF-8", executor.getVariable("LC_CTYPE"));
+        Assertions.assertEquals(0, executor.execute(this.parse("LC_CTYPE=en_US.UTF-8")));
+        Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_CTYPE"));
     }
 
     @Test
-    public void lcMessagesVariableCanBeSet() {
+    void lcMessagesVariableCanBeSet() {
         final Executor executor = new Executor();
-        Assert.assertEquals(0, executor.execute(this.parse("LC_MESSAGES=en_US.UTF-8")));
-        Assert.assertEquals("en_US.UTF-8", executor.getVariable("LC_MESSAGES"));
+        Assertions.assertEquals(0, executor.execute(this.parse("LC_MESSAGES=en_US.UTF-8")));
+        Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_MESSAGES"));
     }
 
     @Test
-    public void localeVariablesCanBeExported() {
+    void localeVariablesCanBeExported() {
         final Map<String, String> env = new HashMap<>();
         env.put("LANG", "C");
         env.put("LC_ALL", "C");
@@ -3089,39 +3196,41 @@ public final class ExecutorTest {
         env.put("LC_CTYPE", "UTF-8");
         env.put("LC_MESSAGES", "C");
         final Executor executor = new Executor(env);
-        Assert.assertEquals("C", executor.getVariable("LANG"));
-        Assert.assertEquals("C", executor.getVariable("LC_ALL"));
-        Assert.assertEquals("POSIX", executor.getVariable("LC_COLLATE"));
-        Assert.assertEquals("UTF-8", executor.getVariable("LC_CTYPE"));
-        Assert.assertEquals("C", executor.getVariable("LC_MESSAGES"));
+        Assertions.assertEquals("C", executor.getVariable("LANG"));
+        Assertions.assertEquals("C", executor.getVariable("LC_ALL"));
+        Assertions.assertEquals("POSIX", executor.getVariable("LC_COLLATE"));
+        Assertions.assertEquals("UTF-8", executor.getVariable("LC_CTYPE"));
+        Assertions.assertEquals("C", executor.getVariable("LC_MESSAGES"));
     }
 
     @Test
-    public void commandDashVOnMissingReturnsOne() {
-        Assert.assertEquals(
+    void commandDashVOnMissingReturnsOne() {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("command -v sh4j_no_such_cmd_xyz"))
         );
     }
 
     @Test
-    public void pwdPhysicalFlagResolvesSymlinks() {
+    void pwdPhysicalFlagResolvesSymlinks() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("pwd -P")));
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).startsWith("/"));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("pwd -P")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).startsWith("/"));
+        stream.close();
     }
 
     @Test
-    public void cdToDirectory() throws Exception {
+    void cdToDirectory() throws Exception {
         final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Executor executor = new Executor();
-            Assert.assertEquals(0, executor.execute(this.parse("cd /tmp")));
-            Assert.assertEquals(
+            Assertions.assertEquals(0, executor.execute(this.parse("cd /tmp")));
+            Assertions.assertEquals(
                 ExecutorTest.TMP_DIR,
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
@@ -3131,14 +3240,14 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void cdToHome() throws Exception {
+    void cdToHome() throws Exception {
         final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
             env.put(ExecutorTest.HOME_KEY, ExecutorTest.TMP_DIR);
             final Executor executor = new Executor(env);
-            Assert.assertEquals(0, executor.execute(this.parse("cd")));
-            Assert.assertEquals(
+            Assertions.assertEquals(0, executor.execute(this.parse("cd")));
+            Assertions.assertEquals(
                 ExecutorTest.TMP_DIR,
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
@@ -3148,15 +3257,15 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void cdToNonexistentReturnsOne() {
-        Assert.assertEquals(
+    void cdToNonexistentReturnsOne() {
+        Assertions.assertEquals(
             1,
             new Executor().execute(this.parse("cd /sh4j_nonexistent_dir_xyz"))
         );
     }
 
     @Test
-    public void cdMinus() throws Exception {
+    void cdMinus() throws Exception {
         final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
@@ -3165,24 +3274,24 @@ public final class ExecutorTest {
             final Executor executor = new Executor(env);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             executor.setCaptureStream(bos);
-            Assert.assertEquals(0, executor.execute(this.parse("cd -")));
-            Assert.assertEquals("/", executor.getVariable(ExecutorTest.PWD_KEY));
-            Assert.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
-            Assert.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
+            Assertions.assertEquals(0, executor.execute(this.parse("cd -")));
+            Assertions.assertEquals("/", executor.getVariable(ExecutorTest.PWD_KEY));
+            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
+            Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
         } finally {
             System.setProperty(ExecutorTest.USER_DIR_PROP, saved);
         }
     }
 
     @Test
-    public void cdWithExpandedVar() throws Exception {
+    void cdWithExpandedVar() throws Exception {
         final String saved = System.getProperty(ExecutorTest.USER_DIR_PROP);
         try {
             final Map<String, String> env = new HashMap<>();
             env.put("MYDIR", ExecutorTest.TMP_DIR);
             final Executor executor = new Executor(env);
-            Assert.assertEquals(0, executor.execute(this.parse("cd $MYDIR")));
-            Assert.assertEquals(
+            Assertions.assertEquals(0, executor.execute(this.parse("cd $MYDIR")));
+            Assertions.assertEquals(
                 ExecutorTest.TMP_DIR,
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
@@ -3192,307 +3301,308 @@ public final class ExecutorTest {
     }
 
     @Test
-    public void typeBuiltin() {
+    void typeBuiltin() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("type echo cd exit export type true false shift unset"))
         );
         final String out = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(out.contains("echo is a shell built-in"));
-        Assert.assertTrue(out.contains("cd is a shell built-in"));
-        Assert.assertTrue(out.contains("exit is a shell built-in"));
-        Assert.assertTrue(out.contains("export is a shell built-in"));
-        Assert.assertTrue(out.contains("type is a shell built-in"));
-        Assert.assertTrue(out.contains("true is a shell built-in"));
-        Assert.assertTrue(out.contains("false is a shell built-in"));
+        Assertions.assertTrue(out.contains("echo is a shell built-in"));
+        Assertions.assertTrue(out.contains("cd is a shell built-in"));
+        Assertions.assertTrue(out.contains("exit is a shell built-in"));
+        Assertions.assertTrue(out.contains("export is a shell built-in"));
+        Assertions.assertTrue(out.contains("type is a shell built-in"));
+        Assertions.assertTrue(out.contains("true is a shell built-in"));
+        Assertions.assertTrue(out.contains("false is a shell built-in"));
     }
 
     @Test
-    public void typeExternal() {
+    void typeExternal() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("type true")));
-        Assert.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is "));
+        Assertions.assertEquals(0, executor.execute(this.parse("type true")));
+        Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is "));
     }
 
     @Test
-    public void typeNotFound() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("type nonexistent_cmd_xyz")));
+    void typeNotFound() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("type nonexistent_cmd_xyz")));
     }
 
     @Test
-    public void execBuiltinRunsCommand() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("exec true")));
+    void execBuiltinRunsCommand() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("exec true")));
     }
 
     @Test
-    public void execBuiltinNotFoundReturnsNotFound() {
-        Assert.assertEquals(
+    void execBuiltinNotFoundReturnsNotFound() {
+        Assertions.assertEquals(
             127,
             new Executor().execute(this.parse("exec nonexistent_cmd_xyz"))
         );
     }
 
     @Test
-    public void execBuiltinNoArgsIsNoop() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("exec")));
+    void execBuiltinNoArgsIsNoop() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("exec")));
     }
 
     @Test
-    public void trueBuiltinReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
+    void trueBuiltinReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTest.TRUE_CMD)));
     }
 
     @Test
-    public void falseBuiltinReturnsOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
+    void falseBuiltinReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorTest.FALSE_CMD)));
     }
 
     @Test
-    public void unsetRemovesVariable() {
+    void unsetRemovesVariable() {
         final Map<String, String> env = new HashMap<>();
         env.put("MYVAR", ExecutorTest.VALUE);
         final Executor executor = new Executor(env);
-        Assert.assertEquals(0, executor.execute(this.parse("unset MYVAR")));
-        Assert.assertNull(executor.getVariable("MYVAR"));
+        Assertions.assertEquals(0, executor.execute(this.parse("unset MYVAR")));
+        Assertions.assertNull(executor.getVariable("MYVAR"));
     }
 
     @Test
-    public void shiftRemovesPositionalParam() {
+    void shiftRemovesPositionalParam() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(
             new HashMap<>(),
             new ArrayList<>(Arrays.asList("sh", "a", "b", "c"))
         );
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("shift; echo $#")));
-        Assert.assertEquals("2", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(0, executor.execute(this.parse("shift; echo $#")));
+        Assertions.assertEquals("2", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void shiftWithCount() {
+    void shiftWithCount() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(
             new HashMap<>(),
             new ArrayList<>(Arrays.asList("sh", "a", "b", "c"))
         );
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("shift 2; echo $#")));
-        Assert.assertEquals("1", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(0, executor.execute(this.parse("shift 2; echo $#")));
+        Assertions.assertEquals("1", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void breakStopsWhileLoop() {
+    void breakStopsWhileLoop() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("while true; do echo ran; break; done"))
         );
-        Assert.assertEquals("ran", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals("ran", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void breakStopsForLoop() {
+    void breakStopsForLoop() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("for i in a b c; do echo $i; break; done"))
         );
-        Assert.assertEquals("a", bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals("a", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void continueInForLoop() {
+    void continueInForLoop() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse("for i in a b; do echo $i; continue; echo after; done"))
         );
-        Assert.assertEquals(String.format("a%nb"), bos.toString(StandardCharsets.UTF_8).trim());
-        Assert.assertFalse(bos.toString(StandardCharsets.UTF_8).contains("after"));
+        Assertions.assertEquals(String.format("a%nb"), bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertFalse(bos.toString(StandardCharsets.UTF_8).contains("after"));
     }
 
     @Test
-    public void colonBuiltinReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse(":")));
+    void colonBuiltinReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse(":")));
     }
 
     @Test
-    public void evalBuiltinRunsCommand() {
+    void evalBuiltinRunsCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("eval echo hello world")));
-        Assert.assertEquals(
+        Assertions.assertEquals(0, executor.execute(this.parse("eval echo hello world")));
+        Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             bos.toString(StandardCharsets.UTF_8).trim()
         );
     }
 
     @Test
-    public void evalBuiltinNoArgsReturnsZero() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("eval")));
+    void evalBuiltinNoArgsReturnsZero() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("eval")));
     }
 
     @Test
-    public void externalOutputRedirect() throws Exception {
+    void externalOutputRedirect() throws Exception {
         final String inpath = "/tmp/sh4j_ext_in.txt";
         final String outpath = "/tmp/sh4j_ext_out.txt";
-        new java.io.File(outpath).delete();
+        new File(outpath).delete();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(inpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(ExecutorTest.HELLO_WORLD);
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat < %s > %s", inpath, outpath)))
         );
-        Assert.assertTrue(new java.io.File(outpath).exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(new File(outpath).exists());
+        Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
-            new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(outpath)), StandardCharsets.UTF_8).trim()
+            new String(Files.readAllBytes(Paths.get(outpath)), StandardCharsets.UTF_8).trim()
         );
-        new java.io.File(inpath).delete();
-        new java.io.File(outpath).delete();
+        new File(inpath).delete();
+        new File(outpath).delete();
     }
 
     @Test
-    public void externalAppendRedirect() throws Exception {
+    void externalAppendRedirect() throws Exception {
         final String inpath = "/tmp/sh4j_ext_append_in.txt";
         final String outpath = "/tmp/sh4j_ext_append_out.txt";
-        new java.io.File(outpath).delete();
+        new File(outpath).delete();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(inpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write("second");
         }
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(outpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(outpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(String.format("first%n"));
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat < %s >> %s", inpath, outpath)))
         );
-        final String content = new String(java.nio.file.Files.readAllBytes(
-            java.nio.file.Paths.get(outpath)
-        ), StandardCharsets.UTF_8).trim();
-        Assert.assertTrue(content.startsWith("first"));
-        Assert.assertTrue(content.contains("second"));
-        new java.io.File(inpath).delete();
-        new java.io.File(outpath).delete();
+        final String content = new String(
+            Files.readAllBytes(Paths.get(outpath)),
+            StandardCharsets.UTF_8
+        ).trim();
+        Assertions.assertTrue(content.startsWith("first"));
+        Assertions.assertTrue(content.contains("second"));
+        new File(inpath).delete();
+        new File(outpath).delete();
     }
 
     @Test
-    public void externalClobberRedirect() throws Exception {
+    void externalClobberRedirect() throws Exception {
         final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
         final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
-        new java.io.File(outpath).delete();
+        new File(outpath).delete();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(inpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write("hello clobber");
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat < %s >| %s", inpath, outpath)))
         );
-        Assert.assertTrue(new java.io.File(outpath).exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(new File(outpath).exists());
+        Assertions.assertEquals(
             "hello clobber",
-            new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(outpath)), StandardCharsets.UTF_8).trim()
+            new String(Files.readAllBytes(Paths.get(outpath)), StandardCharsets.UTF_8).trim()
         );
-        new java.io.File(inpath).delete();
-        new java.io.File(outpath).delete();
+        new File(inpath).delete();
+        new File(outpath).delete();
     }
 
     @Test
-    public void externalRedirectStdoutToStderr() throws Exception {
+    void externalRedirectStdoutToStderr() throws Exception {
         final String inpath = "/tmp/sh4j_ext_12_in.txt";
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(inpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(ExecutorTest.HELLO);
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat < %s 1>&2", inpath)))
         );
-        new java.io.File(inpath).delete();
+        new File(inpath).delete();
     }
 
     @Test
-    public void externalRedirectStderrToStdout() throws Exception {
+    void externalRedirectStderrToStdout() throws Exception {
         final String inpath = "/tmp/sh4j_ext_21_in.txt";
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(inpath),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(ExecutorTest.HELLO);
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat < %s 2>&1", inpath)))
         );
-        new java.io.File(inpath).delete();
+        new File(inpath).delete();
     }
 
     @Test
-    public void externalCloseStdout() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("true 1>&-")));
+    void externalCloseStdout() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true 1>&-")));
     }
 
     @Test
-    public void externalCloseStderr() {
-        Assert.assertEquals(0, new Executor().execute(this.parse("true 2>&-")));
+    void externalCloseStderr() {
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true 2>&-")));
     }
 
     @Test
-    public void externalStderrOutputRedirect() throws Exception {
+    void externalStderrOutputRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_out.txt";
-        new java.io.File(path).delete();
+        new File(path).delete();
         final Executor executor = new Executor();
         executor.execute(this.parse(String.format("cat /nonexistent_path_xyz_123 2> %s", path)));
-        Assert.assertTrue(new java.io.File(path).exists());
-        new java.io.File(path).delete();
+        Assertions.assertTrue(new File(path).exists());
+        new File(path).delete();
     }
 
     @Test
-    public void externalStderrAppendRedirect() throws Exception {
+    void externalStderrAppendRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_append.txt";
-        new java.io.File(path).delete();
+        new File(path).delete();
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(path),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(path),
                 StandardCharsets.UTF_8
             )
         ) {
@@ -3500,515 +3610,557 @@ public final class ExecutorTest {
         }
         final Executor executor = new Executor();
         executor.execute(this.parse(String.format("cat /nonexistent_path_xyz_456 2>> %s", path)));
-        Assert.assertTrue(
-            new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)), StandardCharsets.UTF_8).contains("initial")
+        Assertions.assertTrue(
+            new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8)
+                .contains("initial")
         );
-        new java.io.File(path).delete();
+        new File(path).delete();
     }
 
     @Test
-    public void externalReadWriteRedirect() throws Exception {
+    void externalReadWriteRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_rw.txt";
         try (
-            java.io.BufferedWriter w = Files.newBufferedWriter(
-                java.nio.file.Paths.get(path),
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(path),
                 StandardCharsets.UTF_8
             )
         ) {
             w.write(ExecutorTest.HELLO);
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             new Executor().execute(this.parse(String.format("cat <> %s", path)))
         );
-        new java.io.File(path).delete();
+        new File(path).delete();
     }
 
     @Test
-    public void heredocStripTabsBasic() {
+    void heredocStripTabsBasic() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n")))
         );
-        Assert.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void heredocStripTabsMultiple() {
+    void heredocStripTabsMultiple() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n")))
         );
-        Assert.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void heredocStripTabsDelimiterWithTabs() {
+    void heredocStripTabsDelimiterWithTabs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n")))
         );
-        Assert.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    public void heredocStripTabsMixed() {
+    void heredocStripTabsMixed() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             executor.execute(
                 this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))
             )
         );
-        Assert.assertEquals(
+        Assertions.assertEquals(
             String.format("first%nsecond%nthird"),
             bos.toString(StandardCharsets.UTF_8).trim()
         );
     }
 
     @Test
-    public void typeFunction() {
+    void typeFunction() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
-        Assert.assertEquals(0, executor.execute(this.parse("myfunc() { true; }; type myfunc")));
-        Assert.assertTrue(
+        Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { true; }; type myfunc")));
+        Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("myfunc is a function")
         );
     }
 
     @Test
-    public void shiftNonNumericReturnsOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("shift abc")));
+    void shiftNonNumericReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("shift abc")));
     }
 
     @Test
-    public void shiftNegativeReturnsOne() {
-        Assert.assertEquals(1, new Executor().execute(this.parse("shift -1")));
+    void shiftNegativeReturnsOne() {
+        Assertions.assertEquals(1, new Executor().execute(this.parse("shift -1")));
     }
 
     @Test
-    public void readWithOneVar() {
+    void readWithOneVar() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("hello\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8))
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read var")));
-        Assert.assertEquals("hello", executor.getVariable("var"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+        Assertions.assertEquals("hello", executor.getVariable("var"));
     }
 
     @Test
-    public void readWithMultipleVars() {
+    void readWithMultipleVars() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("a b c\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8))
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read x y z")));
-        Assert.assertEquals("a", executor.getVariable("x"));
-        Assert.assertEquals("b", executor.getVariable("y"));
-        Assert.assertEquals("c", executor.getVariable("z"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read x y z")));
+        Assertions.assertEquals("a", executor.getVariable("x"));
+        Assertions.assertEquals("b", executor.getVariable("y"));
+        Assertions.assertEquals("c", executor.getVariable("z"));
     }
 
     @Test
-    public void readLastVarGetsRemainingFields() {
+    void readLastVarGetsRemainingFields() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("a b c d\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(String.format("a b c d%n").getBytes(StandardCharsets.UTF_8))
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read x y")));
-        Assert.assertEquals("a", executor.getVariable("x"));
-        Assert.assertEquals("b c d", executor.getVariable("y"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read x y")));
+        Assertions.assertEquals("a", executor.getVariable("x"));
+        Assertions.assertEquals("b c d", executor.getVariable("y"));
     }
 
     @Test
-    public void readReplyWhenNoVar() {
+    void readReplyWhenNoVar() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("hello world\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(
+                String.format("hello world%n").getBytes(StandardCharsets.UTF_8)
+            )
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read")));
-        Assert.assertEquals("hello world", executor.getVariable("REPLY"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read")));
+        Assertions.assertEquals("hello world", executor.getVariable("REPLY"));
     }
 
     @Test
-    public void readEofReturnsOne() {
+    void readEofReturnsOne() {
         final Executor executor = new Executor();
         executor.setInputStream(new ByteArrayInputStream(new byte[0]));
-        Assert.assertEquals(1, executor.execute(this.parse("read var")));
+        Assertions.assertEquals(1, executor.execute(this.parse("read var")));
     }
 
     @Test
-    public void readRawModePreservesBackslash() {
+    void readRawModePreservesBackslash() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("a\\tb\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read -r var")));
-        Assert.assertEquals("a\\tb", executor.getVariable("var"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read -r var")));
+        Assertions.assertEquals("a\\tb", executor.getVariable("var"));
     }
 
     @Test
-    public void readBackslashWithoutRawRemovesEscape() {
+    void readBackslashWithoutRawRemovesEscape() {
         final Executor executor = new Executor();
         executor.setInputStream(
-            new ByteArrayInputStream("a\\tb\n".getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
         );
-        Assert.assertEquals(0, executor.execute(this.parse("read var")));
-        Assert.assertEquals("atb", executor.getVariable("var"));
+        Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+        Assertions.assertEquals("atb", executor.getVariable("var"));
     }
 
     @Test
-    public void aliasExpandsToBuiltin() {
+    void aliasExpandsToBuiltin() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("ll")));
-        Assert.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void aliasExpandsWithArgs() {
+    void aliasExpandsWithArgs() {
         final Executor executor = new Executor();
         executor.aliases().put("greet", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("greet world")));
-        Assert.assertEquals("hello world\n", bos.toString(StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("greet world")));
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            bos.toString(StandardCharsets.UTF_8)
+        );
+        stream.close();
     }
 
     @Test
-    public void aliasDoesNotAffectOtherCommands() {
+    void aliasDoesNotAffectOtherCommands() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hi");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("echo hello")));
-        Assert.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("echo hello")));
+        Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void aliasBuiltinSetAndExpand() {
+    void aliasBuiltinSetAndExpand() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.aliases().put("ll", "echo hello");
-        Assert.assertEquals(0, executor.execute(this.parse("ll")));
-        Assert.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void aliasBuiltinSetViaEq() {
+    void aliasBuiltinSetViaEq() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("alias ll='echo hello'")));
-        Assert.assertEquals(0, executor.execute(this.parse("ll")));
-        Assert.assertEquals("hello\n", bos.toString(StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("alias ll='echo hello'")));
+        Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
+        stream.close();
     }
 
     @Test
-    public void aliasBuiltinPrintAll() {
+    void aliasBuiltinPrintAll() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
-        Assert.assertEquals(0, executor.execute(this.parse("alias")));
-        Assert.assertTrue(
+        Assertions.assertEquals(0, executor.execute(this.parse("alias")));
+        Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("ll='ls -l'")
         );
+        stream.close();
     }
 
     @Test
-    public void aliasBuiltinPrintOne() {
+    void aliasBuiltinPrintOne() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
-        Assert.assertEquals(0, executor.execute(this.parse("alias ll")));
-        Assert.assertEquals("ll='ls -l'\n", bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(0, executor.execute(this.parse("alias ll")));
+        Assertions.assertEquals(
+            String.format("ll='ls -l'%n"),
+            bos.toString(StandardCharsets.UTF_8)
+        );
+        stream.close();
     }
 
     @Test
-    public void aliasBuiltinUndefinedReturnsOne() {
+    void aliasBuiltinUndefinedReturnsOne() {
         final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("alias nonexistent")));
+        Assertions.assertEquals(1, executor.execute(this.parse("alias nonexistent")));
     }
 
     @Test
-    public void unaliasRemovesOne() {
-        final Executor executor = new Executor();
-        executor.aliases().put("ll", "ls -l");
-        executor.aliases().put("gg", "grep");
-        Assert.assertEquals(0, executor.execute(this.parse("unalias ll")));
-        Assert.assertFalse(executor.aliases().containsKey("ll"));
-        Assert.assertTrue(executor.aliases().containsKey("gg"));
-    }
-
-    @Test
-    public void unaliasAllRemovesAll() {
+    void unaliasRemovesOne() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "ls -l");
         executor.aliases().put("gg", "grep");
-        Assert.assertEquals(0, executor.execute(this.parse("unalias -a")));
-        Assert.assertTrue(executor.aliases().isEmpty());
+        Assertions.assertEquals(0, executor.execute(this.parse("unalias ll")));
+        Assertions.assertFalse(executor.aliases().containsKey("ll"));
+        Assertions.assertTrue(executor.aliases().containsKey("gg"));
     }
 
     @Test
-    public void unaliasUnknownReturnsOne() {
+    void unaliasAllRemovesAll() {
         final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("unalias nonexistent")));
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        Assertions.assertEquals(0, executor.execute(this.parse("unalias -a")));
+        Assertions.assertTrue(executor.aliases().isEmpty());
     }
 
     @Test
-    public void getoptsParsesSimpleFlag() {
+    void unaliasUnknownReturnsOne() {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(1, executor.execute(this.parse("unalias nonexistent")));
+    }
+
+    @Test
+    void getoptsParsesSimpleFlag() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "file"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
-        Assert.assertEquals("a", executor.getVariable("opt"));
-        Assert.assertEquals("", executor.getVariable("OPTARG"));
+        Assertions.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals("", executor.getVariable("OPTARG"));
     }
 
     @Test
-    public void getoptsParsesFlagWithArg() {
+    void getoptsParsesFlagWithArg() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b", "val", "file"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
-        Assert.assertEquals("b", executor.getVariable("opt"));
-        Assert.assertEquals("val", executor.getVariable("OPTARG"));
+        Assertions.assertEquals("b", executor.getVariable("opt"));
+        Assertions.assertEquals("val", executor.getVariable("OPTARG"));
     }
 
     @Test
-    public void getoptsReturnsOneWhenDone() {
+    void getoptsReturnsOneWhenDone() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "file"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             1, executor.execute(this.parse("getopts ab: opt"))
         );
     }
 
     @Test
-    public void getoptsParsesMultipleFlags() {
+    void getoptsParsesMultipleFlags() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
-        Assert.assertEquals("a", executor.getVariable("opt"));
-        Assert.assertEquals(
+        Assertions.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
-        Assert.assertEquals("b", executor.getVariable("opt"));
-        Assert.assertEquals("val", executor.getVariable("OPTARG"));
-        Assert.assertEquals(
+        Assertions.assertEquals("b", executor.getVariable("opt"));
+        Assertions.assertEquals("val", executor.getVariable("OPTARG"));
+        Assertions.assertEquals(
             1, executor.execute(this.parse("getopts ab: opt"))
         );
     }
 
     @Test
-    public void getoptsNoArgsReturnsOne() {
+    void getoptsNoArgsReturnsOne() {
         final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("getopts")));
+        Assertions.assertEquals(1, executor.execute(this.parse("getopts")));
     }
 
     @Test
-    public void getoptsWithDoubleDash() {
+    void getoptsWithDoubleDash() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "--", "file"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             1, executor.execute(this.parse("getopts ab opt"))
         );
-        Assert.assertEquals("?", executor.getVariable("opt"));
+        Assertions.assertEquals("?", executor.getVariable("opt"));
     }
 
     @Test
-    public void getoptsIllegalOption() {
+    void getoptsIllegalOption() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(env, Arrays.asList("sh", "-c", "file"));
-        executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setErrorStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt"))
         );
-        Assert.assertEquals("?", executor.getVariable("opt"));
+        Assertions.assertEquals("?", executor.getVariable("opt"));
+        stream.close();
     }
 
     @Test
-    public void getoptsMissingArgWithColon() {
+    void getoptsMissingArgWithColon() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts :ab: opt"))
         );
-        Assert.assertEquals(":", executor.getVariable("opt"));
+        Assertions.assertEquals(":", executor.getVariable("opt"));
     }
 
     @Test
-    public void getoptsMissingArgWithoutColon() {
+    void getoptsMissingArgWithoutColon() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
-        executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setErrorStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
-        Assert.assertEquals("?", executor.getVariable("opt"));
+        Assertions.assertEquals("?", executor.getVariable("opt"));
+        stream.close();
     }
 
     @Test
-    public void getoptsWithExplicitArgs() {
+    void getoptsWithExplicitArgs() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env);
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt -a -b val"))
         );
-        Assert.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
     @Test
-    public void getoptsInvalidOptind() {
+    void getoptsInvalidOptind() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "notanumber");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts a opt"))
         );
-        Assert.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
     @Test
-    public void getoptsNegativeOptind() {
+    void getoptsNegativeOptind() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "-5");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0, executor.execute(this.parse("getopts a opt"))
         );
-        Assert.assertEquals("a", executor.getVariable("opt"));
+        Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
     @Test
-    public void cdDashWithoutOldPwdReturnsOne() {
+    void cdDashWithoutOldPwdReturnsOne() {
         final Map<String, String> env = new HashMap<>();
         env.put("PATH", "/usr/bin");
         env.put("HOME", "/tmp");
         final Executor executor = new Executor(env);
-        Assert.assertEquals(1, executor.execute(this.parse("cd -")));
+        Assertions.assertEquals(1, executor.execute(this.parse("cd -")));
     }
 
     @Test
-    public void pwdPhysicalIoError() {
+    void pwdPhysicalIoError() {
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", "/nonexistent/path/that/does/not/exist");
         env.put("PATH", "/usr/bin");
         final Executor executor = new Executor(env);
-        Assert.assertEquals(1, executor.execute(this.parse("pwd -P")));
+        Assertions.assertEquals(1, executor.execute(this.parse("pwd -P")));
     }
 
     @Test
-    public void echoQuotedFieldWithSpace() {
+    void echoQuotedFieldWithSpace() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("echo 'hello world'"))
         );
-        Assert.assertEquals("hello world\n", bos.toString(StandardCharsets.UTF_8));
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            bos.toString(StandardCharsets.UTF_8)
+        );
+        stream.close();
     }
 
     @Test
-    public void aliasWithDoubleQuotedValue() {
+    void aliasWithDoubleQuotedValue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("alias ll=\"ls -l\""))
         );
-        Assert.assertEquals("ls -l", executor.aliases().get("ll"));
+        Assertions.assertEquals("ls -l", executor.aliases().get("ll"));
+        stream.close();
     }
 
     @Test
-    public void aliasShortValueNoUnquote() {
+    void aliasShortValueNoUnquote() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(
             0, executor.execute(this.parse("alias x='a'"))
         );
-        Assert.assertEquals("a", executor.aliases().get("x"));
+        Assertions.assertEquals("a", executor.aliases().get("x"));
+        stream.close();
     }
 
     @Test
-    public void unaliasUnknownNameReturnsOne() {
+    void unaliasUnknownNameReturnsOne() {
         final Executor executor = new Executor();
-        Assert.assertEquals(1, executor.execute(this.parse("unalias unknown_alias")));
+        Assertions.assertEquals(1, executor.execute(this.parse("unalias unknown_alias")));
     }
 
     @Test
-    public void typeBuiltinsBreakContinueEval() {
+    void typeBuiltinsBreakContinueEval() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("type break continue eval")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("type break continue eval")));
         final String out = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(out.contains("break is a shell built-in"));
-        Assert.assertTrue(out.contains("continue is a shell built-in"));
-        Assert.assertTrue(out.contains("eval is a shell built-in"));
+        Assertions.assertTrue(out.contains("break is a shell built-in"));
+        Assertions.assertTrue(out.contains("continue is a shell built-in"));
+        Assertions.assertTrue(out.contains("eval is a shell built-in"));
+        stream.close();
     }
 
     @Test
-    public void executorDefaultsPathWhenMissing() {
+    void executorDefaultsPathWhenMissing() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/tmp");
         final Executor executor = new Executor(env);
-        Assert.assertNotNull(executor.getVariable("PATH"));
-        Assert.assertFalse(executor.getVariable("PATH").isEmpty());
+        Assertions.assertNotNull(executor.getVariable("PATH"));
+        Assertions.assertFalse(executor.getVariable("PATH").isEmpty());
     }
 
     @Test
-    public void functionDefinitionParsing() {
+    void functionDefinitionParsing() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
-        Assert.assertTrue(executor.functionsMap().containsKey("myfunc"));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
+        Assertions.assertTrue(executor.functionsMap().containsKey("myfunc"));
+        stream.close();
     }
 
     @Test
-    public void backgroundPipelineWithPipe() {
+    void backgroundPipelineWithPipe() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
-        Assert.assertEquals(0, executor.execute(this.parse("sleep 0 | true & jobs")));
+        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 | true & jobs")));
         final String output = bos.toString(StandardCharsets.UTF_8);
-        Assert.assertTrue(
-            "expected [1] in output, got: " + output,
-            output.contains("[1]")
+        Assertions.assertTrue(
+            output.contains("[1]"),
+            String.format("expected [1] in output, got: %s", output)
         );
+        stream.close();
     }
 
     private Parser parser(final String input) {

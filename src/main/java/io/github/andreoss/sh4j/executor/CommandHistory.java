@@ -12,6 +12,7 @@ import java.util.List;
  * Stores up to {@code capacity} commands with monotonically increasing
  * history numbers starting at 1. When the buffer wraps, old entries
  * are overwritten but history numbers continue to increase.
+ *
  * @since 1.0
  */
 final class CommandHistory {
@@ -21,12 +22,16 @@ final class CommandHistory {
 
     /** Ring buffer entries. */
     private final String[] buffer;
+
     /** Capacity of the ring buffer. */
     private final int capacity;
+
     /** Next history number to assign (starts at 1). */
-    private int nextNumber;
+    private int counter;
+
     /** Index in {@code buffer} for the oldest entry (when full). */
     private int head;
+
     /** Number of entries currently stored. */
     private int count;
 
@@ -39,6 +44,7 @@ final class CommandHistory {
 
     /**
      * Creates a history with the given capacity.
+     *
      * @param capacity Maximum number of commands to retain
      */
     CommandHistory(final int capacity) {
@@ -47,13 +53,14 @@ final class CommandHistory {
         }
         this.capacity = capacity;
         this.buffer = new String[capacity];
-        this.nextNumber = 1;
+        this.counter = 1;
         this.head = 0;
         this.count = 0;
     }
 
     /**
      * Adds a command to the history.
+     *
      * @param command The command text (empty strings are ignored)
      */
     void add(final String command) {
@@ -69,11 +76,12 @@ final class CommandHistory {
             this.head = (this.head + 1) % this.capacity;
         }
         this.buffer[idx] = command;
-        this.nextNumber = this.nextNumber + 1;
+        this.counter = this.counter + 1;
     }
 
     /**
      * Returns the number of stored commands.
+     *
      * @return The number of commands currently stored
      */
     int size() {
@@ -82,34 +90,35 @@ final class CommandHistory {
 
     /**
      * Returns the next history number.
-     * @return The history number that will be assigned to the next
-     *     added command (1 when empty, N+1 after N commands)
+     *
+     * @return The history number the next added command will receive
      */
-    int nextNumber() {
-        return this.nextNumber;
+    int counter() {
+        return this.counter;
     }
 
     /**
      * Returns the most recent history number.
-     * @return The history number of the most recently added command,
-     *     or 0 when the history is empty
+     *
+     * @return The history number of the most recently added command, or 0
      */
     int lastNumber() {
         int result = 0;
         if (this.count != 0) {
-            result = this.nextNumber - 1;
+            result = this.counter - 1;
         }
         return result;
     }
 
     /**
      * Looks up the command with the given history number.
+     *
      * @param number The history number (1-based)
      * @return The command text, or null when not found
      */
     String get(final int number) {
         String result = null;
-        if (number >= 1 && number < this.nextNumber) {
+        if (number >= 1 && number < this.counter) {
             final int idx = this.indexForNumber(number);
             if (idx >= 0) {
                 result = this.buffer[idx];
@@ -122,30 +131,31 @@ final class CommandHistory {
      * Lists commands in the inclusive range {@code [first, last]}.
      * Negative numbers are relative to the most recent entry
      * (e.g. -1 = most recent, -2 = second most recent).
+     *
      * @param first Start of range (negative for relative)
      * @param last  End of range (negative for relative, 0 = last)
      * @return List of history entries in order
      */
-    List<Entry> list(final int first, final int last) {
-        final List<Entry> result = new ArrayList<>();
-        final int actualFirst = this.resolveNumber(first);
-        final int actualLast = last == 0 ? this.lastNumber() : this.resolveNumber(last);
-        if (actualFirst >= 1 && actualLast >= actualFirst) {
-            for (int num = actualFirst; num <= actualLast; num = num + 1) {
+    List<HistoryEntry> list(final int first, final int last) {
+        final List<HistoryEntry> result = new ArrayList<>(0);
+        final int start = this.resolveNumber(first);
+        final int finish;
+        if (last == 0) {
+            finish = this.lastNumber();
+        } else {
+            finish = this.resolveNumber(last);
+        }
+        if (start >= 1 && finish >= start) {
+            for (int num = start; num <= finish; num = num + 1) {
                 final String cmd = this.get(num);
                 if (cmd != null) {
-                    result.add(new Entry(num, cmd));
+                    result.add(new HistoryEntry(num, cmd));
                 }
             }
         }
         return result;
     }
 
-    /**
-     * Resolves a possibly-negative history number to an absolute number.
-     * @param number The number to resolve (negative = relative to last)
-     * @return Absolute history number, or -1 when the history is empty
-     */
     private int resolveNumber(final int number) {
         int result = -1;
         if (this.count != 0) {
@@ -158,43 +168,16 @@ final class CommandHistory {
         return result;
     }
 
-    /**
-     * Computes the buffer index for a given history number.
-     * @param number The history number
-     * @return Buffer index, or -1 when the number is out of range
-     */
     private int indexForNumber(final int number) {
         int result = -1;
         if (this.count < this.capacity) {
             result = number - 1;
         } else {
-            final int offset = number - (this.nextNumber - this.count);
+            final int offset = number - (this.counter - this.count);
             if (offset >= 0 && offset < this.count) {
                 result = (this.head + offset) % this.capacity;
             }
         }
         return result;
-    }
-
-    /**
-     * A single history entry (number + command text).
-     * @since 1.0
-     */
-    static final class Entry {
-        private final int number;
-        private final String command;
-
-        Entry(final int number, final String command) {
-            this.number = number;
-            this.command = command;
-        }
-
-        int number() {
-            return this.number;
-        }
-
-        String command() {
-            return this.command;
-        }
     }
 }

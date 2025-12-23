@@ -8,6 +8,7 @@
  * {@link io.github.andreoss.sh4j.lexer.Lexer} and emits
  * {@link io.github.andreoss.sh4j.parser.Node} subclasses
  * that the executor walks.
+ *
  * @since 1.0
  */
 package io.github.andreoss.sh4j.parser;

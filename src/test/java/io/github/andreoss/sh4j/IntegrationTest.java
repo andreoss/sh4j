@@ -11,24 +11,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests for Integration.
  * @since 1.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
 public final class IntegrationTest {
 
-    @Rule
-    public TemporaryFolder tempdir = new TemporaryFolder();
+    @TempDir
+    private static Path root;
 
     @Test
-    public void echoHello() throws IOException {
-        Assert.assertEquals(
+    void echoHello() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("echo.sh", String.format("echo hello%n")).getAbsolutePath()
@@ -37,32 +37,32 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void trueCommand() throws IOException {
-        Assert.assertEquals(
+    void trueCommand() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(this.writeScript("true.sh", String.format("true%n")).getAbsolutePath())
         );
     }
 
     @Test
-    public void falseCommand() throws IOException {
-        Assert.assertEquals(
+    void falseCommand() throws IOException {
+        Assertions.assertEquals(
             1,
             Main.runScript(this.writeScript("false.sh", String.format("false%n")).getAbsolutePath())
         );
     }
 
     @Test
-    public void pwdCommand() throws IOException {
-        Assert.assertEquals(
+    void pwdCommand() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(this.writeScript("pwd.sh", String.format("pwd%n")).getAbsolutePath())
         );
     }
 
     @Test
-    public void exitFortyTwo() throws IOException {
-        Assert.assertEquals(
+    void exitFortyTwo() throws IOException {
+        Assertions.assertEquals(
             42,
             Main.runScript(
                 this.writeScript("exitFortyTwo.sh", String.format("exit 42%n")).getAbsolutePath()
@@ -71,8 +71,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void pipelineEchoCat() throws IOException {
-        Assert.assertEquals(
+    void pipelineEchoCat() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("pipe.sh", String.format("echo hello | cat%n")).getAbsolutePath()
@@ -81,8 +81,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void childJvmCatFileProducesVisibleStdout() throws Exception {
-        final File probe = this.tempdir.newFile("probe.txt");
+    void childJvmCatFileProducesVisibleStdout() throws Exception {
+        final File probe = TempDirs.file(IntegrationTest.root, "probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
         }
@@ -100,25 +100,25 @@ public final class IntegrationTest {
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
         final int exitCode = proc.waitFor();
-        Assert.assertEquals(
-            String.format("sh4j exit code; output: %s", out),
+        Assertions.assertEquals(
             0,
-            exitCode
+            exitCode,
+            String.format("sh4j exit code; output: %s", out)
         );
-        Assert.assertTrue(
-            String.format("external cat stdout must reach test; got: '%s'", out),
-            out.contains("hello-from-cat")
+        Assertions.assertTrue(
+            out.contains("hello-from-cat"),
+            String.format("external cat stdout must reach test; got: '%s'", out)
         );
     }
 
     @Test
-    public void nativeBinaryCatProbeSmoke() throws Exception {
+    void nativeBinaryCatProbeSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.Assume.assumeTrue(
-            "target/sh4j native binary not built; skipping native smoke",
-            nativebin.isFile() && nativebin.canExecute()
+        Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native smoke"
         );
-        final File probe = this.tempdir.newFile("nprobe.txt");
+        final File probe = TempDirs.file(IntegrationTest.root, "nprobe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-native%n"));
         }
@@ -133,31 +133,31 @@ public final class IntegrationTest {
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
         final int exitCode = proc.waitFor();
-        Assert.assertEquals(
-            String.format("native sh4j exit code; output: %s", out),
+        Assertions.assertEquals(
             0,
-            exitCode
+            exitCode,
+            String.format("native sh4j exit code; output: %s", out)
         );
-        Assert.assertTrue(
-            String.format("native sh4j must propagate external cat stdout; got: '%s'", out),
-            out.contains("hello-native")
+        Assertions.assertTrue(
+            out.contains("hello-native"),
+            String.format("native sh4j must propagate external cat stdout; got: '%s'", out)
         );
     }
 
     @Test
-    public void childJvmEchoPipeCat() throws Exception {
+    void childJvmEchoPipeCat() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("h_pipe.sh", String.format("echo child-pipe | cat%n"))
         );
-        Assert.assertTrue(
-            String.format("pipeline stdout missing; got: '%s'", out),
-            out.contains("child-pipe")
+        Assertions.assertTrue(
+            out.contains("child-pipe"),
+            String.format("pipeline stdout missing; got: '%s'", out)
         );
     }
 
     @Test
-    public void childJvmCatProbe() throws Exception {
-        final File probe = this.tempdir.newFile("h_probe.txt");
+    void childJvmCatProbe() throws Exception {
+        final File probe = TempDirs.file(IntegrationTest.root, "h_probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("child-probe%n"));
         }
@@ -167,29 +167,29 @@ public final class IntegrationTest {
                 String.format("cat %s%n", probe.getAbsolutePath())
             )
         );
-        Assert.assertTrue(
-            String.format("cat stdout missing; got: '%s'", out),
-            out.contains("child-probe")
+        Assertions.assertTrue(
+            out.contains("child-probe"),
+            String.format("cat stdout missing; got: '%s'", out)
         );
     }
 
     @Test
-    public void childJvmForLoop() throws Exception {
+    void childJvmForLoop() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("h_for.sh", String.format("for i in 1 2 3; do echo $i; done%n"))
         );
-        Assert.assertTrue(
-            String.format("for-loop body missing; got: '%s'", out),
-            out.contains("1") && out.contains("2") && out.contains("3")
+        Assertions.assertTrue(
+            out.contains("1") && out.contains("2") && out.contains("3"),
+            String.format("for-loop body missing; got: '%s'", out)
         );
     }
 
     @Test
-    public void nativeBinaryPipelineSmoke() throws Exception {
+    void nativeBinaryPipelineSmoke() throws Exception {
         final File nativebin = new File("target/sh4j");
-        org.junit.Assume.assumeTrue(
-            "target/sh4j native binary not built; skipping native pipeline smoke",
-            nativebin.isFile() && nativebin.canExecute()
+        Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native pipeline smoke"
         );
         final ProcessBuilder builder = new ProcessBuilder(
             nativebin.getAbsolutePath(),
@@ -202,20 +202,20 @@ public final class IntegrationTest {
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
         final int exitCode = proc.waitFor();
-        Assert.assertEquals(
-            String.format("native sh4j pipeline exit code; output: %s", out),
+        Assertions.assertEquals(
             0,
-            exitCode
+            exitCode,
+            String.format("native sh4j pipeline exit code; output: %s", out)
         );
-        Assert.assertTrue(
-            String.format("native sh4j pipeline must propagate stdout; got: '%s'", out),
-            out.contains("native-pipe")
+        Assertions.assertTrue(
+            out.contains("native-pipe"),
+            String.format("native sh4j pipeline must propagate stdout; got: '%s'", out)
         );
     }
 
     @Test
-    public void pipelineMultiple() throws IOException {
-        Assert.assertEquals(
+    void pipelineMultiple() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -227,8 +227,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void andIfBothSucceed() throws IOException {
-        Assert.assertEquals(
+    void andIfBothSucceed() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("and.sh", String.format("true && echo ok%n")).getAbsolutePath()
@@ -237,8 +237,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void andIfFirstFails() throws IOException {
-        Assert.assertEquals(
+    void andIfFirstFails() throws IOException {
+        Assertions.assertEquals(
             1,
             Main.runScript(
                 this.writeScript(
@@ -250,8 +250,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void orIfFirstFails() throws IOException {
-        Assert.assertEquals(
+    void orIfFirstFails() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("or.sh", String.format("false || echo ok%n")).getAbsolutePath()
@@ -260,8 +260,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void orIfFirstSucceeds() throws IOException {
-        Assert.assertEquals(
+    void orIfFirstSucceeds() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -273,8 +273,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void bangInvertsExit() throws IOException {
-        Assert.assertEquals(
+    void bangInvertsExit() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("bang.sh", String.format("! false%n")).getAbsolutePath()
@@ -283,8 +283,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void bangInvertsTrueToFalse() throws IOException {
-        Assert.assertEquals(
+    void bangInvertsTrueToFalse() throws IOException {
+        Assertions.assertEquals(
             1,
             Main.runScript(
                 this.writeScript("bang_true.sh", String.format("! true%n")).getAbsolutePath()
@@ -293,8 +293,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void sequentialSemicolon() throws IOException {
-        Assert.assertEquals(
+    void sequentialSemicolon() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("semi.sh", String.format("echo a; echo b%n")).getAbsolutePath()
@@ -303,8 +303,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void backgroundAmpersand() throws IOException {
-        Assert.assertEquals(
+    void backgroundAmpersand() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("bg.sh", String.format("sleep 0 &%n")).getAbsolutePath()
@@ -313,8 +313,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void assignmentThenCommand() throws IOException {
-        Assert.assertEquals(
+    void assignmentThenCommand() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -326,8 +326,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void assignmentOnlyPersists() throws IOException {
-        Assert.assertEquals(
+    void assignmentOnlyPersists() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("assign_only.sh", String.format("FOO=bar%n")).getAbsolutePath()
@@ -336,8 +336,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void multipleAssignments() throws IOException {
-        Assert.assertEquals(
+    void multipleAssignments() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("multi_assign.sh", String.format("A=1 B=2%n")).getAbsolutePath()
@@ -346,9 +346,9 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void outputRedirection() throws IOException {
-        final File outfile = this.tempdir.newFile("out.txt");
-        Assert.assertEquals(
+    void outputRedirection() throws IOException {
+        final File outfile = TempDirs.file(IntegrationTest.root, "out.txt");
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -357,18 +357,18 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assert.assertTrue(outfile.exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(outfile.exists());
+        Assertions.assertEquals(
             "test",
             new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
         );
     }
 
     @Test
-    public void inputRedirection() throws IOException {
-        final File infile = this.tempdir.newFile("in.txt");
+    void inputRedirection() throws IOException {
+        final File infile = TempDirs.file(IntegrationTest.root, "in.txt");
         Files.writeString(infile.toPath(), String.format("input data%n"));
-        Assert.assertEquals(
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -380,9 +380,9 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void appendRedirection() throws IOException {
-        final File outfile = this.tempdir.newFile("append.txt");
-        Assert.assertEquals(
+    void appendRedirection() throws IOException {
+        final File outfile = TempDirs.file(IntegrationTest.root, "append.txt");
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -394,17 +394,17 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assert.assertTrue("append.txt should exist", outfile.exists());
-        Assert.assertEquals(
+        Assertions.assertTrue(outfile.exists(), "append.txt should exist");
+        Assertions.assertEquals(
             "line2",
             new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
         );
     }
 
     @Test
-    public void clobberRedirection() throws IOException {
-        final File outfile = this.tempdir.newFile("clobber.txt");
-        Assert.assertEquals(
+    void clobberRedirection() throws IOException {
+        final File outfile = TempDirs.file(IntegrationTest.root, "clobber.txt");
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -416,19 +416,19 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assert.assertTrue(outfile.exists());
+        Assertions.assertTrue(outfile.exists());
     }
 
     @Test
-    public void stderrRedirect() throws IOException {
-        Assert.assertEquals(
+    void stderrRedirect() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
                     "stderr_redir.sh",
                     String.format(
                         "echo test 2>%s%n",
-                        this.tempdir.newFile("stderr.txt").getAbsolutePath()
+                        TempDirs.file(IntegrationTest.root, "stderr.txt").getAbsolutePath()
                     )
                 ).getAbsolutePath()
             )
@@ -436,9 +436,9 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void variableExpansionWithRedirect() throws IOException {
-        final File outfile = this.tempdir.newFile("out2.txt");
-        Assert.assertEquals(
+    void variableExpansionWithRedirect() throws IOException {
+        final File outfile = TempDirs.file(IntegrationTest.root, "out2.txt");
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript(
@@ -450,16 +450,19 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
-        Assert.assertTrue("out2.txt should exist", outfile.exists());
-        Assert.assertFalse(
-            "content should not be empty",
-            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim().isEmpty()
+        Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
+        Assertions.assertFalse(
+            new String(
+                Files.readAllBytes(outfile.toPath()),
+                StandardCharsets.UTF_8
+            ).trim().isEmpty(),
+            "content should not be empty"
         );
     }
 
     @Test
-    public void complexScript() throws IOException {
-        Assert.assertEquals(
+    void complexScript() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("complex.sh", String.format("MSG=hello%necho $MSG%n"))
@@ -469,8 +472,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void variableExpansion() throws IOException {
-        Assert.assertEquals(
+    void variableExpansion() throws IOException {
+        Assertions.assertEquals(
             0,
             Main.runScript(
                 this.writeScript("varexp.sh", String.format("echo $SHELL%n")).getAbsolutePath()
@@ -479,8 +482,8 @@ public final class IntegrationTest {
     }
 
     @Test
-    public void commandNotFound() throws IOException {
-        Assert.assertEquals(
+    void commandNotFound() throws IOException {
+        Assertions.assertEquals(
             127,
             Main.runScript(
                 this.writeScript(
@@ -496,55 +499,65 @@ public final class IntegrationTest {
      * preserved literally; no expansion occurs.
      */
     @Test
-    public void singleQuotesPreserveLiterally() throws Exception {
-        final File script = this.writeScript(
-            "sq.sh", String.format("X=val%necho '$X'%n")
+    void singleQuotesPreserveLiterally() throws Exception {
+        Assertions.assertEquals(
+            String.format("$X%n"),
+            this.runChildJvm(
+                this.writeScript("sq.sh", String.format("X=val%necho '$X'%n"))
+            )
         );
-        Assert.assertEquals("$X\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.2.3 Double-Quotes - variables expand, single quotes are literal.
      */
     @Test
-    public void doubleQuotesAllowVariableExpansion() throws Exception {
-        final File script = this.writeScript(
-            "dq.sh", String.format("X=val%necho \"X=$X\"%n")
+    void doubleQuotesAllowVariableExpansion() throws Exception {
+        Assertions.assertEquals(
+            String.format("X=val%n"),
+            this.runChildJvm(
+                this.writeScript("dq.sh", String.format("X=val%necho \"X=$X\"%n"))
+            )
         );
-        Assert.assertEquals("X=val\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.2 Parameter Expansion - ${var:-word} default if unset.
      */
     @Test
-    public void parameterDefaultExpansion() throws Exception {
-        final File script = this.writeScript(
-            "pe.sh", String.format("echo ${UNSET:-default}%n")
+    void parameterDefaultExpansion() throws Exception {
+        Assertions.assertEquals(
+            String.format("default%n"),
+            this.runChildJvm(
+                this.writeScript("pe.sh", String.format("echo ${UNSET:-default}%n"))
+            )
         );
-        Assert.assertEquals("default\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.3 Command Substitution - $(...) replaced by its stdout.
      */
     @Test
-    public void commandSubstitutionDollarParen() throws Exception {
-        final File script = this.writeScript(
-            "cs.sh", String.format("echo $(echo nested)%n")
+    void commandSubstitutionDollarParen() throws Exception {
+        Assertions.assertEquals(
+            String.format("nested%n"),
+            this.runChildJvm(
+                this.writeScript("cs.sh", String.format("echo $(echo nested)%n"))
+            )
         );
-        Assert.assertEquals("nested\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - $((expression)).
      */
     @Test
-    public void arithmeticExpansion() throws Exception {
-        final File script = this.writeScript(
-            "ae.sh", String.format("echo $((2 * (3 + 4)))%n")
+    void arithmeticExpansion() throws Exception {
+        Assertions.assertEquals(
+            String.format("14%n"),
+            this.runChildJvm(
+                this.writeScript("ae.sh", String.format("echo $((2 * (3 + 4)))%n"))
+            )
         );
-        Assert.assertEquals("14\n", this.runChildJvm(script));
     }
 
     /**
@@ -552,35 +565,47 @@ public final class IntegrationTest {
      * command.
      */
     @Test
-    public void hereDocument() throws Exception {
-        final File script = this.writeScript(
-            "hd.sh", String.format("cat <<EOF%nfirst line%nsecond line%nEOF%n")
+    void hereDocument() throws Exception {
+        Assertions.assertEquals(
+            String.format("first line%nsecond line%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "hd.sh", String.format("cat <<EOF%nfirst line%nsecond line%nEOF%n")
+                )
+            )
         );
-        Assert.assertEquals("first line\nsecond line\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.1 If Conditional Construct - if/elif/else/fi.
      */
     @Test
-    public void ifThenElseConstruct() throws Exception {
-        final File script = this.writeScript(
-            "ite.sh",
-            String.format("if false; then echo no; else echo yes; fi%n")
+    void ifThenElseConstruct() throws Exception {
+        Assertions.assertEquals(
+            String.format("yes%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "ite.sh",
+                    String.format("if false; then echo no; else echo yes; fi%n")
+                )
+            )
         );
-        Assert.assertEquals("yes\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.4 Case Conditional Construct - case/in/esac.
      */
     @Test
-    public void caseConditionalConstruct() throws Exception {
-        final File script = this.writeScript(
-            "case.sh",
-            String.format("x=banana%ncase $x in%n  apple) echo a;;%n  banana) echo b;;%nesac%n")
+    void caseConditionalConstruct() throws Exception {
+        Assertions.assertEquals(
+            String.format("b%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "case.sh",
+                    String.format("x=banana%ncase $x in%n  apple) echo a;;%n  banana) echo b;;%nesac%n")
+                )
+            )
         );
-        Assert.assertEquals("b\n", this.runChildJvm(script));
     }
 
     /**
@@ -588,24 +613,33 @@ public final class IntegrationTest {
      * positional parameters.
      */
     @Test
-    public void functionDefinitionAndCall() throws Exception {
-        final File script = this.writeScript(
-            "fn.sh",
-            String.format("greet() { echo hi $1; }%ngreet world%n")
+    void functionDefinitionAndCall() throws Exception {
+        Assertions.assertEquals(
+            String.format("hi world%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "fn.sh",
+                    String.format("greet() { echo hi $1; }%ngreet world%n")
+                )
+            )
         );
-        Assert.assertEquals("hi world\n", this.runChildJvm(script));
     }
 
     /**
-     * POSIX 2.5.2 Special Parameters, part of POSIX 2.5 Parameters and Variables - $# yields positional-parameter count.
+     * POSIX 2.5.2 Special Parameters, part of POSIX 2.5 Parameters and
+     * Variables - $# yields positional-parameter count.
      */
     @Test
-    public void specialParameterPositionalCount() throws Exception {
-        final File script = this.writeScript(
-            "dollar-hash.sh",
-            String.format("set -- a b c%necho count=$#%n")
+    void specialParameterPositionalCount() throws Exception {
+        Assertions.assertEquals(
+            String.format("count=3%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "dollar-hash.sh",
+                    String.format("set -- a b c%necho count=$#%n")
+                )
+            )
         );
-        Assert.assertEquals("count=3\n", this.runChildJvm(script));
     }
 
     /**
@@ -613,39 +647,47 @@ public final class IntegrationTest {
      * loses any special meaning.
      */
     @Test
-    public void backslashEscapesDollar() throws Exception {
-        final File script = this.writeScript(
-            "bs.sh", String.format("X=val%necho \\$X%n")
+    void backslashEscapesDollar() throws Exception {
+        Assertions.assertEquals(
+            String.format("$X%n"),
+            this.runChildJvm(
+                this.writeScript("bs.sh", String.format("X=val%necho \\$X%n"))
+            )
         );
-        Assert.assertEquals("$X\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.5 Field Splitting - unquoted expansion is split on IFS.
      */
     @Test
-    public void fieldSplittingOnIfs() throws Exception {
-        final File script = this.writeScript(
-            "fs.sh", String.format("IFS=:%nX=a:b:c%nfor i in $X; do echo $i; done%n")
+    void fieldSplittingOnIfs() throws Exception {
+        Assertions.assertEquals(
+            String.format("a%nb%nc%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "fs.sh", String.format("IFS=:%nX=a:b:c%nfor i in $X; do echo $i; done%n")
+                )
+            )
         );
-        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.6 Pathname Expansion - glob characters match filenames.
      */
     @Test
-    public void pathnameExpansionGlob() throws Exception {
-        final File dir = this.tempdir.newFolder("globdir");
-        Assert.assertTrue(new File(dir, "alpha.txt").createNewFile());
-        Assert.assertTrue(new File(dir, "beta.txt").createNewFile());
-        Assert.assertTrue(new File(dir, "other.log").createNewFile());
-        final File script = this.writeScript(
-            "glob.sh",
-            String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n", dir.getAbsolutePath())
-        );
-        Assert.assertEquals(
-            "alpha.txt\nbeta.txt\n", this.runChildJvm(script)
+    void pathnameExpansionGlob() throws Exception {
+        final File dir = TempDirs.folder(IntegrationTest.root, "globdir");
+        Assertions.assertTrue(new File(dir, "alpha.txt").createNewFile());
+        Assertions.assertTrue(new File(dir, "beta.txt").createNewFile());
+        Assertions.assertTrue(new File(dir, "other.log").createNewFile());
+        Assertions.assertEquals(
+            String.format("alpha.txt%nbeta.txt%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "glob.sh",
+                    String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n", dir.getAbsolutePath())
+                )
+            )
         );
     }
 
@@ -653,104 +695,120 @@ public final class IntegrationTest {
      * POSIX 2.6.2 Parameter Expansion - ${#var} yields length.
      */
     @Test
-    public void parameterLengthExpansion() throws Exception {
-        final File script = this.writeScript(
-            "plen.sh", String.format("X=hello%necho ${#X}%n")
+    void parameterLengthExpansion() throws Exception {
+        Assertions.assertEquals(
+            String.format("5%n"),
+            this.runChildJvm(
+                this.writeScript("plen.sh", String.format("X=hello%necho ${#X}%n"))
+            )
         );
-        Assert.assertEquals("5\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.2 Parameter Expansion - ${var%suffix} removes shortest suffix.
      */
     @Test
-    public void parameterSuffixRemoval() throws Exception {
-        final File script = this.writeScript(
-            "psuf.sh",
-            String.format("X=foo.tar.gz%necho ${X%%.gz}%n")
+    void parameterSuffixRemoval() throws Exception {
+        Assertions.assertEquals(
+            String.format("foo.tar%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "psuf.sh",
+                    String.format("X=foo.tar.gz%necho ${X%%.gz}%n")
+                )
+            )
         );
-        Assert.assertEquals("foo.tar\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.8.2 Exit Status - `!` inverts the exit status of the pipeline.
      */
     @Test
-    public void bangInvertsPipelineExit() throws Exception {
-        final File script = this.writeScript(
-            "bang.sh", String.format("! true%necho $?%n")
+    void bangInvertsPipelineExit() throws Exception {
+        Assertions.assertEquals(
+            String.format("1%n"),
+            this.runChildJvm(
+                this.writeScript("bang.sh", String.format("! true%necho $?%n"))
+            )
         );
-        Assert.assertEquals("1\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.3 While - body runs while the condition exits zero.
      */
     @Test
-    public void whileLoopCounts() throws Exception {
-        final File script = this.writeScript(
-            "while.sh",
-            String.format("i=1%nwhile [ $i -le 3 ]; do echo $i; i=$((i+1)); done%n")
+    void whileLoopCounts() throws Exception {
+        Assertions.assertEquals(
+            String.format("1%n2%n3%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "while.sh",
+                    String.format("i=1%nwhile [ $i -le 3 ]; do echo $i; i=$((i+1)); done%n")
+                )
+            )
         );
-        Assert.assertEquals("1\n2\n3\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.5 Until - body runs while the condition exits non-zero.
      */
     @Test
-    public void untilLoopCounts() throws Exception {
-        final File script = this.writeScript(
-            "until.sh",
-            String.format("i=1%nuntil [ $i -gt 3 ]; do echo $i; i=$((i+1)); done%n")
+    void untilLoopCounts() throws Exception {
+        Assertions.assertEquals(
+            String.format("1%n2%n3%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "until.sh",
+                    String.format("i=1%nuntil [ $i -gt 3 ]; do echo $i; i=$((i+1)); done%n")
+                )
+            )
         );
-        Assert.assertEquals("1\n2\n3\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.3 Lists - AND-list short-circuits on first failure.
      */
     @Test
-    public void andOrListShortCircuit() throws Exception {
+    void andOrListShortCircuit() throws Exception {
         final File script = this.writeScript(
             "andor.sh",
             String.format("false && echo skip || echo ran%n")
         );
-        Assert.assertEquals("ran\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("ran%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.2 For - iterates over the given word list.
      */
     @Test
-    public void forIteratesWords() throws Exception {
+    void forIteratesWords() throws Exception {
         final File script = this.writeScript(
             "for.sh",
             String.format("for n in one two three; do echo $n; done%n")
         );
-        Assert.assertEquals("one\ntwo\nthree\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("one%ntwo%nthree%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.5.1 Positional Parameters - $1, $2 access individual params.
      */
     @Test
-    public void positionalParametersDollarOneAndTwo() throws Exception {
+    void positionalParametersDollarOneAndTwo() throws Exception {
         final File script = this.writeScript(
             "pos.sh", String.format("set -- alpha beta gamma%necho $1-$2%n")
         );
-        Assert.assertEquals("alpha-beta\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("alpha-beta%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.1 Tilde Expansion - leading ~ expands to $HOME.
      */
     @Test
-    public void tildeExpansionToHome() throws Exception {
+    void tildeExpansionToHome() throws Exception {
         final File script = this.writeScript(
             "tilde.sh", String.format("HOME=/tmp/home%necho ~/x%n")
         );
-        Assert.assertEquals("/tmp/home/x\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("/tmp/home/x%n"), this.runChildJvm(script));
     }
 
     /**
@@ -758,35 +816,35 @@ public final class IntegrationTest {
      * preserved literally.
      */
     @Test
-    public void quoteRemovalEscapedDoubleQuote() throws Exception {
+    void quoteRemovalEscapedDoubleQuote() throws Exception {
         final File script = this.writeScript(
             "qr.sh", String.format("echo \"a\\\"b\"%n")
         );
-        Assert.assertEquals("a\"b\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a\"b%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.7.6 Duplicating Output FD - 2>&1 merges stderr into stdout.
      */
     @Test
-    public void duplicateStderrToStdout() throws Exception {
+    void duplicateStderrToStdout() throws Exception {
         final File script = this.writeScript(
             "dupfd.sh",
             String.format("echo to-out%necho to-err 1>&2 2>&1%n")
         );
-        Assert.assertEquals("to-out\nto-err\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("to-out%nto-err%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.6 Brace Group - { list; } groups commands without subshell.
      */
     @Test
-    public void braceGroupSharesEnvironment() throws Exception {
+    void braceGroupSharesEnvironment() throws Exception {
         final File script = this.writeScript(
             "brace.sh",
             String.format("{ X=inside; }%necho $X%n")
         );
-        Assert.assertEquals("inside\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("inside%n"), this.runChildJvm(script));
     }
 
     /**
@@ -794,46 +852,46 @@ public final class IntegrationTest {
      * unchanged.
      */
     @Test
-    public void subshellEnvironmentIsolated() throws Exception {
+    void subshellEnvironmentIsolated() throws Exception {
         final File script = this.writeScript(
             "sub.sh",
             String.format("X=outer%n(X=inner; echo $X)%necho $X%n")
         );
-        Assert.assertEquals("inner\nouter\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("inner%nouter%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.5.3 PATH - command search finds executables on PATH.
      */
     @Test
-    public void pathSearchFindsExternalCommand() throws Exception {
+    void pathSearchFindsExternalCommand() throws Exception {
         final File script = this.writeScript(
             "path.sh", String.format("echo $(printf hello)%n")
         );
-        Assert.assertEquals("hello\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("hello%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - variable reference inside $((..)).
      */
     @Test
-    public void arithmeticReferencesVariable() throws Exception {
+    void arithmeticReferencesVariable() throws Exception {
         final File script = this.writeScript(
             "arith2.sh", String.format("a=6; b=7%necho $((a * b))%n")
         );
-        Assert.assertEquals("42\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("42%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.8.2 Exit Status - $? carries the last command's exit.
      */
     @Test
-    public void exitStatusPropagatesToDollarQuestion() throws Exception {
+    void exitStatusPropagatesToDollarQuestion() throws Exception {
         final File script = this.writeScript(
             "dollarq.sh",
             String.format("(exit 7)%necho $?%n")
         );
-        Assert.assertEquals("7\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("7%n"), this.runChildJvm(script));
     }
 
     /**
@@ -841,12 +899,12 @@ public final class IntegrationTest {
      * matching prefix.
      */
     @Test
-    public void parameterPrefixRemoval() throws Exception {
+    void parameterPrefixRemoval() throws Exception {
         final File script = this.writeScript(
             "ppref.sh",
             String.format("X=foo.bar.baz%necho ${X#foo.}%n")
         );
-        Assert.assertEquals("bar.baz\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("bar.baz%n"), this.runChildJvm(script));
     }
 
     /**
@@ -854,12 +912,12 @@ public final class IntegrationTest {
      * parsing the rest of the command.
      */
     @Test
-    public void aliasSubstitution() throws Exception {
+    void aliasSubstitution() throws Exception {
         final File script = this.writeScript(
             "alias.sh",
             String.format("alias greet='echo hi'%ngreet there%n")
         );
-        Assert.assertEquals("hi there\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("hi there%n"), this.runChildJvm(script));
     }
 
     /**
@@ -867,14 +925,14 @@ public final class IntegrationTest {
      * opens a file for both read and write.
      */
     @Test
-    public void readWriteRedirection() throws Exception {
-        final File data = this.tempdir.newFile("rw.dat");
-        Files.writeString(data.toPath(), "stored\n");
+    void readWriteRedirection() throws Exception {
+        final File data = TempDirs.file(IntegrationTest.root, "rw.dat");
+        Files.writeString(data.toPath(), String.format("stored%n"));
         final File script = this.writeScript(
             "rw.sh",
             String.format("cat <>%s%n", data.getAbsolutePath())
         );
-        Assert.assertEquals("stored\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("stored%n"), this.runChildJvm(script));
     }
 
     /**
@@ -882,15 +940,18 @@ public final class IntegrationTest {
      * first command failure.
      */
     @Test
-    public void setEAbortsOnFirstFailure() throws Exception {
+    void setEAbortsOnFirstFailure() throws Exception {
         final File script = this.writeScript(
             "sete.sh",
             String.format("set -e%nfalse%necho should-not-print%n")
         );
         final String out = this.runChildJvmAllowingFailure(script);
-        Assert.assertFalse(
-            "set -e should abort before echo runs: " + out,
-            out.contains("should-not-print")
+        Assertions.assertFalse(
+            out.contains("should-not-print"),
+            String.format(
+                "set -e should abort before echo runs: %s",
+                out
+            )
         );
     }
 
@@ -898,24 +959,24 @@ public final class IntegrationTest {
      * POSIX 2.14 export builtin - marks variable for child environment.
      */
     @Test
-    public void exportMakesVariableVisibleToSubshell() throws Exception {
+    void exportMakesVariableVisibleToSubshell() throws Exception {
         final File script = this.writeScript(
             "export.sh",
             String.format("X=outer%nexport X%n(echo $X)%n")
         );
-        Assert.assertEquals("outer\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("outer%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 unset builtin - removes a variable.
      */
     @Test
-    public void unsetRemovesVariable() throws Exception {
+    void unsetRemovesVariable() throws Exception {
         final File script = this.writeScript(
             "unset.sh",
             String.format("X=hello%nunset X%necho [${X-empty}]%n")
         );
-        Assert.assertEquals("[empty]\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("[empty]%n"), this.runChildJvm(script));
     }
 
     /**
@@ -923,35 +984,48 @@ public final class IntegrationTest {
      * the rest.
      */
     @Test
-    public void shiftDropsFirstPositional() throws Exception {
-        final File script = this.writeScript(
-            "shift.sh",
-            String.format("set -- a b c%nshift%necho $1-$2%n")
+    void shiftDropsFirstPositional() throws Exception {
+        Assertions.assertEquals(
+            String.format("b-c%n"),
+            this.runChildJvm(
+                this.writeScript(
+                    "shift.sh",
+                    String.format("set -- a b c%nshift%necho $1-$2%n")
+                )
+            )
         );
-        Assert.assertEquals("b-c\n", this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 readonly builtin - prevents reassignment.
      */
     @Test
-    public void readonlyPreventsReassignment() throws Exception {
+    void readonlyPreventsReassignment() throws Exception {
         final File script = this.writeScript(
             "ro.sh",
             String.format("readonly R=fixed%nR=changed%necho $R%n")
         );
         final String out = this.runChildJvmAllowingFailure(script);
-        Assert.assertTrue(
-            "expected readonly diagnostic, got: " + out,
-            out.contains("readonly")
+        Assertions.assertTrue(
+            out.contains("readonly"),
+            String.format(
+                "expected readonly diagnostic, got: %s",
+                out
+            )
         );
-        Assert.assertFalse(
-            "assignment to a readonly variable must abort a non-interactive shell, got: " + out,
-            out.contains("fixed")
+        Assertions.assertFalse(
+            out.contains("fixed"),
+            String.format(
+                "assignment to a readonly variable must abort a non-interactive shell, got: %s",
+                out
+            )
         );
-        Assert.assertFalse(
-            "readonly should block reassignment, got: " + out,
-            out.contains("changed")
+        Assertions.assertFalse(
+            out.contains("changed"),
+            String.format(
+                "readonly should block reassignment, got: %s",
+                out
+            )
         );
     }
 
@@ -959,27 +1033,31 @@ public final class IntegrationTest {
      * POSIX 2.14 true / false builtins - exit 0 / 1 respectively.
      */
     @Test
-    public void trueAndFalseExitCodes() throws Exception {
+    void trueAndFalseExitCodes() throws Exception {
         final File script = this.writeScript(
             "tf.sh",
             String.format("true; echo $?%nfalse; echo $?%n")
         );
-        Assert.assertEquals("0\n1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n1%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 pwd builtin - prints the working directory.
      */
     @Test
-    public void pwdPrintsWorkingDirectory() throws Exception {
-        final File dir = this.tempdir.newFolder("wd");
+    void pwdPrintsWorkingDirectory() throws Exception {
+        final File dir = TempDirs.folder(IntegrationTest.root, "wd");
         final File script = this.writeScript(
             "pwd.sh",
             String.format("cd %s%npwd%n", dir.getAbsolutePath())
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue(
-            "expected pwd to end with /wd, got " + out, out.endsWith("/wd")
+        Assertions.assertTrue(
+            out.endsWith("/wd"),
+            String.format(
+                "expected pwd to end with /wd, got %s",
+                out
+            )
         );
     }
 
@@ -987,86 +1065,95 @@ public final class IntegrationTest {
      * POSIX 2.14 colon builtin - {@code :} is a no-op returning 0.
      */
     @Test
-    public void colonBuiltinIsNoop() throws Exception {
+    void colonBuiltinIsNoop() throws Exception {
         final File script = this.writeScript(
             "colon.sh",
             String.format(":%necho $?%n")
         );
-        Assert.assertEquals("0\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 cd builtin - changes the working directory.
      */
     @Test
-    public void cdChangesWorkingDirectory() throws Exception {
-        final File target = this.tempdir.newFolder("cd-target");
+    void cdChangesWorkingDirectory() throws Exception {
+        final File target = TempDirs.folder(IntegrationTest.root, "cd-target");
         final File script = this.writeScript(
             "cd.sh",
             String.format("cd %s%npwd%n", target.getAbsolutePath())
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue("expected to land in /cd-target, got " + out, out.endsWith("/cd-target"));
+        Assertions.assertTrue(
+            out.endsWith("/cd-target"),
+            String.format("expected to land in /cd-target, got %s", out)
+        );
     }
 
     /**
      * POSIX 2.14 eval builtin - parses and runs its arguments as shell input.
      */
     @Test
-    public void evalRunsConstructedCommand() throws Exception {
+    void evalRunsConstructedCommand() throws Exception {
         final File script = this.writeScript(
             "eval.sh",
             String.format("CMD='echo dynamic'%neval $CMD%n")
         );
-        Assert.assertEquals("dynamic\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("dynamic%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 read builtin - reads one line from stdin into VAR.
      */
     @Test
-    public void readBuiltinFromStdinViaHeredoc() throws Exception {
+    void readBuiltinFromStdinViaHeredoc() throws Exception {
         final File script = this.writeScript(
             "read.sh",
             String.format("read VAR <<EOF%nhello world%nEOF%necho got=$VAR%n")
         );
-        Assert.assertEquals("got=hello world\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("got=hello world%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 getopts builtin - parses option flags.
      */
     @Test
-    public void getoptsParsesSingleFlag() throws Exception {
+    void getoptsParsesSingleFlag() throws Exception {
         final File script = this.writeScript(
             "getopts.sh",
             String.format("set -- -a foo%nwhile getopts a: opt; do echo $opt:$OPTARG; done%n")
         );
-        Assert.assertEquals("a:foo\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a:foo%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 umask builtin - default mask is 0022.
      */
     @Test
-    public void umaskDefaultIsPrintable() throws Exception {
+    void umaskDefaultIsPrintable() throws Exception {
         final File script = this.writeScript(
             "umask.sh", String.format("umask%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue("expected 4-digit octal, got " + out, out.matches("\\d{4}"));
+        Assertions.assertTrue(
+            out.matches("\\d{4}"),
+            String.format("expected 4-digit octal, got %s", out)
+        );
     }
 
     /**
      * POSIX 2.5.2 Special Parameters - $$ is the shell's PID (positive int).
      */
     @Test
-    public void specialParameterDollarDollarIsPid() throws Exception {
+    void specialParameterDollarDollarIsPid() throws Exception {
         final File script = this.writeScript(
             "pid.sh", String.format("echo $$%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue("expected positive int, got " + out, out.matches("\\d+"));
+        Assertions.assertTrue(
+            out.matches("\\d+"),
+            String.format("expected positive int, got %s", out)
+        );
     }
 
     /**
@@ -1074,15 +1161,18 @@ public final class IntegrationTest {
      * when var is unset.
      */
     @Test
-    public void parameterErrorIfUnset() throws Exception {
+    void parameterErrorIfUnset() throws Exception {
         final File script = this.writeScript(
             "perr.sh",
             String.format("echo ${UNSET_REQ:?required}%n")
         );
         final String out = this.runChildJvmAllowingFailure(script);
-        Assert.assertTrue(
-            "expected error mentioning UNSET_REQ/required, got: " + out,
-            out.contains("UNSET_REQ") || out.contains("required")
+        Assertions.assertTrue(
+            out.contains("UNSET_REQ") || out.contains("required"),
+            String.format(
+                "expected error mentioning UNSET_REQ/required, got: %s",
+                out
+            )
         );
     }
 
@@ -1091,12 +1181,12 @@ public final class IntegrationTest {
      * var is set non-empty.
      */
     @Test
-    public void parameterAlternativeIfSet() throws Exception {
+    void parameterAlternativeIfSet() throws Exception {
         final File script = this.writeScript(
             "palt.sh",
             String.format("X=v%necho ${X:+present}%necho ${UNSET:+present}%n")
         );
-        Assert.assertEquals("present\n\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("present%n%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1104,12 +1194,12 @@ public final class IntegrationTest {
      * pipeline.
      */
     @Test
-    public void multiStagePipeline() throws Exception {
+    void multiStagePipeline() throws Exception {
         final File script = this.writeScript(
             "pipe.sh",
             String.format("echo hello | tr 'a-z' 'A-Z' | tr -d 'L'%n")
         );
-        Assert.assertEquals("HEO\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("HEO%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1117,14 +1207,14 @@ public final class IntegrationTest {
      * a file to the command's stdin.
      */
     @Test
-    public void inputRedirectionFromFile() throws Exception {
-        final File data = this.tempdir.newFile("in.dat");
-        Files.writeString(data.toPath(), "feed\n");
+    void inputRedirectionFromFile() throws Exception {
+        final File data = TempDirs.file(IntegrationTest.root, "in.dat");
+        Files.writeString(data.toPath(), String.format("feed%n"));
         final File script = this.writeScript(
             "redir.sh",
             String.format("cat <%s%n", data.getAbsolutePath())
         );
-        Assert.assertEquals("feed\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("feed%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1132,9 +1222,9 @@ public final class IntegrationTest {
      * directory recorded in OLDPWD.
      */
     @Test
-    public void cdDashRevisitsPreviousDirectory() throws Exception {
-        final File first = this.tempdir.newFolder("first");
-        final File second = this.tempdir.newFolder("second");
+    void cdDashRevisitsPreviousDirectory() throws Exception {
+        final File first = TempDirs.folder(IntegrationTest.root, "first");
+        final File second = TempDirs.folder(IntegrationTest.root, "second");
         final File script = this.writeScript(
             "cdback.sh",
             String.format(
@@ -1143,7 +1233,10 @@ public final class IntegrationTest {
             )
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue("expected to return to /first, got " + out, out.endsWith("/first"));
+        Assertions.assertTrue(
+            out.endsWith("/first"),
+            String.format("expected to return to /first, got %s", out)
+        );
     }
 
     /**
@@ -1151,14 +1244,17 @@ public final class IntegrationTest {
      * name (builtin / function / file / not found).
      */
     @Test
-    public void typeBuiltinReportsBuiltin() throws Exception {
+    void typeBuiltinReportsBuiltin() throws Exception {
         final File script = this.writeScript(
             "type.sh", String.format("type echo%n")
         );
         final String out = this.runChildJvm(script);
-        Assert.assertTrue(
-            "expected output to mention echo as a builtin, got: " + out,
-            out.contains("echo")
+        Assertions.assertTrue(
+            out.contains("echo"),
+            String.format(
+                "expected output to mention echo as a builtin, got: %s",
+                out
+            )
         );
     }
 
@@ -1166,12 +1262,12 @@ public final class IntegrationTest {
      * POSIX 2.14 command -v - prints the command location / kind.
      */
     @Test
-    public void commandDashVReportsBuiltin() throws Exception {
+    void commandDashVReportsBuiltin() throws Exception {
         final File script = this.writeScript(
             "cmdv.sh", String.format("command -v cd%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertEquals("cd", out);
+        Assertions.assertEquals("cd", out);
     }
 
     /**
@@ -1179,11 +1275,11 @@ public final class IntegrationTest {
      * returns 0.
      */
     @Test
-    public void hashDashRReturnsZero() throws Exception {
+    void hashDashRReturnsZero() throws Exception {
         final File script = this.writeScript(
             "hashr.sh", String.format("hash -r%necho $?%n")
         );
-        Assert.assertEquals("0\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1191,19 +1287,19 @@ public final class IntegrationTest {
      * preserves each region's semantics.
      */
     @Test
-    public void mixedQuotingPreservesEachRegion() throws Exception {
+    void mixedQuotingPreservesEachRegion() throws Exception {
         final File script = this.writeScript(
             "mq.sh",
             String.format("X=val%necho '$X'\"$X\"%n")
         );
-        Assert.assertEquals("$Xval\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("$Xval%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.5 Function Definition - recursive function (factorial of 5).
      */
     @Test
-    public void recursiveFunctionFactorial() throws Exception {
+    void recursiveFunctionFactorial() throws Exception {
         final File script = this.writeScript(
             "fact.sh",
             String.format(
@@ -1212,7 +1308,7 @@ public final class IntegrationTest {
                     + "}%nfact 5%n"
             )
         );
-        Assert.assertEquals("120\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("120%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1220,11 +1316,11 @@ public final class IntegrationTest {
      * background jobs are running.
      */
     @Test
-    public void waitWithoutBackgroundJobsReturnsZero() throws Exception {
+    void waitWithoutBackgroundJobsReturnsZero() throws Exception {
         final File script = this.writeScript(
             "wait.sh", String.format("wait%necho $?%n")
         );
-        Assert.assertEquals("0\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1232,14 +1328,14 @@ public final class IntegrationTest {
      * variable-expanded.
      */
     @Test
-    public void heredocQuotedDelimiterPreventsExpansion() throws Exception {
+    void heredocQuotedDelimiterPreventsExpansion() throws Exception {
         final File script = this.writeScript(
             "hdq.sh",
             String.format(
                 "X=val%ncat <<'EOF'%n$X literal%nEOF%n"
             )
         );
-        Assert.assertEquals("$X literal\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("$X literal%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1247,14 +1343,17 @@ public final class IntegrationTest {
      * to the shell.
      */
     @Test
-    public void specialParameterDollarZeroIsScriptName() throws Exception {
+    void specialParameterDollarZeroIsScriptName() throws Exception {
         final File script = this.writeScript(
             "dollar0.sh", String.format("echo $0%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue(
-            "expected $0 to end with /dollar0.sh, got: " + out,
-            out.endsWith("/dollar0.sh")
+        Assertions.assertTrue(
+            out.endsWith("/dollar0.sh"),
+            String.format(
+                "expected $0 to end with /dollar0.sh, got: %s",
+                out
+            )
         );
     }
 
@@ -1263,12 +1362,12 @@ public final class IntegrationTest {
      * NOT expand.
      */
     @Test
-    public void tildeMidWordNotExpanded() throws Exception {
+    void tildeMidWordNotExpanded() throws Exception {
         final File script = this.writeScript(
             "midtilde.sh",
             String.format("HOME=/h%necho a~b%n")
         );
-        Assert.assertEquals("a~b\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a~b%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1276,22 +1375,22 @@ public final class IntegrationTest {
      * integer.
      */
     @Test
-    public void arithmeticNegativeNumbers() throws Exception {
+    void arithmeticNegativeNumbers() throws Exception {
         final File script = this.writeScript(
             "arithneg.sh", String.format("echo $((-3 - 4))%n")
         );
-        Assert.assertEquals("-7\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("-7%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - octal literal (leading 0).
      */
     @Test
-    public void arithmeticOctalLiteral() throws Exception {
+    void arithmeticOctalLiteral() throws Exception {
         final File script = this.writeScript(
             "octal.sh", String.format("echo $((010 + 1))%n")
         );
-        Assert.assertEquals("9\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("9%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1299,7 +1398,7 @@ public final class IntegrationTest {
      * loop.
      */
     @Test
-    public void nestedWhileInnerBreak() throws Exception {
+    void nestedWhileInnerBreak() throws Exception {
         final File script = this.writeScript(
             "nested.sh",
             String.format(
@@ -1309,7 +1408,7 @@ public final class IntegrationTest {
                     + "i=$((i+1)); done%n"
             )
         );
-        Assert.assertEquals("0.0\n0.1\n1.0\n1.1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0.0%n0.1%n1.0%n1.1%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1317,26 +1416,26 @@ public final class IntegrationTest {
      * within its own scope.
      */
     @Test
-    public void functionShadowsBuiltin() throws Exception {
+    void functionShadowsBuiltin() throws Exception {
         final File script = this.writeScript(
             "shadow.sh",
             String.format("echo() { /usr/bin/env echo wrapped: $*; }%necho hi%n")
         );
-        Assert.assertEquals("wrapped: hi\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("wrapped: hi%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 unset -f - removes a function definition.
      */
     @Test
-    public void unsetDashFRemovesFunction() throws Exception {
+    void unsetDashFRemovesFunction() throws Exception {
         final File script = this.writeScript(
             "unsetf.sh",
             String.format(
                 "f() { echo from-fn; }%nf%nunset -f f%nf 2>/dev/null || echo gone%n"
             )
         );
-        Assert.assertEquals("from-fn\ngone\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("from-fn%ngone%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1344,12 +1443,12 @@ public final class IntegrationTest {
      * to end-of-line; the next command still executes.
      */
     @Test
-    public void hashStartsComment() throws Exception {
+    void hashStartsComment() throws Exception {
         final File script = this.writeScript(
             "comment.sh",
             String.format("# this is a comment%necho after%n")
         );
-        Assert.assertEquals("after\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("after%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1357,12 +1456,12 @@ public final class IntegrationTest {
      * a line continuation, joining the two halves into one word.
      */
     @Test
-    public void backslashNewlineIsLineContinuation() throws Exception {
+    void backslashNewlineIsLineContinuation() throws Exception {
         final File script = this.writeScript(
             "cont.sh",
             String.format("echo one\\%ntwo%n")
         );
-        Assert.assertEquals("onetwo\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("onetwo%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1370,42 +1469,45 @@ public final class IntegrationTest {
      * during field splitting.
      */
     @Test
-    public void ifsUnsetUsesDefault() throws Exception {
+    void ifsUnsetUsesDefault() throws Exception {
         final File script = this.writeScript(
             "ifs.sh",
             String.format(
                 "unset IFS%nX='a b c'%nfor i in $X; do echo $i; done%n"
             )
         );
-        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a%nb%nc%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.4 Case Patterns - `|` separates alternative patterns.
      */
     @Test
-    public void caseAlternativePatterns() throws Exception {
+    void caseAlternativePatterns() throws Exception {
         final File script = this.writeScript(
             "casealt.sh",
             String.format(
                 "for w in a b c d; do case $w in a|b) echo letter;; *) echo other;; esac; done%n"
             )
         );
-        Assert.assertEquals("letter\nletter\nother\nother\n", this.runChildJvm(script));
+        Assertions.assertEquals(
+            String.format("letter%nletter%nother%nother%n"),
+            this.runChildJvm(script)
+        );
     }
 
     /**
      * POSIX 2.9.4.4 Case Patterns - `?` matches any single character.
      */
     @Test
-    public void caseQuestionMarkMatchesSingleChar() throws Exception {
+    void caseQuestionMarkMatchesSingleChar() throws Exception {
         final File script = this.writeScript(
             "caseq.sh",
             String.format(
                 "for w in ab abc a; do case $w in ??) echo two;; *) echo not-two;; esac; done%n"
             )
         );
-        Assert.assertEquals("two\nnot-two\nnot-two\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("two%nnot-two%nnot-two%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1413,12 +1515,12 @@ public final class IntegrationTest {
      * matching prefix.
      */
     @Test
-    public void parameterLongestPrefixRemoval() throws Exception {
+    void parameterLongestPrefixRemoval() throws Exception {
         final File script = this.writeScript(
             "lpref.sh",
             String.format("X=/path/to/file.txt%necho ${X##*/}%n")
         );
-        Assert.assertEquals("file.txt\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("file.txt%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1426,36 +1528,36 @@ public final class IntegrationTest {
      * matching suffix.
      */
     @Test
-    public void parameterLongestSuffixRemoval() throws Exception {
+    void parameterLongestSuffixRemoval() throws Exception {
         final File script = this.writeScript(
             "lsuf.sh",
             String.format("X=foo.tar.gz%necho ${X%%%%.*}%n")
         );
-        Assert.assertEquals("foo\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("foo%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - bit-shift operators.
      */
     @Test
-    public void arithmeticBitShift() throws Exception {
+    void arithmeticBitShift() throws Exception {
         final File script = this.writeScript(
             "shift.sh",
             String.format("echo $((1 << 5)) $((1024 >> 3))%n")
         );
-        Assert.assertEquals("32 128\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("32 128%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - comparison operators yield 0/1.
      */
     @Test
-    public void arithmeticComparisonResult() throws Exception {
+    void arithmeticComparisonResult() throws Exception {
         final File script = this.writeScript(
             "cmp.sh",
             String.format("echo $((5 > 3)) $((3 > 5)) $((5 == 5))%n")
         );
-        Assert.assertEquals("1 0 1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("1 0 1%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1463,19 +1565,19 @@ public final class IntegrationTest {
      * exit status.
      */
     @Test
-    public void functionReturnValue() throws Exception {
+    void functionReturnValue() throws Exception {
         final File script = this.writeScript(
             "ret.sh",
             String.format("f() { return 42; }%nf%necho $?%n")
         );
-        Assert.assertEquals("42\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("42%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 break N - breaks out of N levels of loops.
      */
     @Test
-    public void breakNExitsMultipleLoops() throws Exception {
+    void breakNExitsMultipleLoops() throws Exception {
         final File script = this.writeScript(
             "brk2.sh",
             String.format(
@@ -1483,32 +1585,35 @@ public final class IntegrationTest {
                     + "if [ $j = b ]; then break 2; fi; echo $i.$j; done; done%necho after%n"
             )
         );
-        Assert.assertEquals("1.a\nafter\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("1.a%nafter%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.7.5 Duplicating an Input FD - {@code n<&-} closes the named fd.
      */
     @Test
-    public void closeInputFileDescriptor() throws Exception {
+    void closeInputFileDescriptor() throws Exception {
         final File script = this.writeScript(
             "close.sh",
             String.format("cat <<EOF%nin%nEOF%necho post%n")
         );
-        Assert.assertEquals("in\npost\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("in%npost%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.5.2 Special Parameters - $- contains current shell flags.
      */
     @Test
-    public void specialParameterDashIsShellFlags() throws Exception {
+    void specialParameterDashIsShellFlags() throws Exception {
         final File script = this.writeScript(
             "dash.sh",
             String.format("set -e%necho $-%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue("expected $- to contain e, got: " + out, out.contains("e"));
+        Assertions.assertTrue(
+            out.contains("e"),
+            String.format("expected $- to contain e, got: %s", out)
+        );
     }
 
     /**
@@ -1516,15 +1621,18 @@ public final class IntegrationTest {
      * of the executing script.
      */
     @Test
-    public void linenoTracksScriptLineNumber() throws Exception {
+    void linenoTracksScriptLineNumber() throws Exception {
         final File script = this.writeScript(
             "ln.sh",
             String.format("echo first%necho second-$LINENO%n")
         );
         final String out = this.runChildJvm(script);
-        Assert.assertTrue(
-            "expected LINENO to fire on line 2, got: " + out,
-            out.contains("second-2")
+        Assertions.assertTrue(
+            out.contains("second-2"),
+            String.format(
+                "expected LINENO to fire on line 2, got: %s",
+                out
+            )
         );
     }
 
@@ -1532,8 +1640,8 @@ public final class IntegrationTest {
      * POSIX 2.5.3 OLDPWD - previous working directory after cd.
      */
     @Test
-    public void oldpwdAfterCd() throws Exception {
-        final File target = this.tempdir.newFolder("after");
+    void oldpwdAfterCd() throws Exception {
+        final File target = TempDirs.folder(IntegrationTest.root, "after");
         final File script = this.writeScript(
             "oldpwd.sh",
             String.format(
@@ -1541,58 +1649,67 @@ public final class IntegrationTest {
             )
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertFalse("OLDPWD should not be empty", out.isEmpty());
+        Assertions.assertFalse(out.isEmpty(), "OLDPWD should not be empty");
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - ternary operator.
      */
     @Test
-    public void arithmeticTernaryOperator() throws Exception {
+    void arithmeticTernaryOperator() throws Exception {
         final File script = this.writeScript(
             "tern.sh",
             String.format("echo $((1 > 0 ? 42 : 13)) $((1 > 5 ? 42 : 13))%n")
         );
-        Assert.assertEquals("42 13\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("42 13%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - logical AND / OR short-circuit.
      */
     @Test
-    public void arithmeticLogicalOps() throws Exception {
+    void arithmeticLogicalOps() throws Exception {
         final File script = this.writeScript(
             "logop.sh",
             String.format("echo $((1 && 0)) $((0 || 2)) $((1 && 3))%n")
         );
-        Assert.assertEquals("0 1 1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0 1 1%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.14 readonly -p - lists all readonly variables.
      */
     @Test
-    public void readonlyDashPListsBindings() throws Exception {
+    void readonlyDashPListsBindings() throws Exception {
         final File script = this.writeScript(
             "rop.sh",
             String.format("readonly X=hello%nreadonly -p%n")
         );
         final String out = this.runChildJvm(script);
-        Assert.assertTrue("expected to list X, got: " + out, out.contains("X"));
+        Assertions.assertTrue(
+            out.contains("X"),
+            String.format("expected to list X, got: %s", out)
+        );
     }
 
     /**
      * POSIX 2.14 type - resolves multiple names in one invocation.
      */
     @Test
-    public void typeWithMultipleNames() throws Exception {
+    void typeWithMultipleNames() throws Exception {
         final File script = this.writeScript(
             "tmulti.sh",
             String.format("type echo cd%n")
         );
         final String out = this.runChildJvm(script);
-        Assert.assertTrue("expected echo in output, got: " + out, out.contains("echo"));
-        Assert.assertTrue("expected cd in output, got: " + out, out.contains("cd"));
+        Assertions.assertTrue(
+            out.contains("echo"),
+            String.format("expected echo in output, got: %s", out)
+        );
+        Assertions.assertTrue(
+            out.contains("cd"),
+            String.format("expected cd in output, got: %s", out)
+        );
     }
 
     /**
@@ -1600,14 +1717,18 @@ public final class IntegrationTest {
      * started background command.
      */
     @Test
-    public void specialParameterBangIsLastBgPid() throws Exception {
+    void specialParameterBangIsLastBgPid() throws Exception {
         final File script = this.writeScript(
             "bgpid.sh",
             String.format("true &%necho ${!}%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue(
-            "expected positive int for $!, got: " + out, out.matches("\\d+")
+        Assertions.assertTrue(
+            out.matches("\\d+"),
+            String.format(
+                "expected positive int for $!, got: %s",
+                out
+            )
         );
     }
 
@@ -1615,24 +1736,24 @@ public final class IntegrationTest {
      * POSIX 2.14 set -- with no further args clears positional parameters.
      */
     @Test
-    public void setDashDashClearsPositionalParams() throws Exception {
+    void setDashDashClearsPositionalParams() throws Exception {
         final File script = this.writeScript(
             "setclr.sh",
             String.format("set -- a b c%nset --%necho ${#}%n")
         );
-        Assert.assertEquals("0\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.7.4 here-document with leading-tab strip via {@code <<-}.
      */
     @Test
-    public void heredocDashStripsLeadingTabs() throws Exception {
+    void heredocDashStripsLeadingTabs() throws Exception {
         final File script = this.writeScript(
             "hdtab.sh",
             String.format("cat <<-EOF%n\tindented%n\tagain%n\tEOF%n")
         );
-        Assert.assertEquals("indented\nagain\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("indented%nagain%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1640,24 +1761,24 @@ public final class IntegrationTest {
      * (every read returns the same pid).
      */
     @Test
-    public void specialParameterDollarDollarStable() throws Exception {
+    void specialParameterDollarDollarStable() throws Exception {
         final File script = this.writeScript(
             "ddstable.sh",
             String.format("A=$$%nB=$$%n[ \"$A\" = \"$B\" ] && echo same%n")
         );
-        Assert.assertEquals("same\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("same%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - parentheses change grouping.
      */
     @Test
-    public void arithmeticParensGroup() throws Exception {
+    void arithmeticParensGroup() throws Exception {
         final File script = this.writeScript(
             "arithparen.sh",
             String.format("echo $(( (2 + 3) * 4 ))%n")
         );
-        Assert.assertEquals("20\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("20%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1665,12 +1786,12 @@ public final class IntegrationTest {
      * default falls back to inner default when both vars are unset.
      */
     @Test
-    public void parameterExpansionNested() throws Exception {
+    void parameterExpansionNested() throws Exception {
         final File script = this.writeScript(
             "nested.sh",
             String.format("echo ${UNSET_X-${UNSET_Y-fallback}}%n")
         );
-        Assert.assertEquals("fallback\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("fallback%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1678,14 +1799,14 @@ public final class IntegrationTest {
      * in order (later overrides earlier on same fd).
      */
     @Test
-    public void multipleRedirectionsOnOneCommand() throws Exception {
-        final File data = this.tempdir.newFile("multi.dat");
-        Files.writeString(data.toPath(), "line\n");
+    void multipleRedirectionsOnOneCommand() throws Exception {
+        final File data = TempDirs.file(IntegrationTest.root, "multi.dat");
+        Files.writeString(data.toPath(), String.format("line%n"));
         final File script = this.writeScript(
             "multi.sh",
             String.format("cat <%s 2>&1%n", data.getAbsolutePath())
         );
-        Assert.assertEquals("line\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("line%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1693,31 +1814,31 @@ public final class IntegrationTest {
      * command name persists the assignments in the shell environment.
      */
     @Test
-    public void assignmentOnlyCommandPersists() throws Exception {
+    void assignmentOnlyCommandPersists() throws Exception {
         final File script = this.writeScript(
             "assignonly.sh",
             String.format("FOO=set%necho [$FOO]%n")
         );
-        Assert.assertEquals("[set]\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("[set]%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.2 Pipelines - leading `!` inverts the pipeline exit status.
      */
     @Test
-    public void bangBeforePipelineInverts() throws Exception {
+    void bangBeforePipelineInverts() throws Exception {
         final File script = this.writeScript(
             "bangpipe.sh",
             String.format("! false; echo $?%n! true; echo $?%n")
         );
-        Assert.assertEquals("0\n1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n1%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.4 Case - {@code *)} matches anything as the default arm.
      */
     @Test
-    public void caseStarDefaultMatches() throws Exception {
+    void caseStarDefaultMatches() throws Exception {
         final File script = this.writeScript(
             "casestar.sh",
             String.format(
@@ -1725,26 +1846,26 @@ public final class IntegrationTest {
                     + "case $w in apple) echo a;; *) echo d;; esac; done%n"
             )
         );
-        Assert.assertEquals("a\nd\nd\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a%nd%nd%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.3 Command Substitution - backtick form is equivalent to $(...).
      */
     @Test
-    public void backtickCommandSubstitution() throws Exception {
+    void backtickCommandSubstitution() throws Exception {
         final File script = this.writeScript(
             "btick.sh",
             String.format("X=`echo hello`%necho got=$X%n")
         );
-        Assert.assertEquals("got=hello\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("got=hello%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.4 nested case - case inside a case body works.
      */
     @Test
-    public void nestedCaseStatement() throws Exception {
+    void nestedCaseStatement() throws Exception {
         final File script = this.writeScript(
             "ncase.sh",
             String.format(
@@ -1752,19 +1873,19 @@ public final class IntegrationTest {
                     + "*) echo a-other;; esac;; esac%n"
             )
         );
-        Assert.assertEquals("a2\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a2%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - bitwise AND / OR / XOR.
      */
     @Test
-    public void arithmeticBitwiseOps() throws Exception {
+    void arithmeticBitwiseOps() throws Exception {
         final File script = this.writeScript(
             "bitops.sh",
             String.format("echo $((6 & 3)) $((6 | 1)) $((6 ^ 3))%n")
         );
-        Assert.assertEquals("2 7 5\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("2 7 5%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1772,36 +1893,36 @@ public final class IntegrationTest {
      * (here: redirecting stderr to stdout, so the next echo goes to stdout).
      */
     @Test
-    public void execWithNoCommandRedirectsShell() throws Exception {
+    void execWithNoCommandRedirectsShell() throws Exception {
         final File script = this.writeScript(
             "execredir.sh",
             String.format("exec 2>&1%necho to-stderr 1>&2%n")
         );
-        Assert.assertEquals("to-stderr\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("to-stderr%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - logical NOT (!) inverts truthiness.
      */
     @Test
-    public void arithmeticLogicalNot() throws Exception {
+    void arithmeticLogicalNot() throws Exception {
         final File script = this.writeScript(
             "lnot.sh",
             String.format("echo $((!0)) $((!5)) $((!!7))%n")
         );
-        Assert.assertEquals("1 0 1\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("1 0 1%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - unary plus and double-negate.
      */
     @Test
-    public void arithmeticUnaryPlus() throws Exception {
+    void arithmeticUnaryPlus() throws Exception {
         final File script = this.writeScript(
             "uplus.sh",
             String.format("echo $((+5)) $((- -7))%n")
         );
-        Assert.assertEquals("5 7\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("5 7%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1809,36 +1930,36 @@ public final class IntegrationTest {
      * the empty.
      */
     @Test
-    public void parameterDefaultEmptyWord() throws Exception {
+    void parameterDefaultEmptyWord() throws Exception {
         final File script = this.writeScript(
             "ed.sh",
             String.format("echo [${UNSET:-}]%n")
         );
-        Assert.assertEquals("[]\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("[]%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.1 Lists - multiple commands separated by `;` all execute.
      */
     @Test
-    public void multipleCommandsOnOneLine() throws Exception {
+    void multipleCommandsOnOneLine() throws Exception {
         final File script = this.writeScript(
             "multi-cmd.sh",
             String.format("echo a; echo b; echo c%n")
         );
-        Assert.assertEquals("a\nb\nc\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("a%nb%nc%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic Expansion - mixed-sign arithmetic.
      */
     @Test
-    public void arithmeticMixedSign() throws Exception {
+    void arithmeticMixedSign() throws Exception {
         final File script = this.writeScript(
             "mix.sh",
             String.format("echo $((-3 + 8)) $((5 - 10))%n")
         );
-        Assert.assertEquals("5 -5\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("5 -5%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1846,12 +1967,12 @@ public final class IntegrationTest {
      * literal 'n' character.
      */
     @Test
-    public void backslashPreservesNextChar() throws Exception {
+    void backslashPreservesNextChar() throws Exception {
         final File script = this.writeScript(
             "esc.sh",
             String.format("echo a\\nb%n")
         );
-        Assert.assertEquals("anb\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("anb%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1859,90 +1980,91 @@ public final class IntegrationTest {
      * string.
      */
     @Test
-    public void emptyCommandSubstitution() throws Exception {
+    void emptyCommandSubstitution() throws Exception {
         final File script = this.writeScript(
             "ecs.sh",
             String.format("echo a$()b%n")
         );
-        Assert.assertEquals("ab\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("ab%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.7 Redirection - higher-numbered fd redirected to file.
      */
     @Test
-    public void higherNumberedFdRedirection() throws Exception {
-        final File data = this.tempdir.newFile("fd3.dat");
-        Files.writeString(data.toPath(), "from-fd3\n");
+    void higherNumberedFdRedirection() throws Exception {
+        final File data = TempDirs.file(IntegrationTest.root, "fd3.dat");
+        Files.writeString(data.toPath(), String.format("from-fd3%n"));
         final File script = this.writeScript(
             "fd3.sh",
             String.format("cat 0<%s%n", data.getAbsolutePath())
         );
-        Assert.assertEquals("from-fd3\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("from-fd3%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.2 For - empty word list means zero iterations.
      */
     @Test
-    public void forEmptyWordListSkipsBody() throws Exception {
+    void forEmptyWordListSkipsBody() throws Exception {
         final File script = this.writeScript(
             "empfor.sh",
             String.format("for i in; do echo $i; done%necho after%n")
         );
-        Assert.assertEquals("after\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("after%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.2 For - loop variable retains last iterated value.
      */
     @Test
-    public void forLoopVarPersistsAfter() throws Exception {
+    void forLoopVarPersistsAfter() throws Exception {
         final File script = this.writeScript(
             "forpersist.sh",
             String.format("for i in a b c; do :; done%necho $i%n")
         );
-        Assert.assertEquals("c\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("c%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.7.2 Redirecting Output - `>|` overrides noclobber.
      */
     @Test
-    public void clobberRedirectWritesFile() throws Exception {
-        final File target = this.tempdir.newFile("clob.dat");
-        Files.writeString(target.toPath(), "old\n");
+    void clobberRedirectWritesFile() throws Exception {
+        final File target = TempDirs.file(IntegrationTest.root, "clob.dat");
+        Files.writeString(target.toPath(), String.format("old%n"));
         final File script = this.writeScript(
             "clob.sh",
-            String.format("echo new >|%s%ncat %s%n",
+            String.format(
+                "echo new >|%s%ncat %s%n",
                 target.getAbsolutePath(), target.getAbsolutePath()
             )
         );
-        Assert.assertEquals("new\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("new%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.4 Arithmetic - hex literal with `0x` prefix.
      */
     @Test
-    public void arithmeticHexLiteral() throws Exception {
+    void arithmeticHexLiteral() throws Exception {
         final File script = this.writeScript(
             "hex.sh",
             String.format("echo $((0x10 + 0xF))%n")
         );
-        Assert.assertEquals("31\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("31%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.3.1 alias chains - aliases expand transitively.
      */
     @Test
-    public void aliasChain() throws Exception {
+    void aliasChain() throws Exception {
         final File script = this.writeScript(
             "alchain.sh",
             String.format("alias a=b%nalias b='echo final'%na arg%n")
         );
-        Assert.assertEquals("final arg\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("final arg%n"), this.runChildJvm(script));
     }
 
     /**
@@ -1950,14 +2072,18 @@ public final class IntegrationTest {
      * (not the function name) per POSIX.
      */
     @Test
-    public void dollarZeroInsideFunction() throws Exception {
+    void dollarZeroInsideFunction() throws Exception {
         final File script = this.writeScript(
             "fn0.sh",
             String.format("f() { echo $0; }%nf%n")
         );
         final String out = this.runChildJvm(script).trim();
-        Assert.assertTrue(
-            "expected $0 to end with /fn0.sh, got: " + out, out.endsWith("/fn0.sh")
+        Assertions.assertTrue(
+            out.endsWith("/fn0.sh"),
+            String.format(
+                "expected $0 to end with /fn0.sh, got: %s",
+                out
+            )
         );
     }
 
@@ -1965,60 +2091,62 @@ public final class IntegrationTest {
      * POSIX 2.7.2 Redirecting Output - the last `>` to the same file wins.
      */
     @Test
-    public void multipleOutputRedirectsLastWins() throws Exception {
-        final File a = this.tempdir.newFile("a.dat");
-        final File b = this.tempdir.newFile("b.dat");
+    void multipleOutputRedirectsLastWins() throws Exception {
+        final File filea = TempDirs.file(IntegrationTest.root, "a.dat");
+        final File fileb = TempDirs.file(IntegrationTest.root, "b.dat");
         final File script = this.writeScript(
             "mout.sh",
-            String.format("echo hi >%s >%s%ncat %s%n",
-                a.getAbsolutePath(), b.getAbsolutePath(), b.getAbsolutePath()
+            String.format(
+                "echo hi >%s >%s%ncat %s%n",
+                filea.getAbsolutePath(), fileb.getAbsolutePath(),
+                fileb.getAbsolutePath()
             )
         );
-        Assert.assertEquals("hi\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("hi%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.6.7 Quote Removal - mixed nested quotes preserve each region.
      */
     @Test
-    public void quoteRemovalMixedNested() throws Exception {
+    void quoteRemovalMixedNested() throws Exception {
         final File script = this.writeScript(
             "qmix.sh",
             String.format("echo 'a'\"b\"'c'%n")
         );
-        Assert.assertEquals("abc\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("abc%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.8.2 Exit Status - {@code true; echo $?} reports 0.
      */
     @Test
-    public void exitStatusTrueIsZero() throws Exception {
+    void exitStatusTrueIsZero() throws Exception {
         final File script = this.writeScript(
             "trueq.sh",
             String.format("true%necho $?%n")
         );
-        Assert.assertEquals("0\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("0%n"), this.runChildJvm(script));
     }
 
     /**
      * POSIX 2.9.4.3 While - explicit while-false loop runs zero iterations.
      */
     @Test
-    public void whileFalseZeroIterations() throws Exception {
+    void whileFalseZeroIterations() throws Exception {
         final File script = this.writeScript(
             "wfalse.sh",
             String.format("while false; do echo never; done%necho done%n")
         );
-        Assert.assertEquals("done\n", this.runChildJvm(script));
+        Assertions.assertEquals(String.format("done%n"), this.runChildJvm(script));
     }
 
     private File writeScript(final String name, final String content) throws IOException {
-        final File script = this.tempdir.newFile(name);
+        final File script = TempDirs.file(IntegrationTest.root, name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(content);
         }
-        Assert.assertTrue(script.setExecutable(true));
+        Assertions.assertTrue(script.setExecutable(true));
         return script;
     }
 
@@ -2049,10 +2177,10 @@ public final class IntegrationTest {
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
         final int exitCode = proc.waitFor();
-        Assert.assertEquals(
-            String.format("child sh4j exit code; output: %s", out),
+        Assertions.assertEquals(
             0,
-            exitCode
+            exitCode,
+            String.format("child sh4j exit code; output: %s", out)
         );
         return out;
     }

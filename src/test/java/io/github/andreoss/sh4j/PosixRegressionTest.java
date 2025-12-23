@@ -10,93 +10,122 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Regression tests for the shell semantics repaired after the Step 37
  * conformance audit.
+ *
  * @since 1.0
  */
-public final class PosixRegressionTest {
+final class PosixRegressionTest {
 
-    @Rule
-    public TemporaryFolder tempdir = new TemporaryFolder();
+    @TempDir
+    private static Path root;
 
     @Test
-    public void commentStartsAtTokenPositionOnly() {
-        Assert.assertEquals("a\n", Sh4j.out("echo a #c"));
-        Assert.assertEquals("b\n", Sh4j.out("#lead\necho b"));
-        Assert.assertEquals("one#two\n", Sh4j.out("echo one#two"));
+    void commentStartsAtTokenPositionOnly_caseA() {
+        Assertions.assertEquals(String.format("a%n"), Sh4j.INSTANCE.out("echo a #c"));
     }
 
     @Test
-    public void bracketNegationAndReservedWordsAsArguments() {
-        Assert.assertEquals(
-            "notclass\n",
-            Sh4j.out("case zzz in [!abc]*) echo notclass;; *) echo no;; esac")
+    void commentStartsAtTokenPositionOnly_caseB() {
+        Assertions.assertEquals(
+            String.format("b%n"),
+            Sh4j.INSTANCE.out(String.format("#lead%necho b"))
         );
-        Assert.assertEquals(
-            "klass\n",
-            Sh4j.out("case abc in [abc]*) echo klass;; *) echo no;; esac")
+    }
+
+    @Test
+    void commentStartsAtTokenPositionOnly_caseC() {
+        Assertions.assertEquals(String.format("one#two%n"), Sh4j.INSTANCE.out("echo one#two"));
+    }
+
+    @Test
+    void bracketNegationAndReservedWordsAsArguments() {
+        Assertions.assertEquals(
+            String.format("notclass%n"),
+            Sh4j.INSTANCE.out("case zzz in [!abc]*) echo notclass;; *) echo no;; esac")
         );
-        Assert.assertEquals("if then fi\n", Sh4j.out("echo if then fi"));
-        Assert.assertEquals("multi\n", Sh4j.out("case aaab in a*b) echo multi;; esac"));
+        Assertions.assertEquals(
+            String.format("klass%n"),
+            Sh4j.INSTANCE.out("case abc in [abc]*) echo klass;; *) echo no;; esac")
+        );
+        Assertions.assertEquals(
+            String.format("if then fi%n"),
+            Sh4j.INSTANCE.out("echo if then fi")
+        );
+        Assertions.assertEquals(
+            String.format("multi%n"),
+            Sh4j.INSTANCE.out("case aaab in a*b) echo multi;; esac")
+        );
     }
 
     /**
      * POSIX 2.7.3 Appending Redirected Output and POSIX 2.7 Redirection.
      */
     @Test
-    public void appendRedirectAndAssignmentPrefix() throws IOException {
-        final File file = this.tempdir.newFile("append.txt");
-        final Sh4j.Result result = Sh4j.runFull(
-            String.format("echo a > %s; echo b >> %s; cat %s",
-                file.getAbsolutePath(), file.getAbsolutePath(), file.getAbsolutePath())
+    void appendRedirectAndAssignmentPrefix() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "append.txt");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
+            String.format(
+                "echo a > %s; echo b >> %s; cat %s",
+                file.getAbsolutePath(), file.getAbsolutePath(),
+                file.getAbsolutePath()
+            )
         );
-        Assert.assertEquals("a\nb\n", result.stdout());
-        Assert.assertEquals("hi\n[]\n", Sh4j.out("x=1 echo hi; echo [$x]"));
-    }
-
-    @Test
-    public void shiftBeyondCountAndQuotedCasePatterns() {
-        Assert.assertEquals("rc=1\n", Sh4j.out("set -- a; shift 5; echo \"rc=$?\""));
-        Assert.assertEquals("count=2\n", Sh4j.out("set -- a b c; shift 1; echo \"count=$#\""));
-        Assert.assertEquals(
-            "no\n",
-            Sh4j.out("v='a*'; case aX in \"$v\") echo lit;; *) echo no;; esac")
-        );
-        Assert.assertEquals(
-            "lit\n",
-            Sh4j.out("v='a*'; case 'a*' in $v) echo lit;; *) echo no;; esac")
-        );
-        Assert.assertEquals("after\n", Sh4j.out("break; echo after"));
-        Assert.assertEquals(
-            "1a\n",
-            Sh4j.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done")
+        Assertions.assertEquals(String.format("a%nb%n"), result.stdout());
+        Assertions.assertEquals(
+            String.format("hi%n[]%n"),
+            Sh4j.INSTANCE.out("x=1 echo hi; echo [$x]")
         );
     }
 
     @Test
-    public void readonlyAssignmentTerminatesShell() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void shiftBeyondCountAndQuotedCasePatterns() {
+        Assertions.assertEquals(
+            String.format("rc=1%n"),
+            Sh4j.INSTANCE.out("set -- a; shift 5; echo \"rc=$?\"")
+        );
+        Assertions.assertEquals(
+            String.format("count=2%n"),
+            Sh4j.INSTANCE.out("set -- a b c; shift 1; echo \"count=$#\"")
+        );
+        Assertions.assertEquals(
+            String.format("no%n"),
+            Sh4j.INSTANCE.out("v='a*'; case aX in \"$v\") echo lit;; *) echo no;; esac")
+        );
+        Assertions.assertEquals(
+            String.format("lit%n"),
+            Sh4j.INSTANCE.out("v='a*'; case 'a*' in $v) echo lit;; *) echo no;; esac")
+        );
+        Assertions.assertEquals(String.format("after%n"), Sh4j.INSTANCE.out("break; echo after"));
+        Assertions.assertEquals(
+            String.format("1a%n"),
+            Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done")
+        );
+    }
+
+    @Test
+    void readonlyAssignmentTerminatesShell() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "readonly R=1; R=2; echo after"
         );
-        Assert.assertEquals(1, result.exitCode());
-        Assert.assertEquals("", result.stdout());
+        Assertions.assertEquals(1, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
     }
 
     @Test
-    public void globExpandsDirectoryPrefix() throws IOException {
-        final File dir = this.tempdir.newFolder("sub");
+    void globExpandsDirectoryPrefix() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "sub");
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "b.log").toPath(), new byte[0]);
-        Assert.assertEquals(
-            String.format("%s/a.txt\n", dir.getAbsolutePath()),
-            Sh4j.out(String.format("echo %s/*.txt", dir.getAbsolutePath()))
+        Assertions.assertEquals(
+            String.format(String.format("%%s/a.txt%n"), dir.getAbsolutePath()),
+            Sh4j.INSTANCE.out(String.format("echo %s/*.txt", dir.getAbsolutePath()))
         );
     }
 
@@ -105,18 +134,22 @@ public final class PosixRegressionTest {
      * position, so they stay ordinary arguments elsewhere.
      */
     @Test
-    public void posix24ReservedWordsAsArguments() {
-        Assert.assertEquals("if then fi\n", Sh4j.out("echo if then fi"));
+    void posixReservedWordsAsArguments() {
+        Assertions.assertEquals(
+            String.format("if then fi%n"),
+            Sh4j.INSTANCE.out("echo if then fi")
+        );
     }
 
     /**
-     * POSIX 2.10.1 Shell Grammar Lexical Conventions, part of POSIX 2.10 Shell Grammar.: a {@code #} starts a
+     * POSIX 2.10.1 Shell Grammar Lexical Conventions, part of POSIX 2.10 Shell
+     * Grammar.: a {@code #} starts a
      * comment only at a token position.
      */
     @Test
-    public void posix1010LexicalConventions() {
-        Assert.assertEquals("one#two\n", Sh4j.out("echo one#two"));
-        Assert.assertEquals("a\n", Sh4j.out("echo a  #trailing"));
+    void posixLexicalConventions() {
+        Assertions.assertEquals(String.format("one#two%n"), Sh4j.INSTANCE.out("echo one#two"));
+        Assertions.assertEquals(String.format("a%n"), Sh4j.INSTANCE.out("echo a  #trailing"));
     }
 
     /**
@@ -124,8 +157,11 @@ public final class PosixRegressionTest {
      * name affect only that command's environment.
      */
     @Test
-    public void posix1020AssignmentPrefixScope() {
-        Assert.assertEquals("hi\n[]\n", Sh4j.out("x=1 echo hi; echo [$x]"));
+    void posixAssignmentPrefixScope() {
+        Assertions.assertEquals(
+            String.format("hi%n[]%n"),
+            Sh4j.INSTANCE.out("x=1 echo hi; echo [$x]")
+        );
     }
 
     /**
@@ -133,13 +169,13 @@ public final class PosixRegressionTest {
      * on a failing simple command.
      */
     @Test
-    public void posix211SetEErrorHandling() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void posixSetEErrorHandling() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "set -e; false; echo nope"
         );
-        Assert.assertEquals(1, result.exitCode());
-        Assert.assertEquals("", result.stdout());
+        Assertions.assertEquals(1, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
     }
 
     /**
@@ -147,23 +183,33 @@ public final class PosixRegressionTest {
      * but its directory change does not affect the parent.
      */
     @Test
-    public void posix212SubshellEnvironment() {
-        final String cwd = Sh4j.out("pwd").trim();
-        Assert.assertEquals(
-            String.format("1\n/\n%s\n", cwd),
-            Sh4j.out("v=1; (echo $v); (cd /; pwd); pwd")
+    void posixSubshellEnvironment() {
+        final String cwd = Sh4j.INSTANCE.out("pwd").trim();
+        Assertions.assertEquals(
+            String.format(String.format("1%n/%n%%s%n"), cwd),
+            Sh4j.INSTANCE.out("v=1; (echo $v); (cd /; pwd); pwd")
         );
     }
 
     /**
-     * POSIX 2.13.1 Patterns Matching a Single Character, part of POSIX 2.13 Pattern Matching Notation.: {@code ?} and
+     * POSIX 2.13.1 Patterns Matching a Single Character, part of POSIX 2.13
+     * Pattern Matching Notation.: {@code ?} and
      * bracket negation with {@code !}.
      */
     @Test
-    public void posix2131SingleCharacterPatterns() {
-        Assert.assertEquals("q\n", Sh4j.out("case ab in a?) echo q;; *) echo n;; esac"));
-        Assert.assertEquals("n\n", Sh4j.out("case z in [!abc]) echo n;; *) echo no;; esac"));
-        Assert.assertEquals("k\n", Sh4j.out("case b in [abc]) echo k;; *) echo no;; esac"));
+    void posixSingleCharacterPatterns() {
+        Assertions.assertEquals(
+            String.format("q%n"),
+            Sh4j.INSTANCE.out("case ab in a?) echo q;; *) echo n;; esac")
+        );
+        Assertions.assertEquals(
+            String.format("n%n"),
+            Sh4j.INSTANCE.out("case z in [!abc]) echo n;; *) echo no;; esac")
+        );
+        Assertions.assertEquals(
+            String.format("k%n"),
+            Sh4j.INSTANCE.out("case b in [abc]) echo k;; *) echo no;; esac")
+        );
     }
 
     /**
@@ -171,8 +217,11 @@ public final class PosixRegressionTest {
      * any run of characters.
      */
     @Test
-    public void posix2132MultipleCharacterPatterns() {
-        Assert.assertEquals("m\n", Sh4j.out("case aaab in a*b) echo m;; *) echo no;; esac"));
+    void posixMultipleCharacterPatterns() {
+        Assertions.assertEquals(
+            String.format("m%n"),
+            Sh4j.INSTANCE.out("case aaab in a*b) echo m;; *) echo no;; esac")
+        );
     }
 
     /**
@@ -180,39 +229,39 @@ public final class PosixRegressionTest {
      * expand against the shell's working directory.
      */
     @Test
-    public void posix2133FilenameExpansion() throws IOException {
-        final File dir = this.tempdir.newFolder("pathexpand");
+    void posixFilenameExpansion() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "pathexpand");
         Files.write(new File(dir, "one.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "two.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "skip.log").toPath(), new byte[0]);
-        Assert.assertEquals(
-            "one.txt two.txt\n",
-            Sh4j.out(String.format("cd %s; echo *.txt", dir.getAbsolutePath()))
+        Assertions.assertEquals(
+            String.format("one.txt two.txt%n"),
+            Sh4j.INSTANCE.out(String.format("cd %s; echo *.txt", dir.getAbsolutePath()))
         );
     }
 
     @Test
-    public void redirectionsResolveAgainstShellCwd() throws IOException {
-        final File dir = this.tempdir.newFolder("cwdtest");
+    void redirectionsResolveAgainstShellCwd() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "cwdtest");
         final String base = dir.getAbsolutePath();
-        Assert.assertEquals(
-            "seed\n",
-            Sh4j.out(
+        Assertions.assertEquals(
+            String.format("seed%n"),
+            Sh4j.INSTANCE.out(
                 String.format(
                     "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base
                 )
             )
         );
-        Assert.assertEquals(
-            "fd-ok\n",
-            Sh4j.out(
+        Assertions.assertEquals(
+            String.format("fd-ok%n"),
+            Sh4j.INSTANCE.out(
                 String.format(
                     "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt", base
                 )
             )
         );
-        Assert.assertEquals(
-            "fd-ok\n",
+        Assertions.assertEquals(
+            String.format("fd-ok%n"),
             new String(
                 Files.readAllBytes(new File(dir, "fdout.txt").toPath()),
                 StandardCharsets.UTF_8
@@ -221,41 +270,41 @@ public final class PosixRegressionTest {
     }
 
     @Test
-    public void execRedirectionFailureTerminatesShell() {
-        final Sh4j.Result input = Sh4j.runFull(
+    void execRedirectionFailureTerminatesShell() {
+        final Sh4j.Result input = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "exec 9</nonexistent-dir-xyz/f; echo after"
         );
-        Assert.assertEquals(1, input.exitCode());
-        Assert.assertEquals("", input.stdout());
-        final Sh4j.Result output = Sh4j.runFull(
+        Assertions.assertEquals(1, input.exitCode());
+        Assertions.assertEquals("", input.stdout());
+        final Sh4j.Result output = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "exec >/nonexistent-dir-xyz/f; echo after"
         );
-        Assert.assertEquals(1, output.exitCode());
-        Assert.assertEquals("", output.stdout());
+        Assertions.assertEquals(1, output.exitCode());
+        Assertions.assertEquals("", output.stdout());
     }
 
     @Test
-    public void descriptorRedirectionsPersistAcrossCommands() throws IOException {
-        final File file = this.tempdir.newFile("fd.txt");
-        Files.write(file.toPath(), "seed\n".getBytes(StandardCharsets.UTF_8));
+    void descriptorRedirectionsPersistAcrossCommands() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "fd.txt");
+        Files.write(file.toPath(), String.format("seed%n").getBytes(StandardCharsets.UTF_8));
         final String path = file.getAbsolutePath();
-        Assert.assertEquals(
-            "v=seed\n",
-            Sh4j.out(
+        Assertions.assertEquals(
+            String.format("v=seed%n"),
+            Sh4j.INSTANCE.out(
                 String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path)
             )
         );
-        Assert.assertEquals(
-            "w=seed\n",
-            Sh4j.out(
+        Assertions.assertEquals(
+            String.format("w=seed%n"),
+            Sh4j.INSTANCE.out(
                 String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path)
             )
         );
-        Assert.assertEquals(
-            "y=[]\n",
-            Sh4j.runFull(
+        Assertions.assertEquals(
+            String.format("y=[]%n"),
+            Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 String.format("exec 5<%s; exec 5<&-; read y <&5; echo \"y=[$y]\"", path)
             ).stdout()
@@ -267,411 +316,416 @@ public final class PosixRegressionTest {
      * list and propagates its status.
      */
     @Test
-    public void exitStopsListAndPropagatesStatus() {
-        final Sh4j.Result result = Sh4j.runFull("exit 3; echo after");
-        Assert.assertEquals(3, result.exitCode());
-        Assert.assertEquals("", result.stdout());
+    void exitStopsListAndPropagatesStatus() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("exit 3; echo after");
+        Assertions.assertEquals(3, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
     }
 
     @Test
-    public void execRedirectionPersists() throws IOException {
-        final File file = this.tempdir.newFile("exec.out");
-        final Sh4j.Result result = Sh4j.runFull(
+    void execRedirectionPersists() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "exec.out");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             String.format("exec > %s; echo redirected", file.getAbsolutePath())
         );
-        Assert.assertEquals(0, result.exitCode());
-        Assert.assertEquals("", result.stdout());
-        Assert.assertEquals(
-            "redirected\n",
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
+        Assertions.assertEquals(
+            String.format("redirected%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 
     @Test
-    public void execCommandDoesNotResumeShell() {
-        final Sh4j.Result result = Sh4j.runFull("exec echo hi; echo after");
-        Assert.assertEquals(0, result.exitCode());
-        Assert.assertEquals("hi\n", result.stdout());
+    void execCommandDoesNotResumeShell() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("exec echo hi; echo after");
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertEquals(String.format("hi%n"), result.stdout());
     }
 
     @Test
-    public void subshellCdDoesNotChangeParentCwd() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void subshellCdDoesNotChangeParentCwd() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "cd /tmp; (cd /); pwd"
         );
-        Assert.assertEquals("/tmp\n", result.stdout());
+        Assertions.assertEquals(String.format("/tmp%n"), result.stdout());
     }
 
     @Test
-    public void shellVariablesAreNotExported() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void shellVariablesAreNotExported() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "X=secret; sh -c 'echo ${X-unset}'"
         );
-        Assert.assertEquals("unset\n", result.stdout());
+        Assertions.assertEquals(String.format("unset%n"), result.stdout());
     }
 
     @Test
-    public void exportedValueLosesQuotes() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void exportedValueLosesQuotes() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "export E='x y'; sh -c 'printf \"%s\\n\" \"$E\"'"
         );
-        Assert.assertEquals("x y\n", result.stdout());
+        Assertions.assertEquals(String.format("x y%n"), result.stdout());
     }
 
     @Test
-    public void readonlySurvivesUnset() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void readonlySurvivesUnset() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "readonly R='a b'; unset R; echo after"
         );
-        Assert.assertEquals(1, result.exitCode());
-        Assert.assertEquals("", result.stdout());
-        Assert.assertTrue(result.stderr().contains("readonly"));
+        Assertions.assertEquals(1, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
+        Assertions.assertTrue(result.stderr().contains("readonly"));
     }
 
     @Test
-    public void setPlusEClearsErrexit() {
-        Assert.assertEquals(
-            "alive\n",
-            Sh4j.out("set -e; set +e; false; echo alive")
+    void setPlusEClearsErrexit() {
+        Assertions.assertEquals(
+            String.format("alive%n"),
+            Sh4j.INSTANCE.out("set -e; set +e; false; echo alive")
         );
     }
 
     @Test
-    public void nounsetAbortsScript() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void nounsetAbortsScript() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "set -u; echo \"$MISSING\"; echo after"
         );
-        Assert.assertEquals(1, result.exitCode());
-        Assert.assertEquals("", result.stdout());
-        Assert.assertTrue(result.stderr().contains("MISSING"));
+        Assertions.assertEquals(1, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
+        Assertions.assertTrue(result.stderr().contains("MISSING"));
     }
 
     @Test
-    public void readConsumesOneLinePerCall() {
-        final Sh4j.Result result = Sh4j.runFull(
-            new ByteArrayInputStream("x\ny\n".getBytes(StandardCharsets.UTF_8)),
+    void readConsumesOneLinePerCall() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
+            new ByteArrayInputStream(String.format("x%ny%n").getBytes(StandardCharsets.UTF_8)),
             "read a; read b; echo \"a=$a b=$b\""
         );
-        Assert.assertEquals("a=x b=y\n", result.stdout());
+        Assertions.assertEquals(String.format("a=x b=y%n"), result.stdout());
     }
 
     @Test
-    public void quotedAtPreservesArgumentBoundaries() {
-        Assert.assertEquals(
-            "[a b]\n[c]\n",
-            Sh4j.out("set -- \"a b\" c; for x in \"$@\"; do echo \"[$x]\"; done")
+    void quotedAtPreservesArgumentBoundaries() {
+        Assertions.assertEquals(
+            String.format("[a b]%n[c]%n"),
+            Sh4j.INSTANCE.out("set -- \"a b\" c; for x in \"$@\"; do echo \"[$x]\"; done")
         );
     }
 
     @Test
-    public void starJoinsWithFirstIfsCharacter() {
-        Assert.assertEquals(
-            "a:b\n",
-            Sh4j.out("set -- a b; IFS=:; echo \"$*\"")
+    void starJoinsWithFirstIfsCharacter() {
+        Assertions.assertEquals(
+            String.format("a:b%n"),
+            Sh4j.INSTANCE.out("set -- a b; IFS=:; echo \"$*\"")
         );
     }
 
     @Test
-    public void commandSubstitutionStripsAllTrailingNewlines() {
-        Assert.assertEquals(
-            "<a>\n",
-            Sh4j.out("X=$(printf 'a\\n\\n\\n'); printf '<%s>\\n' \"$X\"")
+    void commandSubstitutionStripsAllTrailingNewlines() {
+        Assertions.assertEquals(
+            String.format("<a>%n"),
+            Sh4j.INSTANCE.out("X=$(printf 'a\\n\\n\\n'); printf '<%s>\\n' \"$X\"")
         );
     }
 
     @Test
-    public void backtickInsideSingleQuotesIsLiteral() {
-        Assert.assertEquals("`date`\n", Sh4j.out("echo '`date`'"));
+    void backtickInsideSingleQuotesIsLiteral() {
+        Assertions.assertEquals(String.format("`date`%n"), Sh4j.INSTANCE.out("echo '`date`'"));
     }
 
     @Test
-    public void casePatternUndergoesExpansion() {
-        Assert.assertEquals(
-            "yes\n",
-            Sh4j.out("p='h*'; case hi in $p) echo yes;; *) echo no;; esac")
+    void casePatternUndergoesExpansion() {
+        Assertions.assertEquals(
+            String.format("yes%n"),
+            Sh4j.INSTANCE.out("p='h*'; case hi in $p) echo yes;; *) echo no;; esac")
         );
     }
 
     @Test
-    public void globSkipsDotfilesAndSorts() throws IOException {
-        final File dir = this.tempdir.newFolder("globfix");
-        Assert.assertTrue(new File(dir, ".hidden").createNewFile());
-        Assert.assertTrue(new File(dir, "b.txt").createNewFile());
-        Assert.assertTrue(new File(dir, "a.txt").createNewFile());
-        Assert.assertEquals(
-            "a.txt b.txt\n",
-            Sh4j.out(String.format("cd %s; echo *.txt", dir.getAbsolutePath()))
+    void globSkipsDotfilesAndSorts() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "globfix");
+        Assertions.assertTrue(new File(dir, ".hidden").createNewFile());
+        Assertions.assertTrue(new File(dir, "b.txt").createNewFile());
+        Assertions.assertTrue(new File(dir, "a.txt").createNewFile());
+        Assertions.assertEquals(
+            String.format("a.txt b.txt%n"),
+            Sh4j.INSTANCE.out(String.format("cd %s; echo *.txt", dir.getAbsolutePath()))
         );
     }
 
     @Test
-    public void noglobDisablesPathnameExpansion() throws IOException {
-        final File dir = this.tempdir.newFolder("noglob");
-        Assert.assertTrue(new File(dir, "a.txt").createNewFile());
-        Assert.assertEquals(
-            "*.txt\n",
-            Sh4j.out(String.format("cd %s; set -f; echo *.txt", dir.getAbsolutePath()))
+    void noglobDisablesPathnameExpansion() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "noglob");
+        Assertions.assertTrue(new File(dir, "a.txt").createNewFile());
+        Assertions.assertEquals(
+            String.format("*.txt%n"),
+            Sh4j.INSTANCE.out(String.format("cd %s; set -f; echo *.txt", dir.getAbsolutePath()))
         );
     }
 
     @Test
-    public void typeRecognisesReadBuiltin() {
-        Assert.assertEquals("read is a shell built-in\n", Sh4j.out("type read"));
+    void typeRecognisesReadBuiltin() {
+        Assertions.assertEquals(
+            String.format("read is a shell built-in%n"),
+            Sh4j.INSTANCE.out("type read")
+        );
     }
 
     @Test
-    public void commandBypassesFunctionLookup() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void commandBypassesFunctionLookup() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "f() { echo function; }; command f"
         );
-        Assert.assertEquals(127, result.exitCode());
-        Assert.assertEquals("", result.stdout());
+        Assertions.assertEquals(127, result.exitCode());
+        Assertions.assertEquals("", result.stdout());
     }
 
     @Test
-    public void pipelineRunsCompoundStages() {
-        Assert.assertEquals(
-            "hi\n",
-            Sh4j.out("if true; then echo hi; fi | cat")
+    void pipelineRunsCompoundStages() {
+        Assertions.assertEquals(
+            String.format("hi%n"),
+            Sh4j.INSTANCE.out("if true; then echo hi; fi | cat")
         );
     }
 
     @Test
-    public void pipelineStageRedirectionIsApplied() throws IOException {
-        final File file = this.tempdir.newFile("pipe.out");
-        final Sh4j.Result result = Sh4j.runFull(
+    void pipelineStageRedirectionIsApplied() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "pipe.out");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             String.format("echo hi > %s | cat", file.getAbsolutePath())
         );
-        Assert.assertEquals("", result.stdout());
-        Assert.assertEquals(
-            "hi\n",
+        Assertions.assertEquals("", result.stdout());
+        Assertions.assertEquals(
+            String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 
     @Test
-    public void pipelineCanFeedBuiltinRead() {
-        Assert.assertEquals(
-            "v=x\n",
-            Sh4j.out("printf 'x\\n' | { read v; echo \"v=$v\"; }")
+    void pipelineCanFeedBuiltinRead() {
+        Assertions.assertEquals(
+            String.format("v=x%n"),
+            Sh4j.INSTANCE.out("printf 'x\\n' | { read v; echo \"v=$v\"; }")
         );
     }
 
     @Test
-    public void backgroundJobInheritsFunctionsAndWaitJoinsIt() {
-        Assert.assertEquals(
-            "F\n",
-            Sh4j.out("f() { echo F; }; f & wait")
+    void backgroundJobInheritsFunctionsAndWaitJoinsIt() {
+        Assertions.assertEquals(
+            String.format("F%n"),
+            Sh4j.INSTANCE.out("f() { echo F; }; f & wait")
         );
     }
 
     @Test
-    public void dollarBangIsNotAnOsPid() {
-        final Sh4j.Result result = Sh4j.runFull("sleep 0.1 & kill $!");
-        Assert.assertEquals(127, result.exitCode());
+    void dollarBangIsNotAnOsPid() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("sleep 0.1 & kill $!");
+        Assertions.assertEquals(127, result.exitCode());
     }
 
     @Test
-    public void trapDotAndTimesWork() throws IOException {
-        final File lib = this.tempdir.newFile("lib.sh");
-        Files.write(lib.toPath(), "LIB=ok\n".getBytes(StandardCharsets.UTF_8));
-        final Sh4j.Result result = Sh4j.runFull(
+    void trapDotAndTimesWork() throws IOException {
+        final File lib = TempDirs.file(PosixRegressionTest.root, "lib.sh");
+        Files.write(lib.toPath(), String.format("LIB=ok%n").getBytes(StandardCharsets.UTF_8));
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             String.format(
                 "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
                 lib.getAbsolutePath()
             )
         );
-        Assert.assertTrue(result.stdout().contains("lib=ok"));
-        Assert.assertTrue(result.stdout().contains("0m0.000s"));
-        Assert.assertTrue(result.stdout().contains("caught"));
+        Assertions.assertTrue(result.stdout().contains("lib=ok"));
+        Assertions.assertTrue(result.stdout().contains("0m0.000s"));
+        Assertions.assertTrue(result.stdout().contains("caught"));
     }
 
     @Test
-    public void externalCommandRunsInExecutorCwd() throws IOException {
-        final File dir = this.tempdir.newFolder("cwd");
-        Assert.assertEquals(
-            dir.getCanonicalPath() + "\n",
-            Sh4j.out(String.format("cd %s; sh -c pwd", dir.getAbsolutePath()))
+    void externalCommandRunsInExecutorCwd() throws IOException {
+        final File dir = TempDirs.folder(PosixRegressionTest.root, "cwd");
+        Assertions.assertEquals(
+            dir.getCanonicalPath() + String.format("%n"),
+            Sh4j.INSTANCE.out(String.format("cd %s; sh -c pwd", dir.getAbsolutePath()))
         );
     }
 
     @Test
-    public void xtraceWritesCommandToStderr() {
-        final Sh4j.Result result = Sh4j.runFull("set -x; echo hi");
-        Assert.assertTrue(result.stderr().contains("+ echo hi"));
-        Assert.assertEquals("hi\n", result.stdout());
+    void xtraceWritesCommandToStderr() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("set -x; echo hi");
+        Assertions.assertTrue(result.stderr().contains("+ echo hi"));
+        Assertions.assertEquals(String.format("hi%n"), result.stdout());
     }
 
     @Test
-    public void execMissingCommandReturns127() {
-        Assert.assertEquals(127, Sh4j.runFull("exec nonexistent_exec_xyz").exitCode());
+    void execMissingCommandReturnsError() {
+        Assertions.assertEquals(127, Sh4j.INSTANCE.runFull("exec nonexistent_exec_xyz").exitCode());
     }
 
     @Test
-    public void lengthOfStarAndAtCountsPositionalParameters() {
-        Assert.assertEquals(
-            "3 3\n",
-            Sh4j.out("set -- a b c; echo \"${#*}\" \"${#@}\"")
+    void lengthOfStarAndAtCountsPositionalParameters() {
+        Assertions.assertEquals(
+            String.format("3 3%n"),
+            Sh4j.INSTANCE.out("set -- a b c; echo \"${#*}\" \"${#@}\"")
         );
-        Assert.assertEquals(
-            "0 0\n",
-            Sh4j.out("set --; echo \"${#*}\" \"${#@}\"")
+        Assertions.assertEquals(
+            String.format("0 0%n"),
+            Sh4j.INSTANCE.out("set --; echo \"${#*}\" \"${#@}\"")
         );
-        Assert.assertEquals("4\n", Sh4j.out("v=abcd; echo \"${#v}\""));
-        Assert.assertEquals("2\n", Sh4j.out("set -- a b; echo \"$#\""));
+        Assertions.assertEquals(String.format("4%n"), Sh4j.INSTANCE.out("v=abcd; echo \"${#v}\""));
+        Assertions.assertEquals(String.format("2%n"), Sh4j.INSTANCE.out("set -- a b; echo \"$#\""));
     }
 
     @Test
-    public void exitTrapSeesTheStatusTheShellExitsWith() {
-        final Sh4j.Result exited = Sh4j.runFull(
+    void exitTrapSeesTheStatusTheShellExitsWith() {
+        final Sh4j.Result exited = Sh4j.INSTANCE.runFull(
             "trap \"echo st=$?\" EXIT; exit 7"
         );
-        Assert.assertEquals(7, exited.exitCode());
-        Assert.assertEquals("st=7\n", exited.stdout());
-        final Sh4j.Result failed = Sh4j.runFull(
+        Assertions.assertEquals(7, exited.exitCode());
+        Assertions.assertEquals(String.format("st=7%n"), exited.stdout());
+        final Sh4j.Result failed = Sh4j.INSTANCE.runFull(
             "trap 'echo exit=$?' EXIT; false"
         );
-        Assert.assertEquals(1, failed.exitCode());
-        Assert.assertEquals("exit=1\n", failed.stdout());
+        Assertions.assertEquals(1, failed.exitCode());
+        Assertions.assertEquals(String.format("exit=1%n"), failed.stdout());
     }
 
     @Test
-    public void trapListingAndRemoval() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void trapListingAndRemoval() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
         );
-        Assert.assertTrue(result.stdout().contains("trap -- 'echo t' EXIT"));
-        Assert.assertTrue(result.stdout().contains("body"));
-        Assert.assertFalse(result.stdout().contains("t\n"));
+        Assertions.assertTrue(result.stdout().contains("trap -- 'echo t' EXIT"));
+        Assertions.assertTrue(result.stdout().contains("body"));
+        Assertions.assertFalse(result.stdout().contains(String.format("t%n")));
     }
 
     @Test
-    public void dotReturnStopsOnlyTheSourcedFile() throws IOException {
-        final Path returned = this.tempdir.newFile("ret.sh").toPath();
+    void dotReturnStopsOnlyTheSourcedFile() throws IOException {
+        final Path returned = TempDirs.file(PosixRegressionTest.root, "ret.sh").toPath();
         Files.write(
             returned,
-            "echo before; return 5; echo after\n".getBytes(StandardCharsets.UTF_8)
+            String.format("echo before; return 5; echo after%n").getBytes(StandardCharsets.UTF_8)
         );
-        final Sh4j.Result result = Sh4j.runFull(
-            ". " + returned + "; echo \"rc=$?\""
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
+            String.format(". %s; echo \"rc=$?\"", returned)
         );
-        Assert.assertEquals(0, result.exitCode());
-        Assert.assertEquals("before\nrc=5\n", result.stdout());
-        final Path exited = this.tempdir.newFile("exit.sh").toPath();
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertEquals(String.format("before%nrc=5%n"), result.stdout());
+        final Path exited = TempDirs.file(PosixRegressionTest.root, "exit.sh").toPath();
         Files.write(
             exited,
-            "echo x; exit 3; echo y\n".getBytes(StandardCharsets.UTF_8)
+            String.format("echo x; exit 3; echo y%n").getBytes(StandardCharsets.UTF_8)
         );
-        final Sh4j.Result shell = Sh4j.runFull(". " + exited + "; echo after");
-        Assert.assertEquals(3, shell.exitCode());
-        Assert.assertEquals("x\n", shell.stdout());
-    }
-
-    @Test
-    public void dotMissingFileReturnsOne() {
-        final Sh4j.Result result = Sh4j.runFull(". /nonexistent/library.sh");
-        Assert.assertEquals(1, result.exitCode());
-        Assert.assertTrue(result.stderr().contains("cannot open"));
-    }
-
-    @Test
-    public void dotSetsPositionalParameters() throws IOException {
-        final File lib = this.tempdir.newFile("args-lib.sh");
-        Files.write(lib.toPath(), "echo \"$1\"\n".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals(
-            "arg\n",
-            Sh4j.out(String.format(". %s arg", lib.getAbsolutePath()))
+        final Sh4j.Result shell = Sh4j.INSTANCE.runFull(
+            String.format(". %s; echo after", exited)
         );
+        Assertions.assertEquals(3, shell.exitCode());
+        Assertions.assertEquals(String.format("x%n"), shell.stdout());
     }
 
     @Test
-    public void killListsAndRejectsJobPids() {
-        Assert.assertTrue(Sh4j.out("kill -l").contains("TERM"));
-        Assert.assertEquals(127, Sh4j.run("kill notapid"));
-        Assert.assertEquals(127, Sh4j.run("sleep 0.1 & kill $!"));
+    void dotMissingFileReturnsOne() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(". /nonexistent/library.sh");
+        Assertions.assertEquals(1, result.exitCode());
+        Assertions.assertTrue(result.stderr().contains("cannot open"));
     }
 
     @Test
-    public void waitUnknownPidReturns127() {
-        Assert.assertEquals(127, Sh4j.run("wait 999999"));
-    }
-
-    @Test
-    public void commandVerboseDescribesFunction() {
-        Assert.assertTrue(
-            Sh4j.out("f() { :; }; command -V f").contains("f is a function")
+    void dotSetsPositionalParameters() throws IOException {
+        final File lib = TempDirs.file(PosixRegressionTest.root, "args-lib.sh");
+        Files.write(lib.toPath(), String.format("echo \"$1\"%n").getBytes(StandardCharsets.UTF_8));
+        Assertions.assertEquals(
+            String.format("arg%n"),
+            Sh4j.INSTANCE.out(String.format(". %s arg", lib.getAbsolutePath()))
         );
     }
 
     @Test
-    public void exportAndReadonlyPrintLists() {
-        Assert.assertTrue(Sh4j.out("export -p").contains("export PATH="));
-        Assert.assertTrue(
-            Sh4j.out("readonly R=1; readonly -p").contains("readonly R=1")
+    void killListsAndRejectsJobPids() {
+        Assertions.assertTrue(Sh4j.INSTANCE.out("kill -l").contains("TERM"));
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill notapid"));
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("sleep 0.1 & kill $!"));
+    }
+
+    @Test
+    void waitUnknownPidReturnsError() {
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("wait 999999"));
+    }
+
+    @Test
+    void commandVerboseDescribesFunction() {
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.out("f() { :; }; command -V f").contains("f is a function")
         );
     }
 
     @Test
-    public void readReplyAndRawMode() {
-        final Sh4j.Result reply = Sh4j.runFull(
-            new ByteArrayInputStream("hello\n".getBytes(StandardCharsets.UTF_8)),
+    void exportAndReadonlyPrintLists() {
+        Assertions.assertTrue(Sh4j.INSTANCE.out("export -p").contains("export PATH="));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.out("readonly R=1; readonly -p").contains("readonly R=1")
+        );
+    }
+
+    @Test
+    void readReplyAndRawMode() {
+        final Sh4j.Result reply = Sh4j.INSTANCE.runFull(
+            new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
             "read; echo \"$REPLY\""
         );
-        Assert.assertEquals("hello\n", reply.stdout());
-        final Sh4j.Result raw = Sh4j.runFull(
-            new ByteArrayInputStream("a\\tb\n".getBytes(StandardCharsets.UTF_8)),
+        Assertions.assertEquals(String.format("hello%n"), reply.stdout());
+        final Sh4j.Result raw = Sh4j.INSTANCE.runFull(
+            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)),
             "read -r x; echo \"$x\""
         );
-        Assert.assertEquals("a\\tb\n", raw.stdout());
+        Assertions.assertEquals(String.format("a\\tb%n"), raw.stdout());
     }
 
     @Test
-    public void readAtEofReturnsOne() {
-        final Sh4j.Result result = Sh4j.runFull(
+    void readAtEofReturnsOne() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "read x; echo status=$?"
         );
-        Assert.assertEquals("status=1\n", result.stdout());
+        Assertions.assertEquals(String.format("status=1%n"), result.stdout());
     }
 
     @Test
-    public void functionRedirectionAndPrefixAssignment() throws IOException {
-        final File file = this.tempdir.newFile("fn.out");
-        Assert.assertEquals(
-            "1\n",
-            Sh4j.out("f() { echo $X; }; X=1 f")
+    void functionRedirectionAndPrefixAssignment() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "fn.out");
+        Assertions.assertEquals(
+            String.format("1%n"),
+            Sh4j.INSTANCE.out("f() { echo $X; }; X=1 f")
         );
-        Sh4j.run(String.format("f() { echo hi; }; f > %s", file.getAbsolutePath()));
-        Assert.assertEquals(
-            "hi\n",
+        Sh4j.INSTANCE.run(String.format("f() { echo hi; }; f > %s", file.getAbsolutePath()));
+        Assertions.assertEquals(
+            String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 
     @Test
-    public void pipelineStatusComesFromLastStage() {
-        Assert.assertEquals(1, Sh4j.run("true | false"));
-        Assert.assertEquals(0, Sh4j.run("false | true"));
+    void pipelineStatusComesFromLastStage() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("true | false"));
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("false | true"));
     }
 
     @Test
-    public void backgroundWaitReturnsJobStatus() {
-        Assert.assertEquals(3, Sh4j.run("sh -c 'exit 3' & wait $!"));
+    void backgroundWaitReturnsJobStatus() {
+        Assertions.assertEquals(3, Sh4j.INSTANCE.run("sh -c 'exit 3' & wait $!"));
     }
 
     @Test
-    public void setDashOOptions() {
-        Assert.assertEquals(
+    void setDashOOptions() {
+        Assertions.assertEquals(
             1,
-            Sh4j.run("set -o nounset; echo $MISSING_OPTION_VAR")
+            Sh4j.INSTANCE.run("set -o nounset; echo $MISSING_OPTION_VAR")
         );
     }
 
     @Test
-    public void subshellExitOnlyLeavesSubshell() {
-        Assert.assertEquals(
-            "after\n",
-            Sh4j.out("(exit 3); echo after")
+    void subshellExitOnlyLeavesSubshell() {
+        Assertions.assertEquals(
+            String.format("after%n"),
+            Sh4j.INSTANCE.out("(exit 3); echo after")
         );
     }
 
@@ -679,127 +733,133 @@ public final class PosixRegressionTest {
      * POSIX 2.9.4 Compound Commands: nested loop level unwinding.
      */
     @Test
-    public void nestedBreakAndContinueLevels() {
-        Assert.assertEquals(
-            "1a\n",
-            Sh4j.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done")
+    void nestedBreakAndContinueLevels() {
+        Assertions.assertEquals(
+            String.format("1a%n"),
+            Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done")
         );
-        Assert.assertEquals(
-            "1a\n2a\n",
-            Sh4j.out("for i in 1 2; do for j in a b; do echo $i$j; continue 2; done; done")
-        );
-    }
-
-    @Test
-    public void illegalLoopAndReturnDiagnostics() {
-        Assert.assertEquals(0, Sh4j.run("break"));
-        Assert.assertEquals(0, Sh4j.run("continue"));
-        Assert.assertEquals(5, Sh4j.run("return 5"));
-    }
-
-    @Test
-    public void returnInsideFunction() {
-        Assert.assertEquals(4, Sh4j.run("f() { return 4; }; f"));
-    }
-
-    @Test
-    public void forWithoutInUsesPositionalParameters() {
-        Assert.assertEquals(
-            "a\nb\n",
-            Sh4j.out("set -- a b; for i; do echo $i; done")
+        Assertions.assertEquals(
+            String.format("1a%n2a%n"),
+            Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; continue 2; done; done")
         );
     }
 
     @Test
-    public void pipelineExitAndRuntimeSignalsStayInSubshell() {
-        final Sh4j.Result exit = Sh4j.runFull("exit 1 | cat; echo after");
-        Assert.assertEquals("after\n", exit.stdout());
-        final Sh4j.Result broken = Sh4j.runFull("break | cat; echo after");
-        Assert.assertEquals("after\n", broken.stdout());
+    void illegalLoopAndReturnDiagnostics() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("break"));
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("continue"));
+        Assertions.assertEquals(5, Sh4j.INSTANCE.run("return 5"));
     }
 
     @Test
-    public void execWithCommandAndRedirection() throws IOException {
-        final File file = this.tempdir.newFile("exec-arg.out");
-        final Sh4j.Result result = Sh4j.runFull(
+    void returnInsideFunction() {
+        Assertions.assertEquals(4, Sh4j.INSTANCE.run("f() { return 4; }; f"));
+    }
+
+    @Test
+    void forWithoutInUsesPositionalParameters() {
+        Assertions.assertEquals(
+            String.format("a%nb%n"),
+            Sh4j.INSTANCE.out("set -- a b; for i; do echo $i; done")
+        );
+    }
+
+    @Test
+    void pipelineExitAndRuntimeSignalsStayInSubshell() {
+        final Sh4j.Result exit = Sh4j.INSTANCE.runFull("exit 1 | cat; echo after");
+        Assertions.assertEquals(String.format("after%n"), exit.stdout());
+        final Sh4j.Result broken = Sh4j.INSTANCE.runFull("break | cat; echo after");
+        Assertions.assertEquals(String.format("after%n"), broken.stdout());
+    }
+
+    @Test
+    void execWithCommandAndRedirection() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "exec-arg.out");
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
             String.format("exec echo hi > %s", file.getAbsolutePath())
         );
-        Assert.assertEquals(0, result.exitCode());
-        Assert.assertEquals(
-            "hi\n",
+        Assertions.assertEquals(0, result.exitCode());
+        Assertions.assertEquals(
+            String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
     }
 
     @Test
-    public void specialBuiltinAssignmentPersists() {
-        Assert.assertEquals(
-            "12\n",
-            Sh4j.out("X=1 export Y=2; echo $X$Y")
+    void specialBuiltinAssignmentPersists() {
+        Assertions.assertEquals(
+            String.format("12%n"),
+            Sh4j.INSTANCE.out("X=1 export Y=2; echo $X$Y")
         );
     }
 
     @Test
-    public void externalCommandReceivesPrefixAssignment() {
-        Assert.assertEquals(
-            "1\n",
-            Sh4j.out("X=1 sh -c 'echo $X'")
+    void externalCommandReceivesPrefixAssignment() {
+        Assertions.assertEquals(
+            String.format("1%n"),
+            Sh4j.INSTANCE.out("X=1 sh -c 'echo $X'")
         );
     }
 
     @Test
-    public void emptyAndMissingCommandsReturn127() {
-        Assert.assertEquals(127, Sh4j.run("PATH=; ls"));
-        Assert.assertEquals(127, Sh4j.run("/nonexistent/command"));
-        Assert.assertEquals("ok\n", Sh4j.out("PATH=:/bin; true; echo ok"));
-    }
-
-    @Test
-    public void trapRuntimeErrorDoesNotCrashExit() {
-        final Sh4j.Result result = Sh4j.runFull("trap 'if' EXIT; echo body");
-        Assert.assertEquals("body\n", result.stdout());
-    }
-
-    @Test
-    public void unsetFunctionAndCommandLookup() {
-        Assert.assertEquals(
-            1, Sh4j.run("f() { :; }; unset -f f; type f")
+    void emptyAndMissingCommandsReturnError() {
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("PATH=; ls"));
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("/nonexistent/command"));
+        Assertions.assertEquals(
+            String.format("ok%n"),
+            Sh4j.INSTANCE.out("PATH=:/bin; true; echo ok")
         );
-        Assert.assertEquals(0, Sh4j.run("command"));
-        Assert.assertEquals("echo\n", Sh4j.out("command -v echo"));
     }
 
     @Test
-    public void hashWaitAndKillOptionForms() {
-        Assert.assertEquals(0, Sh4j.run("hash echo"));
-        Assert.assertEquals(0, Sh4j.run("sleep 0.1 & wait"));
-        Assert.assertEquals(127, Sh4j.run("kill -s TERM 999999"));
-        Assert.assertEquals(127, Sh4j.run("kill -9 999999"));
+    void trapRuntimeErrorDoesNotCrashExit() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body");
+        Assertions.assertEquals(String.format("body%n"), result.stdout());
     }
 
     @Test
-    public void trapEmptyActionIsIgnored() {
-        Assert.assertEquals("body\n", Sh4j.out("trap '' EXIT; echo body"));
+    void unsetFunctionAndCommandLookup() {
+        Assertions.assertEquals(
+            1, Sh4j.INSTANCE.run("f() { :; }; unset -f f; type f")
+        );
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("command"));
+        Assertions.assertEquals(String.format("echo%n"), Sh4j.INSTANCE.out("command -v echo"));
     }
 
     @Test
-    public void dotWithoutFileReturnsOne() {
-        Assert.assertEquals(1, Sh4j.run("."));
+    void hashWaitAndKillOptionForms() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("hash echo"));
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("sleep 0.1 & wait"));
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -s TERM 999999"));
+        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -9 999999"));
     }
 
     @Test
-    public void readLastVariableReceivesRemainder() {
-        final Sh4j.Result result = Sh4j.runFull(
-            new ByteArrayInputStream("x y z\n".getBytes(StandardCharsets.UTF_8)),
+    void trapEmptyActionIsIgnored() {
+        Assertions.assertEquals(
+            String.format("body%n"),
+            Sh4j.INSTANCE.out("trap '' EXIT; echo body")
+        );
+    }
+
+    @Test
+    void dotWithoutFileReturnsOne() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("."));
+    }
+
+    @Test
+    void readLastVariableReceivesRemainder() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
+            new ByteArrayInputStream(String.format("x y z%n").getBytes(StandardCharsets.UTF_8)),
             "read a b; echo \"a=$a b=$b\""
         );
-        Assert.assertEquals("a=x b=y z\n", result.stdout());
+        Assertions.assertEquals(String.format("a=x b=y z%n"), result.stdout());
     }
 
     @Test
-    public void jobsAndFgWithNoJobReportErrors() {
-        Assert.assertEquals(0, Sh4j.run("jobs"));
-        Assert.assertEquals(1, Sh4j.run("fg"));
-        Assert.assertEquals(1, Sh4j.run("bg"));
+    void jobsAndFgWithNoJobReportErrors() {
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("fg"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("bg"));
     }
 }

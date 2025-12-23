@@ -9,6 +9,7 @@ package io.github.andreoss.sh4j.parser;
  * valid POSIX shell command list. Unchecked because the lexer/parser are
  * exercised by tests and the executor surfaces parse errors at the CLI
  * boundary.
+ *
  * @since 1.0
  */
 public class ParseException extends RuntimeException {
@@ -18,6 +19,7 @@ public class ParseException extends RuntimeException {
 
     /**
      * Creates a new parse exception with the given diagnostic message.
+     *
      * @param message Human-readable description of the parse failure
      */
     public ParseException(final String message) {

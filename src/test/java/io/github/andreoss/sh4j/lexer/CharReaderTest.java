@@ -6,103 +6,102 @@ package io.github.andreoss.sh4j.lexer;
 
 import java.io.IOException;
 import java.io.Reader;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for CharReader.
+ *
  * @since 1.0
  */
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnitTestContainsTooManyAsserts"})
-public final class CharReaderTest {
+final class CharReaderTest {
 
     @Test
-    public void peekReturnsFirstChar() {
-        assertThat(new CharReader("a").peek(), is(97));
+    void peekReturnsFirstChar() {
+        MatcherAssert.assertThat(new CharReader("a").peek(), CoreMatchers.is(97));
     }
 
     @Test
-    public void consumeReturnsCharsInOrder() {
+    void consumeReturnsCharsInOrder() {
         final CharReader result = new CharReader("ab");
-        assertThat(result.consume(), is(97));
-        assertThat(result.consume(), is(98));
+        MatcherAssert.assertThat(result.consume(), CoreMatchers.is(97));
+        MatcherAssert.assertThat(result.consume(), CoreMatchers.is(98));
     }
 
     @Test
-    public void consumeAdvancesPosition() {
+    void consumeAdvancesPosition() {
         final CharReader result = new CharReader("ab");
         result.consume();
-        assertThat(result.peek(), is(98));
+        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(98));
     }
 
     @Test
-    public void isEofReturnsFalseWhenCharsRemain() {
-        assertThat(new CharReader("abc").isEof(), is(false));
+    void isEofReturnsFalseWhenCharsRemain() {
+        MatcherAssert.assertThat(new CharReader("abc").isEof(), CoreMatchers.is(false));
     }
 
     @Test
-    public void eofOnEmptyString() {
+    void eofOnEmptyString() {
         final CharReader result = new CharReader("");
-        assertThat(result.isEof(), is(true));
-        assertThat(result.peek(), is(-1));
+        MatcherAssert.assertThat(result.isEof(), CoreMatchers.is(true));
+        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 
     @Test
-    public void eofAfterFullConsume() {
+    void eofAfterFullConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        assertThat(result.isEof(), is(true));
-        assertThat(result.peek(), is(-1));
+        MatcherAssert.assertThat(result.isEof(), CoreMatchers.is(true));
+        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 
     @Test
-    public void consumeEofReturnsMinusOne() {
-        assertThat(new CharReader("").consume(), is(-1));
+    void consumeEofReturnsMinusOne() {
+        MatcherAssert.assertThat(new CharReader("").consume(), CoreMatchers.is(-1));
     }
 
     @Test
-    public void lineColumnInitialValues() {
+    void lineColumnInitialValues() {
         final CharReader result = new CharReader("a");
-        assertThat(result.getLine(), is(1));
-        assertThat(result.getColumn(), is(0));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(1));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
     @Test
-    public void lineColumnAfterConsume() {
+    void lineColumnAfterConsume() {
         final CharReader result = new CharReader("a");
         result.consume();
-        assertThat(result.getLine(), is(1));
-        assertThat(result.getColumn(), is(1));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(1));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
     }
 
     @Test
-    public void newlineIncrementsLineAndResetsColumn() {
+    void newlineIncrementsLineAndResetsColumn() {
         final CharReader result = new CharReader(String.format("%n"));
         result.consume();
-        assertThat(result.getLine(), is(2));
-        assertThat(result.getColumn(), is(0));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(2));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
     @Test
-    public void multipleLines() {
+    void multipleLines() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        assertThat(result.getLine(), is(1));
-        assertThat(result.getColumn(), is(0));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(1));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
         result.consume();
-        assertThat(result.getLine(), is(1));
-        assertThat(result.getColumn(), is(1));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(1));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
         result.consume();
-        assertThat(result.getLine(), is(2));
-        assertThat(result.getColumn(), is(0));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(2));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
         result.consume();
-        assertThat(result.getLine(), is(2));
-        assertThat(result.getColumn(), is(1));
+        MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(2));
+        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
     }
 
     @Test
-    public void ioExceptionTreatedAsEof() {
+    void ioExceptionTreatedAsEof() {
         final CharReader reader = new CharReader(
             new Reader() {
 
@@ -123,18 +122,18 @@ public final class CharReaderTest {
                 }
             }
         );
-        assertThat(reader.isEof(), is(true));
-        assertThat(reader.peek(), is(-1));
-        assertThat(reader.consume(), is(-1));
+        MatcherAssert.assertThat(reader.isEof(), CoreMatchers.is(true));
+        MatcherAssert.assertThat(reader.peek(), CoreMatchers.is(-1));
+        MatcherAssert.assertThat(reader.consume(), CoreMatchers.is(-1));
     }
 
     @Test
-    public void eofStaysEofOnMultipleCalls() {
+    void eofStaysEofOnMultipleCalls() {
         final CharReader result = new CharReader("");
-        assertThat(result.isEof(), is(true));
-        assertThat(result.peek(), is(-1));
-        assertThat(result.consume(), is(-1));
-        assertThat(result.isEof(), is(true));
-        assertThat(result.peek(), is(-1));
+        MatcherAssert.assertThat(result.isEof(), CoreMatchers.is(true));
+        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
+        MatcherAssert.assertThat(result.consume(), CoreMatchers.is(-1));
+        MatcherAssert.assertThat(result.isEof(), CoreMatchers.is(true));
+        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 }

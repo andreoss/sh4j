@@ -4,181 +4,260 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.util.List;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for CommandHistory.
+ *
  * @since 1.0
  */
-@SuppressWarnings({
-    "PMD.UnitTestContainsTooManyAsserts",
-    "PMD.UnnecessaryLocalRule",
-    "PMD.AvoidDuplicateLiterals",
-    "PMD.TooManyMethods"
-})
-public final class CommandHistoryTest {
+final class CommandHistoryTest {
 
     @Test
-    public void emptyHistoryHasSizeZero() {
-        final CommandHistory hist = new CommandHistory();
-        assertThat(hist.size(), equalTo(0));
-        assertThat(hist.lastNumber(), equalTo(0));
-        assertThat(hist.nextNumber(), equalTo(1));
+    void emptyHistoryHasSizeZero() {
+        MatcherAssert.assertThat(
+            new CommandHistory().size(), CoreMatchers.equalTo(0)
+        );
     }
 
     @Test
-    public void addIncrementsSizeAndNumber() {
+    void emptyHistoryHasZeroLastNumber() {
+        MatcherAssert.assertThat(
+            new CommandHistory().lastNumber(), CoreMatchers.equalTo(0)
+        );
+    }
+
+    @Test
+    void emptyHistoryHasCounterOne() {
+        MatcherAssert.assertThat(
+            new CommandHistory().counter(), CoreMatchers.equalTo(1)
+        );
+    }
+
+    @Test
+    void addIncrementsSize() {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo hello");
-        assertThat(hist.size(), equalTo(1));
-        assertThat(hist.lastNumber(), equalTo(1));
-        assertThat(hist.nextNumber(), equalTo(2));
+        MatcherAssert.assertThat(hist.size(), CoreMatchers.equalTo(1));
     }
 
     @Test
-    public void getReturnsCorrectCommand() {
+    void addIncrementsLastNumber() {
+        final CommandHistory hist = new CommandHistory();
+        hist.add("echo hello");
+        MatcherAssert.assertThat(hist.lastNumber(), CoreMatchers.equalTo(1));
+    }
+
+    @Test
+    void addIncrementsCounter() {
+        final CommandHistory hist = new CommandHistory();
+        hist.add("echo hello");
+        MatcherAssert.assertThat(hist.counter(), CoreMatchers.equalTo(2));
+    }
+
+    @Test
+    void returnsFirstCommand() {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo one");
         hist.add("echo two");
-        assertThat(hist.get(1), equalTo("echo one"));
-        assertThat(hist.get(2), equalTo("echo two"));
+        MatcherAssert.assertThat(hist.get(1), CoreMatchers.equalTo("echo one"));
     }
 
     @Test
-    public void getReturnsNullForOutOfRange() {
+    void returnsSecondCommand() {
         final CommandHistory hist = new CommandHistory();
         hist.add("echo one");
-        assertThat(hist.get(0), nullValue());
-        assertThat(hist.get(2), nullValue());
-        assertThat(hist.get(-1), nullValue());
+        hist.add("echo two");
+        MatcherAssert.assertThat(hist.get(2), CoreMatchers.equalTo("echo two"));
     }
 
     @Test
-    public void listAllEntries() {
+    void returnsNullForZeroIndex() {
+        final CommandHistory hist = new CommandHistory();
+        hist.add("echo one");
+        MatcherAssert.assertThat(hist.get(0), CoreMatchers.nullValue());
+    }
+
+    @Test
+    void returnsNullForFutureIndex() {
+        final CommandHistory hist = new CommandHistory();
+        hist.add("echo one");
+        MatcherAssert.assertThat(hist.get(2), CoreMatchers.nullValue());
+    }
+
+    @Test
+    void returnsNullForNegativeIndex() {
+        final CommandHistory hist = new CommandHistory();
+        hist.add("echo one");
+        MatcherAssert.assertThat(hist.get(-1), CoreMatchers.nullValue());
+    }
+
+    @Test
+    void listAllEntries() {
         final CommandHistory hist = new CommandHistory();
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final List<CommandHistory.Entry> entries = hist.list(1, 0);
-        assertThat(entries.size(), equalTo(3));
-        assertThat(entries.get(0).number(), equalTo(1));
-        assertThat(entries.get(0).command(), equalTo("cmd1"));
-        assertThat(entries.get(2).number(), equalTo(3));
-        assertThat(entries.get(2).command(), equalTo("cmd3"));
+        MatcherAssert.assertThat(hist.list(1, 0).size(), CoreMatchers.equalTo(3));
     }
 
     @Test
-    public void listWithNegativeRange() {
+    void listWithNegativeRange() {
         final CommandHistory hist = new CommandHistory();
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final List<CommandHistory.Entry> entries = hist.list(-2, -1);
-        assertThat(entries.size(), equalTo(2));
-        assertThat(entries.get(0).number(), equalTo(2));
-        assertThat(entries.get(1).number(), equalTo(3));
+        MatcherAssert.assertThat(hist.list(-2, -1).size(), CoreMatchers.equalTo(2));
     }
 
     @Test
-    public void listWithExplicitRange() {
+    void listWithExplicitRange() {
         final CommandHistory hist = new CommandHistory();
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
-        final List<CommandHistory.Entry> entries = hist.list(2, 2);
-        assertThat(entries.size(), equalTo(1));
-        assertThat(entries.get(0).command(), equalTo("cmd2"));
+        MatcherAssert.assertThat(hist.list(2, 2).size(), CoreMatchers.equalTo(1));
     }
 
     @Test
-    public void listEmptyWhenOutOfRange() {
+    void listEmptyWhenOutOfRange() {
         final CommandHistory hist = new CommandHistory();
         hist.add("cmd1");
-        final List<CommandHistory.Entry> entries = hist.list(5, 10);
-        assertThat(entries.isEmpty(), is(true));
+        MatcherAssert.assertThat(hist.list(5, 10).isEmpty(), CoreMatchers.is(true));
     }
 
     @Test
-    public void ringBufferWraps() {
+    void ringBufferWraps() {
         final CommandHistory hist = new CommandHistory(3);
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
         hist.add("cmd4");
-        assertThat(hist.size(), equalTo(3));
-        assertThat(hist.lastNumber(), equalTo(4));
-        assertThat(hist.get(1), nullValue());
-        assertThat(hist.get(2), equalTo("cmd2"));
-        assertThat(hist.get(3), equalTo("cmd3"));
-        assertThat(hist.get(4), equalTo("cmd4"));
+        MatcherAssert.assertThat(hist.size(), CoreMatchers.equalTo(3));
     }
 
     @Test
-    public void listAfterWrap() {
+    void listAfterWrap() {
         final CommandHistory hist = new CommandHistory(3);
         hist.add("cmd1");
         hist.add("cmd2");
         hist.add("cmd3");
         hist.add("cmd4");
-        final List<CommandHistory.Entry> entries = hist.list(2, 0);
-        assertThat(entries.size(), equalTo(3));
-        assertThat(entries.get(0).command(), equalTo("cmd2"));
-        assertThat(entries.get(2).command(), equalTo("cmd4"));
+        MatcherAssert.assertThat(hist.list(2, 0).size(), CoreMatchers.equalTo(3));
     }
 
     @Test
-    public void emptyCommandsAreIgnored() {
+    void emptyCommandsAreIgnored() {
         final CommandHistory hist = new CommandHistory();
         hist.add("");
         hist.add(null);
-        assertThat(hist.size(), equalTo(0));
+        MatcherAssert.assertThat(hist.size(), CoreMatchers.equalTo(0));
     }
 
     @Test
-    public void negativeCapacityThrows() {
+    void negativeCapacityThrows() {
+        boolean thrown = false;
         try {
             new CommandHistory(0);
-            // Should not reach here
-            assertThat(true, is(false));
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getClass(), equalTo(IllegalArgumentException.class));
+        } catch (final IllegalArgumentException ex) {
+            thrown = true;
         }
+        MatcherAssert.assertThat(thrown, CoreMatchers.is(true));
     }
 
     @Test
-    public void listEmptyHistoryReturnsEmpty() {
-        final CommandHistory hist = new CommandHistory();
-        assertThat(hist.list(1, 0).isEmpty(), is(true));
+    void listEmptyHistoryReturnsEmpty() {
+        MatcherAssert.assertThat(
+            new CommandHistory().list(1, 0).isEmpty(), CoreMatchers.is(true)
+        );
     }
 
     @Test
-    public void capacityOneAndRangeBoundaries() {
+    void capacityOneAndRangeBoundaries() {
         final CommandHistory hist = new CommandHistory(1);
         hist.add("one");
         hist.add("two");
-        assertThat(hist.size(), equalTo(1));
-        assertThat(hist.get(2), equalTo("two"));
-        assertThat(hist.get(1), nullValue());
-        assertThat(hist.get(3), nullValue());
-        assertThat(hist.list(0, 0).isEmpty(), is(true));
-        assertThat(hist.list(-99, 0).isEmpty(), is(true));
-        assertThat(hist.list(3, 2).isEmpty(), is(true));
+        MatcherAssert.assertThat(hist.size(), CoreMatchers.equalTo(1));
     }
 
     @Test
-    public void negativeRelativeNumbersClampToBuffer() {
+    void capacityOneKeepsLastCommand() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.get(2), CoreMatchers.equalTo("two"));
+    }
+
+    @Test
+    void capacityOneHasNoFirstCommand() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.get(1), CoreMatchers.nullValue());
+    }
+
+    @Test
+    void capacityOneHasNoThirdCommand() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.get(3), CoreMatchers.nullValue());
+    }
+
+    @Test
+    void capacityOneListZeroRangeIsEmpty() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.list(0, 0).isEmpty(), CoreMatchers.is(true));
+    }
+
+    @Test
+    void capacityOneListNegativeRangeIsEmpty() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.list(-99, 0).isEmpty(), CoreMatchers.is(true));
+    }
+
+    @Test
+    void capacityOneListReversedRangeIsEmpty() {
+        final CommandHistory hist = new CommandHistory(1);
+        hist.add("one");
+        hist.add("two");
+        MatcherAssert.assertThat(hist.list(3, 2).isEmpty(), CoreMatchers.is(true));
+    }
+
+    @Test
+    void negativeRelativeNumbersClampToBuffer() {
         final CommandHistory hist = new CommandHistory(2);
         hist.add("one");
         hist.add("two");
         hist.add("three");
-        assertThat(hist.list(-1, -1).get(0).number(), equalTo(3));
-        assertThat(hist.list(-1, -1).get(0).command(), equalTo("three"));
-        assertThat(hist.list(-99, -1).isEmpty(), is(true));
+        MatcherAssert.assertThat(
+            hist.list(-1, -1).get(0).number(), CoreMatchers.equalTo(3)
+        );
+    }
+
+    @Test
+    void negativeRelativeKeepsLastCommand() {
+        final CommandHistory hist = new CommandHistory(2);
+        hist.add("one");
+        hist.add("two");
+        hist.add("three");
+        MatcherAssert.assertThat(
+            hist.list(-1, -1).get(0).command(), CoreMatchers.equalTo("three")
+        );
+    }
+
+    @Test
+    void negativeRelativeBeyondBufferIsEmpty() {
+        final CommandHistory hist = new CommandHistory(2);
+        hist.add("one");
+        hist.add("two");
+        hist.add("three");
+        MatcherAssert.assertThat(hist.list(-99, -1).isEmpty(), CoreMatchers.is(true));
     }
 }

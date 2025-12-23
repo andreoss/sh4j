@@ -12,23 +12,29 @@ import java.io.StringReader;
  * Single-character lookahead cursor over the lexer's input stream. The
  * cursor caches the next character so {@link #peek()} is O(1) and
  * {@link #consume()} fetches the following character lazily.
+ *
  * @since 1.0
  */
 public final class CharReader {
 
     /** Underlying character source. */
     private final Reader reader;
+
     /** Cached next character (or -1 at EOF). */
     private int peeked;
+
     /** Whether the first character has been read. */
     private boolean loaded;
-    /** 1-based line number of the cached character. */
+
+    /** One-based line number of the cached character. */
     private int line;
-    /** 0-based column number of the cached character. */
+
+    /** Zero-based column number of the cached character. */
     private int column;
 
     /**
      * Reads from the given string.
+     *
      * @param input The script source
      */
     public CharReader(final String input) {
@@ -37,6 +43,7 @@ public final class CharReader {
 
     /**
      * Reads from the given reader.
+     *
      * @param reader The source to consume
      */
     public CharReader(final Reader reader) {
@@ -47,6 +54,7 @@ public final class CharReader {
 
     /**
      * Looks at the next character without consuming it.
+     *
      * @return The next character, or -1 at end-of-input
      */
     public int peek() {
@@ -59,6 +67,7 @@ public final class CharReader {
 
     /**
      * Advances the cursor.
+     *
      * @return The character that was previously at the cursor
      */
     public int consume() {
@@ -75,6 +84,7 @@ public final class CharReader {
 
     /**
      * Checks whether the cursor has reached end-of-input.
+     *
      * @return True when the cursor has reached end-of-input
      */
     public boolean isEof() {
@@ -83,7 +93,8 @@ public final class CharReader {
 
     /**
      * Returns the 1-based line number of the next character.
-     * @return 1-based line number of the next character
+     *
+     * @return One-based line number of the next character
      */
     public int getLine() {
         return this.line;
@@ -91,17 +102,13 @@ public final class CharReader {
 
     /**
      * Returns the 0-based column number of the next character.
-     * @return 0-based column number of the next character
+     *
+     * @return Zero-based column number of the next character
      */
     public int getColumn() {
         return this.column;
     }
 
-    /**
-     * Fills the lookahead slot from the underlying reader, swallowing
-     * IO exceptions as end-of-input (consistent with the contract that
-     * {@link #peek()} can never fail).
-     */
     private void read() {
         try {
             this.peeked = this.reader.read();
