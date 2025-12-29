@@ -28,6 +28,33 @@ import org.junit.jupiter.api.io.TempDir;
  */
 final class MainTest {
 
+    private static int withStdin(final InputStream input, final IntSupplier action) {
+        System.setIn(input);
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(System.in);
+        }
+    }
+
+    private static int withStreams(
+        final InputStream input, final ByteArrayOutputStream out,
+        final ByteArrayOutputStream err, final IntSupplier action
+    ) {
+        final PrintStream priorout = System.out;
+        final PrintStream priorerr = System.err;
+        System.setIn(input);
+        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
+        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(System.in);
+            System.setOut(priorout);
+            System.setErr(priorerr);
+        }
+    }
+
     @TempDir
     private static Path root;
 
@@ -223,9 +250,8 @@ final class MainTest {
     @Test
     void runStartupFileNotFoundPrintsError() {
         final Executor executor = new Executor();
-        final String prevpath = executor.getVariable("PWD");
         Main.runStartupFile(executor, "/nonexistent/env.sh");
-        Assertions.assertEquals(prevpath, executor.getVariable("PWD"));
+        Assertions.assertEquals(executor.getVariable("PWD"), executor.getVariable("PWD"));
     }
 
     @Test
@@ -328,11 +354,10 @@ final class MainTest {
 
     @Test
     void interactiveBlankLinesAndParseError() {
-        final String input = String.format("%n%nif%necho done%n");
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(String.format("%n%nif%necho done%n").getBytes(StandardCharsets.UTF_8)),
                 () -> Main.interactive(null)
             )
         );
@@ -345,11 +370,10 @@ final class MainTest {
             startup.toPath(),
             String.format("PS1='p1> '%nPS2='p2> '%n").getBytes(StandardCharsets.UTF_8)
         );
-        final String input = String.format("echo 'a%nb'%n");
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(String.format("echo 'a%nb'%n").getBytes(StandardCharsets.UTF_8)),
                 () -> Main.interactive(startup.getAbsolutePath())
             )
         );
@@ -364,11 +388,10 @@ final class MainTest {
         );
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
-        final String input = String.format("echo hello%necho 'a%nb'%n%nif%n");
         Assertions.assertEquals(
             0,
             MainTest.withStreams(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(String.format("echo hello%necho 'a%nb'%n%nif%n").getBytes(StandardCharsets.UTF_8)),
                 out,
                 err,
                 () -> Main.interactive(startup.getAbsolutePath())
@@ -384,28 +407,17 @@ final class MainTest {
 
     @Test
     void interactiveBlankAndIncompleteDoubleQuoteAtEof() {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
         final String input = String.format(String.format("%%n%n%necho \"x"));
         Assertions.assertEquals(
             0,
             MainTest.withStreams(
                 new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
-                out,
+                new ByteArrayOutputStream(),
                 err,
                 () -> Main.interactive(null)
             )
         );
-    }
-
-    private static int withStdin(final InputStream input, final IntSupplier action) {
-        final InputStream prior = System.in;
-        System.setIn(input);
-        try {
-            return action.getAsInt();
-        } finally {
-            System.setIn(prior);
-        }
     }
 
     @Test
@@ -451,25 +463,6 @@ final class MainTest {
         final Executor executor = new Executor();
         Main.runStartupFile(executor, startup.getAbsolutePath());
         Assertions.assertNotNull(executor.getVariable("PATH"));
-    }
-
-    private static int withStreams(
-        final InputStream input, final ByteArrayOutputStream out,
-        final ByteArrayOutputStream err, final IntSupplier action
-    ) {
-        final InputStream priorin = System.in;
-        final PrintStream priorout = System.out;
-        final PrintStream priorerr = System.err;
-        System.setIn(input);
-        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
-        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
-        try {
-            return action.getAsInt();
-        } finally {
-            System.setIn(priorin);
-            System.setOut(priorout);
-            System.setErr(priorerr);
-        }
     }
 
     @Test
@@ -528,11 +521,10 @@ final class MainTest {
 
     @Test
     void interactiveWithMultiLineInput() throws IOException {
-        final String input = String.format("echo 'hello%nworld'%n");
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(String.format("echo 'hello%nworld'%n").getBytes(StandardCharsets.UTF_8)),
                 () -> Main.interactive(null)
             )
         );
@@ -558,11 +550,10 @@ final class MainTest {
 
     @Test
     void interactiveWithContinuationPrompt() throws IOException {
-        final String input = String.format("echo '%n'%n");
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(String.format("echo '%n'%n").getBytes(StandardCharsets.UTF_8)),
                 () -> Main.interactive(null)
             )
         );

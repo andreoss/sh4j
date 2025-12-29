@@ -1097,9 +1097,9 @@ public final class Executor implements BuiltinContext {
         if (replacement == null) {
             return null;
         }
-        final InputStream saved = this.inStream;
+        final InputStream prior = this.inStream;
         this.inStream = replacement;
-        return saved;
+        return prior;
     }
 
     /**
@@ -1508,10 +1508,9 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public void setPositionalParams(final List<String> params) {
-        final String script = this.params.isEmpty()
-            ? "" : this.params.get(0);
+        final String zeroth = this.params.isEmpty() ? "" : this.params.get(0);
         this.params.clear();
-        this.params.add(script);
+        this.params.add(zeroth);
         this.params.addAll(params);
     }
 }

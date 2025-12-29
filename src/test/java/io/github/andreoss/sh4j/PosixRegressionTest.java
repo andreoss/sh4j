@@ -184,9 +184,8 @@ final class PosixRegressionTest {
      */
     @Test
     void posixSubshellEnvironment() {
-        final String cwd = Sh4j.INSTANCE.out("pwd").trim();
         Assertions.assertEquals(
-            String.format(String.format("1%n/%n%%s%n"), cwd),
+            String.format(String.format("1%n/%n%%s%n"), Sh4j.INSTANCE.out("pwd").trim()),
             Sh4j.INSTANCE.out("v=1; (echo $v); (cd /; pwd); pwd")
         );
     }
@@ -519,8 +518,7 @@ final class PosixRegressionTest {
 
     @Test
     void dollarBangIsNotAnOsPid() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull("sleep 0.1 & kill $!");
-        Assertions.assertEquals(127, result.exitCode());
+        Assertions.assertEquals(127, Sh4j.INSTANCE.runFull("sleep 0.1 & kill $!").exitCode());
     }
 
     @Test
@@ -766,10 +764,8 @@ final class PosixRegressionTest {
 
     @Test
     void pipelineExitAndRuntimeSignalsStayInSubshell() {
-        final Sh4j.Result exit = Sh4j.INSTANCE.runFull("exit 1 | cat; echo after");
-        Assertions.assertEquals(String.format("after%n"), exit.stdout());
-        final Sh4j.Result broken = Sh4j.INSTANCE.runFull("break | cat; echo after");
-        Assertions.assertEquals(String.format("after%n"), broken.stdout());
+        Assertions.assertEquals(String.format("after%n"), Sh4j.INSTANCE.runFull("exit 1 | cat; echo after").stdout());
+        Assertions.assertEquals(String.format("after%n"), Sh4j.INSTANCE.runFull("break | cat; echo after").stdout());
     }
 
     @Test
@@ -813,8 +809,7 @@ final class PosixRegressionTest {
 
     @Test
     void trapRuntimeErrorDoesNotCrashExit() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body");
-        Assertions.assertEquals(String.format("body%n"), result.stdout());
+        Assertions.assertEquals(String.format("body%n"), Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body").stdout());
     }
 
     @Test

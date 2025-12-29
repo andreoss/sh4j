@@ -25,10 +25,6 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class WordExpander {
 
-    @GeneratedDefensive
-    private WordExpander() {
-    }
-
     /**
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
      * brace expansion, and bare variable references.
@@ -1024,5 +1020,9 @@ public final class WordExpander {
             idx = idx + 1;
         }
         return str.matches(regex.toString());
+    }
+
+    @GeneratedDefensive
+    private WordExpander() {
     }
 }
