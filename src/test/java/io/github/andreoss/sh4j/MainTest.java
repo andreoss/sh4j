@@ -27,34 +27,6 @@ import org.junit.jupiter.api.io.TempDir;
  * @since 1.0
  */
 final class MainTest {
-
-    private static int withStdin(final InputStream input, final IntSupplier action) {
-        System.setIn(input);
-        try {
-            return action.getAsInt();
-        } finally {
-            System.setIn(System.in);
-        }
-    }
-
-    private static int withStreams(
-        final InputStream input, final ByteArrayOutputStream out,
-        final ByteArrayOutputStream err, final IntSupplier action
-    ) {
-        final PrintStream priorout = System.out;
-        final PrintStream priorerr = System.err;
-        System.setIn(input);
-        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
-        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
-        try {
-            return action.getAsInt();
-        } finally {
-            System.setIn(System.in);
-            System.setOut(priorout);
-            System.setErr(priorerr);
-        }
-    }
-
     @TempDir
     private static Path root;
 
@@ -558,4 +530,32 @@ final class MainTest {
             )
         );
     }
+
+    private static int withStdin(final InputStream input, final IntSupplier action) {
+        System.setIn(input);
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(System.in);
+        }
+    }
+
+    private static int withStreams(
+        final InputStream input, final ByteArrayOutputStream out,
+        final ByteArrayOutputStream err, final IntSupplier action
+    ) {
+        final PrintStream priorout = System.out;
+        final PrintStream priorerr = System.err;
+        System.setIn(input);
+        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
+        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
+        try {
+            return action.getAsInt();
+        } finally {
+            System.setIn(System.in);
+            System.setOut(priorout);
+            System.setErr(priorerr);
+        }
+    }
+
 }

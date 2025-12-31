@@ -24,6 +24,9 @@ import java.util.regex.PatternSyntaxException;
  * @since 1.0
  */
 public final class WordExpander {
+    @GeneratedDefensive
+    private WordExpander() {
+    }
 
     /**
      * Full POSIX word expansion: tilde, command/arithmetic substitution,
@@ -61,6 +64,418 @@ public final class WordExpander {
             }
         }
         return expanded.toString();
+    }
+
+    /**
+     * Full implementation of {@code ${...}} brace expansion.
+     *
+     * @param inner The text inside the braces
+     * @param env   Environment view
+     * @param ctx   Executor callbacks
+     * @return The expansion, or null when no operator matches
+     */
+    static String expandBracedImpl(
+        final String inner,
+        final Map<String, String> env,
+        final BuiltinContext ctx
+    ) {
+        if (inner.isEmpty()) {
+            return null;
+        }
+        if (inner.charAt(0) == '#') {
+            if (inner.length() == 1) {
+                return ctx.getSpecialParam('#');
+            }
+            final String name = inner.substring(1);
+            if ("*".equals(name) || "@".equals(name)) {
+                return String.valueOf(ctx.positionalParamsList().size() - 1);
+            }
+            final String val = ctx.lookupVariable(name, env);
+            final String result;
+            if (val == null) {
+                result = "0";
+            } else {
+                result = String.valueOf(val.length());
+            }
+            return result;
+        }
+        final int nameend = findNameEnd(inner);
+        if (nameend == 0) {
+            return null;
+        }
+        final String varname = inner.substring(0, nameend);
+        final String rest = inner.substring(nameend);
+        final String varvalue = ctx.lookupVariable(varname, env);
+        if (rest.isEmpty()) {
+            final String result;
+            if (varvalue == null) {
+                result = "";
+            } else {
+                result = varvalue;
+            }
+            return result;
+        }
+        final String defaulted = applyDefaultOps(rest, varvalue, varname, env, ctx);
+        if (defaulted != null) {
+            return defaulted;
+        }
+        final String erred = applyErrorOps(rest, varvalue, varname, ctx);
+        if (erred != null) {
+            return erred;
+        }
+        if (varvalue == null) {
+            return "";
+        }
+        return applyPatternOps(rest, varvalue);
+    }
+
+    /**
+     * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
+     *
+     * @param arg The word to expand
+     * @param env Environment view (HOME, PWD)
+     * @return The word with the leading tilde resolved
+     */
+    static String expandTilde(final String arg, final Map<String, String> env) {
+        final String result;
+        if (arg.isEmpty() || arg.charAt(0) != '~') {
+            result = arg;
+        } else {
+            final int slash = arg.indexOf('/');
+            final String tildepart;
+            final String rest;
+            if (slash >= 0) {
+                tildepart = arg.substring(0, slash);
+                rest = arg.substring(slash);
+            } else {
+                tildepart = arg;
+                rest = "";
+            }
+            if ("~".equals(tildepart)) {
+                result = env.getOrDefault("HOME", "/root") + rest;
+            } else if ("~+".equals(tildepart)) {
+                result = env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
+            } else {
+                result = arg;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Rewrites backtick command substitutions as {@code $(...)} so they
+     * can be handled by the rest of the expansion pipeline uniformly.
+     *
+     * @param arg The input word
+     * @return The rewritten word
+     */
+    static String normaliseBackticks(final String arg) {
+        final StringBuilder result = new StringBuilder();
+        int idx = 0;
+        boolean single = false;
+        while (idx < arg.length()) {
+            final char chr = arg.charAt(idx);
+            if (chr == '\'') {
+                single = !single;
+                result.append(chr);
+                idx = idx + 1;
+            } else if (single) {
+                result.append(chr);
+                idx = idx + 1;
+            } else {
+                final int consumed = normaliseOne(arg, idx, result);
+                idx = idx + consumed;
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Field splitting (POSIX 2.6.5). Returns the fields {@code value} is
+     * broken into according to the IFS characters.
+     *
+     * @param value The post-expansion text
+     * @param ifs   The IFS value (each character is a separator)
+     * @return One field per non-IFS run
+     */
+    static List<String> splitFields(final String value, final String ifs) {
+        if (ifs == null || ifs.isEmpty()) {
+            return Collections.singletonList(value);
+        }
+        final StringBuilder wsbuf = new StringBuilder();
+        final StringBuilder nwsbuf = new StringBuilder();
+        for (int idx = 0; idx < ifs.length(); idx = idx + 1) {
+            final char chr = ifs.charAt(idx);
+            if (chr == ' ' || chr == '\t' || chr == '\n') {
+                wsbuf.append(chr);
+            } else {
+                nwsbuf.append(chr);
+            }
+        }
+        final String wschars = wsbuf.toString();
+        final String nwschars = nwsbuf.toString();
+        final List<String> result = new ArrayList<>(0);
+        StringBuilder field = new StringBuilder();
+        boolean infield = false;
+        for (int idx = 0; idx < value.length(); idx = idx + 1) {
+            final char chr = value.charAt(idx);
+            if (nwschars.indexOf(chr) >= 0) {
+                result.add(field.toString());
+                field = new StringBuilder();
+                infield = false;
+            } else if (wschars.indexOf(chr) >= 0) {
+                if (infield) {
+                    result.add(field.toString());
+                    field = new StringBuilder();
+                    infield = false;
+                }
+            } else {
+                field.append(chr);
+                infield = true;
+            }
+        }
+        if (infield) {
+            result.add(field.toString());
+        } else if (!nwschars.isEmpty() && !value.isEmpty()
+            && nwschars.indexOf(value.charAt(value.length() - 1)) >= 0) {
+            result.add(field.toString());
+        }
+        return result;
+    }
+
+    /**
+     * Checks whether the word is quoted.
+     *
+     * @param arg Any word
+     * @return True when the word is quoted
+     */
+    static boolean isQuoted(final String arg) {
+        final boolean result;
+        if (arg == null || arg.length() < 2) {
+            result = false;
+        } else {
+            final char first = arg.charAt(0);
+            final char last = arg.charAt(arg.length() - 1);
+            result = first == '"' && last == '"'
+                || first == '\'' && last == '\'';
+        }
+        return result;
+    }
+
+    /**
+     * Escapes characters in expansion-produced data so that downstream
+     * {@link #removeQuotes} treats them as literal. POSIX 2.6 says quote
+     * removal acts only on quotes that were in the original word, not on
+     * data produced by expansions. Doubles every backslash and prefixes
+     * every literal single/double quote with a backslash.
+     *
+     * @param value Expansion-produced text
+     * @return The escaped text safe to feed back through removeQuotes
+     */
+    static String escapeForQuoteRemoval(final String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        final StringBuilder out = new StringBuilder(value.length() + 4);
+        for (int idx = 0; idx < value.length(); idx = idx + 1) {
+            final char chr = value.charAt(idx);
+            if (chr == '\\' || chr == '\'' || chr == '"') {
+                out.append('\\');
+            }
+            out.append(chr);
+        }
+        return out.toString();
+    }
+
+    /**
+     * Quote removal (POSIX 2.6.7). Strips the outer single/double quotes
+     * and resolves backslash-escapes inside double quotes.
+     *
+     * @param word The source word
+     * @return The de-quoted text
+     */
+    static String removeQuotes(final String word) {
+        final StringBuilder result = new StringBuilder();
+        boolean insingle = false;
+        boolean indouble = false;
+        int idx = 0;
+        while (idx < word.length()) {
+            final char chr = word.charAt(idx);
+            if (insingle) {
+                if (chr == '\'') {
+                    insingle = false;
+                } else {
+                    result.append(chr);
+                }
+                idx = idx + 1;
+            } else if (indouble) {
+                idx = appendDoubleQuoted(word, idx, result);
+                if (idx < 0) {
+                    indouble = false;
+                    idx = -idx;
+                }
+            } else if (chr == '\'') {
+                insingle = true;
+                idx = idx + 1;
+            } else if (chr == '"') {
+                indouble = true;
+                idx = idx + 1;
+            } else if (chr == '\\' && idx + 1 < word.length()) {
+                result.append(word.charAt(idx + 1));
+                idx = idx + 2;
+            } else {
+                result.append(chr);
+                idx = idx + 1;
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Pathname expansion (POSIX 2.6.6): replaces any field containing
+     * glob characters with the alphabetic list of matching files (or the
+     * literal field when no match).
+     *
+     * @param fields The post-IFS fields
+     * @return The post-glob fields
+     */
+    static List<String> pathnameExpand(final List<String> fields) {
+        return pathnameExpand(fields, new File(System.getProperty("user.dir")));
+    }
+
+    /**
+     * Pathname expansion relative to a specific directory. Dotfiles are
+     * skipped unless the final pattern segment starts with a dot.
+     *
+     * @param fields The post-IFS fields
+     * @param cwd Directory used for relative patterns
+     * @return The post-glob fields
+     */
+    static List<String> pathnameExpand(
+        final List<String> fields, final File cwd
+    ) {
+        final List<String> result = new ArrayList<>(0);
+        for (final String field : fields) {
+            if (containsGlobChars(field)) {
+                final List<String> matches = globFiles(field, cwd);
+                if (matches.isEmpty()) {
+                    result.add(field);
+                } else {
+                    Collections.sort(matches);
+                    result.addAll(matches);
+                }
+            } else {
+                result.add(field);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks whether the string contains glob characters.
+     *
+     * @param str Any string
+     * @return True when the string contains glob characters
+     */
+    static boolean containsGlobChars(final String str) {
+        return str.indexOf('*') >= 0 || str.indexOf('?') >= 0 || str.indexOf('[') >= 0;
+    }
+
+    /**
+     * Returns the files matching a glob pattern.
+     *
+     * @param pattern A glob pattern
+     * @param cwd     Directory used for relative patterns
+     * @return The matching files
+     */
+    static List<String> globFiles(final String pattern, final File cwd) {
+        final int slash = pattern.lastIndexOf('/');
+        final String prefix;
+        if (slash < 0) {
+            prefix = "";
+        } else {
+            prefix = pattern.substring(0, slash);
+        }
+        final String segment;
+        if (slash < 0) {
+            segment = pattern;
+        } else {
+            segment = pattern.substring(slash + 1);
+        }
+        final File dir;
+        if (prefix.isEmpty()) {
+            dir = cwd;
+        } else if (prefix.startsWith("/")) {
+            dir = new File(prefix);
+        } else {
+            dir = new File(cwd, prefix);
+        }
+        final String[] files = dir.list();
+        final List<String> matches = new ArrayList<>(0);
+        if (files == null) {
+            return matches;
+        }
+        final PathMatcher matcher;
+        try {
+            matcher = FileSystems.getDefault().getPathMatcher(String.format("glob:%s", segment));
+        } catch (final PatternSyntaxException ignored) {
+            return matches;
+        }
+        final boolean dotpattern = segment.startsWith(".");
+        for (final String name : files) {
+            if (name.startsWith(".") && !dotpattern) {
+                continue;
+            }
+            if (matcher.matches(Paths.get(name))) {
+                if (prefix.isEmpty()) {
+                    matches.add(name);
+                } else {
+                    matches.add(String.format("%s/%s", prefix, name));
+                }
+            }
+        }
+        return matches;
+    }
+
+    /**
+     * Checks whether a glob pattern matches a string.
+     *
+     * @param pattern A glob pattern
+     * @param str     The candidate text
+     * @return True when {@code pattern} matches {@code str}
+     */
+    static boolean globMatches(final String pattern, final String str) {
+        final StringBuilder regex = new StringBuilder();
+        int idx = 0;
+        while (idx < pattern.length()) {
+            final char chr = pattern.charAt(idx);
+            if (chr == '*') {
+                regex.append(".*");
+            } else if (chr == '?') {
+                regex.append('.');
+            } else if (chr == '.' || chr == '(' || chr == ')' || chr == '+'
+                || chr == '^' || chr == '$' || chr == '{' || chr == '}'
+                || chr == '|' || chr == '\\') {
+                regex.append('\\').append(chr);
+            } else if (chr == '[') {
+                final int end = pattern.indexOf(']', idx + 1);
+                if (end > idx + 1) {
+                    final String body = pattern.substring(idx + 1, end);
+                    if (body.startsWith("!") && body.length() > 1) {
+                        regex.append("[^").append(body.substring(1)).append(']');
+                    } else {
+                        regex.append('[').append(body).append(']');
+                    }
+                    idx = end;
+                } else {
+                    regex.append("\\[");
+                }
+            } else {
+                regex.append(chr);
+            }
+            idx = idx + 1;
+        }
+        return str.matches(regex.toString());
     }
 
     private static int appendOneExpansion(
@@ -228,69 +643,6 @@ public final class WordExpander {
     private static boolean isSpecialParamChar(final char chr) {
         return chr == '?' || chr == '-' || chr == '$' || chr == '!'
             || chr == '@' || chr == '*';
-    }
-
-    /**
-     * Full implementation of {@code ${...}} brace expansion.
-     *
-     * @param inner The text inside the braces
-     * @param env   Environment view
-     * @param ctx   Executor callbacks
-     * @return The expansion, or null when no operator matches
-     */
-    static String expandBracedImpl(
-        final String inner,
-        final Map<String, String> env,
-        final BuiltinContext ctx
-    ) {
-        if (inner.isEmpty()) {
-            return null;
-        }
-        if (inner.charAt(0) == '#') {
-            if (inner.length() == 1) {
-                return ctx.getSpecialParam('#');
-            }
-            final String name = inner.substring(1);
-            if ("*".equals(name) || "@".equals(name)) {
-                return String.valueOf(ctx.positionalParamsList().size() - 1);
-            }
-            final String val = ctx.lookupVariable(name, env);
-            final String result;
-            if (val == null) {
-                result = "0";
-            } else {
-                result = String.valueOf(val.length());
-            }
-            return result;
-        }
-        final int nameend = findNameEnd(inner);
-        if (nameend == 0) {
-            return null;
-        }
-        final String varname = inner.substring(0, nameend);
-        final String rest = inner.substring(nameend);
-        final String varvalue = ctx.lookupVariable(varname, env);
-        if (rest.isEmpty()) {
-            final String result;
-            if (varvalue == null) {
-                result = "";
-            } else {
-                result = varvalue;
-            }
-            return result;
-        }
-        final String defaulted = applyDefaultOps(rest, varvalue, varname, env, ctx);
-        if (defaulted != null) {
-            return defaulted;
-        }
-        final String erred = applyErrorOps(rest, varvalue, varname, ctx);
-        if (erred != null) {
-            return erred;
-        }
-        if (varvalue == null) {
-            return "";
-        }
-        return applyPatternOps(rest, varvalue);
     }
 
     private static int findNameEnd(final String inner) {
@@ -581,67 +933,6 @@ public final class WordExpander {
             .allMatch(chr -> Character.isLetterOrDigit(chr) || chr == '_');
     }
 
-    /**
-     * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
-     *
-     * @param arg The word to expand
-     * @param env Environment view (HOME, PWD)
-     * @return The word with the leading tilde resolved
-     */
-    static String expandTilde(final String arg, final Map<String, String> env) {
-        final String result;
-        if (arg.isEmpty() || arg.charAt(0) != '~') {
-            result = arg;
-        } else {
-            final int slash = arg.indexOf('/');
-            final String tildepart;
-            final String rest;
-            if (slash >= 0) {
-                tildepart = arg.substring(0, slash);
-                rest = arg.substring(slash);
-            } else {
-                tildepart = arg;
-                rest = "";
-            }
-            if ("~".equals(tildepart)) {
-                result = env.getOrDefault("HOME", "/root") + rest;
-            } else if ("~+".equals(tildepart)) {
-                result = env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
-            } else {
-                result = arg;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Rewrites backtick command substitutions as {@code $(...)} so they
-     * can be handled by the rest of the expansion pipeline uniformly.
-     *
-     * @param arg The input word
-     * @return The rewritten word
-     */
-    static String normaliseBackticks(final String arg) {
-        final StringBuilder result = new StringBuilder();
-        int idx = 0;
-        boolean single = false;
-        while (idx < arg.length()) {
-            final char chr = arg.charAt(idx);
-            if (chr == '\'') {
-                single = !single;
-                result.append(chr);
-                idx = idx + 1;
-            } else if (single) {
-                result.append(chr);
-                idx = idx + 1;
-            } else {
-                final int consumed = normaliseOne(arg, idx, result);
-                idx = idx + consumed;
-            }
-        }
-        return result.toString();
-    }
-
     private static int normaliseOne(final String arg, final int idx, final StringBuilder result) {
         final char chr = arg.charAt(idx);
         int consumed = 1;
@@ -715,147 +1006,6 @@ public final class WordExpander {
         return cur - idx;
     }
 
-    /**
-     * Field splitting (POSIX 2.6.5). Returns the fields {@code value} is
-     * broken into according to the IFS characters.
-     *
-     * @param value The post-expansion text
-     * @param ifs   The IFS value (each character is a separator)
-     * @return One field per non-IFS run
-     */
-    static List<String> splitFields(final String value, final String ifs) {
-        if (ifs == null || ifs.isEmpty()) {
-            return Collections.singletonList(value);
-        }
-        final StringBuilder wsbuf = new StringBuilder();
-        final StringBuilder nwsbuf = new StringBuilder();
-        for (int idx = 0; idx < ifs.length(); idx = idx + 1) {
-            final char chr = ifs.charAt(idx);
-            if (chr == ' ' || chr == '\t' || chr == '\n') {
-                wsbuf.append(chr);
-            } else {
-                nwsbuf.append(chr);
-            }
-        }
-        final String wschars = wsbuf.toString();
-        final String nwschars = nwsbuf.toString();
-        final List<String> result = new ArrayList<>(0);
-        StringBuilder field = new StringBuilder();
-        boolean infield = false;
-        for (int idx = 0; idx < value.length(); idx = idx + 1) {
-            final char chr = value.charAt(idx);
-            if (nwschars.indexOf(chr) >= 0) {
-                result.add(field.toString());
-                field = new StringBuilder();
-                infield = false;
-            } else if (wschars.indexOf(chr) >= 0) {
-                if (infield) {
-                    result.add(field.toString());
-                    field = new StringBuilder();
-                    infield = false;
-                }
-            } else {
-                field.append(chr);
-                infield = true;
-            }
-        }
-        if (infield) {
-            result.add(field.toString());
-        } else if (!nwschars.isEmpty() && !value.isEmpty()
-            && nwschars.indexOf(value.charAt(value.length() - 1)) >= 0) {
-            result.add(field.toString());
-        }
-        return result;
-    }
-
-    /**
-     * Checks whether the word is quoted.
-     *
-     * @param arg Any word
-     * @return True when the word is quoted
-     */
-    static boolean isQuoted(final String arg) {
-        final boolean result;
-        if (arg == null || arg.length() < 2) {
-            result = false;
-        } else {
-            final char first = arg.charAt(0);
-            final char last = arg.charAt(arg.length() - 1);
-            result = first == '"' && last == '"'
-                || first == '\'' && last == '\'';
-        }
-        return result;
-    }
-
-    /**
-     * Escapes characters in expansion-produced data so that downstream
-     * {@link #removeQuotes} treats them as literal. POSIX 2.6 says quote
-     * removal acts only on quotes that were in the original word, not on
-     * data produced by expansions. Doubles every backslash and prefixes
-     * every literal single/double quote with a backslash.
-     *
-     * @param value Expansion-produced text
-     * @return The escaped text safe to feed back through removeQuotes
-     */
-    static String escapeForQuoteRemoval(final String value) {
-        if (value == null || value.isEmpty()) {
-            return value;
-        }
-        final StringBuilder out = new StringBuilder(value.length() + 4);
-        for (int idx = 0; idx < value.length(); idx = idx + 1) {
-            final char chr = value.charAt(idx);
-            if (chr == '\\' || chr == '\'' || chr == '"') {
-                out.append('\\');
-            }
-            out.append(chr);
-        }
-        return out.toString();
-    }
-
-    /**
-     * Quote removal (POSIX 2.6.7). Strips the outer single/double quotes
-     * and resolves backslash-escapes inside double quotes.
-     *
-     * @param word The source word
-     * @return The de-quoted text
-     */
-    static String removeQuotes(final String word) {
-        final StringBuilder result = new StringBuilder();
-        boolean insingle = false;
-        boolean indouble = false;
-        int idx = 0;
-        while (idx < word.length()) {
-            final char chr = word.charAt(idx);
-            if (insingle) {
-                if (chr == '\'') {
-                    insingle = false;
-                } else {
-                    result.append(chr);
-                }
-                idx = idx + 1;
-            } else if (indouble) {
-                idx = appendDoubleQuoted(word, idx, result);
-                if (idx < 0) {
-                    indouble = false;
-                    idx = -idx;
-                }
-            } else if (chr == '\'') {
-                insingle = true;
-                idx = idx + 1;
-            } else if (chr == '"') {
-                indouble = true;
-                idx = idx + 1;
-            } else if (chr == '\\' && idx + 1 < word.length()) {
-                result.append(word.charAt(idx + 1));
-                idx = idx + 2;
-            } else {
-                result.append(chr);
-                idx = idx + 1;
-            }
-        }
-        return result.toString();
-    }
-
     private static int appendDoubleQuoted(
         final String word, final int idx, final StringBuilder result
     ) {
@@ -875,154 +1025,4 @@ public final class WordExpander {
         return next;
     }
 
-    /**
-     * Pathname expansion (POSIX 2.6.6): replaces any field containing
-     * glob characters with the alphabetic list of matching files (or the
-     * literal field when no match).
-     *
-     * @param fields The post-IFS fields
-     * @return The post-glob fields
-     */
-    static List<String> pathnameExpand(final List<String> fields) {
-        return pathnameExpand(fields, new File(System.getProperty("user.dir")));
-    }
-
-    /**
-     * Pathname expansion relative to a specific directory. Dotfiles are
-     * skipped unless the final pattern segment starts with a dot.
-     *
-     * @param fields The post-IFS fields
-     * @param cwd Directory used for relative patterns
-     * @return The post-glob fields
-     */
-    static List<String> pathnameExpand(
-        final List<String> fields, final File cwd
-    ) {
-        final List<String> result = new ArrayList<>(0);
-        for (final String field : fields) {
-            if (containsGlobChars(field)) {
-                final List<String> matches = globFiles(field, cwd);
-                if (matches.isEmpty()) {
-                    result.add(field);
-                } else {
-                    Collections.sort(matches);
-                    result.addAll(matches);
-                }
-            } else {
-                result.add(field);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Checks whether the string contains glob characters.
-     *
-     * @param str Any string
-     * @return True when the string contains glob characters
-     */
-    static boolean containsGlobChars(final String str) {
-        return str.indexOf('*') >= 0 || str.indexOf('?') >= 0 || str.indexOf('[') >= 0;
-    }
-
-    /**
-     * Returns the files matching a glob pattern.
-     *
-     * @param pattern A glob pattern
-     * @param cwd     Directory used for relative patterns
-     * @return The matching files
-     */
-    static List<String> globFiles(final String pattern, final File cwd) {
-        final int slash = pattern.lastIndexOf('/');
-        final String prefix;
-        if (slash < 0) {
-            prefix = "";
-        } else {
-            prefix = pattern.substring(0, slash);
-        }
-        final String segment;
-        if (slash < 0) {
-            segment = pattern;
-        } else {
-            segment = pattern.substring(slash + 1);
-        }
-        final File dir;
-        if (prefix.isEmpty()) {
-            dir = cwd;
-        } else if (prefix.startsWith("/")) {
-            dir = new File(prefix);
-        } else {
-            dir = new File(cwd, prefix);
-        }
-        final String[] files = dir.list();
-        final List<String> matches = new ArrayList<>(0);
-        if (files == null) {
-            return matches;
-        }
-        final PathMatcher matcher;
-        try {
-            matcher = FileSystems.getDefault().getPathMatcher(String.format("glob:%s", segment));
-        } catch (final PatternSyntaxException ignored) {
-            return matches;
-        }
-        final boolean dotpattern = segment.startsWith(".");
-        for (final String name : files) {
-            if (name.startsWith(".") && !dotpattern) {
-                continue;
-            }
-            if (matcher.matches(Paths.get(name))) {
-                if (prefix.isEmpty()) {
-                    matches.add(name);
-                } else {
-                    matches.add(String.format("%s/%s", prefix, name));
-                }
-            }
-        }
-        return matches;
-    }
-
-    /**
-     * Checks whether a glob pattern matches a string.
-     *
-     * @param pattern A glob pattern
-     * @param str     The candidate text
-     * @return True when {@code pattern} matches {@code str}
-     */
-    static boolean globMatches(final String pattern, final String str) {
-        final StringBuilder regex = new StringBuilder();
-        int idx = 0;
-        while (idx < pattern.length()) {
-            final char chr = pattern.charAt(idx);
-            if (chr == '*') {
-                regex.append(".*");
-            } else if (chr == '?') {
-                regex.append('.');
-            } else if (chr == '.' || chr == '(' || chr == ')' || chr == '+'
-                || chr == '^' || chr == '$' || chr == '{' || chr == '}'
-                || chr == '|' || chr == '\\') {
-                regex.append('\\').append(chr);
-            } else if (chr == '[') {
-                final int end = pattern.indexOf(']', idx + 1);
-                if (end > idx + 1) {
-                    final String body = pattern.substring(idx + 1, end);
-                    if (body.startsWith("!") && body.length() > 1) {
-                        regex.append("[^").append(body.substring(1)).append(']');
-                    } else {
-                        regex.append('[').append(body).append(']');
-                    }
-                    idx = end;
-                } else {
-                    regex.append("\\[");
-                }
-            } else {
-                regex.append(chr);
-            }
-            idx = idx + 1;
-        }
-        return str.matches(regex.toString());
-    }
-
-    @GeneratedDefensive
-    private WordExpander() {
-    }
 }

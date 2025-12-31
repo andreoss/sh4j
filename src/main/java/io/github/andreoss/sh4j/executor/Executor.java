@@ -49,7 +49,6 @@ import io.github.andreoss.sh4j.parser.WhileNode;
  * @since 1.0
  */
 public final class Executor implements BuiltinContext {
-
     /**
      * POSIX 2.14 special built-in utilities — these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
@@ -514,20 +513,6 @@ public final class Executor implements BuiltinContext {
         return this.lastcode;
     }
 
-    private static boolean shouldRunNext(
-        final ListNode.Separator prevSep, final int prevExit
-    ) {
-        final boolean run;
-        if (prevSep == ListNode.Separator.AND_IF) {
-            run = prevExit == 0;
-        } else if (prevSep == ListNode.Separator.OR_IF) {
-            run = prevExit != 0;
-        } else {
-            run = true;
-        }
-        return run;
-    }
-
     private void executeAsync(final Pipeline pipeline) {
         final String cmdStr = pipelineToString(pipeline);
         final Executor parent = this;
@@ -562,20 +547,6 @@ public final class Executor implements BuiltinContext {
             command.addArgument(arg);
         }
         return this.runNamedCommand(command, name, new HashMap<>(env), true);
-    }
-
-    private static String pipelineToString(final Pipeline pipeline) {
-        final StringBuilder line = new StringBuilder();
-        for (final Node node : pipeline.getCommands()) {
-            if (node == null) {
-                continue;
-            }
-            if (line.length() > 0) {
-                line.append(" | ");
-            }
-            line.append(node.toString());
-        }
-        return line.toString();
     }
 
     private int executePipeline(final Pipeline pipeline) {
@@ -1056,10 +1027,6 @@ public final class Executor implements BuiltinContext {
         }
     }
 
-    private static boolean isSpecialBuiltin(final String name) {
-        return SPECIAL_BUILTINS.contains(name);
-    }
-
     private InputStream swapInputForBuiltin(final List<Redirection> redirs) {
         InputStream replacement = null;
         for (final Redirection redir : redirs) {
@@ -1513,4 +1480,37 @@ public final class Executor implements BuiltinContext {
         this.params.add(zeroth);
         this.params.addAll(params);
     }
+
+    private static boolean shouldRunNext(
+        final ListNode.Separator prevSep, final int prevExit
+    ) {
+        final boolean run;
+        if (prevSep == ListNode.Separator.AND_IF) {
+            run = prevExit == 0;
+        } else if (prevSep == ListNode.Separator.OR_IF) {
+            run = prevExit != 0;
+        } else {
+            run = true;
+        }
+        return run;
+    }
+
+    private static String pipelineToString(final Pipeline pipeline) {
+        final StringBuilder line = new StringBuilder();
+        for (final Node node : pipeline.getCommands()) {
+            if (node == null) {
+                continue;
+            }
+            if (line.length() > 0) {
+                line.append(" | ");
+            }
+            line.append(node.toString());
+        }
+        return line.toString();
+    }
+
+    private static boolean isSpecialBuiltin(final String name) {
+        return SPECIAL_BUILTINS.contains(name);
+    }
+
 }
