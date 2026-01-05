@@ -136,7 +136,7 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(String.format("%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("%n"),
                 () -> Main.exitCode(new String[0])
             )
         );
@@ -351,7 +351,7 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(String.format("%n%nif%necho done%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("%n%nif%necho done%n"),
                 () -> Main.interactive(null)
             )
         );
@@ -367,7 +367,7 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(String.format("echo 'a%nb'%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("echo 'a%nb'%n"),
                 () -> Main.interactive(startup.getAbsolutePath())
             )
         );
@@ -385,7 +385,7 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStreams(
-                new ByteArrayInputStream(String.format("echo hello%necho 'a%nb'%n%nif%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
                 out,
                 err,
                 () -> Main.interactive(startup.getAbsolutePath())
@@ -496,7 +496,7 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(String.format("echo 'hello%nworld'%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("echo 'hello%nworld'%n"),
                 () -> Main.interactive(null)
             )
         );
@@ -525,9 +525,15 @@ final class MainTest {
         Assertions.assertEquals(
             0,
             MainTest.withStdin(
-                new ByteArrayInputStream(String.format("echo '%n'%n").getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("echo '%n'%n"),
                 () -> Main.interactive(null)
             )
+        );
+    }
+
+    private static ByteArrayInputStream input(final String format, final Object... args) {
+        return new ByteArrayInputStream(
+            String.format(format, args).getBytes(StandardCharsets.UTF_8)
         );
     }
 

@@ -545,7 +545,8 @@ final class WordExpanderTest {
 
     @Test
     void errorOnNullWithoutWordUsesDefaultMessage() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo ${MISSING:?}").stderr().contains("$MISSING"));
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo ${MISSING:?}").stderr()
+            .contains("$MISSING"));
     }
 
     @Test
@@ -634,7 +635,8 @@ final class WordExpanderTest {
 
     @Test
     void errorOnNullWithCustomWord() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo ${MISSING:?msg}").stderr().contains("msg"));
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo ${MISSING:?msg}").stderr()
+            .contains("msg"));
     }
 
     @Test

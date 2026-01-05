@@ -602,7 +602,10 @@ public final class IntegrationTest {
             this.runChildJvm(
                 this.writeScript(
                     "case.sh",
-                    String.format("x=banana%ncase $x in%n  apple) echo a;;%n  banana) echo b;;%nesac%n")
+                    String.format(
+                        "x=banana%ncase $x in%n"
+                        + "  apple) echo a;;%n  banana) echo b;;%nesac%n"
+                    )
                 )
             )
         );
@@ -685,7 +688,8 @@ public final class IntegrationTest {
             this.runChildJvm(
                 this.writeScript(
                     "glob.sh",
-                    String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n", dir.getAbsolutePath())
+                    String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n",
+                        dir.getAbsolutePath())
                 )
             )
         );
@@ -1208,7 +1212,10 @@ public final class IntegrationTest {
             this.runChildJvm(
                 this.writeScript(
                     "getopts.sh",
-                    String.format("set -- -a foo%nwhile getopts a: opt; do echo $opt:$OPTARG; done%n")
+                    String.format(
+                        "set -- -a foo%n"
+                        + "while getopts a: opt; do echo $opt:$OPTARG; done%n"
+                    )
                 )
             )
         );
@@ -1565,7 +1572,11 @@ public final class IntegrationTest {
             this.runChildJvm(
                 this.writeScript(
                     "shadow.sh",
-                    String.format("echo() { /usr/bin/env echo wrapped: $*; }%necho hi%n")
+                    String.format(
+                        "echo() { "
+                        + "/usr/bin/env echo wrapped: $*; }"
+                        + "%necho hi%n"
+                    )
                 )
             )
         );
@@ -1768,7 +1779,8 @@ public final class IntegrationTest {
                     "brk2.sh",
                     String.format(
                         "for i in 1 2; do for j in a b c; do "
-                            + "if [ $j = b ]; then break 2; fi; echo $i.$j; done; done%necho after%n"
+                            + "if [ $j = b ]; then break 2; fi; "
+                            + "echo $i.$j; done; done%necho after%n"
                     )
                 )
             )

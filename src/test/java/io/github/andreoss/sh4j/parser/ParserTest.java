@@ -108,14 +108,14 @@ final class ParserTest {
 
     @Test
     void parseCommandWithNoArguments() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("ls").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("ls"));
         Assertions.assertEquals("ls", cmd.getName());
         Assertions.assertTrue(cmd.getArguments().isEmpty());
     }
 
     @Test
     void parseInputRedirection() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cat < file.txt").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cat < file.txt"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(0, cmd.getRedirections().get(0).getFd());
         Assertions.assertEquals(RedirectionType.INPUT, cmd.getRedirections().get(0).getType());
@@ -124,7 +124,7 @@ final class ParserTest {
 
     @Test
     void parseOutputRedirection() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("echo hello > out.txt").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("echo hello > out.txt"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(1, cmd.getRedirections().get(0).getFd());
         Assertions.assertEquals(RedirectionType.OUTPUT, cmd.getRedirections().get(0).getType());
@@ -133,7 +133,7 @@ final class ParserTest {
 
     @Test
     void parseAppendRedirection() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("echo hello >> out.txt").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("echo hello >> out.txt"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.APPEND, cmd.getRedirections().get(0).getType());
         Assertions.assertEquals("out.txt", cmd.getRedirections().get(0).getTarget());
@@ -141,7 +141,7 @@ final class ParserTest {
 
     @Test
     void parseClobberRedirection() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("echo test >| file.txt").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("echo test >| file.txt"));
         Assertions.assertTrue(cmd.getRedirections().size() >= 1);
         Assertions.assertTrue(
             cmd.getRedirections().stream().anyMatch(r -> r.getType() == RedirectionType.CLOBBER)
@@ -150,7 +150,7 @@ final class ParserTest {
 
     @Test
     void parseCommandWithDollar() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("echo $VAR").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("echo $VAR"));
         Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertEquals("$VAR", cmd.getArguments().get(0));
     }
@@ -197,7 +197,8 @@ final class ParserTest {
 
     @Test
     void parseSubshellInPipeline() {
-        final Pipeline pipeline = this.parse("echo foo | (cat) | wc").getPipelines().get(0);
+        final ListNode list = this.parse("echo foo | (cat) | wc");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(3, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof Subshell);
@@ -221,7 +222,8 @@ final class ParserTest {
 
     @Test
     void parseGroupingInPipeline() {
-        final Pipeline pipeline = this.parse("echo foo | { cat; } | wc").getPipelines().get(0);
+        final ListNode list = this.parse("echo foo | { cat; } | wc");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(3, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof Grouping);
@@ -240,35 +242,35 @@ final class ParserTest {
 
     @Test
     void parseCommandStartingWithInputRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("< input.txt cat").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("< input.txt cat"));
         Assertions.assertEquals("<", cmd.getName());
         Assertions.assertEquals(2, cmd.getArguments().size());
     }
 
     @Test
     void parseCommandStartingWithOutputRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("> out.txt echo").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("> out.txt echo"));
         Assertions.assertEquals(">", cmd.getName());
         Assertions.assertEquals(2, cmd.getArguments().size());
     }
 
     @Test
     void parseCommandStartingWithClobberRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(">| file.txt echo").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse(">| file.txt echo"));
         Assertions.assertEquals(">|", cmd.getName());
         Assertions.assertEquals(2, cmd.getArguments().size());
     }
 
     @Test
     void parseCommandStartingWithAppendRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(">> file.txt echo").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse(">> file.txt echo"));
         Assertions.assertEquals(">>", cmd.getName());
         Assertions.assertEquals(2, cmd.getArguments().size());
     }
 
     @Test
     void parseAssignmentWordAfterCommandName() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("echo FOO=bar").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("echo FOO=bar"));
         Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
         Assertions.assertTrue(cmd.getArguments().contains("FOO=bar"));
         Assertions.assertTrue(cmd.getAssignments().isEmpty());
@@ -276,14 +278,14 @@ final class ParserTest {
 
     @Test
     void parseIoNumberRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("2>file").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("2>file"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals("file", cmd.getRedirections().get(0).getTarget());
     }
 
     @Test
     void parseDupInputRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cmd <&3").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cmd <&3"));
         Assertions.assertEquals("cmd", cmd.getName());
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
@@ -292,7 +294,7 @@ final class ParserTest {
 
     @Test
     void parseCloseInputRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cmd <&-").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cmd <&-"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
         Assertions.assertEquals("-", cmd.getRedirections().get(0).getTarget());
@@ -300,7 +302,7 @@ final class ParserTest {
 
     @Test
     void parseDupOutputRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cmd >&2").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cmd >&2"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.DUP_OUTPUT, cmd.getRedirections().get(0).getType());
         Assertions.assertEquals("2", cmd.getRedirections().get(0).getTarget());
@@ -308,7 +310,7 @@ final class ParserTest {
 
     @Test
     void parseReadWriteRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cmd <>file").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cmd <>file"));
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
         Assertions.assertEquals("file", cmd.getRedirections().get(0).getTarget());
@@ -325,14 +327,16 @@ final class ParserTest {
 
     @Test
     void parseIfThenElseFi() {
-        final Pipeline pipeline = this.parse("if false; then echo a; else echo b; fi").getPipelines().get(0);
+        final ListNode list = this.parse("if false; then echo a; else echo b; fi");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof IfNode);
         Assertions.assertNotNull(((IfNode) pipeline.getCommands().get(0)).getElseBody());
     }
 
     @Test
     void parseForDoDone() {
-        final Pipeline pipeline = this.parse("for var in a b c; do echo $var; done").getPipelines().get(0);
+        final ListNode list = this.parse("for var in a b c; do echo $var; done");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(1, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof ForNode);
         final ForNode node = (ForNode) pipeline.getCommands().get(0);
@@ -344,21 +348,24 @@ final class ParserTest {
 
     @Test
     void parseWhileDoDone() {
-        final Pipeline pipeline = this.parse("while true; do echo hi; done").getPipelines().get(0);
+        final ListNode list = this.parse("while true; do echo hi; done");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof WhileNode);
         Assertions.assertFalse(((WhileNode) pipeline.getCommands().get(0)).isUntil());
     }
 
     @Test
     void parseUntilDoDone() {
-        final Pipeline pipeline = this.parse("until false; do echo hi; done").getPipelines().get(0);
+        final ListNode list = this.parse("until false; do echo hi; done");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof WhileNode);
         Assertions.assertTrue(((WhileNode) pipeline.getCommands().get(0)).isUntil());
     }
 
     @Test
     void parseCaseSimple() {
-        final Pipeline pipeline = this.parse("case foo in pat) echo match;; esac").getPipelines().get(0);
+        final ListNode list = this.parse("case foo in pat) echo match;; esac");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof CaseNode);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         Assertions.assertEquals("foo", num.getWord());
@@ -368,7 +375,8 @@ final class ParserTest {
 
     @Test
     void parseCasePipePattern() {
-        final Pipeline pipeline = this.parse("case foo in a|b) echo match;; esac").getPipelines().get(0);
+        final ListNode list = this.parse("case foo in a|b) echo match;; esac");
+        final Pipeline pipeline = this.firstPipeline(list);
         final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
         Assertions.assertEquals(2, num.getItems().get(0).getPatterns().size());
         Assertions.assertEquals("a", num.getItems().get(0).getPatterns().get(0));
@@ -405,14 +413,16 @@ final class ParserTest {
 
     @Test
     void parseFunctionDefinition() {
-        final Pipeline pipeline = this.parse("foo() { echo bar; }").getPipelines().get(0);
+        final ListNode list = this.parse("foo() { echo bar; }");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof FunctionNode);
         Assertions.assertEquals("foo", ((FunctionNode) pipeline.getCommands().get(0)).getName());
     }
 
     @Test
     void parseFunctionSubshellBody() {
-        final Pipeline pipeline = this.parse("foo() (echo bar)").getPipelines().get(0);
+        final ListNode list = this.parse("foo() (echo bar)");
+        final Pipeline pipeline = this.firstPipeline(list);
         final FunctionNode num = (FunctionNode) pipeline.getCommands().get(0);
         Assertions.assertEquals("foo", num.getName());
         Assertions.assertTrue(num.getBody() instanceof Subshell);
@@ -420,7 +430,8 @@ final class ParserTest {
 
     @Test
     void parseIfInPipeline() {
-        final Pipeline pipeline = this.parse("true | if true; then echo hi; fi").getPipelines().get(0);
+        final ListNode list = this.parse("true | if true; then echo hi; fi");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof IfNode);
@@ -428,28 +439,32 @@ final class ParserTest {
 
     @Test
     void parseForInPipeline() {
-        final Pipeline pipeline = this.parse("true | for var in a; do echo $var; done").getPipelines().get(0);
+        final ListNode list = this.parse("true | for var in a; do echo $var; done");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof ForNode);
     }
 
     @Test
     void parseWhileInPipeline() {
-        final Pipeline pipeline = this.parse("true | while false; do echo hi; done").getPipelines().get(0);
+        final ListNode list = this.parse("true | while false; do echo hi; done");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof WhileNode);
     }
 
     @Test
     void parseCaseInPipeline() {
-        final Pipeline pipeline = this.parse("true | case foo in pat) echo hi;; esac").getPipelines().get(0);
+        final ListNode list = this.parse("true | case foo in pat) echo hi;; esac");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof CaseNode);
     }
 
     @Test
     void parseFunctionInPipeline() {
-        final Pipeline pipeline = this.parse("true | foo() { echo bar; }").getPipelines().get(0);
+        final ListNode list = this.parse("true | foo() { echo bar; }");
+        final Pipeline pipeline = this.firstPipeline(list);
         Assertions.assertEquals(2, pipeline.getCommands().size());
         Assertions.assertTrue(pipeline.getCommands().get(1) instanceof FunctionNode);
     }
@@ -519,7 +534,7 @@ final class ParserTest {
 
     @Test
     void parseAssignmentWithoutCommand() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("FOO=bar").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("FOO=bar"));
         Assertions.assertEquals("", cmd.getName());
         Assertions.assertEquals(1, cmd.getAssignments().size());
         Assertions.assertEquals("FOO=bar", cmd.getAssignments().get(0));
@@ -527,7 +542,7 @@ final class ParserTest {
 
     @Test
     void parseMultipleAssignmentsThenCommand() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("FOO=1 BAR=2 cmd arg").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("FOO=1 BAR=2 cmd arg"));
         Assertions.assertEquals("cmd", cmd.getName());
         Assertions.assertEquals(2, cmd.getAssignments().size());
         Assertions.assertEquals("arg", cmd.getArguments().get(0));
@@ -535,7 +550,7 @@ final class ParserTest {
 
     @Test
     void parseInlineAssignmentMidCommand() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse("cmd FOO=1 arg").getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
         Assertions.assertEquals("cmd", cmd.getName());
         Assertions.assertEquals(0, cmd.getAssignments().size());
         Assertions.assertEquals(2, cmd.getArguments().size());
@@ -608,7 +623,8 @@ final class ParserTest {
 
     @Test
     void parseHereDocRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(String.format("cat <<EOF%nhello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = (SimpleCommand) this.parse(String
+            .format("cat <<EOF%nhello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
     }
@@ -639,7 +655,8 @@ final class ParserTest {
 
     @Test
     void parseHereDocStripTabs() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(String.format("cat <<-EOF%n\thello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = (SimpleCommand) this.parse(String
+            .format("cat <<-EOF%n\thello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
     }
@@ -782,5 +799,17 @@ final class ParserTest {
 
     private ListNode parse(final String input) {
         return this.parser(input).parse();
+    }
+
+    private SimpleCommand command(final ListNode list) {
+        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+    }
+
+    private Pipeline firstPipeline(final ListNode list) {
+        return list.getPipelines().get(0);
+    }
+
+    private Node firstCommand(final ListNode list) {
+        return list.getPipelines().get(0).getCommands().get(0);
     }
 }

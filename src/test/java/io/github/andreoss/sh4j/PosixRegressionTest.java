@@ -764,8 +764,10 @@ final class PosixRegressionTest {
 
     @Test
     void pipelineExitAndRuntimeSignalsStayInSubshell() {
-        Assertions.assertEquals(String.format("after%n"), Sh4j.INSTANCE.runFull("exit 1 | cat; echo after").stdout());
-        Assertions.assertEquals(String.format("after%n"), Sh4j.INSTANCE.runFull("break | cat; echo after").stdout());
+        Assertions.assertEquals(String.format("after%n"),
+            Sh4j.INSTANCE.runFull("exit 1 | cat; echo after").stdout());
+        Assertions.assertEquals(String.format("after%n"),
+            Sh4j.INSTANCE.runFull("break | cat; echo after").stdout());
     }
 
     @Test
@@ -809,7 +811,8 @@ final class PosixRegressionTest {
 
     @Test
     void trapRuntimeErrorDoesNotCrashExit() {
-        Assertions.assertEquals(String.format("body%n"), Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body").stdout());
+        Assertions.assertEquals(String.format("body%n"),
+            Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body").stdout());
     }
 
     @Test

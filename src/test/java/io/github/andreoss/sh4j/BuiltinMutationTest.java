@@ -571,7 +571,8 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdFlagOrder() throws IOException {
-        final Path dir = TempDirs.folder(BuiltinMutationTest.root, "pwdorder").toPath().toRealPath();
+        final Path dir = TempDirs.folder(BuiltinMutationTest.root,
+            "pwdorder").toPath().toRealPath();
         Assertions.assertEquals(
             dir + String.format("%n"),
             Sh4j.INSTANCE.out(String.format("cd %s; pwd -P -L", dir))
