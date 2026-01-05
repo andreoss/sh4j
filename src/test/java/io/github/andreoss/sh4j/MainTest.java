@@ -31,6 +31,50 @@ final class MainTest {
     private static Path root;
 
     @Test
+    void exitCodeNoArgsInteractiveIoException() {
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new InputStream() {
+                    @Override
+                    public int read() throws IOException {
+                        throw new IOException();
+                    }
+
+                    @Override
+                    public int read(final byte[] buf, final int off, final int len)
+                        throws IOException {
+                        throw new IOException();
+                    }
+                },
+                () -> Main.exitCode(new String[0])
+            )
+        );
+    }
+
+    @Test
+    void exitCodeDashSReadFailure() {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> MainTest.withStdin(
+                new InputStream() {
+                    @Override
+                    public int read() throws IOException {
+                        throw new IOException();
+                    }
+
+                    @Override
+                    public int read(final byte[] buf, final int off, final int len)
+                        throws IOException {
+                        throw new IOException();
+                    }
+                },
+                () -> Main.exitCode(new String[] {"-s"})
+            )
+        );
+    }
+
+    @Test
     void runScriptWithEcho() throws IOException {
         final File script = TempDirs.file(MainTest.root, "echo.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
@@ -130,28 +174,6 @@ final class MainTest {
             w.write(String.format("exit $1%n"));
         }
         Assertions.assertEquals(7, Main.exitCode(new String[] {script.getAbsolutePath(), "7"}));
-    }
-
-    @Test
-    void exitCodeNoArgsInteractiveIoException() {
-        Assertions.assertEquals(
-            0,
-            MainTest.withStdin(
-                new InputStream() {
-                    @Override
-                    public int read() throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public int read(final byte[] buf, final int off, final int len)
-                        throws IOException {
-                        throw new IOException();
-                    }
-                },
-                () -> Main.exitCode(new String[0])
-            )
-        );
     }
 
     @Test
@@ -396,28 +418,6 @@ final class MainTest {
     void exitCodeDashCWithPositionalArguments() {
         Assertions.assertEquals(
             7, Main.exitCode(new String[] {"-c", "exit $1", "sh", "7"})
-        );
-    }
-
-    @Test
-    void exitCodeDashSReadFailure() {
-        Assertions.assertThrows(
-            IllegalStateException.class,
-            () -> MainTest.withStdin(
-                new InputStream() {
-                    @Override
-                    public int read() throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public int read(final byte[] buf, final int off, final int len)
-                        throws IOException {
-                        throw new IOException();
-                    }
-                },
-                () -> Main.exitCode(new String[] {"-s"})
-            )
         );
     }
 

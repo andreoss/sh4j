@@ -136,112 +136,11 @@ public final class Executor implements BuiltinContext {
     /** Exit status of the last command substitution (-1 when none ran). */
     private int substat = -1;
 
-    /** Input streams bound to descriptors by a redirection-only {@code exec}. */
-    private final Map<Integer, InputStream> descriptors = new HashMap<>();
-
-    /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
-
     /** True when the current input swap borrowed a descriptor stream. */
     private boolean borrowed;
 
     /** Nesting depth of active loop bodies. */
     private int loops;
-
-    /**
-     * Builds an executor seeded with the current process environment.
-     */
-    public Executor() {
-        this(System.getenv(), Arrays.asList("sh"));
-    }
-
-    /**
-     * Builds an executor with the given environment view.
-     *
-     * @param environment Environment variables (copied, not aliased)
-     */
-    public Executor(final Map<String, String> environment) {
-        this(environment, Arrays.asList("sh"));
-    }
-
-    /**
-     * Builds an executor with the given environment and positional params.
-     *
-     * @param environment       Environment variables (copied)
-     * @param params  Positional parameters ({@code $0} first)
-     */
-    public Executor(
-        final Map<String, String> environment,
-        final List<String> params
-    ) {
-        super();
-        this.environment = new HashMap<>(environment);
-        this.exported = new HashSet<>(environment.keySet());
-        this.readonly = new HashSet<>();
-        this.traps = new HashMap<>();
-        this.cwd = new File(System.getProperty("user.dir", "/")).getAbsoluteFile();
-        this.functions = new HashMap<>();
-        this.params = new ArrayList<>(params);
-        this.jobs = new JobManager();
-        this.dispatcher = new BuiltinDispatcher();
-        this.arith = new ArithmeticEvaluator();
-        this.lastcode = 0;
-        this.flags = "";
-        this.bgpid = 0;
-        this.out = System.out;
-        this.err = System.err;
-        this.inStream = System.in;
-        this.aliases = new HashMap<>();
-        this.history = new CommandHistory();
-        this.setDefaults();
-    }
-
-    private void setDefaults() {
-        this.environment.putIfAbsent("IFS", DEFAULT_IFS);
-        this.environment.putIfAbsent("HOME", System.getProperty("user.home", "/root"));
-        this.environment.putIfAbsent("PATH", System.getenv("PATH"));
-        final String path = this.environment.get("PATH");
-        if (path == null || path.isEmpty()) {
-            this.environment.put("PATH", DEFAULT_PATH);
-        }
-        this.exported.add("HOME");
-        this.exported.add("PATH");
-        this.environment.putIfAbsent("PWD", this.cwd.getAbsolutePath());
-        this.exported.add("PWD");
-        this.environment.putIfAbsent(
-            "PPID",
-            Long.toString(
-                ProcessHandle.current().parent().orElse(ProcessHandle.current()).pid()
-            )
-        );
-    }
-
-    /**
-     * Creates a subshell with the same variables, functions, aliases,
-     * positional parameters, flags, traps, and working directory.
-     *
-     * @return A new child executor
-     */
-    private Executor subshell() {
-        final Executor child = new Executor(this.exportedEnvironment());
-        child.environment.clear();
-        child.environment.putAll(this.environment);
-        child.exported.clear();
-        child.exported.addAll(this.exported);
-        child.readonly.addAll(this.readonly);
-        child.traps.putAll(this.traps);
-        child.functions.putAll(this.functions);
-        child.aliases.putAll(this.aliases);
-        child.params.clear();
-        child.params.addAll(this.params);
-        child.flags = this.flags;
-        child.cwd = this.cwd;
-        child.out = this.out;
-        child.err = this.err;
-        child.inStream = this.inStream;
-        child.lastcode = this.lastcode;
-        return child;
-    }
 
     @Override
     public Map<String, String> exportedEnvironment() {
@@ -331,6 +230,277 @@ public final class Executor implements BuiltinContext {
         return this.traps;
     }
 
+    @Override
+    public String executeCommandSubstitution(final String text) {
+        final ListNode ast = new Parser(new Lexer(new CharReader(text))).parse();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final Executor sub = this.subshell();
+        sub.setCaptureStream(baos);
+        this.substat = sub.execute(ast);
+        String captured = baos.toString(StandardCharsets.UTF_8);
+        while (captured.endsWith("\n")) {
+            captured = captured.substring(0, captured.length() - 1);
+        }
+        return captured;
+    }
+
+    @Override
+    public String evalArithmetic(final String expr, final Map<String, String> env) {
+        return this.arith.evalArithmetic(expr, env);
+    }
+
+    @Override
+    public int execute(final ListNode list) {
+        if (this.depth == 0) {
+            this.snapshot = null;
+            this.snapshotLine = -1;
+        }
+        this.depth = this.depth + 1;
+        int code;
+        try {
+            code = 0;
+            if (!list.getPipelines().isEmpty()) {
+                code = this.runPipelineList(list);
+            }
+        } catch (final ExitSignal ex) {
+            if (this.depth > 1) {
+                throw ex;
+            }
+            code = ex.getCode();
+        } catch (final ReturnSignal ex) {
+            if (this.depth > 1) {
+                throw ex;
+            }
+            this.err.println("sh: return: not in a function");
+            code = ex.getCode();
+        } catch (final BreakSignal ex) {
+            if (this.depth > 1) {
+                throw ex;
+            }
+            code = 0;
+        } catch (final ContinueSignal ex) {
+            if (this.depth > 1) {
+                throw ex;
+            }
+            code = 0;
+        } finally {
+            this.depth = this.depth - 1;
+        }
+        return code;
+    }
+
+    @Override
+    public int lastBackgroundPid() {
+        return this.bgpid;
+    }
+
+    @Override
+    public void waitForBackgroundJobs() {
+        this.jobs.waitForAll();
+    }
+
+    @Override
+    public int executeBypassingFunctions(
+        final String name, final List<String> args, final Map<String, String> env
+    ) {
+        final SimpleCommand command = new SimpleCommand(name);
+        for (final String arg : args) {
+            command.addArgument(arg);
+        }
+        return this.runNamedCommand(command, name, new HashMap<>(env), true);
+    }
+
+    @Override
+    public String expandVariables(final String arg, final Map<String, String> env) {
+        return WordExpander.expandVariablesImpl(arg, env, this);
+    }
+
+    @Override
+    public List<String> expandArguments(final String arg, final Map<String, String> env) {
+        List<String> fields = this.expandFields(arg, env);
+        if (arg != null && !WordExpander.isQuoted(arg)
+            && this.flags.indexOf('f') < 0) {
+            fields = WordExpander.pathnameExpand(fields, this.cwd);
+        }
+        return fields;
+    }
+
+    @Override
+    public List<String> expandFields(final String arg, final Map<String, String> env) {
+        final List<String> fields = new ArrayList<>();
+        if (arg == null) {
+            return fields;
+        }
+        if ("\"$@\"".equals(arg) || "\"${@}\"".equals(arg)) {
+            if (this.params.size() > 1) {
+                fields.addAll(this.params.subList(1, this.params.size()));
+            }
+        } else {
+            final String expanded = this.expandVariables(arg, env);
+            if (WordExpander.isQuoted(arg)) {
+                fields.add(WordExpander.removeQuotes(expanded));
+            } else {
+                final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
+                for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
+                    fields.add(WordExpander.removeQuotes(field));
+                }
+            }
+        }
+        return fields;
+    }
+
+    @Override
+    public String lookupVariable(final String name, final Map<String, String> env) {
+        String result;
+        if (name.isEmpty()) {
+            return "";
+        }
+        if (name.length() == 1) {
+            result = this.getSpecialParam(name.charAt(0));
+        } else {
+            result = null;
+        }
+        if (result == null) {
+            if (name.chars().allMatch(Character::isDigit)) {
+                final int idx = Integer.parseInt(name);
+                if (idx < this.params.size()) {
+                    result = this.params.get(idx);
+                }
+            } else {
+                result = env.get(name);
+                if (result == null && this.flags.indexOf('u') >= 0) {
+                    this.err.println("sh: " + name + ": parameter not set");
+                    throw new ExitSignal(1);
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public String getSpecialParam(final char name) {
+        return switch (name) {
+            case '?' -> String.valueOf(this.lastcode);
+            case '-' -> this.flags;
+            case '$' -> String.valueOf(ProcessHandle.current().pid());
+            case '!' -> String.valueOf(this.bgpid);
+            case '#' -> String.valueOf(this.params.size() - 1);
+            case '@', '*' -> this.positionalParamsJoined();
+            default -> this.positionalParamForDigit(name);
+        };
+    }
+
+    @Override
+    public String resolveCommand(final String name) {
+        return this.resolveCommand(name, this.environment);
+    }
+
+    @Override
+    public Map<String, String> environmentMap() {
+        return this.environment;
+    }
+
+    @Override
+    public List<String> positionalParamsList() {
+        return this.params;
+    }
+
+    @Override
+    public Map<String, FunctionNode> functionsMap() {
+        return this.functions;
+    }
+
+    @Override
+    public Map<String, String> aliases() {
+        return this.aliases;
+    }
+
+    @Override
+    public JobManager jobManager() {
+        return this.jobs;
+    }
+
+    @Override
+    public CommandHistory history() {
+        return this.history;
+    }
+
+    @Override
+    public PrintStream outStream() {
+        return this.out;
+    }
+
+    @Override
+    public PrintStream errStream() {
+        return this.err;
+    }
+
+    @Override
+    public String shellFlags() {
+        return this.flags;
+    }
+
+    @Override
+    public void setShellFlags(final String flags) {
+        this.flags = flags;
+    }
+
+    @Override
+    public void setPositionalParams(final List<String> params) {
+        final String zeroth = this.params.isEmpty() ? "" : this.params.get(0);
+        this.params.clear();
+        this.params.add(zeroth);
+        this.params.addAll(params);
+    }
+
+    /**
+     * Builds an executor seeded with the current process environment.
+     */
+    public Executor() {
+        this(System.getenv(), Arrays.asList("sh"));
+    }
+
+    /**
+     * Builds an executor with the given environment view.
+     *
+     * @param environment Environment variables (copied, not aliased)
+     */
+    public Executor(final Map<String, String> environment) {
+        this(environment, Arrays.asList("sh"));
+    }
+
+    /**
+     * Builds an executor with the given environment and positional params.
+     *
+     * @param environment       Environment variables (copied)
+     * @param params  Positional parameters ({@code $0} first)
+     */
+    public Executor(
+        final Map<String, String> environment,
+        final List<String> params
+    ) {
+        super();
+        this.environment = new HashMap<>(environment);
+        this.exported = new HashSet<>(environment.keySet());
+        this.readonly = new HashSet<>();
+        this.traps = new HashMap<>();
+        this.cwd = new File(System.getProperty("user.dir", "/")).getAbsoluteFile();
+        this.functions = new HashMap<>();
+        this.params = new ArrayList<>(params);
+        this.jobs = new JobManager();
+        this.dispatcher = new BuiltinDispatcher();
+        this.arith = new ArithmeticEvaluator();
+        this.lastcode = 0;
+        this.flags = "";
+        this.bgpid = 0;
+        this.out = System.out;
+        this.err = System.err;
+        this.inStream = System.in;
+        this.aliases = new HashMap<>();
+        this.history = new CommandHistory();
+        this.setDefaults();
+    }
+
     /**
      * Runs and removes the EXIT trap using the last exit status.
      */
@@ -404,63 +574,66 @@ public final class Executor implements BuiltinContext {
         this.inStream = inputStream;
     }
 
-    @Override
-    public String executeCommandSubstitution(final String text) {
-        final ListNode ast = new Parser(new Lexer(new CharReader(text))).parse();
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final Executor sub = this.subshell();
-        sub.setCaptureStream(baos);
-        this.substat = sub.execute(ast);
-        String captured = baos.toString(StandardCharsets.UTF_8);
-        while (captured.endsWith("\n")) {
-            captured = captured.substring(0, captured.length() - 1);
-        }
-        return captured;
+    /**
+     * Returns the most recent background-job PID.
+     *
+     * @return The most recent background-job PID ({@code $!})
+     */
+    int getLastBgPid() {
+        return this.bgpid;
     }
 
-    @Override
-    public String evalArithmetic(final String expr, final Map<String, String> env) {
-        return this.arith.evalArithmetic(expr, env);
+    /** Input streams bound to descriptors by a redirection-only {@code exec}. */
+    private final Map<Integer, InputStream> descriptors = new HashMap<>();
+
+    /** Output streams bound to descriptors by a redirection-only exec. */
+    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
+
+    private void setDefaults() {
+        this.environment.putIfAbsent("IFS", DEFAULT_IFS);
+        this.environment.putIfAbsent("HOME", System.getProperty("user.home", "/root"));
+        this.environment.putIfAbsent("PATH", System.getenv("PATH"));
+        final String path = this.environment.get("PATH");
+        if (path == null || path.isEmpty()) {
+            this.environment.put("PATH", DEFAULT_PATH);
+        }
+        this.exported.add("HOME");
+        this.exported.add("PATH");
+        this.environment.putIfAbsent("PWD", this.cwd.getAbsolutePath());
+        this.exported.add("PWD");
+        this.environment.putIfAbsent(
+            "PPID",
+            Long.toString(
+                ProcessHandle.current().parent().orElse(ProcessHandle.current()).pid()
+            )
+        );
     }
 
-    @Override
-    public int execute(final ListNode list) {
-        if (this.depth == 0) {
-            this.snapshot = null;
-            this.snapshotLine = -1;
-        }
-        this.depth = this.depth + 1;
-        int code;
-        try {
-            code = 0;
-            if (!list.getPipelines().isEmpty()) {
-                code = this.runPipelineList(list);
-            }
-        } catch (final ExitSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
-            code = ex.getCode();
-        } catch (final ReturnSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
-            this.err.println("sh: return: not in a function");
-            code = ex.getCode();
-        } catch (final BreakSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
-            code = 0;
-        } catch (final ContinueSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
-            code = 0;
-        } finally {
-            this.depth = this.depth - 1;
-        }
-        return code;
+    /**
+     * Creates a subshell with the same variables, functions, aliases,
+     * positional parameters, flags, traps, and working directory.
+     *
+     * @return A new child executor
+     */
+    private Executor subshell() {
+        final Executor child = new Executor(this.exportedEnvironment());
+        child.environment.clear();
+        child.environment.putAll(this.environment);
+        child.exported.clear();
+        child.exported.addAll(this.exported);
+        child.readonly.addAll(this.readonly);
+        child.traps.putAll(this.traps);
+        child.functions.putAll(this.functions);
+        child.aliases.putAll(this.aliases);
+        child.params.clear();
+        child.params.addAll(this.params);
+        child.flags = this.flags;
+        child.cwd = this.cwd;
+        child.out = this.out;
+        child.err = this.err;
+        child.inStream = this.inStream;
+        child.lastcode = this.lastcode;
+        return child;
     }
 
     private int runPipelineList(final ListNode list) {
@@ -526,27 +699,6 @@ public final class Executor implements BuiltinContext {
             cmdStr
         );
         this.bgpid = (int) (JobManager.JOB_PID_BASE + jobId);
-    }
-
-    @Override
-    public int lastBackgroundPid() {
-        return this.bgpid;
-    }
-
-    @Override
-    public void waitForBackgroundJobs() {
-        this.jobs.waitForAll();
-    }
-
-    @Override
-    public int executeBypassingFunctions(
-        final String name, final List<String> args, final Map<String, String> env
-    ) {
-        final SimpleCommand command = new SimpleCommand(name);
-        for (final String arg : args) {
-            command.addArgument(arg);
-        }
-        return this.runNamedCommand(command, name, new HashMap<>(env), true);
     }
 
     private int executePipeline(final Pipeline pipeline) {
@@ -1069,22 +1221,6 @@ public final class Executor implements BuiltinContext {
         return prior;
     }
 
-    /**
-     * Parses a redirection descriptor target such as {@code 3}.
-     *
-     * @param text The expanded redirection target
-     * @return The descriptor number, or -1 when it is not numeric
-     */
-    private static int parseDescriptor(final String text) {
-        int result = -1;
-        try {
-            result = Integer.parseInt(text.trim());
-        } catch (final NumberFormatException ex) {
-            result = -1;
-        }
-        return result;
-    }
-
     private int runExternalCommand(
         final SimpleCommand cmd, final String name, final Map<String, String> cmdEnv
     ) {
@@ -1214,86 +1350,6 @@ public final class Executor implements BuiltinContext {
         return 0;
     }
 
-    @Override
-    public String expandVariables(final String arg, final Map<String, String> env) {
-        return WordExpander.expandVariablesImpl(arg, env, this);
-    }
-
-    @Override
-    public List<String> expandArguments(final String arg, final Map<String, String> env) {
-        List<String> fields = this.expandFields(arg, env);
-        if (arg != null && !WordExpander.isQuoted(arg)
-            && this.flags.indexOf('f') < 0) {
-            fields = WordExpander.pathnameExpand(fields, this.cwd);
-        }
-        return fields;
-    }
-
-    @Override
-    public List<String> expandFields(final String arg, final Map<String, String> env) {
-        final List<String> fields = new ArrayList<>();
-        if (arg == null) {
-            return fields;
-        }
-        if ("\"$@\"".equals(arg) || "\"${@}\"".equals(arg)) {
-            if (this.params.size() > 1) {
-                fields.addAll(this.params.subList(1, this.params.size()));
-            }
-        } else {
-            final String expanded = this.expandVariables(arg, env);
-            if (WordExpander.isQuoted(arg)) {
-                fields.add(WordExpander.removeQuotes(expanded));
-            } else {
-                final String ifsVal = env.getOrDefault("IFS", DEFAULT_IFS);
-                for (final String field : WordExpander.splitFields(expanded, ifsVal)) {
-                    fields.add(WordExpander.removeQuotes(field));
-                }
-            }
-        }
-        return fields;
-    }
-
-    @Override
-    public String lookupVariable(final String name, final Map<String, String> env) {
-        String result;
-        if (name.isEmpty()) {
-            return "";
-        }
-        if (name.length() == 1) {
-            result = this.getSpecialParam(name.charAt(0));
-        } else {
-            result = null;
-        }
-        if (result == null) {
-            if (name.chars().allMatch(Character::isDigit)) {
-                final int idx = Integer.parseInt(name);
-                if (idx < this.params.size()) {
-                    result = this.params.get(idx);
-                }
-            } else {
-                result = env.get(name);
-                if (result == null && this.flags.indexOf('u') >= 0) {
-                    this.err.println("sh: " + name + ": parameter not set");
-                    throw new ExitSignal(1);
-                }
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public String getSpecialParam(final char name) {
-        return switch (name) {
-            case '?' -> String.valueOf(this.lastcode);
-            case '-' -> this.flags;
-            case '$' -> String.valueOf(ProcessHandle.current().pid());
-            case '!' -> String.valueOf(this.bgpid);
-            case '#' -> String.valueOf(this.params.size() - 1);
-            case '@', '*' -> this.positionalParamsJoined();
-            default -> this.positionalParamForDigit(name);
-        };
-    }
-
     private String positionalParamsJoined() {
         final String joined;
         if (this.params.size() <= 1) {
@@ -1334,11 +1390,6 @@ public final class Executor implements BuiltinContext {
             code = EXIT_COMMAND_NOT_EXECUTABLE;
         }
         return code;
-    }
-
-    @Override
-    public String resolveCommand(final String name) {
-        return this.resolveCommand(name, this.environment);
     }
 
     private String resolveCommand(final String name, final Map<String, String> env) {
@@ -1414,73 +1465,6 @@ public final class Executor implements BuiltinContext {
         return child;
     }
 
-    /**
-     * Returns the most recent background-job PID.
-     *
-     * @return The most recent background-job PID ({@code $!})
-     */
-    int getLastBgPid() {
-        return this.bgpid;
-    }
-
-    @Override
-    public Map<String, String> environmentMap() {
-        return this.environment;
-    }
-
-    @Override
-    public List<String> positionalParamsList() {
-        return this.params;
-    }
-
-    @Override
-    public Map<String, FunctionNode> functionsMap() {
-        return this.functions;
-    }
-
-    @Override
-    public Map<String, String> aliases() {
-        return this.aliases;
-    }
-
-    @Override
-    public JobManager jobManager() {
-        return this.jobs;
-    }
-
-    @Override
-    public CommandHistory history() {
-        return this.history;
-    }
-
-    @Override
-    public PrintStream outStream() {
-        return this.out;
-    }
-
-    @Override
-    public PrintStream errStream() {
-        return this.err;
-    }
-
-    @Override
-    public String shellFlags() {
-        return this.flags;
-    }
-
-    @Override
-    public void setShellFlags(final String flags) {
-        this.flags = flags;
-    }
-
-    @Override
-    public void setPositionalParams(final List<String> params) {
-        final String zeroth = this.params.isEmpty() ? "" : this.params.get(0);
-        this.params.clear();
-        this.params.add(zeroth);
-        this.params.addAll(params);
-    }
-
     private static boolean shouldRunNext(
         final ListNode.Separator prevSep, final int prevExit
     ) {
@@ -1511,6 +1495,22 @@ public final class Executor implements BuiltinContext {
 
     private static boolean isSpecialBuiltin(final String name) {
         return SPECIAL_BUILTINS.contains(name);
+    }
+
+    /**
+     * Parses a redirection descriptor target such as {@code 3}.
+     *
+     * @param text The expanded redirection target
+     * @return The descriptor number, or -1 when it is not numeric
+     */
+    private static int parseDescriptor(final String text) {
+        int result = -1;
+        try {
+            result = Integer.parseInt(text.trim());
+        } catch (final NumberFormatException ex) {
+            result = -1;
+        }
+        return result;
     }
 
 }
