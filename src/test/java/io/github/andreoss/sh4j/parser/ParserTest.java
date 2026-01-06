@@ -623,8 +623,9 @@ final class ParserTest {
 
     @Test
     void parseHereDocRedirect() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(String
-            .format("cat <<EOF%nhello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(
+            this.parse(String.format("cat <<EOF%nhello%nEOF%n"))
+        );
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
     }
@@ -655,8 +656,9 @@ final class ParserTest {
 
     @Test
     void parseHereDocStripTabs() {
-        final SimpleCommand cmd = (SimpleCommand) this.parse(String
-            .format("cat <<-EOF%n\thello%nEOF%n")).getPipelines().get(0).getCommands().get(0);
+        final SimpleCommand cmd = this.command(
+            this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"))
+        );
         Assertions.assertEquals(1, cmd.getRedirections().size());
         Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
     }

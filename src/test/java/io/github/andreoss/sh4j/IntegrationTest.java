@@ -688,8 +688,10 @@ public final class IntegrationTest {
             this.runChildJvm(
                 this.writeScript(
                     "glob.sh",
-                    String.format("cd %s%necho *.txt | tr ' ' '\\n' | sort%n",
-                        dir.getAbsolutePath())
+                    String.format(
+                        "cd %s%necho *.txt | tr ' ' '\\n' | sort%n",
+                        dir.getAbsolutePath()
+                    )
                 )
             )
         );

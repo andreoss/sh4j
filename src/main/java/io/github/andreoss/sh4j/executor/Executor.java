@@ -892,23 +892,26 @@ public final class Executor implements BuiltinContext {
                 );
             child.err = this.err;
             final Node node = commands.get(index);
-            threads[index] = new Thread(() -> {
-                try {
-                    codes[index] = child.executeNode(node);
-                } catch (final ExitSignal ex) {
-                    codes[index] = ex.getCode();
-                } catch (final RuntimeException ex) {
-                    codes[index] = 1;
-                } finally {
-                    if (!last) {
-                        try {
-                            outputs[index].close();
-                        } catch (final IOException ignored) {
-                            codes[index] = 1;
+            threads[index] = new Thread(
+                () -> {
+                    try {
+                        codes[index] = child.executeNode(node);
+                    } catch (final ExitSignal ex) {
+                        codes[index] = ex.getCode();
+                    } catch (final RuntimeException ex) {
+                        codes[index] = 1;
+                    } finally {
+                        if (!last) {
+                            try {
+                                outputs[index].close();
+                            } catch (final IOException ignored) {
+                                codes[index] = 1;
+                            }
                         }
                     }
-                }
-            }, "sh-pipe-" + index);
+                },
+                "sh-pipe-" + index
+            );
         }
         for (final Thread thread : threads) {
             thread.start();

@@ -296,8 +296,10 @@ final class Sh4jPosixTest {
 
     @Test
     void setEWithBangTrueNoExit() {
-        Assertions.assertEquals(String.format("after%n"),
-            Sh4j.INSTANCE.out("set -e; ! false; echo after"));
+        Assertions.assertEquals(
+            String.format("after%n"),
+            Sh4j.INSTANCE.out("set -e; ! false; echo after")
+        );
     }
 
     @Test
@@ -722,8 +724,12 @@ final class Sh4jPosixTest {
 
     @Test
     void fcSubstitute() {
-        Assertions.assertTrue(Sh4j.INSTANCE.out("echo hello",
-            "fc -s hello=world").contains("echo world"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.out(
+                "echo hello",
+                "fc -s hello=world"
+            ).contains("echo world")
+        );
     }
 
     // ============================================================
@@ -808,8 +814,10 @@ final class Sh4jPosixTest {
 
     @Test
     void subshellDoesNotAffectParent() {
-        Assertions.assertEquals(String.format("outer%n"),
-            Sh4j.INSTANCE.out("X=outer; (X=inner); echo $X"));
+        Assertions.assertEquals(
+            String.format("outer%n"),
+            Sh4j.INSTANCE.out("X=outer; (X=inner); echo $X")
+        );
     }
 
     @Test
@@ -823,8 +831,10 @@ final class Sh4jPosixTest {
 
     @Test
     void groupingSharesEnvironment() {
-        Assertions.assertEquals(String.format("inner%n"),
-            Sh4j.INSTANCE.out("{ X=inner; }; echo $X"));
+        Assertions.assertEquals(
+            String.format("inner%n"),
+            Sh4j.INSTANCE.out("{ X=inner; }; echo $X")
+        );
     }
 
     // ============================================================
@@ -852,8 +862,10 @@ final class Sh4jPosixTest {
 
     @Test
     void breakExitsLoop() {
-        Assertions.assertEquals(String.format("1%n"),
-            Sh4j.INSTANCE.out("for i in 1 2 3; do echo $i; break; echo after; done"));
+        Assertions.assertEquals(
+            String.format("1%n"),
+            Sh4j.INSTANCE.out("for i in 1 2 3; do echo $i; break; echo after; done")
+        );
     }
 
     @Test

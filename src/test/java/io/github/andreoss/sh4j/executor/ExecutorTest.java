@@ -1946,8 +1946,12 @@ final class ExecutorTest {
     @Test
     void ppidExpandsAsParameter() {
         final Executor executor = new Executor();
-        Assertions.assertTrue(executor.expandVariables("$PPID",
-            executor.environmentMap()).matches("\\d+"), "$PPID should expand to digits");
+        Assertions.assertTrue(
+            executor.expandVariables(
+                "$PPID",
+                executor.environmentMap()
+            ).matches("\\d+")
+        );
     }
 
     @Test
@@ -2819,8 +2823,11 @@ final class ExecutorTest {
     @Test
     void jobsWithNonExistentJobId() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 99999")));
         stream.close();
@@ -2871,8 +2878,11 @@ final class ExecutorTest {
     @Test
     void bgNoJobsReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("bg")));
         stream.close();
@@ -2895,8 +2905,11 @@ final class ExecutorTest {
     @Test
     void bgWithInvalidJobIdReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg 99999")));
         stream.close();
@@ -2905,8 +2918,11 @@ final class ExecutorTest {
     @Test
     void bgWithInvalidJobSyntaxReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg notanumber")));
         stream.close();
@@ -2985,8 +3001,11 @@ final class ExecutorTest {
     @Test
     void fgWithInvalidJobSyntaxReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("fg notajob")));
         stream.close();
@@ -3058,8 +3077,11 @@ final class ExecutorTest {
     @Test
     void fcSubstituteInvalidPattern() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -s nosign")));
@@ -3069,8 +3091,11 @@ final class ExecutorTest {
     @Test
     void fcUnknownOptionReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -z")));
@@ -3080,8 +3105,11 @@ final class ExecutorTest {
     @Test
     void fcSubstituteNonExistentNumber() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -s hello=world 999")));
@@ -3219,8 +3247,10 @@ final class ExecutorTest {
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
         } finally {
-            System.setProperty(ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP));
+            System.setProperty(
+                ExecutorTest.USER_DIR_PROP,
+                System.getProperty(ExecutorTest.USER_DIR_PROP)
+            );
         }
     }
 
@@ -3236,8 +3266,10 @@ final class ExecutorTest {
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
         } finally {
-            System.setProperty(ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP));
+            System.setProperty(
+                ExecutorTest.USER_DIR_PROP,
+                System.getProperty(ExecutorTest.USER_DIR_PROP)
+            );
         }
     }
 
@@ -3263,8 +3295,10 @@ final class ExecutorTest {
             Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
             Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
         } finally {
-            System.setProperty(ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP));
+            System.setProperty(
+                ExecutorTest.USER_DIR_PROP,
+                System.getProperty(ExecutorTest.USER_DIR_PROP)
+            );
         }
     }
 
@@ -3280,8 +3314,10 @@ final class ExecutorTest {
                 executor.getVariable(ExecutorTest.PWD_KEY)
             );
         } finally {
-            System.setProperty(ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP));
+            System.setProperty(
+                ExecutorTest.USER_DIR_PROP,
+                System.getProperty(ExecutorTest.USER_DIR_PROP)
+            );
         }
     }
 
@@ -3960,8 +3996,11 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-c", "file"));
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setErrorStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt"))
@@ -3986,8 +4025,11 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setErrorStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
@@ -4064,8 +4106,11 @@ final class ExecutorTest {
     @Test
     void aliasWithDoubleQuotedValue() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias ll=\"ls -l\""))
@@ -4077,8 +4122,11 @@ final class ExecutorTest {
     @Test
     void aliasShortValueNoUnquote() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias x='a'"))
@@ -4118,8 +4166,11 @@ final class ExecutorTest {
     @Test
     void functionDefinitionParsing() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(new ByteArrayOutputStream(), true,
-            StandardCharsets.UTF_8);
+        final PrintStream stream = new PrintStream(
+            new ByteArrayOutputStream(),
+            true,
+            StandardCharsets.UTF_8
+        );
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
         Assertions.assertTrue(executor.functionsMap().containsKey("myfunc"));
