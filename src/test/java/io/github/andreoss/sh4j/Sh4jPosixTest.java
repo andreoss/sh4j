@@ -586,43 +586,52 @@ final class Sh4jPosixTest {
 
     @Test
     void readSingleVar() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
-            "read VAR",
-            "echo $VAR"
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
+                "read VAR",
+                "echo $VAR"
+            )
         );
-        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
     void readMultipleVars() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8)),
-            "read X Y Z",
-            "echo $X $Y $Z"
+        Assertions.assertEquals(
+            String.format("a b c%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8)),
+                "read X Y Z",
+                "echo $X $Y $Z"
+            )
         );
-        Assertions.assertEquals(String.format("a b c%n"), result.stdout());
     }
 
     @Test
     void readRawMode() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("a\\b%n").getBytes(StandardCharsets.UTF_8)),
-            "read -r VAR",
-            "echo $VAR"
+        Assertions.assertEquals(
+            String.format("a\\b%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(String.format("a\\b%n").getBytes(StandardCharsets.UTF_8)),
+                "read -r VAR",
+                "echo $VAR"
+            )
         );
-        Assertions.assertEquals(String.format("a\\b%n"), result.stdout());
     }
 
     @Test
     void readWithReplay() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("hello world%n").getBytes(StandardCharsets
-                .UTF_8)),
-            "read",
-            "echo $REPLY"
+        Assertions.assertEquals(
+            String.format("hello world%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(
+                    String.format("hello world%n").getBytes(StandardCharsets.UTF_8)
+                ),
+                "read",
+                "echo $REPLY"
+            )
         );
-        Assertions.assertEquals(String.format("hello world%n"), result.stdout());
     }
 
     // ============================================================
@@ -672,22 +681,26 @@ final class Sh4jPosixTest {
 
     @Test
     void getoptsParsesFlags() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "set -- -a -b val",
-            "getopts ab: opt; echo $opt",
-            "getopts ab: opt; echo $opt $OPTARG"
+        Assertions.assertEquals(
+            String.format("a%nb val%n"),
+            Sh4j.INSTANCE.out(
+                "set -- -a -b val",
+                "getopts ab: opt; echo $opt",
+                "getopts ab: opt; echo $opt $OPTARG"
+            )
         );
-        Assertions.assertEquals(String.format("a%nb val%n"), result.stdout());
     }
 
     @Test
     void getoptsEndsAtNonOption() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "set -- -a file",
-            "getopts a opt; echo $opt",
-            "getopts a opt; echo $?"
+        Assertions.assertEquals(
+            String.format("a%n1%n"),
+            Sh4j.INSTANCE.out(
+                "set -- -a file",
+                "getopts a opt; echo $opt",
+                "getopts a opt; echo $?"
+            )
         );
-        Assertions.assertEquals(String.format("a%n1%n"), result.stdout());
     }
 
     // ============================================================
@@ -782,30 +795,36 @@ final class Sh4jPosixTest {
 
     @Test
     void outputRedirection() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "echo hello > /tmp/sh4j_test.txt",
-            "cat /tmp/sh4j_test.txt"
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.out(
+                "echo hello > /tmp/sh4j_test.txt",
+                "cat /tmp/sh4j_test.txt"
+            )
         );
-        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
     void inputRedirection() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "echo hello > /tmp/sh4j_test_in.txt",
-            "cat < /tmp/sh4j_test_in.txt"
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.out(
+                "echo hello > /tmp/sh4j_test_in.txt",
+                "cat < /tmp/sh4j_test_in.txt"
+            )
         );
-        Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
     @Test
     void appendRedirection() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "echo hello > /tmp/sh4j_test_app.txt",
-            "echo world >> /tmp/sh4j_test_app.txt",
-            "cat /tmp/sh4j_test_app.txt"
+        Assertions.assertEquals(
+            String.format("hello%nworld%n"),
+            Sh4j.INSTANCE.out(
+                "echo hello > /tmp/sh4j_test_app.txt",
+                "echo world >> /tmp/sh4j_test_app.txt",
+                "cat /tmp/sh4j_test_app.txt"
+            )
         );
-        Assertions.assertEquals(String.format("hello%nworld%n"), result.stdout());
     }
 
     // ============================================================

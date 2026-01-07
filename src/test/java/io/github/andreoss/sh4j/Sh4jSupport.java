@@ -173,6 +173,10 @@ public final class Sh4jSupport {
      * @param commands The commands to execute
      * @return The result containing exit code, stdout, stderr, and environment
      */
+    public String stdout(final InputStream stdin, final String... commands) {
+        return this.runFull(Sh4jSupport.DEFAULT_ENV, stdin, commands).stdout();
+    }
+
     public Sh4j.Result runFull(
         final Map<String, String> env,
         final InputStream stdin,

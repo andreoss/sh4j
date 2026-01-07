@@ -98,6 +98,17 @@ public final class Sh4j {
     }
 
     /**
+     * Runs commands with stdin and captures stdout.
+     *
+     * @param stdin The stdin input
+     * @param commands The commands to execute
+     * @return The captured stdout
+     */
+    public String stdout(final InputStream stdin, final String... commands) {
+        return this.support.stdout(stdin, commands);
+    }
+
+    /**
      * Runs commands and returns a full result object.
      *
      * @param commands The commands to execute

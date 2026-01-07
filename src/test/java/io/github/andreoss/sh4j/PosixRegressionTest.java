@@ -69,14 +69,16 @@ final class PosixRegressionTest {
     @Test
     void appendRedirectAndAssignmentPrefix() throws IOException {
         final File file = TempDirs.file(PosixRegressionTest.root, "append.txt");
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format(
-                "echo a > %s; echo b >> %s; cat %s",
-                file.getAbsolutePath(), file.getAbsolutePath(),
-                file.getAbsolutePath()
+        Assertions.assertEquals(
+            String.format("a%nb%n"),
+            Sh4j.INSTANCE.out(
+                String.format(
+                    "echo a > %s; echo b >> %s; cat %s",
+                    file.getAbsolutePath(), file.getAbsolutePath(),
+                    file.getAbsolutePath()
+                )
             )
         );
-        Assertions.assertEquals(String.format("a%nb%n"), result.stdout());
         Assertions.assertEquals(
             String.format("hi%n[]%n"),
             Sh4j.INSTANCE.out("x=1 echo hi; echo [$x]")
@@ -344,26 +346,32 @@ final class PosixRegressionTest {
 
     @Test
     void subshellCdDoesNotChangeParentCwd() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "cd /tmp; (cd /); pwd"
+        Assertions.assertEquals(
+            String.format("/tmp%n"),
+            Sh4j.INSTANCE.out(
+                "cd /tmp; (cd /); pwd"
+            )
         );
-        Assertions.assertEquals(String.format("/tmp%n"), result.stdout());
     }
 
     @Test
     void shellVariablesAreNotExported() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "X=secret; sh -c 'echo ${X-unset}'"
+        Assertions.assertEquals(
+            String.format("unset%n"),
+            Sh4j.INSTANCE.out(
+                "X=secret; sh -c 'echo ${X-unset}'"
+            )
         );
-        Assertions.assertEquals(String.format("unset%n"), result.stdout());
     }
 
     @Test
     void exportedValueLosesQuotes() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "export E='x y'; sh -c 'printf \"%s\\n\" \"$E\"'"
+        Assertions.assertEquals(
+            String.format("x y%n"),
+            Sh4j.INSTANCE.out(
+                "export E='x y'; sh -c 'printf \"%s\\n\" \"$E\"'"
+            )
         );
-        Assertions.assertEquals(String.format("x y%n"), result.stdout());
     }
 
     @Test
@@ -396,11 +404,13 @@ final class PosixRegressionTest {
 
     @Test
     void readConsumesOneLinePerCall() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("x%ny%n").getBytes(StandardCharsets.UTF_8)),
-            "read a; read b; echo \"a=$a b=$b\""
+        Assertions.assertEquals(
+            String.format("a=x b=y%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(String.format("x%ny%n").getBytes(StandardCharsets.UTF_8)),
+                "read a; read b; echo \"a=$a b=$b\""
+            )
         );
-        Assertions.assertEquals(String.format("a=x b=y%n"), result.stdout());
     }
 
     @Test
@@ -490,10 +500,12 @@ final class PosixRegressionTest {
     @Test
     void pipelineStageRedirectionIsApplied() throws IOException {
         final File file = TempDirs.file(PosixRegressionTest.root, "pipe.out");
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format("echo hi > %s | cat", file.getAbsolutePath())
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.out(
+                String.format("echo hi > %s | cat", file.getAbsolutePath())
+            )
         );
-        Assertions.assertEquals("", result.stdout());
         Assertions.assertEquals(
             String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -679,11 +691,13 @@ final class PosixRegressionTest {
 
     @Test
     void readAtEofReturnsOne() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "read x; echo status=$?"
+        Assertions.assertEquals(
+            String.format("status=1%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(new byte[0]),
+                "read x; echo status=$?"
+            )
         );
-        Assertions.assertEquals(String.format("status=1%n"), result.stdout());
     }
 
     @Test
@@ -853,11 +867,13 @@ final class PosixRegressionTest {
 
     @Test
     void readLastVariableReceivesRemainder() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("x y z%n").getBytes(StandardCharsets.UTF_8)),
-            "read a b; echo \"a=$a b=$b\""
+        Assertions.assertEquals(
+            String.format("a=x b=y z%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(String.format("x y z%n").getBytes(StandardCharsets.UTF_8)),
+                "read a b; echo \"a=$a b=$b\""
+            )
         );
-        Assertions.assertEquals(String.format("a=x b=y z%n"), result.stdout());
     }
 
     @Test

@@ -1660,15 +1660,16 @@ public final class IntegrationTest {
      */
     @Test
     void caseAlternativePatterns() throws Exception {
-        final File script = this.writeScript(
-            "casealt.sh",
-            String.format(
-                "for w in a b c d; do case $w in a|b) echo letter;; *) echo other;; esac; done%n"
-            )
-        );
         Assertions.assertEquals(
             String.format("letter%nletter%nother%nother%n"),
-            this.runChildJvm(script)
+            this.runChildJvm(
+                this.writeScript(
+                    "casealt.sh",
+                    String.format(
+                        "for w in a b c d; do case $w in a|b) echo letter;; *) echo other;; esac; done%n"
+                    )
+                )
+            )
         );
     }
 
@@ -1677,13 +1678,15 @@ public final class IntegrationTest {
      */
     @Test
     void caseQuestionMarkMatchesSingleChar() throws Exception {
-        final File script = this.writeScript(
-            "caseq.sh",
-            String.format(
-                "for w in ab abc a; do case $w in ??) echo two;; *) echo not-two;; esac; done%n"
+        Assertions.assertEquals(String.format("two%nnot-two%nnot-two%n"), this.runChildJvm(
+                this.writeScript(
+                    "caseq.sh",
+                    String.format(
+                        "for w in ab abc a; do case $w in ??) echo two;; *) echo not-two;; esac; done%n"
+                    )
+                )
             )
         );
-        Assertions.assertEquals(String.format("two%nnot-two%nnot-two%n"), this.runChildJvm(script));
     }
 
     /**
@@ -2090,14 +2093,16 @@ public final class IntegrationTest {
      */
     @Test
     void caseStarDefaultMatches() throws Exception {
-        final File script = this.writeScript(
-            "casestar.sh",
-            String.format(
-                "for w in apple banana cherry; do "
-                    + "case $w in apple) echo a;; *) echo d;; esac; done%n"
+        Assertions.assertEquals(String.format("a%nd%nd%n"), this.runChildJvm(
+                this.writeScript(
+                    "casestar.sh",
+                    String.format(
+                        "for w in apple banana cherry; do "
+                            + "case $w in apple) echo a;; *) echo d;; esac; done%n"
+                    )
+                )
             )
         );
-        Assertions.assertEquals(String.format("a%nd%nd%n"), this.runChildJvm(script));
     }
 
     /**
@@ -2121,14 +2126,16 @@ public final class IntegrationTest {
      */
     @Test
     void nestedCaseStatement() throws Exception {
-        final File script = this.writeScript(
-            "ncase.sh",
-            String.format(
-                "X=a; Y=2%ncase $X in a) case $Y in 2) echo a2;; "
-                    + "*) echo a-other;; esac;; esac%n"
+        Assertions.assertEquals(String.format("a2%n"), this.runChildJvm(
+                this.writeScript(
+                    "ncase.sh",
+                    String.format(
+                        "X=a; Y=2%ncase $X in a) case $Y in 2) echo a2;; "
+                            + "*) echo a-other;; esac;; esac%n"
+                    )
+                )
             )
         );
-        Assertions.assertEquals(String.format("a2%n"), this.runChildJvm(script));
     }
 
     /**

@@ -3611,8 +3611,9 @@ final class ExecutorTest {
     void externalStderrOutputRedirect() throws Exception {
         final String path = "/tmp/sh4j_ext_err_out.txt";
         new File(path).delete();
-        new Executor().execute(this.parse(String
-            .format("cat /nonexistent_path_xyz_123 2> %s", path)));
+        new Executor().execute(
+            this.parse(String.format("cat /nonexistent_path_xyz_123 2> %s", path))
+        );
         Assertions.assertTrue(new File(path).exists());
         new File(path).delete();
     }
@@ -3629,8 +3630,9 @@ final class ExecutorTest {
         ) {
             w.write(String.format("initial%n"));
         }
-        new Executor().execute(this.parse(String
-            .format("cat /nonexistent_path_xyz_456 2>> %s", path)));
+        new Executor().execute(
+            this.parse(String.format("cat /nonexistent_path_xyz_456 2>> %s", path))
+        );
         Assertions.assertTrue(
             new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8)
                 .contains("initial")
