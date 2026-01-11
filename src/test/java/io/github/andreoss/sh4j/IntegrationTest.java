@@ -99,10 +99,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int exitCode = proc.waitFor();
+        final int codeout = proc.waitFor();
         Assertions.assertEquals(
             0,
-            exitCode,
+            codeout,
             String.format("sh4j exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -132,10 +132,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int exitCode = proc.waitFor();
+        final int codeout = proc.waitFor();
         Assertions.assertEquals(
             0,
-            exitCode,
+            codeout,
             String.format("native sh4j exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -201,10 +201,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int exitCode = proc.waitFor();
+        final int codeout = proc.waitFor();
         Assertions.assertEquals(
             0,
-            exitCode,
+            codeout,
             String.format("native sh4j pipeline exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -2515,21 +2515,21 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int exitCode = proc.waitFor();
+        final int codeout = proc.waitFor();
         Assertions.assertEquals(
             0,
-            exitCode,
+            codeout,
             String.format("child sh4j exit code; output: %s", out)
         );
         return out;
     }
 
-    private static byte[] readAllBytes(final InputStream in) throws IOException {
+    private static byte[] readAllBytes(final InputStream input) throws IOException {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) != -1) {
-            bos.write(buf, 0, n);
+        int num;
+        while ((num = input.read(buf)) != -1) {
+            bos.write(buf, 0, num);
         }
         return bos.toByteArray();
     }

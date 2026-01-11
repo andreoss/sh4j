@@ -3122,9 +3122,9 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
-        for (int i = 1; i <= 5; i = i + 1) {
+        for (int idx = 1; idx <= 5; idx = idx + 1) {
             executor.execute(
-                this.parse(String.format("echo cmd%d", i))
+                this.parse(String.format("echo cmd%d", idx))
             );
         }
         Assertions.assertEquals(0, executor.execute(this.parse("fc -l")));

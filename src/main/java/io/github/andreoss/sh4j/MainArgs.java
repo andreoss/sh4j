@@ -29,17 +29,17 @@ final class MainArgs {
     static int exitCode(final String... args) {
         final Options opts = MainArgs.parse(args);
         final int code;
-        if (opts.dashC()) {
+        if (opts.dashed()) {
             if (opts.command() == null) {
                 code = MainArgs.missingCommand();
             } else {
                 code = MainRunner.runSource(opts.command(), opts.params());
             }
-        } else if (opts.readStdin()) {
+        } else if (opts.stdind()) {
             code = MainRunner.runSource(
                 MainRunner.readAll(System.in), Collections.singletonList("sh")
             );
-        } else if (opts.forceInteractive() || opts.script() == null) {
+        } else if (opts.inter() || opts.script() == null) {
             code = MainRepl.interactive(System.getenv("ENV"));
         } else {
             code = MainRunner.runScript(opts.script(), opts.params());
@@ -64,9 +64,9 @@ final class MainArgs {
     private static Options parse(final String... args) {
         int idx = 0;
         String command = null;
-        boolean dashC = false;
-        boolean readStdin = false;
-        boolean forceInteractive = false;
+        boolean dashed = false;
+        boolean stdind = false;
+        boolean inter = false;
         while (idx < args.length) {
             final String arg = args[idx];
             if ("--".equals(arg)) {
@@ -74,7 +74,7 @@ final class MainArgs {
                 break;
             }
             if ("-c".equals(arg)) {
-                dashC = true;
+                dashed = true;
                 if (idx + 1 < args.length) {
                     command = args[idx + 1];
                     idx = idx + 2;
@@ -82,10 +82,10 @@ final class MainArgs {
                 break;
             }
             if ("-s".equals(arg)) {
-                readStdin = true;
+                stdind = true;
                 idx = idx + 1;
             } else if ("-i".equals(arg)) {
-                forceInteractive = true;
+                inter = true;
                 idx = idx + 1;
             } else if (arg.startsWith("-")) {
                 idx = idx + 1;
@@ -93,33 +93,33 @@ final class MainArgs {
                 break;
             }
         }
-        return MainArgs.options(args, idx, dashC, command, readStdin, forceInteractive);
+        return MainArgs.options(args, idx, dashed, command, stdind, inter);
     }
 
     /**
      * Builds options from the scan position.
      * @param args Raw CLI arguments
      * @param idx Current index
-     * @param dashC Whether {@code -c} was given
+     * @param dashed Whether {@code -c} was given
      * @param command Command text from {@code -c}, or null
-     * @param readStdin Whether {@code -s} was given
-     * @param forceInteractive Whether {@code -i} was given
+     * @param stdind Whether {@code -s} was given
+     * @param inter Whether {@code -i} was given
      * @return Parsed options
      */
     private static Options options(
-        final String[] args, final int idx, final boolean dashC,
-        final String command, final boolean readStdin,
-        final boolean forceInteractive
+        final String[] args, final int idx, final boolean dashed,
+        final String command, final boolean stdind,
+        final boolean inter
     ) {
         final String script;
         final List<String> params;
-        if (dashC) {
+        if (dashed) {
             script = null;
             params = MainArgs.params(args, idx, "sh");
-        } else if (readStdin) {
+        } else if (stdind) {
             script = null;
             params = Collections.singletonList("sh");
-        } else if (forceInteractive || idx >= args.length) {
+        } else if (inter || idx >= args.length) {
             script = null;
             params = Collections.emptyList();
         } else {
@@ -127,7 +127,7 @@ final class MainArgs {
             params = MainArgs.params(args, idx, args[idx]);
         }
         return new Options(
-            dashC, command, readStdin, forceInteractive, script, params
+            dashed, command, stdind, inter, script, params
         );
     }
 
@@ -151,17 +151,17 @@ final class MainArgs {
 
     /**
      * Parsed CLI options.
-     * @param dashC Whether {@code -c} was given
+     * @param dashed Whether {@code -c} was given
      * @param command Command text from {@code -c}, or null
-     * @param readStdin Whether {@code -s} was given
-     * @param forceInteractive Whether {@code -i} was given
+     * @param stdind Whether {@code -s} was given
+     * @param inter Whether {@code -i} was given
      * @param script Script path, or null
      * @param params Positional parameters
      * @since 1.0
      */
     private record Options(
-        boolean dashC, String command, boolean readStdin,
-        boolean forceInteractive, String script, List<String> params
+        boolean dashed, String command, boolean stdind,
+        boolean inter, String script, List<String> params
     ) {
     }
 }

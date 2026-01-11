@@ -233,8 +233,8 @@ final class ParserTest {
         try {
             this.parse("echo <");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException e) {
-            Assertions.assertEquals(ParseException.class, e.getClass());
+        } catch (ParseException ex) {
+            Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
 
@@ -459,8 +459,8 @@ final class ParserTest {
         try {
             this.parse("if true; then echo hi");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException e) {
-            Assertions.assertEquals(ParseException.class, e.getClass());
+        } catch (ParseException ex) {
+            Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
 
@@ -507,8 +507,8 @@ final class ParserTest {
         try {
             this.parse("foo() bar");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException e) {
-            Assertions.assertEquals(ParseException.class, e.getClass());
+        } catch (ParseException ex) {
+            Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
 

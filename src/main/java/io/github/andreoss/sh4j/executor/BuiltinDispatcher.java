@@ -27,6 +27,10 @@ import java.util.Optional;
  * @since 1.0
  */
 final class BuiltinDispatcher {
+
+    /** Map from built-in name to its implementation. */
+    private final Map<String, Builtin> registry = buildRegistry();
+
     /**
      * Builds the dispatcher and registers every shell built-in.
      */
@@ -80,17 +84,6 @@ final class BuiltinDispatcher {
         }
         return code;
     }
-
-    /**
-     * Implementation of {@code hash [-r] [name...]}.
-     * POSIX 2.14. sh4j has no command-lookup cache, so:
-     * - {@code hash} with no args prints nothing and returns 0
-     * (cache is empty by definition)
-     * - {@code hash -r} returns 0 (no-op)
-     * - {@code hash NAME ...} verifies each NAME resolves on PATH;
-
-    /** Map from built-in name to its implementation. */
-    private final Map<String, Builtin> registry = buildRegistry();
 
     private static Map<String, Builtin> buildRegistry() {
         final Map<String, Builtin> registry = new HashMap<>();
