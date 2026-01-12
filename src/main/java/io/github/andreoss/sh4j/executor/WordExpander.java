@@ -505,8 +505,14 @@ public final class WordExpander {
                 final String value = ctx.lookupVariable(
                     arg.substring(idx + 1, end), env
                 );
+                final String safe;
+                if (value == null) {
+                    safe = "";
+                } else {
+                    safe = value;
+                }
                 expanded.append(
-                    WordExpander.escapeForQuoteRemoval(value == null ? "" : value)
+                    WordExpander.escapeForQuoteRemoval(safe)
                 );
                 consumed = end - idx;
             } else {

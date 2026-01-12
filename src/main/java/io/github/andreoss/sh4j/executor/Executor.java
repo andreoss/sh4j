@@ -501,7 +501,12 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public void setPositionalParams(final List<String> params) {
-        final String zeroth = this.params.isEmpty() ? "" : this.params.get(0);
+        final String zeroth;
+        if (this.params.isEmpty()) {
+            zeroth = "";
+        } else {
+            zeroth = this.params.get(0);
+        }
         this.params.clear();
         this.params.add(zeroth);
         this.params.addAll(params);
@@ -714,7 +719,11 @@ public final class Executor implements BuiltinContext {
                 exit = this.executePipelineInternal(pipeline);
             }
             if (pipeline.isBang()) {
-                code = exit == 0 ? 1 : 0;
+                if (exit == 0) {
+                    code = 1;
+                } else {
+                    code = 0;
+                }
             } else {
                 code = exit;
             }
@@ -776,11 +785,13 @@ public final class Executor implements BuiltinContext {
         boolean broken = false;
         final List<String> words;
         if (node.getWords() == null) {
-            words = this.params.size() <= 1
-                ? new ArrayList<>()
-                : new ArrayList<>(
+            if (this.params.size() <= 1) {
+                words = new ArrayList<>();
+            } else {
+                words = new ArrayList<>(
                     this.params.subList(1, this.params.size())
                 );
+            }
         } else {
             words = new ArrayList<>();
             for (final String raw : node.getWords()) {
@@ -816,7 +827,12 @@ public final class Executor implements BuiltinContext {
         boolean running = true;
         while (running) {
             final int condexit = this.execute(node.getCondition());
-            final boolean dobody = node.isUntil() ? condexit != 0 : condexit == 0;
+            final boolean dobody;
+            if (node.isUntil()) {
+                dobody = condexit != 0;
+            } else {
+                dobody = condexit == 0;
+            }
             if (!dobody) {
                 running = false;
             } else {
@@ -853,8 +869,12 @@ public final class Executor implements BuiltinContext {
                 final String expanded = this.expandVariables(pattern, this.environment);
                 final String cleaned = WordExpander.removeQuotes(expanded);
                 final boolean quoted = pattern.indexOf('\'') >= 0 || pattern.indexOf('"') >= 0;
-                final boolean hits = quoted ? cleaned.equals(word)
-                    : WordExpander.globMatches(cleaned, word);
+                final boolean hits;
+                if (quoted) {
+                    hits = cleaned.equals(word);
+                } else {
+                    hits = WordExpander.globMatches(cleaned, word);
+                }
                 if (hits) {
                     code = this.execute(item.getBody());
                     matched = true;
@@ -884,12 +904,18 @@ public final class Executor implements BuiltinContext {
             final int index = idx;
             final boolean last = index == count - 1;
             final Executor child = this.subshell();
-            child.instream = index == 0 ? this.instream : inputs[index];
-            child.out = last
-                ? this.out
-                : new PrintStream(
+            if (index == 0) {
+                child.instream = this.instream;
+            } else {
+                child.instream = inputs[index];
+            }
+            if (last) {
+                child.out = this.out;
+            } else {
+                child.out = new PrintStream(
                     outputs[index], true, StandardCharsets.UTF_8
                 );
+            }
             child.err = this.err;
             final Node node = commands.get(index);
             threads[index] = new Thread(
@@ -953,7 +979,13 @@ public final class Executor implements BuiltinContext {
     }
 
     private Map<String, String> aliasTable() {
-        return this.snapshot == null ? this.aliases : this.snapshot;
+        final Map<String, String> table;
+        if (this.snapshot == null) {
+            table = this.aliases;
+        } else {
+            table = this.snapshot;
+        }
+        return table;
     }
 
     private void refreshAliases(final SimpleCommand cmd) {
@@ -968,7 +1000,12 @@ public final class Executor implements BuiltinContext {
         final SimpleCommand cmd, final String name, final Map<String, String> cenv,
         final boolean skipfunc
     ) {
-        final String alias = skipfunc ? null : this.aliasTable().get(name);
+        final String alias;
+        if (skipfunc) {
+            alias = null;
+        } else {
+            alias = this.aliasTable().get(name);
+        }
         if (alias != null) {
             final StringBuilder line = new StringBuilder(alias);
             for (final String arg : cmd.getArguments()) {
@@ -1361,7 +1398,11 @@ public final class Executor implements BuiltinContext {
             String separator = " ";
             final String ifs = this.environment.get("IFS");
             if (ifs != null) {
-                separator = ifs.isEmpty() ? "" : ifs.substring(0, 1);
+                if (ifs.isEmpty()) {
+                    separator = "";
+                } else {
+                    separator = ifs.substring(0, 1);
+                }
             }
             joined = String.join(
                 separator,
@@ -1398,7 +1439,11 @@ public final class Executor implements BuiltinContext {
     private String resolveCommand(final String name, final Map<String, String> env) {
         String result;
         if (name.contains("/")) {
-            result = new File(name).isFile() ? name : null;
+            if (new File(name).isFile()) {
+                result = name;
+            } else {
+                result = null;
+            }
         } else {
             final String path = env.get("PATH");
             if (path == null || path.isEmpty()) {

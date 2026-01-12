@@ -1225,8 +1225,12 @@ final class BuiltinDispatcher {
             environment.put(varname, "?");
             return 1;
         }
-        int optpos = environment.containsKey("OPTIND_POS")
-            ? Integer.parseInt(environment.get("OPTIND_POS")) : 1;
+        int optpos;
+        if (environment.containsKey("OPTIND_POS")) {
+            optpos = Integer.parseInt(environment.get("OPTIND_POS"));
+        } else {
+            optpos = 1;
+        }
         if (optpos >= current.length()) {
             optind = optind + 1;
             environment.put("OPTIND", String.valueOf(optind));
@@ -1397,7 +1401,13 @@ final class BuiltinDispatcher {
             if (job != null && job.getState() == JobManager.State.STOPPED) {
                 job.resume();
             }
-            self.outStream().printf("[%d] %s%n", id, job != null ? job.getCommand() : "");
+            final String command;
+            if (job == null) {
+                command = "";
+            } else {
+                command = job.getCommand();
+            }
+            self.outStream().printf("[%d] %s%n", id, command);
         }
         return 0;
     }
@@ -1751,11 +1761,14 @@ final class BuiltinDispatcher {
             );
             try {
                 final File raw = new File(path);
+                final Path rawpath;
+                if (raw.isAbsolute()) {
+                    rawpath = raw.toPath();
+                } else {
+                    rawpath = new File(self.currentDirectory(), path).toPath();
+                }
                 final String source = new String(
-                    Files.readAllBytes(
-                        (raw.isAbsolute() ? raw : new File(self.currentDirectory(), path))
-                            .toPath()
-                    ), StandardCharsets.UTF_8
+                    Files.readAllBytes(rawpath), StandardCharsets.UTF_8
                 );
                 final List<String> saved = new ArrayList<>(self.positionalParamsList());
                 if (args.size() > 1) {
