@@ -746,19 +746,26 @@ final class BuiltinDispatcher {
     }
 
     private static String umaskSymbolic(final String mask) {
-        final int value;
+        int value = 0;
+        boolean ok = true;
         try {
             value = Integer.parseInt(mask, 8);
         } catch (final NumberFormatException ex) {
-            return "u=,g=,o=";
+            ok = false;
         }
-        final int allbits = 7;
-        return String.format(
-            "u=%s,g=%s,o=%s",
-            umaskBitsToString(allbits & ~((value >> 6) & allbits)),
-            umaskBitsToString(allbits & ~((value >> 3) & allbits)),
-            umaskBitsToString(allbits & ~(value & allbits))
-        );
+        final String symbolic;
+        if (!ok) {
+            symbolic = "u=,g=,o=";
+        } else {
+            final int allbits = 7;
+            symbolic = String.format(
+                "u=%s,g=%s,o=%s",
+                umaskBitsToString(allbits & ~((value >> 6) & allbits)),
+                umaskBitsToString(allbits & ~((value >> 3) & allbits)),
+                umaskBitsToString(allbits & ~(value & allbits))
+            );
+        }
+        return symbolic;
     }
 
     private static String umaskBitsToString(final int bits) {
@@ -831,23 +838,24 @@ final class BuiltinDispatcher {
         try {
             final long pid = Long.parseLong(pidstr);
             if (JobManager.isJobPid(pid)) {
-                return 127;
-            }
-            final Optional<ProcessHandle> handle = ProcessHandle.of(pid);
-            if (handle.isPresent()) {
-                final boolean sent;
-                if (forcibly) {
-                    sent = handle.get().destroyForcibly();
-                } else {
-                    sent = handle.get().destroy();
-                }
-                if (sent) {
-                    code = 0;
+                code = 127;
+            } else {
+                final Optional<ProcessHandle> handle = ProcessHandle.of(pid);
+                if (handle.isPresent()) {
+                    final boolean sent;
+                    if (forcibly) {
+                        sent = handle.get().destroyForcibly();
+                    } else {
+                        sent = handle.get().destroy();
+                    }
+                    if (sent) {
+                        code = 0;
+                    } else {
+                        code = 127;
+                    }
                 } else {
                     code = 127;
                 }
-            } else {
-                code = 127;
             }
         } catch (final NumberFormatException ex) {
             code = 127;
@@ -972,34 +980,44 @@ final class BuiltinDispatcher {
         }
         final List<String> names = args.subList(idx, args.size());
         final String line = self.readInputLine();
+        int code;
         if (line == null) {
-            return 1;
-        }
-        final String processed;
-        if (raw) {
-            processed = line;
+            code = 1;
         } else {
-            processed = processReadEscapes(line);
-        }
-        final Map<String, String> environment = self.environmentMap();
-        if (names.isEmpty()) {
-            environment.put("REPLY", processed);
-            return 0;
-        }
-        final String ifs = env.getOrDefault("IFS", String.format(" \t%n"));
-        final char firstifs = ifs.charAt(0);
-        final List<String> fields = splitReadFields(processed, ifs, firstifs);
-        for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
-            final String name = names.get(vdx);
-            if (vdx == names.size() - 1) {
-                environment.put(name, joinReadFields(fields, vdx, firstifs));
-            } else if (vdx < fields.size()) {
-                environment.put(name, fields.get(vdx));
+            final String processed;
+            if (raw) {
+                processed = line;
             } else {
-                environment.put(name, "");
+                processed = processReadEscapes(line);
+            }
+            final Map<String, String> environment = self.environmentMap();
+            if (names.isEmpty()) {
+                environment.put("REPLY", processed);
+                code = 0;
+            } else {
+                final String ifs = env.getOrDefault(
+                    "IFS", String.format(" \t%n")
+                );
+                final char firstifs = ifs.charAt(0);
+                final List<String> fields = splitReadFields(
+                    processed, ifs, firstifs
+                );
+                for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
+                    final String name = names.get(vdx);
+                    if (vdx == names.size() - 1) {
+                        environment.put(
+                            name, joinReadFields(fields, vdx, firstifs)
+                        );
+                    } else if (vdx < fields.size()) {
+                        environment.put(name, fields.get(vdx));
+                    } else {
+                        environment.put(name, "");
+                    }
+                }
+                code = 0;
             }
         }
-        return 0;
+        return code;
     }
 
     private static String processReadEscapes(final String line) {
@@ -1188,9 +1206,18 @@ final class BuiltinDispatcher {
         final Map<String, String> env,
         final List<String> assigns
     ) {
+        int code;
         if (args.size() < 2) {
-            return 1;
+            code = 1;
+        } else {
+            code = doGetoptsBody(self, args);
         }
+        return code;
+    }
+
+    private static int doGetoptsBody(
+        final BuiltinContext self, final List<String> args
+    ) {
         final String optstring = args.get(0);
         final String varname = args.get(1);
         final List<String> pargs;
@@ -1210,96 +1237,146 @@ final class BuiltinDispatcher {
         if (optind < 1) {
             optind = 1;
         }
+        final int early;
         if (optind > pargs.size()) {
             environment.put(varname, "?");
             environment.put("OPTIND", String.valueOf(pargs.size() + 1));
-            return 1;
-        }
-        final String current = pargs.get(optind - 1);
-        if ("--".equals(current)) {
+            early = 1;
+        } else if ("--".equals(pargs.get(optind - 1))) {
             environment.put("OPTIND", String.valueOf(optind + 1));
             environment.put(varname, "?");
-            return 1;
-        }
-        if (current.length() < 2 || current.charAt(0) != '-') {
+            early = 1;
+        } else if (pargs.get(optind - 1).length() < 2
+            || pargs.get(optind - 1).charAt(0) != '-') {
             environment.put(varname, "?");
-            return 1;
+            early = 1;
+        } else {
+            early = 0;
         }
+        int code;
+        if (early != 0) {
+            code = early;
+        } else {
+            code = doGetoptsTail(self, environment, optstring, varname, pargs, optind);
+        }
+        return code;
+    }
+
+    private static int doGetoptsTail(
+        final BuiltinContext self,
+        final Map<String, String> environment,
+        final String optstring,
+        final String varname,
+        final List<String> pargs,
+        final int optindin
+    ) {
+        final String current = pargs.get(optindin - 1);
+        int optind = optindin;
         int optpos;
         if (environment.containsKey("OPTIND_POS")) {
             optpos = Integer.parseInt(environment.get("OPTIND_POS"));
         } else {
             optpos = 1;
         }
+        boolean exhausted = false;
         if (optpos >= current.length()) {
             optind = optind + 1;
             environment.put("OPTIND", String.valueOf(optind));
             if (optind > pargs.size()) {
                 environment.put(varname, "?");
                 environment.remove("OPTIND_POS");
-                return 1;
-            }
-            final String next = pargs.get(optind - 1);
-            if (next.length() < 2 || next.charAt(0) != '-') {
+                exhausted = true;
+            } else if (pargs.get(optind - 1).length() < 2
+                || pargs.get(optind - 1).charAt(0) != '-') {
                 environment.put(varname, "?");
                 environment.remove("OPTIND_POS");
-                return 1;
-            }
-            environment.put("OPTIND_POS", String.valueOf(1));
-            optpos = 1;
-        }
-        final char optchar = current.charAt(optpos);
-        environment.put("OPTIND_POS", String.valueOf(optpos + 1));
-        final int optidx = optstring.indexOf(optchar);
-        if (optidx < 0) {
-            if (optstring.length() > 0 && optstring.charAt(0) == ':') {
-                environment.put(varname, "?");
-                environment.put("OPTARG", String.valueOf(optchar));
+                exhausted = true;
             } else {
-                self.errStream().println(
-                    String.format("sh: illegal option -- %s", optchar)
-                );
-                environment.put(varname, "?");
-                environment.put("OPTARG", String.valueOf(optchar));
+                environment.put("OPTIND_POS", String.valueOf(1));
+                optpos = 1;
             }
-            return 0;
         }
+        final int code;
+        if (exhausted) {
+            code = 1;
+        } else {
+            final char optchar = current.charAt(optpos);
+            environment.put("OPTIND_POS", String.valueOf(optpos + 1));
+            final int optidx = optstring.indexOf(optchar);
+            if (optidx < 0) {
+                if (optstring.length() > 0 && optstring.charAt(0) == ':') {
+                    environment.put(varname, "?");
+                    environment.put("OPTARG", String.valueOf(optchar));
+                } else {
+                    self.errStream().println(
+                        String.format("sh: illegal option -- %s", optchar)
+                    );
+                    environment.put(varname, "?");
+                    environment.put("OPTARG", String.valueOf(optchar));
+                }
+                code = 0;
+            } else {
+                code = doGetoptsArgument(
+                    self, environment, optstring, varname, pargs, optind,
+                    optpos, current, optchar, optidx
+                );
+            }
+        }
+        return code;
+    }
+
+    private static int doGetoptsArgument(
+        final BuiltinContext self,
+        final Map<String, String> environment,
+        final String optstring,
+        final String varname,
+        final List<String> pargs,
+        final int optind,
+        final int optpos,
+        final String current,
+        final char optchar,
+        final int optidx
+    ) {
         final boolean takesarg = optidx + 1 < optstring.length()
             && optstring.charAt(optidx + 1) == ':';
+        int code = 0;
+        boolean stop = false;
         if (takesarg) {
             environment.put("OPTIND", String.valueOf(optind + 1));
             if (optpos + 1 < current.length()) {
-                environment.put(
-                    "OPTARG", current.substring(optpos + 1)
-                );
+                environment.put("OPTARG", current.substring(optpos + 1));
             } else if (optind < pargs.size()) {
-                environment.put(
-                    "OPTARG", pargs.get(optind)
-                );
+                environment.put("OPTARG", pargs.get(optind));
                 environment.put("OPTIND", String.valueOf(optind + 2));
             } else {
                 if (optstring.length() > 0 && optstring.charAt(0) == ':') {
                     environment.put(varname, ":");
                 } else {
                     self.errStream().println(
-                        String.format("sh: option requires an argument -- %s", optchar)
+                        String.format(
+                            "sh: option requires an argument -- %s", optchar
+                        )
                     );
                     environment.put(varname, "?");
                 }
                 environment.put("OPTARG", "");
                 environment.remove("OPTIND_POS");
-                return 0;
+                stop = true;
             }
-            environment.remove("OPTIND_POS");
+            if (!stop) {
+                environment.remove("OPTIND_POS");
+            }
         } else {
             environment.put("OPTARG", "");
         }
-        environment.put(varname, String.valueOf(optchar));
-        if (!takesarg && optpos + 1 >= current.length()) {
-            environment.put("OPTIND", String.valueOf(optind + 1));
-            environment.remove("OPTIND_POS");
+        if (!stop) {
+            environment.put(varname, String.valueOf(optchar));
+            if (!takesarg && optpos + 1 >= current.length()) {
+                environment.put("OPTIND", String.valueOf(optind + 1));
+                environment.remove("OPTIND_POS");
+            }
         }
-        return 0;
+        return code;
     }
 
     private static int parseJobId(final String arg) {
@@ -1309,11 +1386,13 @@ final class BuiltinDispatcher {
         } else {
             digits = arg;
         }
+        int parsed = -1;
         try {
-            return Integer.parseInt(digits);
+            parsed = Integer.parseInt(digits);
         } catch (final NumberFormatException ex) {
-            return -1;
+            parsed = -1;
         }
+        return parsed;
     }
 
     /**
