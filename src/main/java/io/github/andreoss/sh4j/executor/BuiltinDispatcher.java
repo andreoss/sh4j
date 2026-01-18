@@ -119,111 +119,221 @@ final class BuiltinDispatcher {
         );
         registry.put(
             "unset",
-            (self, call) -> BuiltinDispatcher.doUnset(                self, call            )
+            (self, call) -> BuiltinDispatcher.doUnset(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "export",
-            (self, call) -> BuiltinDispatcher.doExport(                self, call            )
+            (self, call) -> BuiltinDispatcher.doExport(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "cd",
-            (self, call) -> BuiltinDispatcher.doCd(                self, call            )
+            (self, call) -> BuiltinDispatcher.doCd(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "pwd",
-            (self, call) -> BuiltinDispatcher.doPwd(                self, call            )
+            (self, call) -> BuiltinDispatcher.doPwd(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "echo",
-            (self, call) -> BuiltinDispatcher.doEcho(                self, call            )
+            (self, call) -> BuiltinDispatcher.doEcho(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "eval",
-            (self, call) -> BuiltinDispatcher.doEval(                self, call            )
+            (self, call) -> BuiltinDispatcher.doEval(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "exit",
-            (self, call) -> BuiltinDispatcher.doExit(                self, call            )
+            (self, call) -> BuiltinDispatcher.doExit(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "type",
-            (self, call) -> BuiltinDispatcher.doType(                self, call            )
+            (self, call) -> BuiltinDispatcher.doType(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "command",
-            (self, call) -> BuiltinDispatcher.doCommand(                self, call            )
+            (self, call) -> BuiltinDispatcher.doCommand(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "wait",
-            (self, call) -> BuiltinDispatcher.doWait(                self, call            )
+            (self, call) -> BuiltinDispatcher.doWait(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "hash",
-            (self, call) -> BuiltinDispatcher.doHash(                self, call            )
+            (self, call) -> BuiltinDispatcher.doHash(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "kill",
-            (self, call) -> BuiltinDispatcher.doKill(                self, call            )
+            (self, call) -> BuiltinDispatcher.doKill(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "umask",
-            (self, call) -> BuiltinDispatcher.doUmask(                self, call            )
+            (self, call) -> BuiltinDispatcher.doUmask(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "shift",
-            (self, call) -> BuiltinDispatcher.doShift(                self, call            )
+            (self, call) -> BuiltinDispatcher.doShift(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "read",
-            (self, call) -> BuiltinDispatcher.doRead(                self, call            )
+            (self, call) -> BuiltinDispatcher.doRead(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "alias",
-            (self, call) -> BuiltinDispatcher.doAlias(                self, call            )
+            (self, call) -> BuiltinDispatcher.doAlias(
+                self,
+                call.arguments(),
+                call.env(),
+                call.assignments()
+            )
         );
         registry.put(
             "unalias",
-            (self, call) -> BuiltinDispatcher.doUnalias(                self, call            )
+            (self, call) -> BuiltinDispatcher.doUnalias(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "getopts",
-            (self, call) -> BuiltinDispatcher.doGetopts(                self, call            )
+            (self, call) -> BuiltinDispatcher.doGetopts(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "jobs",
-            (self, call) -> BuiltinDispatcher.doJobs(                self, call            )
+            (self, call) -> BuiltinDispatcher.doJobs(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "bg",
-            (self, call) -> BuiltinDispatcher.doBg(                self, call            )
+            (self, call) -> BuiltinDispatcher.doBg(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "fg",
-            (self, call) -> BuiltinDispatcher.doFg(                self, call            )
+            (self, call) -> BuiltinDispatcher.doFg(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "fc",
-            (self, call) -> BuiltinDispatcher.doFc(                self, call            )
+            (self, call) -> BuiltinDispatcher.doFc(
+                self,
+                call.arguments(),
+                call.env(),
+                call.assignments()
+            )
         );
         registry.put(
             "set",
-            (self, call) -> BuiltinDispatcher.doSet(                self, call            )
+            (self, call) -> BuiltinDispatcher.doSet(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "readonly",
-            (self, call) -> BuiltinDispatcher.doReadonly(                self, call            )
+            (self, call) -> BuiltinDispatcher.doReadonly(
+                self,
+                call.arguments(),
+                call.env(),
+                call.assignments()
+            )
         );
         registry.put(
             "trap",
-            (self, call) -> BuiltinDispatcher.doTrap(                self, call            )
+            (self, call) -> BuiltinDispatcher.doTrap(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         registry.put(
             "times",
-            (self, call) -> BuiltinDispatcher.doTimes(                self, call            )
+            (self, call) -> BuiltinDispatcher.doTimes(
+                self,
+                call.env()
+            )
         );
         registry.put(
             ".",
-            (self, call) -> BuiltinDispatcher.doDot(                self, call            )
+            (self, call) -> BuiltinDispatcher.doDot(
+                self,
+                call.arguments(),
+                call.env()
+            )
         );
         return registry;
     }
@@ -233,17 +343,13 @@ final class BuiltinDispatcher {
      *
      * @param self The context
      * @param args The arguments
-     * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doUnset(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         boolean removefunc = false;
         int idx = 0;
         while (idx < args.size() && args.get(idx).startsWith("-")) {
@@ -287,16 +393,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doExport(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final Map<String, String> environment = self.environmentMap();
         final List<String> names = new ArrayList<>(args);
         if (!names.isEmpty() && "-p".equals(names.get(0))) {
@@ -330,16 +433,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doCd(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final Map<String, String> environment = self.environmentMap();
         String target;
         int code = 0;
@@ -379,17 +479,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name
-     * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 on IO error
      */
     static int doPwd(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         boolean physical = false;
         for (final String arg : args) {
             if ("-P".equals(arg)) {
@@ -438,16 +534,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doEcho(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         boolean newline = true;
         int start = 0;
         if (!args.isEmpty() && "-n".equals(args.get(0))) {
@@ -476,16 +569,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doEval(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final StringBuilder buf = new StringBuilder();
         for (final String arg : args) {
             if (buf.length() > 0) {
@@ -511,16 +601,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doExit(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code = 0;
         if (!args.isEmpty()) {
             try {
@@ -538,16 +625,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doType(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code = 0;
         for (final String arg : args) {
             final String expanded = self.expandVariables(arg, env);
@@ -577,16 +661,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return Resolved command exit code (1 if NAME not found with -v/-V)
      */
     static int doCommand(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code;
         int idx = 0;
         boolean verbose = false;
@@ -660,16 +741,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 on parse error
      */
     static int doUmask(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final Map<String, String> environment = self.environmentMap();
         final String current = environment.getOrDefault("SH4J_UMASK", "0022");
         int code = 0;
@@ -751,16 +829,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 on usage error, 127 if any PID cannot be signalled
      */
     static int doKill(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code = 0;
         if (args.isEmpty()) {
             code = 1;
@@ -822,11 +897,9 @@ final class BuiltinDispatcher {
 
     static int doHash(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code = 0;
         for (final String arg : args) {
             if ("-r".equals(arg)) {
@@ -849,16 +922,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name (PIDs)
      * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 127 when a named PID is not a known bg job
      */
     static int doWait(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code = 0;
         if (args.isEmpty()) {
             self.waitForBackgroundJobs();
@@ -881,16 +951,13 @@ final class BuiltinDispatcher {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @param assigns The assignments
      * @return The exit code (0 on success)
      */
     static int doShift(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int shifts = 1;
         int code = 0;
         if (!args.isEmpty()) {
@@ -923,16 +990,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 on EOF
      */
     static int doRead(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         boolean raw = false;
         int idx = 0;
         if (!args.isEmpty() && "-r".equals(args.get(0))) {
@@ -1057,17 +1121,15 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name
-     * @param env     Environment (unused)
      * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 if any named alias is undefined
      */
     static int doAlias(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final Map<String, String> aliases = self.aliases();
         int code = 0;
         final boolean hasargs = !args.isEmpty() || !assigns.isEmpty();
@@ -1118,17 +1180,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name
-     * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 if any named alias doesn't exist
      */
     static int doUnalias(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final Map<String, String> aliases = self.aliases();
         int code = 0;
         boolean all = false;
@@ -1159,17 +1217,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args: optstring, var, optional positional replacement
-     * @param env     Environment for OPTIND/OPTARG access
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 if an option was found, 1 if all options processed
      */
     static int doGetopts(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code;
         if (args.size() < 2) {
             code = 1;
@@ -1366,17 +1420,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job ids)
-     * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0
      */
     static int doJobs(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final JobManager mgr = self.jobManager();
         final List<Job> all;
         if (args.isEmpty()) {
@@ -1411,17 +1461,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job ids)
-     * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 if no matching job
      */
     static int doBg(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final JobManager mgr = self.jobManager();
         final List<Integer> ids = new ArrayList<>(0);
         if (args.isEmpty()) {
@@ -1464,17 +1510,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name (optional job id)
-     * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The job's exit code, or 1 on error
      */
     static int doFg(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final JobManager mgr = self.jobManager();
         final int id;
         if (args.isEmpty()) {
@@ -1508,17 +1550,15 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name
-     * @param env     Environment for variable lookup
      * @param assigns Inline assignments (unused)
      * @return The exit code: 0 on success, 1 on error
      */
     static int doFc(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         boolean listmode = true;
         boolean nonumbers = false;
         String substitute = null;
@@ -1640,16 +1680,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0
      */
     static int doSet(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         String flags = self.shellFlags();
         int idx = 0;
         boolean sawdash = false;
@@ -1730,17 +1767,13 @@ final class BuiltinDispatcher {
      *
      * @param self    Builtin context
      * @param args    Args after the command name
-     * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0
      */
     static int doTrap(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final int code;
         if (args.isEmpty()) {
             for (final Map.Entry<String, String> entry : self.traps().entrySet()) {
@@ -1770,18 +1803,12 @@ final class BuiltinDispatcher {
      * Implementation of {@code times}.
      *
      * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param env     Environment (unused)
-     * @param assigns Inline assignments (unused)
      * @return The exit code: 0
      */
     static int doTimes(
         final BuiltinContext self,
-        final Invocation call
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         self.outStream().println("0m0.000s 0m0.000s");
         self.outStream().println("0m0.000s 0m0.000s");
         return 0;
@@ -1793,16 +1820,13 @@ final class BuiltinDispatcher {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @param assigns Inline assignments (unused)
      * @return The sourced script's exit status, or 1 on IO/parse failure
      */
     static int doDot(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         int code;
         if (args.isEmpty()) {
             code = 1;
@@ -1857,11 +1881,10 @@ final class BuiltinDispatcher {
      */
     static int doReadonly(
         final BuiltinContext self,
-        final Invocation call
+        final List<String> args,
+        final Map<String, String> env,
+        final List<String> assigns
     ) {
-        final List<String> args = call.arguments();
-        final Map<String, String> env = call.env();
-        final List<String> assigns = call.assignments();
         final List<String> all = new ArrayList<>(args);
         all.addAll(assigns);
         final Map<String, String> environment = self.environmentMap();
