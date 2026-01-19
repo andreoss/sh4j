@@ -343,6 +343,7 @@ final class BuiltinDispatcher {
      *
      * @param self The context
      * @param args The arguments
+     * @param env The environment
      * @return The exit code (0 on success)
      */
     static int doUnset(
@@ -477,8 +478,9 @@ final class BuiltinDispatcher {
      * {@code -L} (default) prefers the {@code PWD} env value; {@code -P}
      * resolves symlinks via {@link Path#toRealPath}.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0 on success, 1 on IO error
      */
     static int doPwd(
@@ -1119,9 +1121,10 @@ final class BuiltinDispatcher {
      * POSIX 2.14: without args, prints all aliases.
      * With name=value, sets an alias. With plain name, prints that alias.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param assigns Inline assignments (unused)
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
      * @return The exit code: 0 on success, 1 if any named alias is undefined
      */
     static int doAlias(
@@ -1178,8 +1181,9 @@ final class BuiltinDispatcher {
      * Implementation of {@code unalias [-a] name...}.
      * POSIX 2.14: removes named aliases, or all aliases with -a.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0 on success, 1 if any named alias doesn't exist
      */
     static int doUnalias(
@@ -1215,8 +1219,9 @@ final class BuiltinDispatcher {
      * POSIX 2.14: parses option characters from positional parameters
      * (or optional args). Uses OPTIND/OPTARG/OPTERR env vars for state.
      *
-     * @param self    Builtin context
-     * @param args    Args: optstring, var, optional positional replacement
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0 if an option was found, 1 if all options processed
      */
     static int doGetopts(
@@ -1418,8 +1423,9 @@ final class BuiltinDispatcher {
      * POSIX 2.14: without args, lists all background jobs with their
      * state and command line.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name (optional job ids)
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0
      */
     static int doJobs(
@@ -1459,8 +1465,9 @@ final class BuiltinDispatcher {
      * POSIX 2.14: resumes suspended jobs in the background. Without args,
      * operates on the most recent job. Prints a confirmation line.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name (optional job ids)
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0 on success, 1 if no matching job
      */
     static int doBg(
@@ -1508,8 +1515,9 @@ final class BuiltinDispatcher {
      * POSIX 2.14: brings a background job to the foreground, waiting for
      * it to complete. Without args, operates on the most recent job.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name (optional job id)
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The job's exit code, or 1 on error
      */
     static int doFg(
@@ -1548,9 +1556,10 @@ final class BuiltinDispatcher {
      * {@code -l} lists entries (default), {@code -n} suppresses numbers,
      * {@code -s pat=rep} substitutes and re-executes the last command.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param assigns Inline assignments (unused)
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @param assigns The assignments
      * @return The exit code: 0 on success, 1 on error
      */
     static int doFc(
@@ -1765,8 +1774,9 @@ final class BuiltinDispatcher {
      * Only the EXIT trap is executed by the executor; other signals are
      * recorded but the JDK does not expose portable signal handlers.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
      * @return The exit code: 0
      */
     static int doTrap(
@@ -1802,7 +1812,8 @@ final class BuiltinDispatcher {
     /**
      * Implementation of {@code times}.
      *
-     * @param self    Builtin context
+     * @param self The context
+     * @param env The environment
      * @return The exit code: 0
      */
     static int doTimes(
