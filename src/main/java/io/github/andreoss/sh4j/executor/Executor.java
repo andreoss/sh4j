@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -22,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import io.github.andreoss.sh4j.Io;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.CaseItem;
@@ -556,7 +556,7 @@ public final class Executor implements BuiltinContext {
      * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
-        this.out = Io.printer(stream, true);
+        this.out = Executor.console(stream);
     }
 
     /**
@@ -913,9 +913,7 @@ public final class Executor implements BuiltinContext {
             if (last) {
                 child.out = this.out;
             } else {
-                child.out = Io.printer(
-                    outputs[index], StandardCharsets.UTF_8, true
-                );
+                child.out = Executor.printer(outputs[index], true);
             }
             child.err = this.err;
             final Node node = commands.get(index);
@@ -1137,17 +1135,16 @@ public final class Executor implements BuiltinContext {
                     final File target = this.redirectionFile(redir);
                     try {
                         if (type == RedirectionType.READWRITE) {
+                            final OutputStream sink = Executor.sink(target, true);
+                            final PrintStream writer = Executor.printer(
+                                sink, false
+                            );
                             this.outdescs.put(
-                                desc,
-                                Io.printer(
-                                    Io.output(target, true),
-                                    StandardCharsets.UTF_8, false
-                                )
+                                Integer.valueOf(desc), writer
                             );
                         }
-                        this.descriptors.put(
-                            desc, Io.input(target)
-                        );
+                        final InputStream source = Executor.source(target);
+                        this.descriptors.put(Integer.valueOf(desc), source);
                     } catch (final IOException ex) {
                         bound = false;
                     }
@@ -1155,15 +1152,13 @@ public final class Executor implements BuiltinContext {
                     || type == RedirectionType.CLOBBER || type == RedirectionType.APPEND)) {
                     final File target = this.redirectionFile(redir);
                     try {
-                        this.outdescs.put(
-                            desc,
-                            Io.printer(
-                                Io.output(
-                                    target, type == RedirectionType.APPEND
-                                ),
-                                StandardCharsets.UTF_8, false
-                            )
+                        final OutputStream appended = Executor.sink(
+                            target, type == RedirectionType.APPEND
                         );
+                        final PrintStream writer = Executor.printer(
+                            appended, false
+                        );
+                        this.outdescs.put(Integer.valueOf(desc), writer);
                     } catch (final IOException ex) {
                         bound = false;
                     }
@@ -1237,7 +1232,7 @@ public final class Executor implements BuiltinContext {
                     } else {
                         body = this.expandVariables(content, this.environment);
                     }
-                    replacement = Io.memory(body);
+                    replacement = Executor.buffer(body);
                 }
             } else if (type == RedirectionType.DUP_INPUT) {
                 final InputStream bound = this.descriptors.get(
@@ -1250,7 +1245,7 @@ public final class Executor implements BuiltinContext {
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
                 final File target = this.redirectionFile(redir);
                 try {
-                    replacement = Io.input(target);
+                    replacement = Executor.source(target);
                 } catch (final IOException ex) {
                     replacement = null;
                 }
@@ -1564,4 +1559,32 @@ public final class Executor implements BuiltinContext {
         return result;
     }
 
+    private static PrintStream console(final ByteArrayOutputStream sink) {
+        return Executor.printer(sink, true);
+    }
+
+    private static InputStream buffer(final String body) {
+        final byte[] encoded = body.getBytes(StandardCharsets.UTF_8);
+        return new ByteArrayInputStream(encoded);
+    }
+
+    private static InputStream source(final File file) throws IOException {
+        final FileInputStream stream = new FileInputStream(file);
+        return stream;
+    }
+
+    private static OutputStream sink(final File file, final boolean append)
+        throws IOException {
+        final FileOutputStream stream = new FileOutputStream(file, append);
+        return stream;
+    }
+
+    private static PrintStream printer(
+        final OutputStream sink, final boolean flush
+    ) {
+        final PrintStream target = new PrintStream(
+            sink, flush, StandardCharsets.UTF_8
+        );
+        return target;
+    }
 }

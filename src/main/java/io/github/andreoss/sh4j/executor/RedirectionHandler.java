@@ -4,16 +4,19 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import io.github.andreoss.sh4j.Io;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -276,18 +279,32 @@ public final class RedirectionHandler {
     ) {
         PrintStream result;
         try {
-            result = Io.printer(
-                Io.appending(
-                    RedirectionHandler.resolve(target, base).toPath(),
-                    append
-                ),
-                StandardCharsets.UTF_8,
-                false
+            final OutputStream sink = RedirectionHandler.sink(
+                RedirectionHandler.resolve(target, base).toPath(), append
+            );
+            result = new PrintStream(
+                sink, false, StandardCharsets.UTF_8
             );
         } catch (final IOException ex) {
             result = null;
         }
         return result;
+    }
+
+    private static OutputStream sink(final Path path, final boolean append)
+        throws IOException {
+        final OpenOption[] modes;
+        if (append) {
+            modes = new OpenOption[]{
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND,
+            };
+        } else {
+            modes = new OpenOption[]{
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+            };
+        }
+        return Files.newOutputStream(path, modes);
     }
 
     private static void applyOne(

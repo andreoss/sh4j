@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: LGPL-3.0-or-later
  */
 package io.github.andreoss.sh4j.lexer;
-
-import io.github.andreoss.sh4j.Io;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * Single-character lookahead cursor over the lexer's input stream. The
@@ -38,7 +37,7 @@ public final class CharReader {
      * @param input The script source
      */
     public CharReader(final String input) {
-        this(Io.text(input));
+        this(CharReader.memory(input));
     }
 
     /**
@@ -116,4 +115,8 @@ public final class CharReader {
             this.peeked = -1;
         }
     }
+    private static Reader memory(final String text) {
+        return new StringReader(text);
+    }
+
 }
