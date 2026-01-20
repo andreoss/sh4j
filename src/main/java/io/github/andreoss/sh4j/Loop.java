@@ -7,8 +7,6 @@ package io.github.andreoss.sh4j;
 import io.github.andreoss.sh4j.executor.Executor;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 
 /**
  * The read–eval–print loop used by interactive mode.
@@ -33,9 +31,7 @@ final class Loop {
      */
     Loop(final Executor executor) {
         this.executor = executor;
-        this.reader = new BufferedReader(
-            new InputStreamReader(System.in, StandardCharsets.UTF_8)
-        );
+        this.reader = Io.standardInput();
     }
 
     /** Runs until EOF or an IO failure. */

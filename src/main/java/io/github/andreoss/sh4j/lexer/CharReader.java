@@ -4,9 +4,9 @@
  */
 package io.github.andreoss.sh4j.lexer;
 
+import io.github.andreoss.sh4j.Io;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 
 /**
  * Single-character lookahead cursor over the lexer's input stream. The
@@ -38,7 +38,7 @@ public final class CharReader {
      * @param input The script source
      */
     public CharReader(final String input) {
-        this(new StringReader(input));
+        this(Io.text(input));
     }
 
     /**

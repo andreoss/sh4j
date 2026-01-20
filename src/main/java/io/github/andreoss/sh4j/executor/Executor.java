@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import io.github.andreoss.sh4j.Io;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.CaseItem;
@@ -555,7 +556,7 @@ public final class Executor implements BuiltinContext {
      * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
-        this.out = new PrintStream(stream, true, StandardCharsets.UTF_8);
+        this.out = Io.printer(stream, true);
     }
 
     /**
@@ -912,8 +913,8 @@ public final class Executor implements BuiltinContext {
             if (last) {
                 child.out = this.out;
             } else {
-                child.out = new PrintStream(
-                    outputs[index], true, StandardCharsets.UTF_8
+                child.out = Io.printer(
+                    outputs[index], StandardCharsets.UTF_8, true
                 );
             }
             child.err = this.err;
@@ -1138,13 +1139,15 @@ public final class Executor implements BuiltinContext {
                         if (type == RedirectionType.READWRITE) {
                             this.outdescs.put(
                                 desc,
-                                new PrintStream(
-                                    new FileOutputStream(target, true), false,
-                                    StandardCharsets.UTF_8
+                                Io.printer(
+                                    Io.output(target, true),
+                                    StandardCharsets.UTF_8, false
                                 )
                             );
                         }
-                        this.descriptors.put(desc, new FileInputStream(target));
+                        this.descriptors.put(
+                            desc, Io.input(target)
+                        );
                     } catch (final IOException ex) {
                         bound = false;
                     }
@@ -1154,9 +1157,11 @@ public final class Executor implements BuiltinContext {
                     try {
                         this.outdescs.put(
                             desc,
-                            new PrintStream(
-                                new FileOutputStream(target, type == RedirectionType.APPEND),
-                                false, StandardCharsets.UTF_8
+                            Io.printer(
+                                Io.output(
+                                    target, type == RedirectionType.APPEND
+                                ),
+                                StandardCharsets.UTF_8, false
                             )
                         );
                     } catch (final IOException ex) {
@@ -1232,9 +1237,7 @@ public final class Executor implements BuiltinContext {
                     } else {
                         body = this.expandVariables(content, this.environment);
                     }
-                    replacement = new ByteArrayInputStream(
-                        body.getBytes(StandardCharsets.UTF_8)
-                    );
+                    replacement = Io.memory(body);
                 }
             } else if (type == RedirectionType.DUP_INPUT) {
                 final InputStream bound = this.descriptors.get(
@@ -1247,9 +1250,9 @@ public final class Executor implements BuiltinContext {
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
                 final File target = this.redirectionFile(redir);
                 try {
-                    replacement = new FileInputStream(target);
-                } catch (final java.io.FileNotFoundException ex) {
-                    // fall back to no replacement; read will see original stdin
+                    replacement = Io.input(target);
+                } catch (final IOException ex) {
+                    replacement = null;
                 }
             }
         }

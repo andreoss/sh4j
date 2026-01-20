@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.Io;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
@@ -13,7 +14,6 @@ import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -276,20 +276,13 @@ public final class RedirectionHandler {
     ) {
         PrintStream result;
         try {
-            final StandardOpenOption mode;
-            if (append) {
-                mode = StandardOpenOption.APPEND;
-            } else {
-                mode = StandardOpenOption.TRUNCATE_EXISTING;
-            }
-            result = new PrintStream(
-                Files.newOutputStream(
+            result = Io.printer(
+                Io.appending(
                     RedirectionHandler.resolve(target, base).toPath(),
-                    StandardOpenOption.CREATE,
-                    mode
+                    append
                 ),
-                false,
-                StandardCharsets.UTF_8
+                StandardCharsets.UTF_8,
+                false
             );
         } catch (final IOException ex) {
             result = null;
