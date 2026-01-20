@@ -7,8 +7,6 @@ package io.github.andreoss.sh4j.executor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -22,6 +20,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -1135,15 +1135,16 @@ public final class Executor implements BuiltinContext {
                     final File target = this.redirectionFile(redir);
                     try {
                         if (type == RedirectionType.READWRITE) {
-                            final OutputStream sink = Executor.sink(target, true);
-                            final PrintStream writer = Executor.printer(
-                                sink, false
+                            final PrintStream writer = new PrintStream(
+                                Files.newOutputStream(target.toPath(), StandardOpenOption.CREATE,
+                                StandardOpenOption.APPEND), false,
+                                StandardCharsets.UTF_8
                             );
-                            this.outdescs.put(
-                                Integer.valueOf(desc), writer
-                            );
+                            this.outdescs.put(Integer.valueOf(desc), writer);
                         }
-                        final InputStream source = Executor.source(target);
+                        final InputStream source = Files.newInputStream(
+                            target.toPath()
+                        );
                         this.descriptors.put(Integer.valueOf(desc), source);
                     } catch (final IOException ex) {
                         bound = false;
@@ -1152,13 +1153,16 @@ public final class Executor implements BuiltinContext {
                     || type == RedirectionType.CLOBBER || type == RedirectionType.APPEND)) {
                     final File target = this.redirectionFile(redir);
                     try {
-                        final OutputStream appended = Executor.sink(
-                            target, type == RedirectionType.APPEND
+                        final OutputStream appended = type == RedirectionType.APPEND
+                            ? Files.newOutputStream(
+                                target.toPath(), StandardOpenOption.CREATE,
+                                StandardOpenOption.APPEND
+                            )
+                            : Files.newOutputStream(target.toPath());
+                        this.outdescs.put(
+                            Integer.valueOf(desc),
+                            new PrintStream(appended, false, StandardCharsets.UTF_8)
                         );
-                        final PrintStream writer = Executor.printer(
-                            appended, false
-                        );
-                        this.outdescs.put(Integer.valueOf(desc), writer);
                     } catch (final IOException ex) {
                         bound = false;
                     }
@@ -1245,7 +1249,7 @@ public final class Executor implements BuiltinContext {
             } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
                 final File target = this.redirectionFile(redir);
                 try {
-                    replacement = Executor.source(target);
+                    replacement = Files.newInputStream(target.toPath());
                 } catch (final IOException ex) {
                     replacement = null;
                 }
@@ -1564,27 +1568,16 @@ public final class Executor implements BuiltinContext {
     }
 
     private static InputStream buffer(final String body) {
-        final byte[] encoded = body.getBytes(StandardCharsets.UTF_8);
-        return new ByteArrayInputStream(encoded);
+        return new ByteArrayInputStream(
+            body.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
-    private static InputStream source(final File file) throws IOException {
-        final FileInputStream stream = new FileInputStream(file);
-        return stream;
-    }
 
-    private static OutputStream sink(final File file, final boolean append)
-        throws IOException {
-        final FileOutputStream stream = new FileOutputStream(file, append);
-        return stream;
-    }
 
     private static PrintStream printer(
         final OutputStream sink, final boolean flush
     ) {
-        final PrintStream target = new PrintStream(
-            sink, flush, StandardCharsets.UTF_8
-        );
-        return target;
+        return new PrintStream(sink, flush, StandardCharsets.UTF_8);
     }
 }
