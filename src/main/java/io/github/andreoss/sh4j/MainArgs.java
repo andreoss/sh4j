@@ -47,20 +47,11 @@ final class MainArgs {
         return code;
     }
 
-    /**
-     * Reports a {@code -c} flag that carries no command and returns its status.
-     * @return The exit status 1
-     */
     private static int missingCommand() {
         System.err.println("sh: -c: option requires an argument");
         return 1;
     }
 
-    /**
-     * Parses CLI flags and positional arguments.
-     * @param args Raw CLI arguments
-     * @return Parsed options
-     */
     private static Options parse(final String... args) {
         int idx = 0;
         String command = null;
@@ -96,16 +87,6 @@ final class MainArgs {
         return MainArgs.options(args, idx, dashed, command, stdind, inter);
     }
 
-    /**
-     * Builds options from the scan position.
-     * @param args Raw CLI arguments
-     * @param idx Current index
-     * @param dashed Whether {@code -c} was given
-     * @param command Command text from {@code -c}, or null
-     * @param stdind Whether {@code -s} was given
-     * @param inter Whether {@code -i} was given
-     * @return Parsed options
-     */
     private static Options options(
         final String[] args, final int idx, final boolean dashed,
         final String command, final boolean stdind,
@@ -131,13 +112,6 @@ final class MainArgs {
         );
     }
 
-    /**
-     * Builds positional parameters starting at the given index.
-     * @param args Raw CLI arguments
-     * @param start Index of the first positional argument
-     * @param first Value for {@code $0}
-     * @return Positional parameters
-     */
     private static List<String> params(
         final String[] args, final int start, final String first
     ) {
@@ -149,16 +123,6 @@ final class MainArgs {
         return params;
     }
 
-    /**
-     * Parsed CLI options.
-     * @param dashed Whether {@code -c} was given
-     * @param command Command text from {@code -c}, or null
-     * @param stdind Whether {@code -s} was given
-     * @param inter Whether {@code -i} was given
-     * @param script Script path, or null
-     * @param params Positional parameters
-     * @since 1.0
-     */
     private record Options(
         boolean dashed, String command, boolean stdind,
         boolean inter, String script, List<String> params

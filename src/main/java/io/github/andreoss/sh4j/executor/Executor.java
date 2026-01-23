@@ -4,25 +4,6 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.Set;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.CaseItem;
@@ -40,6 +21,26 @@ import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import io.github.andreoss.sh4j.parser.WhileNode;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tree-walking executor for the AST produced by {@link Parser}. Top-level
@@ -54,7 +55,7 @@ public final class Executor implements BuiltinContext {
      * POSIX 2.14 special built-in utilities — these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
      */
-    private static final java.util.Set<String> SPECIAL_BUILTINS = java.util.Set.of(
+    private static final java.util.Set<String> SPECIAL_BUILTINS = Set.of(
         ":", ".", "break", "continue", "eval", "exec", "exit", "export",
         "readonly", "return", "set", "shift", "times", "trap", "unset"
     );
@@ -615,12 +616,6 @@ public final class Executor implements BuiltinContext {
         );
     }
 
-    /**
-     * Creates a subshell with the same variables, functions, aliases,
-     * positional parameters, flags, traps, and working directory.
-     *
-     * @return A new child executor
-     */
     private Executor subshell() {
         final Executor child = new Executor(this.exportedEnvironment());
         child.environment.clear();
@@ -1077,13 +1072,6 @@ public final class Executor implements BuiltinContext {
         return code;
     }
 
-    /**
-     * Expands a redirection target into a file resolved against the shell's
-     * working directory.
-     *
-     * @param redir The redirection whose target is expanded
-     * @return The resolved file
-     */
     private File redirectionFile(final Redirection redir) {
         final File raw = new File(this.expandVariables(redir.getTarget(), this.environment));
         final File result;
@@ -1095,15 +1083,6 @@ public final class Executor implements BuiltinContext {
         return result;
     }
 
-    /**
-     * Implements {@code exec}: redirection-only calls persist the stream
-     * changes; a command replaces the shell semantically by unwinding with
-     * the child's status.
-     *
-     * @param cmd The exec command node
-     * @param cenv Expansion environment
-     * @return 0 for redirection-only exec
-     */
     private int runExec(final SimpleCommand cmd, final Map<String, String> cenv) {
         final int code;
         if (cmd.getArguments().isEmpty()) {
@@ -1276,7 +1255,7 @@ public final class Executor implements BuiltinContext {
                 builder, cmd.getRedirections(),
                 new RedirectionHandler.RedirectContext(
                     text -> this.expandVariables(text, this.environment),
-                    this.cwd, java.util.Collections.emptyMap()
+                    this.cwd, Collections.emptyMap()
                 )
             );
             code = this.startAndAwaitOne(builder);
@@ -1318,7 +1297,7 @@ public final class Executor implements BuiltinContext {
                 reader = new Thread(
                     () -> {
                         try (
-                            java.io.OutputStream stream = process.getOutputStream()
+                            OutputStream stream = process.getOutputStream()
                         ) {
                             this.instream.transferTo(stream);
                         } catch (final IOException ignored) {
@@ -1352,12 +1331,6 @@ public final class Executor implements BuiltinContext {
         return code;
     }
 
-    /**
-     * Applies variable assignments to the environment.
-     *
-     * @param assignments Assignment strings
-     * @param source Source environment
-     */
     private void applyAssignments(
         final List<String> assignments, final Map<String, String> source
     ) {
@@ -1547,12 +1520,6 @@ public final class Executor implements BuiltinContext {
         return SPECIAL_BUILTINS.contains(name);
     }
 
-    /**
-     * Parses a redirection descriptor target such as {@code 3}.
-     *
-     * @param text The expanded redirection target
-     * @return The descriptor number, or -1 when it is not numeric
-     */
     private static int parseDescriptor(final String text) {
         int result = -1;
         try {
