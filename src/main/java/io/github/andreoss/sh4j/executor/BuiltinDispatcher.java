@@ -1802,7 +1802,6 @@ final class BuiltinDispatcher {
     ) {
         final boolean takesarg = optidx + 1 < optstring.length()
             && optstring.charAt(optidx + 1) == ':';
-        int code = 0;
         boolean stop = false;
         if (takesarg) {
             environment.put("OPTIND", String.valueOf(optind + 1));
@@ -1839,7 +1838,7 @@ final class BuiltinDispatcher {
                 environment.remove("OPTIND_POS");
             }
         }
-        return code;
+        return 0;
     }
 
     private static int parseJobId(final String arg) {

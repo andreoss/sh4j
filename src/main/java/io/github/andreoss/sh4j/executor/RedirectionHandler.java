@@ -279,11 +279,10 @@ public final class RedirectionHandler {
     ) {
         PrintStream result;
         try {
-            final OutputStream sink = RedirectionHandler.sink(
-                RedirectionHandler.resolve(target, base).toPath(), append
-            );
             result = new PrintStream(
-                sink, false, StandardCharsets.UTF_8
+                RedirectionHandler.sink(
+                    RedirectionHandler.resolve(target, base).toPath(), append
+                ), false, StandardCharsets.UTF_8
             );
         } catch (final IOException ex) {
             result = null;

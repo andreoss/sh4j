@@ -99,10 +99,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int codeout = proc.waitFor();
+        proc.waitFor();
         Assertions.assertEquals(
             0,
-            codeout,
+            proc.exitValue(),
             String.format("sh4j exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -132,10 +132,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int codeout = proc.waitFor();
+        proc.waitFor();
         Assertions.assertEquals(
             0,
-            codeout,
+            proc.exitValue(),
             String.format("native sh4j exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -201,10 +201,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int codeout = proc.waitFor();
+        proc.waitFor();
         Assertions.assertEquals(
             0,
-            codeout,
+            proc.exitValue(),
             String.format("native sh4j pipeline exit code; output: %s", out)
         );
         Assertions.assertTrue(
@@ -1136,6 +1136,12 @@ public final class IntegrationTest {
                 out
             )
         );
+        Assertions.assertTrue(
+            out.contains(dir.getName()),
+            String.format(
+                "expected pwd to mention %s", dir.getName()
+            )
+        );
     }
 
     /**
@@ -1169,6 +1175,10 @@ public final class IntegrationTest {
         Assertions.assertTrue(
             out.endsWith("/cd-target"),
             String.format("expected to land in /cd-target, got %s", out)
+        );
+        Assertions.assertTrue(
+            out.contains(target.getName()),
+            String.format("expected pwd to mention %s", target.getName())
         );
     }
 
@@ -1349,6 +1359,10 @@ public final class IntegrationTest {
         Assertions.assertTrue(
             out.endsWith("/first"),
             String.format("expected to return to /first, got %s", out)
+        );
+        Assertions.assertNotEquals(
+            second.getAbsolutePath(), out,
+            "cd - must not land on the directory just left"
         );
     }
 
@@ -1861,6 +1875,10 @@ public final class IntegrationTest {
             )
         ).trim();
         Assertions.assertFalse(out.isEmpty(), "OLDPWD should not be empty");
+        Assertions.assertNotEquals(
+            target.getAbsolutePath(), out,
+            "OLDPWD should name the directory left behind"
+        );
     }
 
     /**
@@ -2515,10 +2533,10 @@ public final class IntegrationTest {
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
         final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        final int codeout = proc.waitFor();
+        proc.waitFor();
         Assertions.assertEquals(
             0,
-            codeout,
+            proc.exitValue(),
             String.format("child sh4j exit code; output: %s", out)
         );
         return out;

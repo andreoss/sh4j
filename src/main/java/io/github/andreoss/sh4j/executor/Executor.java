@@ -1237,9 +1237,13 @@ public final class Executor implements BuiltinContext {
         if (replacement == null) {
             return null;
         }
-        final InputStream prior = this.instream;
+        return this.installInput(replacement);
+    }
+
+    private InputStream installInput(final InputStream replacement) {
+        final InputStream previous = this.instream;
         this.instream = replacement;
-        return prior;
+        return previous;
     }
 
     private int runExternalCommand(
