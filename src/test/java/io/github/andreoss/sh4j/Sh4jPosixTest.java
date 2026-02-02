@@ -656,23 +656,27 @@ final class Sh4jPosixTest {
 
     @Test
     void unaliasRemovesAlias() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "alias ll='echo hello'",
-            "unalias ll",
-            "ll"
+        Assertions.assertNotEquals(
+            0,
+            Sh4j.INSTANCE.runFull(
+                "alias ll='echo hello'",
+                "unalias ll",
+                "ll"
+            ).exitCode()
         );
-        Assertions.assertNotEquals(0, result.exitCode());
     }
 
     @Test
     void unaliasAll() {
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            "alias ll='echo hello'",
-            "alias la='echo world'",
-            "unalias -a",
-            "ll"
+        Assertions.assertNotEquals(
+            0,
+            Sh4j.INSTANCE.runFull(
+                "alias ll='echo hello'",
+                "alias la='echo world'",
+                "unalias -a",
+                "ll"
+            ).exitCode()
         );
-        Assertions.assertNotEquals(0, result.exitCode());
     }
 
     // ============================================================
@@ -889,9 +893,11 @@ final class Sh4jPosixTest {
 
     @Test
     void continueSkipsRestOfLoop() {
-        final String out = Sh4j.INSTANCE.out(
-            "for i in 1 2 3; do if [ $i -eq 2 ]; then continue; fi; echo $i; done"
+        Assertions.assertEquals(
+            String.format("1%n3%n"),
+            Sh4j.INSTANCE.out(
+                "for i in 1 2 3; do if [ $i -eq 2 ]; then continue; fi; echo $i; done"
+            )
         );
-        Assertions.assertEquals(String.format("1%n3%n"), out);
     }
 }

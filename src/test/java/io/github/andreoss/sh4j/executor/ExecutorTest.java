@@ -1928,19 +1928,23 @@ final class ExecutorTest {
         Assertions.assertNotNull(ppid);
         final long parsed = Long.parseLong(ppid);
         Assertions.assertTrue(parsed > 0L, "PPID should be a positive PID");
-        final long expected = ProcessHandle.current()
-            .parent().orElse(ProcessHandle.current()).pid();
-        Assertions.assertEquals(expected, parsed);
+        Assertions.assertEquals(
+            ProcessHandle.current()
+                .parent().orElse(ProcessHandle.current()).pid(),
+            parsed
+        );
     }
 
     @Test
     void ppidPreservedAcrossSubshellExecutor() {
         final Executor parent = new Executor();
-        final Executor sub = new Executor(
-            parent.environmentMap(),
-            Collections.singletonList("sub")
+        Assertions.assertEquals(
+            parent.getVariable("PPID"),
+            new Executor(
+                parent.environmentMap(),
+                Collections.singletonList("sub")
+            ).getVariable("PPID")
         );
-        Assertions.assertEquals(parent.getVariable("PPID"), sub.getVariable("PPID"));
     }
 
     @Test

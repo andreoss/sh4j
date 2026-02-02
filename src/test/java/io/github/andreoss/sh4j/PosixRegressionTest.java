@@ -677,16 +677,24 @@ final class PosixRegressionTest {
 
     @Test
     void readReplyAndRawMode() {
-        final Sh4j.Result reply = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
-            "read; echo \"$REPLY\""
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(
+                    String.format("hello%n").getBytes(StandardCharsets.UTF_8)
+                ),
+                "read; echo \"$REPLY\""
+            )
         );
-        Assertions.assertEquals(String.format("hello%n"), reply.stdout());
-        final Sh4j.Result raw = Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)),
-            "read -r x; echo \"$x\""
+        Assertions.assertEquals(
+            String.format("a\\tb%n"),
+            Sh4j.INSTANCE.stdout(
+                new ByteArrayInputStream(
+                    String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)
+                ),
+                "read -r x; echo \"$x\""
+            )
         );
-        Assertions.assertEquals(String.format("a\\tb%n"), raw.stdout());
     }
 
     @Test
@@ -791,10 +799,12 @@ final class PosixRegressionTest {
     @Test
     void execWithCommandAndRedirection() throws IOException {
         final File file = TempDirs.file(PosixRegressionTest.root, "exec-arg.out");
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format("exec echo hi > %s", file.getAbsolutePath())
+        Assertions.assertEquals(
+            0,
+            Sh4j.INSTANCE.runFull(
+                String.format("exec echo hi > %s", file.getAbsolutePath())
+            ).exitCode()
         );
-        Assertions.assertEquals(0, result.exitCode());
         Assertions.assertEquals(
             String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)

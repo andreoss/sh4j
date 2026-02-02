@@ -307,14 +307,16 @@ final class MainTest {
     @Test
     void runSourceRunsExitTrap() throws IOException {
         final File marker = TempDirs.file(MainTest.root, "trap-marker.txt");
-        final int code = Main.runSource(
-            String.format(
-                "trap 'echo trapped > %s' EXIT; echo body",
-                marker.getAbsolutePath()
-            ),
-            Collections.singletonList("sh")
+        Assertions.assertEquals(
+            0,
+            Main.runSource(
+                String.format(
+                    "trap 'echo trapped > %s' EXIT; echo body",
+                    marker.getAbsolutePath()
+                ),
+                Collections.singletonList("sh")
+            )
         );
-        Assertions.assertEquals(0, code);
         Assertions.assertEquals(
             String.format("trapped%s", System.lineSeparator()),
             new String(Files.readAllBytes(marker.toPath()), StandardCharsets.UTF_8)
@@ -324,14 +326,16 @@ final class MainTest {
     @Test
     void runSourcePropagatesExitAndRunsTrap() throws IOException {
         final File marker = TempDirs.file(MainTest.root, "exit-trap-marker.txt");
-        final int code = Main.runSource(
-            String.format(
-                "trap 'echo trapped > %s' EXIT; exit 3",
-                marker.getAbsolutePath()
-            ),
-            Collections.singletonList("sh")
+        Assertions.assertEquals(
+            3,
+            Main.runSource(
+                String.format(
+                    "trap 'echo trapped > %s' EXIT; exit 3",
+                    marker.getAbsolutePath()
+                ),
+                Collections.singletonList("sh")
+            )
         );
-        Assertions.assertEquals(3, code);
         Assertions.assertTrue(marker.isFile());
     }
 
@@ -402,11 +406,10 @@ final class MainTest {
     @Test
     void interactiveBlankAndIncompleteDoubleQuoteAtEof() {
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
-        final String input = String.format(String.format("%%n%n%necho \"x"));
         Assertions.assertEquals(
             0,
             MainTest.withStreams(
-                new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)),
+                MainTest.input("%n%n%necho \"x"),
                 new ByteArrayOutputStream(),
                 err,
                 () -> Main.interactive(null)
