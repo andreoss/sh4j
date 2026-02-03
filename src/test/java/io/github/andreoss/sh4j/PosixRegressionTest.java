@@ -22,6 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 final class PosixRegressionTest {
 
+    /** Temporary root directory. */
+
     @TempDir
     private static Path root;
 

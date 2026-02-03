@@ -94,8 +94,8 @@ final class Loop {
     }
 
     private static BufferedReader console() {
-        return new BufferedReader(new InputStreamReader(
-            System.in, StandardCharsets.UTF_8
-        ));
+        return new BufferedReader(
+            new InputStreamReader(System.in, StandardCharsets.UTF_8)
+        );
     }
 }

@@ -23,6 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 public final class IntegrationTest {
 
+    /** Temporary root directory. */
+
     @TempDir
     private static Path root;
 
@@ -1391,12 +1393,14 @@ public final class IntegrationTest {
      */
     @Test
     void commandDashVReportsBuiltin() throws Exception {
-        final String out = this.runChildJvm(
-            this.writeScript(
-                "cmdv.sh", String.format("command -v cd%n")
-            )
-        ).trim();
-        Assertions.assertEquals("cd", out);
+        Assertions.assertEquals(
+            "cd",
+            this.runChildJvm(
+                this.writeScript(
+                    "cmdv.sh", String.format("command -v cd%n")
+                )
+            ).trim()
+        );
     }
 
     /**
@@ -1692,7 +1696,9 @@ public final class IntegrationTest {
      */
     @Test
     void caseQuestionMarkMatchesSingleChar() throws Exception {
-        Assertions.assertEquals(String.format("two%nnot-two%nnot-two%n"), this.runChildJvm(
+        Assertions.assertEquals(
+            String.format("two%nnot-two%nnot-two%n"),
+            this.runChildJvm(
                 this.writeScript(
                     "caseq.sh",
                     String.format(
@@ -2111,7 +2117,9 @@ public final class IntegrationTest {
      */
     @Test
     void caseStarDefaultMatches() throws Exception {
-        Assertions.assertEquals(String.format("a%nd%nd%n"), this.runChildJvm(
+        Assertions.assertEquals(
+            String.format("a%nd%nd%n"),
+            this.runChildJvm(
                 this.writeScript(
                     "casestar.sh",
                     String.format(
@@ -2144,7 +2152,9 @@ public final class IntegrationTest {
      */
     @Test
     void nestedCaseStatement() throws Exception {
-        Assertions.assertEquals(String.format("a2%n"), this.runChildJvm(
+        Assertions.assertEquals(
+            String.format("a2%n"),
+            this.runChildJvm(
                 this.writeScript(
                     "ncase.sh",
                     String.format(

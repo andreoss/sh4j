@@ -24,6 +24,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 final class ExecutorMutationTest {
 
+    /** Temporary root directory. */
+
     @TempDir
     private static Path root;
 

@@ -1242,7 +1242,9 @@ public final class Executor implements BuiltinContext {
 
     private InputStream installInput(final InputStream replacement) {
         final InputStream previous = this.instream;
-        this.instream = replacement;
+        if (previous != replacement) {
+            this.instream = replacement;
+        }
         return previous;
     }
 

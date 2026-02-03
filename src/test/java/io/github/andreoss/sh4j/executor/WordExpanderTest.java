@@ -29,6 +29,8 @@ final class WordExpanderTest {
     /** ABC constant. */
     private static final String ABC = "abc";
 
+    /** Temporary root directory. */
+
     @TempDir
     private static Path root;
 

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.io.TempDir;
  * @since 1.0
  */
 final class MainTest {
+    /** Temporary root directory. */
     @TempDir
     private static Path root;
 
@@ -275,11 +276,13 @@ final class MainTest {
         try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("export STARTUP_RAN=yes%n"));
         }
-        final int result = MainTest.withStdin(
-            new ByteArrayInputStream(new byte[0]),
-            () -> Main.interactive(startup.getAbsolutePath())
+        Assertions.assertEquals(
+            0,
+            MainTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.interactive(startup.getAbsolutePath())
+            )
         );
-        Assertions.assertEquals(0, result);
     }
 
     @Test
@@ -406,14 +409,19 @@ final class MainTest {
     @Test
     void interactiveBlankAndIncompleteDoubleQuoteAtEof() {
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        final ByteArrayOutputStream recorded = new ByteArrayOutputStream();
         Assertions.assertEquals(
             0,
             MainTest.withStreams(
                 MainTest.input("%n%n%necho \"x"),
-                new ByteArrayOutputStream(),
+                recorded,
                 err,
                 () -> Main.interactive(null)
             )
+        );
+        Assertions.assertTrue(
+            recorded.toString(StandardCharsets.UTF_8).contains("$"),
+            "the REPL must print a prompt before reporting EOF"
         );
     }
 
