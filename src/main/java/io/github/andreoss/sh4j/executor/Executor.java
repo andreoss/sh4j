@@ -407,30 +407,48 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String lookupVariable(final String name, final Map<String, String> env) {
-        String result;
         if (name.isEmpty()) {
             return "";
         }
+        String result;
         if (name.length() == 1) {
             result = this.getSpecialParam(name.charAt(0));
         } else {
             result = null;
         }
         if (result == null) {
-            if (name.chars().allMatch(Character::isDigit)) {
-                final int idx = Integer.parseInt(name);
-                if (idx < this.params.size()) {
-                    result = this.params.get(idx);
-                }
-            } else {
-                result = env.get(name);
-                if (result == null && this.flags.indexOf('u') >= 0) {
-                    this.err.println("sh: " + name + ": parameter not set");
-                    throw new ExitSignal(1);
-                }
-            }
+            result = this.lookupNamed(name, env);
         }
         return result;
+    }
+
+    private String lookupNamed(final String name, final Map<String, String> env) {
+        final String value;
+        if (name.chars().allMatch(Character::isDigit)) {
+            value = this.positionalAt(Integer.parseInt(name));
+        } else {
+            value = this.namedValue(name, env);
+        }
+        return value;
+    }
+
+    private String positionalAt(final int idx) {
+        final String value;
+        if (idx < this.params.size()) {
+            value = this.params.get(idx);
+        } else {
+            value = null;
+        }
+        return value;
+    }
+
+    private String namedValue(final String name, final Map<String, String> env) {
+        final String value = env.get(name);
+        if (value == null && this.flags.indexOf('u') >= 0) {
+            this.err.println("sh: " + name + ": parameter not set");
+            throw new ExitSignal(1);
+        }
+        return value;
     }
 
     @Override
