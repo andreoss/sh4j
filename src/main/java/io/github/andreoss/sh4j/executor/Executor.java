@@ -407,48 +407,15 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String lookupVariable(final String name, final Map<String, String> env) {
+        final String result;
         if (name.isEmpty()) {
-            return "";
-        }
-        String result;
-        if (name.length() == 1) {
-            result = this.getSpecialParam(name.charAt(0));
+            result = "";
+        } else if (name.length() == 1) {
+            result = this.soleParam(name, env);
         } else {
-            result = null;
-        }
-        if (result == null) {
             result = this.lookupNamed(name, env);
         }
         return result;
-    }
-
-    private String lookupNamed(final String name, final Map<String, String> env) {
-        final String value;
-        if (name.chars().allMatch(Character::isDigit)) {
-            value = this.positionalAt(Integer.parseInt(name));
-        } else {
-            value = this.namedValue(name, env);
-        }
-        return value;
-    }
-
-    private String positionalAt(final int idx) {
-        final String value;
-        if (idx < this.params.size()) {
-            value = this.params.get(idx);
-        } else {
-            value = null;
-        }
-        return value;
-    }
-
-    private String namedValue(final String name, final Map<String, String> env) {
-        final String value = env.get(name);
-        if (value == null && this.flags.indexOf('u') >= 0) {
-            this.err.println("sh: " + name + ": parameter not set");
-            throw new ExitSignal(1);
-        }
-        return value;
     }
 
     @Override
@@ -1564,11 +1531,51 @@ public final class Executor implements BuiltinContext {
         );
     }
 
-
-
     private static PrintStream printer(
         final OutputStream sink, final boolean flush
     ) {
         return new PrintStream(sink, flush, StandardCharsets.UTF_8);
+    }
+
+    private String namedValue(final String name, final Map<String, String> env) {
+        final String value = env.get(name);
+        if (value == null && this.flags.indexOf('u') >= 0) {
+            this.err.println(
+                String.format("sh: %s: parameter not set", name)
+            );
+            throw new ExitSignal(1);
+        }
+        return value;
+    }
+
+    private String positionalAt(final int idx) {
+        final String value;
+        if (idx < this.params.size()) {
+            value = this.params.get(idx);
+        } else {
+            value = null;
+        }
+        return value;
+    }
+
+    private String lookupNamed(final String name, final Map<String, String> env) {
+        final String value;
+        if (name.chars().allMatch(Character::isDigit)) {
+            value = this.positionalAt(Integer.parseInt(name));
+        } else {
+            value = this.namedValue(name, env);
+        }
+        return value;
+    }
+
+    private String soleParam(final String name, final Map<String, String> env) {
+        final String special = this.getSpecialParam(name.charAt(0));
+        final String value;
+        if (special == null) {
+            value = this.lookupNamed(name, env);
+        } else {
+            value = special;
+        }
+        return value;
     }
 }
