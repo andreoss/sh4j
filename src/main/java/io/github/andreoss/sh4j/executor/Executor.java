@@ -51,6 +51,7 @@ import java.util.Set;
  * @since 1.0
  */
 public final class Executor implements BuiltinContext {
+
     /**
      * POSIX 2.14 special built-in utilities — these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
@@ -61,16 +62,13 @@ public final class Executor implements BuiltinContext {
     );
 
     /** Default IFS value (space, tab, newline). */
-    private static final String DEFAULT_IFS = " \t\n";
+    private static final String DEFAULT_IFS = " \t" + (char) 10;
 
     /** Default fallback PATH when none is set. */
-    private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
-
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
 
     /** Exit code for a command that exists but cannot be executed. */
-    private static final int EXIT_COMMAND_NOT_EXECUTABLE = 126;
 
     /** Live shell-variable table. */
     private final Map<String, String> environment;
@@ -176,7 +174,6 @@ public final class Executor implements BuiltinContext {
         final Map<String, String> environment,
         final List<String> params
     ) {
-        super();
         this.environment = new HashMap<>(environment);
         this.exported = new HashSet<>(environment.keySet());
         this.readonly = new HashSet<>();
@@ -482,12 +479,12 @@ public final class Executor implements BuiltinContext {
     }
 
     @Override
-    public void setShellFlags(final String flags) {
-        this.flags = flags;
+    public void setShellFlags(final String value) {
+        this.flags = value;
     }
 
     @Override
-    public void setPositionalParams(final List<String> params) {
+    public void setPositionalParams(final List<String> incoming) {
         final String zeroth;
         if (this.params.isEmpty()) {
             zeroth = "";
@@ -496,7 +493,7 @@ public final class Executor implements BuiltinContext {
         }
         this.params.clear();
         this.params.add(zeroth);
-        this.params.addAll(params);
+        this.params.addAll(incoming);
     }
 
     /**
@@ -587,7 +584,7 @@ public final class Executor implements BuiltinContext {
         this.environment.putIfAbsent("PATH", System.getenv("PATH"));
         final String path = this.environment.get("PATH");
         if (path == null || path.isEmpty()) {
-            this.environment.put("PATH", DEFAULT_PATH);
+            this.environment.put("PATH", "/usr/local/bin:/usr/bin:/bin");
         }
         this.exported.add("HOME");
         this.exported.add("PATH");
@@ -1326,9 +1323,9 @@ public final class Executor implements BuiltinContext {
         final List<String> assignments, final Map<String, String> source
     ) {
         for (final String assignment : assignments) {
-            final int eq = assignment.indexOf('=');
-            if (eq > 0) {
-                final String name = assignment.substring(0, eq);
+            final int equals = assignment.indexOf('=');
+            if (equals > 0) {
+                final String name = assignment.substring(0, equals);
                 final String value = source.get(name);
                 if (value != null) {
                     this.environment.put(name, value);
@@ -1397,7 +1394,7 @@ public final class Executor implements BuiltinContext {
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
             code = EXIT_COMMAND_NOT_FOUND;
         } else {
-            code = EXIT_COMMAND_NOT_EXECUTABLE;
+            code = 126;
         }
         return code;
     }
@@ -1467,9 +1464,9 @@ public final class Executor implements BuiltinContext {
     ) {
         final Map<String, String> child = this.exportedEnvironment();
         for (final String assignment : cmd.getAssignments()) {
-            final int eq = assignment.indexOf('=');
-            if (eq > 0) {
-                final String name = assignment.substring(0, eq);
+            final int equals = assignment.indexOf('=');
+            if (equals > 0) {
+                final String name = assignment.substring(0, equals);
                 final String value = cenv.get(name);
                 if (value != null) {
                     child.put(name, value);

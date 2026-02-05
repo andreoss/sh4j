@@ -18,7 +18,6 @@ final class MainArgs {
      * Utility class; no instances.
      */
     private MainArgs() {
-        super();
     }
 
     /**

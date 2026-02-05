@@ -185,10 +185,8 @@ final class BuiltinDispatcher {
             target = self.expandVariables(args.get(0), env);
             if ("-".equals(target)) {
                 final String old = environment.get("OLDPWD");
-                if (old == null) {
-                    code = 1;
-                } else {
-                    self.outStream().println(old);
+                code = BuiltinDispatcher.reportOldPwd(self, old);
+                if (old != null) {
                     target = old;
                 }
             }
@@ -1767,7 +1765,7 @@ final class BuiltinDispatcher {
             environment.put("OPTIND_POS", String.valueOf(optpos + 1));
             final int optidx = optstring.indexOf(optchar);
             if (optidx < 0) {
-                if (optstring.length() > 0 && optstring.charAt(0) == ':') {
+                if (!optstring.isEmpty() && optstring.charAt(0) == ':') {
                     environment.put(varname, "?");
                     environment.put("OPTARG", String.valueOf(optchar));
                 } else {
@@ -1811,7 +1809,7 @@ final class BuiltinDispatcher {
                 environment.put("OPTARG", pargs.get(optind));
                 environment.put("OPTIND", String.valueOf(optind + 2));
             } else {
-                if (optstring.length() > 0 && optstring.charAt(0) == ':') {
+                if (!optstring.isEmpty() && optstring.charAt(0) == ':') {
                     environment.put(varname, ":");
                 } else {
                     self.errStream().println(
@@ -1925,4 +1923,17 @@ final class BuiltinDispatcher {
         return flag;
     }
 
+
+    private static int reportOldPwd(
+        final BuiltinIo io, final String old
+    ) {
+        final int code;
+        if (old == null) {
+            code = 1;
+        } else {
+            io.outStream().println(old);
+            code = 0;
+        }
+        return code;
+    }
 }

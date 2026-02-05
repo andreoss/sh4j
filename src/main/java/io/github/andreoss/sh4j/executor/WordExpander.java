@@ -24,6 +24,7 @@ import java.util.regex.PatternSyntaxException;
  * @since 1.0
  */
 public final class WordExpander {
+
     @GeneratedDefensive
     private WordExpander() {
     }
@@ -840,18 +841,25 @@ public final class WordExpander {
     ) {
         final String result;
         if (varvalue == null || varvalue.isEmpty()) {
-            final String msg;
-            if (word.isEmpty()) {
-                msg = "parameter null or not set";
-            } else {
-                msg = word;
-            }
-            ctx.errStream().println(String.format("$%s: %s", varname, msg));
-            throw new ExitSignal(1);
+            result = WordExpander.failOnError(ctx, varname, word, "parameter null or not set");
         } else {
             result = varvalue;
         }
         return result;
+    }
+
+    private static String failOnError(
+        final BuiltinContext ctx, final String varname,
+        final String word, final String fallback
+    ) {
+        final String msg;
+        if (word.isEmpty()) {
+            msg = fallback;
+        } else {
+            msg = word;
+        }
+        ctx.errStream().println(String.format("$%s: %s", varname, msg));
+        throw new ExitSignal(1);
     }
 
     private static String errorOnNull(
@@ -862,14 +870,7 @@ public final class WordExpander {
     ) {
         final String result;
         if (varvalue == null) {
-            final String msg;
-            if (word.isEmpty()) {
-                msg = "parameter not set";
-            } else {
-                msg = word;
-            }
-            ctx.errStream().println(String.format("$%s: %s", varname, msg));
-            throw new ExitSignal(1);
+            result = WordExpander.failOnError(ctx, varname, word, "parameter not set");
         } else {
             result = varvalue;
         }

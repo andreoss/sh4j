@@ -27,6 +27,7 @@ import org.junit.jupiter.api.io.TempDir;
  * @since 1.0
  */
 final class MainTest {
+
     /** Temporary root directory. */
     @TempDir
     private static Path root;
