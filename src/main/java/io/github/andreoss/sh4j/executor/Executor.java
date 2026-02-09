@@ -53,7 +53,7 @@ import java.util.Set;
 public final class Executor implements BuiltinContext {
 
     /**
-     * POSIX 2.14 special built-in utilities — these take priority over user-
+     * POSIX 2.14 special built-in utilities - these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
      */
     private static final java.util.Set<String> SPECIAL_BUILTINS = Set.of(
@@ -64,11 +64,14 @@ public final class Executor implements BuiltinContext {
     /** Default IFS value (space, tab, newline). */
     private static final String DEFAULT_IFS = " \t" + (char) 10;
 
-    /** Default fallback PATH when none is set. */
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
 
-    /** Exit code for a command that exists but cannot be executed. */
+    /** Input streams bound to descriptors by a redirection-only exec. */
+    private final Map<Integer, InputStream> descriptors = new HashMap<>();
+
+    /** Output streams bound to descriptors by a redirection-only exec. */
+    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
 
     /** Live shell-variable table. */
     private final Map<String, String> environment;
@@ -118,7 +121,7 @@ public final class Executor implements BuiltinContext {
     /** Live stdin used by built-ins (read, etc.). */
     private InputStream instream;
 
-    /** Alias table (alias name → replacement text). */
+    /** Alias table (alias name -> replacement text). */
     private Map<String, String> aliases;
 
     /** Command history for fc built-in. */
@@ -141,12 +144,6 @@ public final class Executor implements BuiltinContext {
 
     /** Nesting depth of active loop bodies. */
     private int loops;
-
-    /** Input streams bound to descriptors by a redirection-only { exec}. */
-    private final Map<Integer, InputStream> descriptors = new HashMap<>();
-
-    /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
 
     /**
      * Builds an executor seeded with the current process environment.

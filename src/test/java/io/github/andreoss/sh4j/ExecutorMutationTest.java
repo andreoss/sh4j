@@ -23,7 +23,6 @@ import org.hamcrest.MatcherAssert;
 final class ExecutorMutationTest {
 
     /** Temporary root directory. */
-
     @TempDir
     private static Path root;
 

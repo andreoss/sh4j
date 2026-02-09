@@ -24,7 +24,6 @@ import org.junit.jupiter.api.io.TempDir;
 public final class IntegrationTest {
 
     /** Temporary root directory. */
-
     @TempDir
     private static Path root;
 

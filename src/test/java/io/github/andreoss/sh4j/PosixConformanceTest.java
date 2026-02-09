@@ -28,7 +28,6 @@ import org.junit.jupiter.api.io.TempDir;
 final class PosixConformanceTest {
 
     /** Temporary root directory. */
-
     @TempDir
     private static Path root;
 
