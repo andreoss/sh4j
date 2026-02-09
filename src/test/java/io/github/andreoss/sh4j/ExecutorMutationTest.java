@@ -42,7 +42,9 @@ final class ExecutorMutationTest {
             Sh4j.INSTANCE.out(
                 String.format("set -u; cd %s; (echo $-); (pwd)", dir.getAbsolutePath())
             ),
-            CoreMatchers.equalTo(String.format("u%n") + dir.getCanonicalPath() + String.format("%n"))
+            CoreMatchers.equalTo(
+                String.format("u%n%s%n", dir.getCanonicalPath())
+            )
         );
     }
 
@@ -60,17 +62,26 @@ final class ExecutorMutationTest {
 
     @Test
     void topLevelLoopAndReturnSignalsAreReported() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.runFull("break").exitCode(), CoreMatchers.equalTo(0));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.runFull("break").exitCode(),
+            CoreMatchers.equalTo(0)
+        );
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("break").stderr(),
             CoreMatchers.containsString("break: not in a loop")
         );
-        MatcherAssert.assertThat(Sh4j.INSTANCE.runFull("continue").exitCode(), CoreMatchers.equalTo(0));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.runFull("continue").exitCode(),
+            CoreMatchers.equalTo(0)
+        );
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("continue").stderr(),
             CoreMatchers.containsString("continue: not in a loop")
         );
-        MatcherAssert.assertThat(Sh4j.INSTANCE.runFull("return 5").exitCode(), CoreMatchers.equalTo(5));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.runFull("return 5").exitCode(),
+            CoreMatchers.equalTo(5)
+        );
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("return 5").stderr(),
             CoreMatchers.containsString("return: not in a function")
@@ -79,36 +90,72 @@ final class ExecutorMutationTest {
 
     @Test
     void ifBranchesPropagateBodyStatus() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("if true; then false; fi"), CoreMatchers.equalTo(1));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("if false; then :; fi"), CoreMatchers.equalTo(0));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("if false; then :; else false; fi"), CoreMatchers.equalTo(1));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("if true; then false; fi"),
+            CoreMatchers.equalTo(1)
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("if false; then :; fi"),
+            CoreMatchers.equalTo(0)
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("if false; then :; else false; fi"),
+            CoreMatchers.equalTo(1)
+        );
     }
 
     @Test
     void forWithoutWordsAndBodyStatus() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("for i; do echo $i; done"), CoreMatchers.equalTo(""));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("for i in a b; do false; done"), CoreMatchers.equalTo(1));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("for i in a b; do break; done"), CoreMatchers.equalTo(0));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("for i; do echo $i; done"),
+            CoreMatchers.equalTo("")
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("for i in a b; do false; done"),
+            CoreMatchers.equalTo(1)
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("for i in a b; do break; done"),
+            CoreMatchers.equalTo(0)
+        );
     }
 
     @Test
     void caseWithoutMatchReturnsZero() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("case x in y) false;; esac"), CoreMatchers.equalTo(0));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("case x in y) echo no;; esac"), CoreMatchers.equalTo(""));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("case x in y) false;; esac"),
+            CoreMatchers.equalTo(0)
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("case x in y) echo no;; esac"),
+            CoreMatchers.equalTo("")
+        );
     }
 
     @Test
     void aliasAndExecStatuses() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("alias a='false'", "a"), CoreMatchers.equalTo(1));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("alias a='false'", "a"),
+            CoreMatchers.equalTo(1)
+        );
         MatcherAssert.assertThat(Sh4j.INSTANCE.run("alias a='true'", "a"), CoreMatchers.equalTo(0));
         MatcherAssert.assertThat(Sh4j.INSTANCE.run("exec sh -c 'exit 7'"), CoreMatchers.equalTo(7));
     }
 
     @Test
     void aliasExpansionUsesTheTableCapturedAtReadTime() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("alias q='echo Q'; q"), CoreMatchers.equalTo(127));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("alias q='echo Q'", "q"), CoreMatchers.equalTo(String.format("Q%n")));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("alias e='echo X'; f() { e; }; f"), CoreMatchers.equalTo(127));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("alias q='echo Q'; q"),
+            CoreMatchers.equalTo(127)
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("alias q='echo Q'", "q"),
+            CoreMatchers.equalTo(String.format("Q%n"))
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("alias e='echo X'; f() { e; }; f"),
+            CoreMatchers.equalTo(127)
+        );
     }
 
     @Test
@@ -117,7 +164,10 @@ final class ExecutorMutationTest {
             Sh4j.INSTANCE.out("set -- outer; f() { echo $1; }; f inner; echo $1"),
             CoreMatchers.equalTo(String.format("inner%nouter%n"))
         );
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run("f() { return 6; }; f"), CoreMatchers.equalTo(6));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run("f() { return 6; }; f"),
+            CoreMatchers.equalTo(6)
+        );
     }
 
     @Test
@@ -175,8 +225,14 @@ final class ExecutorMutationTest {
 
     @Test
     void expandFieldsQuotedAtAndEmptyPositionals() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("for x in \"$@\"; do echo $x; done"), CoreMatchers.equalTo(""));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("echo \"$@\""), CoreMatchers.equalTo(String.format("%n")));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("for x in \"$@\"; do echo $x; done"),
+            CoreMatchers.equalTo("")
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("echo \"$@\""),
+            CoreMatchers.equalTo(String.format("%n"))
+        );
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("IFS=; set -- a b; echo \"$*\""),
             CoreMatchers.equalTo(String.format("ab%n"))
@@ -185,10 +241,22 @@ final class ExecutorMutationTest {
 
     @Test
     void specialParameterBoundaries() {
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("set -- a b; echo ${#}"), CoreMatchers.equalTo(String.format("2%n")));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("set -- a; echo $9"), CoreMatchers.equalTo(String.format("%n")));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("echo \"$@\""), CoreMatchers.equalTo(String.format("%n")));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.out("set --; echo $1"), CoreMatchers.equalTo(String.format("%n")));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("set -- a b; echo ${#}"),
+            CoreMatchers.equalTo(String.format("2%n"))
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("set -- a; echo $9"),
+            CoreMatchers.equalTo(String.format("%n"))
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("echo \"$@\""),
+            CoreMatchers.equalTo(String.format("%n"))
+        );
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.out("set --; echo $1"),
+            CoreMatchers.equalTo(String.format("%n"))
+        );
     }
 
     @Test
@@ -196,7 +264,10 @@ final class ExecutorMutationTest {
         final File file = TempDirs.file(ExecutorMutationTest.root, "not-executable.sh");
         Files.write(file.toPath(), String.format("echo hi%n").getBytes(StandardCharsets.UTF_8));
         MatcherAssert.assertThat(file.setExecutable(false), CoreMatchers.is(true));
-        MatcherAssert.assertThat(Sh4j.INSTANCE.run(file.getAbsolutePath()), CoreMatchers.equalTo(126));
+        MatcherAssert.assertThat(
+            Sh4j.INSTANCE.run(file.getAbsolutePath()),
+            CoreMatchers.equalTo(126)
+        );
     }
 
     @Test
