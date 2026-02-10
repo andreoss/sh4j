@@ -62,7 +62,8 @@ public final class Executor implements BuiltinContext {
     );
 
     /** Default IFS value (space, tab, newline). */
-    private static final String DEFAULT_IFS = " \t" + (char) 10;
+    private static final String DEFAULT_IFS =
+        new StringBuilder().append(' ').append('\t').append((char) 10).toString();
 
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
@@ -712,7 +713,7 @@ public final class Executor implements BuiltinContext {
             this.refreshAliases(cmd);
             this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
             if (this.flags.indexOf('x') >= 0) {
-                this.err.println("+ " + cmd);
+                this.err.println(String.format("+ %s", cmd));
             }
             code = this.executeCommand(cmd);
         } else if (node instanceof Subshell sub) {
@@ -909,7 +910,7 @@ public final class Executor implements BuiltinContext {
                         }
                     }
                 },
-                "sh-pipe-" + index
+                String.format("sh-pipe-%d", index)
             );
         }
         for (final Thread thread : threads) {
@@ -1339,7 +1340,9 @@ public final class Executor implements BuiltinContext {
             if (eqpos > 0) {
                 final String vname = assignment.substring(0, eqpos);
                 if (this.readonly.contains(vname)) {
-                    this.err.println("sh: " + vname + ": readonly variable");
+                    this.err.println(
+                        String.format("sh: %s: readonly variable", vname)
+                    );
                     throw new ExitSignal(1);
                 }
                 final String rvalue = assignment.substring(eqpos + 1);

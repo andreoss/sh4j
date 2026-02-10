@@ -604,8 +604,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "case.sh",
                     String.format(
-                        "x=banana%ncase $x in%n"
-                        + "  apple) echo a;;%n  banana) echo b;;%nesac%n"
+                        String.join(
+                            "",
+                            "x=banana%ncase $x in%n",
+                            "  apple) echo a;;%n  banana) echo b;;%nesac%n"
+                        )
                     )
                 )
             )
@@ -1226,8 +1229,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "getopts.sh",
                     String.format(
-                        "set -- -a foo%n"
-                        + "while getopts a: opt; do echo $opt:$OPTARG; done%n"
+                        String.join(
+                            "",
+                            "set -- -a foo%n",
+                            "while getopts a: opt; do echo $opt:$OPTARG; done%n"
+                        )
                     )
                 )
             )
@@ -1446,9 +1452,8 @@ public final class IntegrationTest {
                 this.writeScript(
                     "fact.sh",
                     String.format(
-                        "fact() {%n  if [ $1 -le 1 ]; then echo 1; "
-                            + "else echo $(( $1 * $(fact $(( $1 - 1 ))) )); fi%n"
-                            + "}%nfact 5%n"
+                        "fact() {%n  if [ $1 -le 1 ]; then echo 1; %s fi%n}%nfact 5%n",
+                        "else echo $(( $1 * $(fact $(( $1 - 1 ))) ));"
                     )
                 )
             )
@@ -1570,10 +1575,13 @@ public final class IntegrationTest {
                 this.writeScript(
                     "nested.sh",
                     String.format(
-                        "i=0%nwhile [ $i -lt 2 ]; do "
-                            + "j=0; while [ $j -lt 3 ]; do echo $i.$j; "
-                            + "if [ $j -eq 1 ]; then break; fi; j=$((j+1)); done; "
-                            + "i=$((i+1)); done%n"
+                        String.join(
+                            "",
+                            "i=0%nwhile [ $i -lt 2 ]; do ",
+                            "j=0; while [ $j -lt 3 ]; do echo $i.$j; ",
+                            "if [ $j -eq 1 ]; then break; fi; j=$((j+1)); done; ",
+                            "i=$((i+1)); done%n"
+                        )
                     )
                 )
             )
@@ -1592,9 +1600,8 @@ public final class IntegrationTest {
                 this.writeScript(
                     "shadow.sh",
                     String.format(
-                        "echo() { "
-                        + "/usr/bin/env echo wrapped: $*; }"
-                        + "%necho hi%n"
+                        "echo() { %s wrapped: $*; }%necho hi%n",
+                        "/usr/bin/env echo"
                     )
                 )
             )
@@ -1802,9 +1809,12 @@ public final class IntegrationTest {
                 this.writeScript(
                     "brk2.sh",
                     String.format(
-                        "for i in 1 2; do for j in a b c; do "
-                            + "if [ $j = b ]; then break 2; fi; "
-                            + "echo $i.$j; done; done%necho after%n"
+                        String.join(
+                            "",
+                            "for i in 1 2; do for j in a b c; do ",
+                            "if [ $j = b ]; then break 2; fi; ",
+                            "echo $i.$j; done; done%necho after%n"
+                        )
                     )
                 )
             )
@@ -2122,8 +2132,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "casestar.sh",
                     String.format(
-                        "for w in apple banana cherry; do "
-                            + "case $w in apple) echo a;; *) echo d;; esac; done%n"
+                        String.join(
+                            "",
+                            "for w in apple banana cherry; do ",
+                            "case $w in apple) echo a;; *) echo d;; esac; done%n"
+                        )
                     )
                 )
             )
@@ -2157,8 +2170,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "ncase.sh",
                     String.format(
-                        "X=a; Y=2%ncase $X in a) case $Y in 2) echo a2;; "
-                            + "*) echo a-other;; esac;; esac%n"
+                        String.join(
+                            "",
+                            "X=a; Y=2%ncase $X in a) case $Y in 2) echo a2;; ",
+                            "*) echo a-other;; esac;; esac%n"
+                        )
                     )
                 )
             )

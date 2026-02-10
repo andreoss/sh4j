@@ -843,8 +843,11 @@ final class BuiltinMutationTest {
         Assertions.assertEquals(
             String.format("12 6 2 3 11 22 7 1 0%n"),
             Sh4j.INSTANCE.out(
-                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))"
-                + " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+                String.join(
+                    "",
+                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+                )
             )
         );
         Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("echo $((unknownvar+1))"));
