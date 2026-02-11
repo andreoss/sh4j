@@ -62,8 +62,7 @@ public final class Executor implements BuiltinContext {
     );
 
     /** Default IFS value (space, tab, newline). */
-    private static final String DEFAULT_IFS =
-        new StringBuilder().append(' ').append('\t').append((char) 10).toString();
+    private static final String DEFAULT_IFS = Variables.DEFAULT_IFS;
 
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
@@ -172,11 +171,13 @@ public final class Executor implements BuiltinContext {
         final Map<String, String> environment,
         final List<String> params
     ) {
-        this.environment = new HashMap<>(environment);
-        this.exported = new HashSet<>(environment.keySet());
+        this.environment = new Variables(
+            environment, System.getProperty("user.dir", "/")
+        );
+        this.exported = new Exports(environment);
         this.readonly = new HashSet<>();
         this.traps = new HashMap<>();
-        this.cwd = new File(System.getProperty("user.dir", "/")).getAbsoluteFile();
+        this.cwd = new File(System.getProperty("user.dir", "/"));
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(params);
         this.jobs = new JobManager();
@@ -185,12 +186,11 @@ public final class Executor implements BuiltinContext {
         this.lastcode = 0;
         this.flags = "";
         this.bgpid = 0;
-        this.out = Executor.console(System.out);
-        this.err = Executor.console(System.err);
+        this.out = new PrintSink(System.out, StandardCharsets.UTF_8);
+        this.err = new PrintSink(System.err, StandardCharsets.UTF_8);
         this.instream = System.in;
         this.aliases = new HashMap<>();
         this.history = new CommandHistory();
-        this.setDefaults();
     }
 
     @Override
@@ -574,26 +574,6 @@ public final class Executor implements BuiltinContext {
      */
     int getLastBgPid() {
         return this.bgpid;
-    }
-
-    private void setDefaults() {
-        this.environment.putIfAbsent("IFS", DEFAULT_IFS);
-        this.environment.putIfAbsent("HOME", System.getProperty("user.home", "/root"));
-        this.environment.putIfAbsent("PATH", System.getenv("PATH"));
-        final String path = this.environment.get("PATH");
-        if (path == null || path.isEmpty()) {
-            this.environment.put("PATH", "/usr/local/bin:/usr/bin:/bin");
-        }
-        this.exported.add("HOME");
-        this.exported.add("PATH");
-        this.environment.putIfAbsent("PWD", this.cwd.getAbsolutePath());
-        this.exported.add("PWD");
-        this.environment.putIfAbsent(
-            "PPID",
-            Long.toString(
-                ProcessHandle.current().parent().orElse(ProcessHandle.current()).pid()
-            )
-        );
     }
 
     private Executor subshell() {
