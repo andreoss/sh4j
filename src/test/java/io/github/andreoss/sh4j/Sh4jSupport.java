@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j;
 
+import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.executor.Executor;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -11,7 +12,6 @@ import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import io.github.andreoss.sh4j.PrintSink;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;

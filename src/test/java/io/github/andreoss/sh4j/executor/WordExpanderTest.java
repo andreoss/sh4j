@@ -4,8 +4,8 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import io.github.andreoss.sh4j.TempDirs;
 import io.github.andreoss.sh4j.Sh4j;
+import io.github.andreoss.sh4j.TempDirs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
