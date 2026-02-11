@@ -8,7 +8,7 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
+import io.github.andreoss.sh4j.PrintSink;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -27,16 +27,14 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStderrToStdout() {
-        final PrintStream out = new PrintStream(
+        final PrintSink out = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
-        final PrintStream err = new PrintStream(
+            );
+        final PrintSink err = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
+            );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
             new RedirectionHandler.Streams(out, err),
@@ -53,16 +51,14 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStdoutToStderr() {
-        final PrintStream out = new PrintStream(
+        final PrintSink out = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
-        final PrintStream err = new PrintStream(
+            );
+        final PrintSink err = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
+            );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
             new RedirectionHandler.Streams(out, err),
@@ -78,16 +74,14 @@ final class RedirectionHandlerTest {
 
     @Test
     void noRedirsLeavesStreamsUnchanged() {
-        final PrintStream out = new PrintStream(
+        final PrintSink out = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
-        final PrintStream err = new PrintStream(
+            );
+        final PrintSink err = new PrintSink(
             new ByteArrayOutputStream(),
-            true,
             StandardCharsets.UTF_8
-        );
+            );
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.<Redirection>asList(),
             new RedirectionHandler.Streams(out, err),
@@ -119,11 +113,11 @@ final class RedirectionHandlerTest {
     void builtinOutputFileAndLastRedirectWins() throws Exception {
         final File first = File.createTempFile("rh-first", ".txt");
         final File second = File.createTempFile("rh-second", ".txt");
-        final PrintStream out = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink out = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
-        final PrintStream err = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink err = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
@@ -140,18 +134,18 @@ final class RedirectionHandlerTest {
             String.format("hello%n"),
             new String(Files.readAllBytes(second.toPath()), StandardCharsets.UTF_8)
         );
-        err.close();
+        err.flush();
     }
 
     @Test
     void builtinAppendAndStderrForms() throws Exception {
         final File file = File.createTempFile("rh-append", ".txt");
         Files.write(file.toPath(), "x".getBytes(StandardCharsets.UTF_8));
-        final PrintStream out = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink out = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
-        final PrintStream err = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink err = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
@@ -169,16 +163,16 @@ final class RedirectionHandlerTest {
             "xyz",
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
         );
-        err.close();
+        err.flush();
     }
 
     @Test
     void builtinCloseAndDuplicateOutputForms() {
-        final PrintStream out = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink out = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
-        final PrintStream err = new PrintStream(
-            new ByteArrayOutputStream(), true, StandardCharsets.UTF_8
+        final PrintSink err = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
         );
         final RedirectionHandler.StreamSwap closed = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),

@@ -4,9 +4,9 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.parser.ListNode;
 import java.io.File;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
@@ -22,14 +22,14 @@ interface BuiltinIo {
      *
      * @return The stderr stream the executor writes diagnostics to
      */
-    PrintStream errStream();
+    PrintSink errStream();
 
     /**
      * Returns the stdout stream.
      *
      * @return The stdout stream the executor writes built-in output to
      */
-    PrintStream outStream();
+    PrintSink outStream();
 
     /**
      * Returns the current working directory.

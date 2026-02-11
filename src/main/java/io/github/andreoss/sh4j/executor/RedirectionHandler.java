@@ -4,13 +4,13 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -235,7 +235,7 @@ public final class RedirectionHandler {
 
     private static void assign(
         final RedirectionState state,
-        final PrintStream stream, final int desc
+        final PrintSink stream, final int desc
     ) {
         if (stream == null) {
             state.fail();
@@ -262,10 +262,10 @@ public final class RedirectionHandler {
         return result;
     }
 
-    private static PrintStream descriptor(
-        final Map<Integer, PrintStream> descriptors, final String target
+    private static PrintSink descriptor(
+        final Map<Integer, PrintSink> descriptors, final String target
     ) {
-        PrintStream result = null;
+        PrintSink result = null;
         try {
             result = descriptors.get(Integer.parseInt(target.trim()));
         } catch (final NumberFormatException ex) {
@@ -274,15 +274,16 @@ public final class RedirectionHandler {
         return result;
     }
 
-    private static PrintStream openForWrite(
+    private static PrintSink openForWrite(
         final String target, final boolean append, final File base
     ) {
-        PrintStream result;
+        PrintSink result;
         try {
-            result = new PrintStream(
+            result = new PrintSink(
                 RedirectionHandler.sink(
                     RedirectionHandler.resolve(target, base).toPath(), append
-                ), false, StandardCharsets.UTF_8
+                ),
+                StandardCharsets.UTF_8
             );
         } catch (final IOException ex) {
             result = null;
@@ -435,7 +436,7 @@ public final class RedirectionHandler {
      * @param err Current stderr
      * @since 1.0
      */
-    public record Streams(PrintStream out, PrintStream err) {
+    public record Streams(PrintSink out, PrintSink err) {
     }
 
     /**
@@ -449,7 +450,7 @@ public final class RedirectionHandler {
      */
     public record RedirectContext(
         UnaryOperator<String> expander, File base,
-        Map<Integer, PrintStream> descriptors
+        Map<Integer, PrintSink> descriptors
     ) {
     }
 
@@ -464,8 +465,8 @@ public final class RedirectionHandler {
      * @since 1.0
      */
     public record StreamSwap(
-        PrintStream out, PrintStream err, PrintStream savedout,
-        PrintStream savederr, boolean failed
+        PrintSink out, PrintSink err, PrintSink savedout,
+        PrintSink savederr, boolean failed
     ) {
     }
 }

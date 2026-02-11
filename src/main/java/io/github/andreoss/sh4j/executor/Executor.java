@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.CaseItem;
@@ -29,7 +30,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -72,7 +72,7 @@ public final class Executor implements BuiltinContext {
     private final Map<Integer, InputStream> descriptors = new HashMap<>();
 
     /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintStream> outdescs = new HashMap<>();
+    private final Map<Integer, PrintSink> outdescs = new HashMap<>();
 
     /** Live shell-variable table. */
     private final Map<String, String> environment;
@@ -114,10 +114,10 @@ public final class Executor implements BuiltinContext {
     private int bgpid;
 
     /** Live stdout used by built-ins. */
-    private PrintStream out;
+    private PrintSink out;
 
     /** Live stderr used by built-ins. */
-    private PrintStream err;
+    private PrintSink err;
 
     /** Live stdin used by built-ins (read, etc.). */
     private InputStream instream;
@@ -185,8 +185,8 @@ public final class Executor implements BuiltinContext {
         this.lastcode = 0;
         this.flags = "";
         this.bgpid = 0;
-        this.out = System.out;
-        this.err = System.err;
+        this.out = Executor.console(System.out);
+        this.err = Executor.console(System.err);
         this.instream = System.in;
         this.aliases = new HashMap<>();
         this.history = new CommandHistory();
@@ -462,12 +462,12 @@ public final class Executor implements BuiltinContext {
     }
 
     @Override
-    public PrintStream outStream() {
+    public PrintSink outStream() {
         return this.out;
     }
 
     @Override
-    public PrintStream errStream() {
+    public PrintSink errStream() {
         return this.err;
     }
 
@@ -537,7 +537,7 @@ public final class Executor implements BuiltinContext {
      * @param stream Destination for captured stdout
      */
     public void setCaptureStream(final ByteArrayOutputStream stream) {
-        this.out = Executor.console(stream);
+        this.out = new PrintSink(stream, StandardCharsets.UTF_8);
     }
 
     /**
@@ -545,7 +545,7 @@ public final class Executor implements BuiltinContext {
      *
      * @param outlet The new live stdout
      */
-    public void setOutputStream(final PrintStream outlet) {
+    public void setOutputStream(final PrintSink outlet) {
         this.out = outlet;
     }
 
@@ -554,7 +554,7 @@ public final class Executor implements BuiltinContext {
      *
      * @param errlet The new live stderr
      */
-    public void setErrorStream(final PrintStream errlet) {
+    public void setErrorStream(final PrintSink errlet) {
         this.err = errlet;
     }
 
@@ -888,7 +888,7 @@ public final class Executor implements BuiltinContext {
             if (last) {
                 child.out = this.out;
             } else {
-                child.out = Executor.printer(outputs[index], true);
+                child.out = new PrintSink(outputs[index], StandardCharsets.UTF_8);
             }
             child.err = this.err;
             final Node node = commands.get(index);
@@ -1037,15 +1037,9 @@ public final class Executor implements BuiltinContext {
                 this.instream = keptin;
             }
             if (swap.savedout() != null) {
-                if (this.out != this.err) {
-                    this.out.close();
-                }
                 this.out = swap.savedout();
             }
             if (swap.savederr() != null) {
-                if (this.err != this.out) {
-                    this.err.close();
-                }
                 this.err = swap.savederr();
             }
         }
@@ -1094,11 +1088,11 @@ public final class Executor implements BuiltinContext {
                     final File target = this.redirectionFile(redir);
                     try {
                         if (type == RedirectionType.READWRITE) {
-                            final PrintStream writer = new PrintStream(
-                                Files.newOutputStream(target.toPath(), StandardOpenOption.CREATE,
-                                StandardOpenOption.APPEND), false,
-                                StandardCharsets.UTF_8
+                            final OutputStream appended = Files.newOutputStream(
+                                target.toPath(), StandardOpenOption.CREATE,
+                                StandardOpenOption.APPEND
                             );
+                            final PrintSink writer = new PrintSink(appended, StandardCharsets.UTF_8);
                             this.outdescs.put(Integer.valueOf(desc), writer);
                         }
                         final InputStream source = Files.newInputStream(
@@ -1120,7 +1114,7 @@ public final class Executor implements BuiltinContext {
                             : Files.newOutputStream(target.toPath());
                         this.outdescs.put(
                             Integer.valueOf(desc),
-                            new PrintStream(appended, false, StandardCharsets.UTF_8)
+                            new PrintSink(appended, StandardCharsets.UTF_8)
                         );
                     } catch (final IOException ex) {
                         bound = false;
@@ -1137,10 +1131,7 @@ public final class Executor implements BuiltinContext {
                     }
                 } else if (desc > 0 && type == RedirectionType.DUP_OUTPUT
                     && "-".equals(redir.getTarget())) {
-                    final PrintStream closed = this.outdescs.remove(desc);
-                    if (closed != null) {
-                        closed.close();
-                    }
+                        this.outdescs.remove(Integer.valueOf(desc));
                 }
             }
             if (!bound) {
@@ -1195,7 +1186,9 @@ public final class Executor implements BuiltinContext {
                     } else {
                         body = this.expandVariables(content, this.environment);
                     }
-                    replacement = Executor.buffer(body);
+                    replacement = new ByteArrayInputStream(
+                        body.getBytes(StandardCharsets.UTF_8)
+                    );
                 }
             } else if (type == RedirectionType.DUP_INPUT) {
                 final InputStream bound = this.descriptors.get(
@@ -1269,7 +1262,7 @@ public final class Executor implements BuiltinContext {
                 writer = new Thread(
                     () -> {
                         try (InputStream stream = process.getErrorStream()) {
-                            stream.transferTo(this.err);
+                            stream.transferTo(this.err.bytes());
                         } catch (final IOException ignored) {
                             this.err.flush();
                         }
@@ -1296,7 +1289,7 @@ public final class Executor implements BuiltinContext {
             }
             if (ProcessBuilder.Redirect.PIPE.equals(output)) {
                 try (InputStream stream = process.getInputStream()) {
-                    stream.transferTo(this.out);
+                    stream.transferTo(this.out.bytes());
                 }
             }
             code = process.waitFor();
@@ -1518,20 +1511,16 @@ public final class Executor implements BuiltinContext {
         return result;
     }
 
-    private static PrintStream console(final ByteArrayOutputStream sink) {
-        return Executor.printer(sink, true);
+    private static PrintSink console(
+        final OutputStream destination
+    ) {
+        return new PrintSink(destination, StandardCharsets.UTF_8);
     }
 
-    private static InputStream buffer(final String body) {
-        return new ByteArrayInputStream(
-            body.getBytes(StandardCharsets.UTF_8)
-        );
-    }
-
-    private static PrintStream printer(
+    private static PrintSink printer(
         final OutputStream sink, final boolean flush
     ) {
-        return new PrintStream(sink, flush, StandardCharsets.UTF_8);
+        return new PrintSink(sink, StandardCharsets.UTF_8);
     }
 
     private String namedValue(final String name, final Map<String, String> env) {

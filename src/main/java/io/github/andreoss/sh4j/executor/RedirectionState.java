@@ -4,8 +4,8 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.PrintSink;
 import java.io.File;
-import java.io.PrintStream;
 import java.util.Map;
 
 /**
@@ -17,16 +17,16 @@ import java.util.Map;
 final class RedirectionState {
 
     /** Current live stdout. */
-    private PrintStream out;
+    private PrintSink out;
 
     /** Current live stderr. */
-    private PrintStream err;
+    private PrintSink err;
 
     /** Saved stdout, or null when not swapped. */
-    private PrintStream savedout;
+    private PrintSink savedout;
 
     /** Saved stderr, or null when not swapped. */
-    private PrintStream savederr;
+    private PrintSink savederr;
 
     /** True when a redirection target could not be opened. */
     private boolean failed;
@@ -42,7 +42,7 @@ final class RedirectionState {
      * @param context Expansion, base directory, and bound descriptors
      */
     RedirectionState(
-        final PrintStream stdout, final PrintStream stderr,
+        final PrintSink stdout, final PrintSink stderr,
         final RedirectionHandler.RedirectContext context
     ) {
         this.out = stdout;
@@ -75,7 +75,7 @@ final class RedirectionState {
      *
      * @return Bound descriptors
      */
-    Map<Integer, PrintStream> descriptors() {
+    Map<Integer, PrintSink> descriptors() {
         return this.context.descriptors();
     }
 
@@ -84,7 +84,7 @@ final class RedirectionState {
      *
      * @param value New stdout
      */
-    void replaceOut(final PrintStream value) {
+    void replaceOut(final PrintSink value) {
         if (this.savedout == null) {
             this.savedout = this.out;
         }
@@ -96,7 +96,7 @@ final class RedirectionState {
      *
      * @param value New stderr
      */
-    void replaceErr(final PrintStream value) {
+    void replaceErr(final PrintSink value) {
         if (this.savederr == null) {
             this.savederr = this.err;
         }

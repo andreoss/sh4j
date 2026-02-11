@@ -798,7 +798,7 @@ final class BuiltinDispatcher {
                 case DONE -> "Done";
                 default -> "Stopped";
             };
-            self.outStream().printf("[%d] %s %s%n", job.getId(), state, job.getCommand());
+            self.outStream().println(String.format("[%d] %s %s", job.getId(), state, job.getCommand()));
         }
         return 0;
     }
@@ -848,7 +848,7 @@ final class BuiltinDispatcher {
             } else {
                 command = job.getCommand();
             }
-            self.outStream().printf("[%d] %s%n", id, command);
+            self.outStream().println(String.format("[%d] %s", id, command));
         }
         return 0;
     }
@@ -886,7 +886,7 @@ final class BuiltinDispatcher {
         }
         final Job job = mgr.getJob(id);
         if (job == null) {
-            self.errStream().printf("sh: fg: %d: no such job%n", id);
+            self.errStream().println(String.format("sh: fg: %d: no such job", id));
             return 1;
         }
         self.outStream().println(job.getCommand());
@@ -1872,7 +1872,9 @@ final class BuiltinDispatcher {
             if (nonumbers) {
                 self.outStream().println(String.format("\t%s", entry.command()));
             } else {
-                self.outStream().printf("%d\t%s%n", entry.number(), entry.command());
+                self.outStream().println(
+                    String.format("%d\t%s", entry.number(), entry.command())
+                );
             }
         }
         return 0;
@@ -1891,7 +1893,7 @@ final class BuiltinDispatcher {
         final String newstr = pattern.substring(eqidx + 1);
         final String cmd = hist.get(number);
         if (cmd == null) {
-            self.errStream().printf("sh: fc: %d: no such history entry%n", number);
+            self.errStream().println(String.format("sh: fc: %d: no such history entry", number));
             return 1;
         }
         final String replaced = cmd.replace(oldstr, newstr);

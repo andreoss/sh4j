@@ -11,7 +11,7 @@ import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.PrintStream;
+import io.github.andreoss.sh4j.PrintSink;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +75,7 @@ public final class Sh4jSupport {
     public String out(final Map<String, String> env, final String... commands) {
         final Executor executor = new Executor(new HashMap<>(this.resolveEnv(env)));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setOutputStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        executor.setOutputStream(new PrintSink(bos, StandardCharsets.UTF_8));
         int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
@@ -100,7 +100,7 @@ public final class Sh4jSupport {
     public String err(final Map<String, String> env, final String... commands) {
         final Executor executor = new Executor(new HashMap<>(this.resolveEnv(env)));
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        executor.setErrorStream(new PrintStream(bos, true, StandardCharsets.UTF_8));
+        executor.setErrorStream(new PrintSink(bos, StandardCharsets.UTF_8));
         int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));
@@ -189,7 +189,7 @@ public final class Sh4jSupport {
         final ByteArrayOutputStream outbuffer = new ByteArrayOutputStream();
         final ByteArrayOutputStream errbuffer = new ByteArrayOutputStream();
         executor.setCaptureStream(outbuffer);
-        executor.setErrorStream(new PrintStream(errbuffer, true, StandardCharsets.UTF_8));
+        executor.setErrorStream(new PrintSink(errbuffer, StandardCharsets.UTF_8));
         int code = 0;
         for (final String cmd : commands) {
             final Lexer lexer = new Lexer(new CharReader(cmd));

@@ -15,7 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
+import io.github.andreoss.sh4j.PrintSink;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -590,28 +590,28 @@ final class ExecutorTest {
     void executeWhileBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             1,
             executor.execute(this.parse("i=; while [ -z \"$i\" ]; do echo ran; i=1; false; done"))
         );
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void executeUntilBodyRunsOnce() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0,
             executor.execute(this.parse("i=; until [ -n \"$i\" ]; do echo ran; i=1; true; done"))
         );
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -650,13 +650,13 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
         final Executor executor = new Executor(env);
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("export")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello")
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -671,21 +671,21 @@ final class ExecutorTest {
     void executeElifWhenIfFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0,
             executor.execute(this.parse("if false; then echo no; elif true; then echo yes; fi"))
         );
         Assertions.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void executeElifChainFalseFalse() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0,
@@ -694,14 +694,14 @@ final class ExecutorTest {
             )
         );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void executeElifChainSecondElifTrue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0,
@@ -712,7 +712,7 @@ final class ExecutorTest {
             )
         );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -2561,7 +2561,7 @@ final class ExecutorTest {
     void expandBracedColonQuestionErrorStream() {
         final Executor executor = new Executor(new HashMap<>());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setErrorStream(stream);
         try {
             executor.expandVariables("${x:?my error}", new HashMap<>());
@@ -2573,7 +2573,7 @@ final class ExecutorTest {
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),
             "error message should go to injected stream"
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -2582,13 +2582,13 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd")));
         Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -2597,87 +2597,87 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd -L")));
         Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void commandDashVOnBuiltinPrintsName() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command -v echo")));
         Assertions.assertEquals(
             ExecutorTest.HELLO.replace(ExecutorTest.HELLO, "echo"),
             bos.toString(StandardCharsets.UTF_8).trim()
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void commandDashUppervOnBuiltinDescribes() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command -V true")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("shell built-in")
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void commandWithoutFlagsRunsCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command echo hi")));
         Assertions.assertEquals("hi", bos.toString(StandardCharsets.UTF_8).trim());
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void umaskNoArgsPrintsDefault() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask")));
         Assertions.assertEquals("0022", bos.toString(StandardCharsets.UTF_8).trim());
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void umaskSetThenReadEchoesValue() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask 077")));
         Assertions.assertEquals(0, executor.execute(this.parse("umask")));
         Assertions.assertEquals("0077", bos.toString(StandardCharsets.UTF_8).trim());
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void umaskDashSPrintsSymbolic() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask -S")));
         Assertions.assertEquals(
             "u=rwx,g=rx,o=rx", bos.toString(StandardCharsets.UTF_8).trim()
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -2689,13 +2689,13 @@ final class ExecutorTest {
     void killDashLListsSignals() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("kill -l")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("TERM")
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -2769,7 +2769,7 @@ final class ExecutorTest {
     void jobsListsBackgroundJobs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -2781,14 +2781,14 @@ final class ExecutorTest {
             output.contains("sleep 0"),
             String.format("expected 'sleep 0' in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsWithPercentId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs %1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -2796,63 +2796,61 @@ final class ExecutorTest {
             output.contains("[1]"),
             String.format("expected [1] in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsEmptyWhenNoBackgroundJobs() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("jobs")));
         Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsWithNumericId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 1")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("[1]"),
             String.format("output was: %s", bos)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsWithNonExistentJobId() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 99999")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsWithInvalidJobIdReturnsZero() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs notanumber")));
         Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void jobsShowsDoneForCompletedJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.jobManager().waitForJob(executor.jobManager().submit(() -> { }, "test-cmd"));
         executor.execute(this.parse("jobs"));
@@ -2861,14 +2859,14 @@ final class ExecutorTest {
             output.contains("Done"),
             String.format("expected Done state in jobs output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgConfirmsBackgroundJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -2876,67 +2874,61 @@ final class ExecutorTest {
             output.contains("[1]"),
             String.format("expected [1] in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgNoJobsReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("bg")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgWithPercentId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg %1")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("[1]"),
             String.format("output was: %s", bos)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgWithInvalidJobIdReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg 99999")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgWithInvalidJobSyntaxReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("sleep 0 & bg notanumber")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void bgResumesStoppedJob() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         final JobManager mgr = executor.jobManager();
         final int id = mgr.submit(
@@ -2959,14 +2951,14 @@ final class ExecutorTest {
             output.contains(String.format("[%s]", id)),
             String.format("expected bg confirmation in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fgBringsJobToForeground() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -2974,14 +2966,14 @@ final class ExecutorTest {
             output.contains("sleep 0"),
             String.format("expected 'sleep 0' in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fgWithSpecificJobId() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg %1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -2989,7 +2981,7 @@ final class ExecutorTest {
             output.contains("sleep 0"),
             String.format("expected 'sleep 0' in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3005,21 +2997,19 @@ final class ExecutorTest {
     @Test
     void fgWithInvalidJobSyntaxReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(1, executor.execute(this.parse("fg notajob")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcListsHistoryEntries() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo one"));
         executor.execute(this.parse("echo two"));
@@ -3029,28 +3019,28 @@ final class ExecutorTest {
         Assertions.assertTrue(output.contains("1\techo one"));
         Assertions.assertTrue(output.contains("2\techo two"));
         Assertions.assertTrue(output.contains("3\techo three"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcListsNoNumbers() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -ln 1 1")));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("\techo hello"));
         Assertions.assertFalse(output.contains("1\t"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcListsLastEntry() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo first"));
         executor.execute(this.parse("echo second"));
@@ -3058,7 +3048,7 @@ final class ExecutorTest {
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("echo second"));
         Assertions.assertFalse(output.contains("echo first"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3070,61 +3060,55 @@ final class ExecutorTest {
     void fcSubstituteAndReExecute() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -s hello=world")));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("echo world"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcSubstituteInvalidPattern() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -s nosign")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcUnknownOptionReturnsError() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -z")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcSubstituteNonExistentNumber() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(1, executor.execute(this.parse("fc -s hello=world 999")));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void fcDefaultRangeListsLastItem() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         for (int idx = 1; idx <= 5; idx = idx + 1) {
             executor.execute(
@@ -3135,27 +3119,27 @@ final class ExecutorTest {
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("echo cmd1"));
         Assertions.assertTrue(output.contains("echo cmd5"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void linenoReflectsSourceLine() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO"))
         );
         Assertions.assertEquals(String.format("1%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void linenoUpdatesPerCommand() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO; echo $LINENO"))
@@ -3166,7 +3150,7 @@ final class ExecutorTest {
             output.contains(String.format("1%n1%n"))
                 || output.split(String.format("%n")).length >= 2
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3234,11 +3218,11 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
         final Executor executor = new Executor(env);
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd -P")));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).startsWith("/"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3813,11 +3797,11 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3825,14 +3809,14 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.aliases().put("greet", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("greet world")));
         Assertions.assertEquals(
             String.format("hello world%n"),
             bos.toString(StandardCharsets.UTF_8)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -3840,56 +3824,56 @@ final class ExecutorTest {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hi");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("echo hello")));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasBuiltinSetAndExpand() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "echo hello");
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasBuiltinSetViaEq() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("alias ll='echo hello'")));
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasBuiltinPrintAll() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
         Assertions.assertEquals(0, executor.execute(this.parse("alias")));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("ll='ls -l'")
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasBuiltinPrintOne() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
         Assertions.assertEquals(0, executor.execute(this.parse("alias ll")));
@@ -3897,7 +3881,7 @@ final class ExecutorTest {
             String.format("ll='ls -l'%n"),
             bos.toString(StandardCharsets.UTF_8)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -4002,17 +3986,15 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-c", "file"));
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setErrorStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt"))
         );
         Assertions.assertEquals("?", executor.getVariable("opt"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -4031,17 +4013,15 @@ final class ExecutorTest {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setErrorStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
         Assertions.assertEquals("?", executor.getVariable("opt"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -4097,7 +4077,7 @@ final class ExecutorTest {
     void echoQuotedFieldWithSpace() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo 'hello world'"))
@@ -4106,39 +4086,35 @@ final class ExecutorTest {
             String.format("hello world%n"),
             bos.toString(StandardCharsets.UTF_8)
         );
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasWithDoubleQuotedValue() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias ll=\"ls -l\""))
         );
         Assertions.assertEquals("ls -l", executor.aliases().get("ll"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void aliasShortValueNoUnquote() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias x='a'"))
         );
         Assertions.assertEquals("a", executor.aliases().get("x"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -4150,14 +4126,14 @@ final class ExecutorTest {
     void typeBuiltinsBreakContinueEval() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("type break continue eval")));
         final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("break is a shell built-in"));
         Assertions.assertTrue(out.contains("continue is a shell built-in"));
         Assertions.assertTrue(out.contains("eval is a shell built-in"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
@@ -4172,22 +4148,20 @@ final class ExecutorTest {
     @Test
     void functionDefinitionParsing() {
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(
-            new ByteArrayOutputStream(),
-            true,
-            StandardCharsets.UTF_8
-        );
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
         Assertions.assertTrue(executor.functionsMap().containsKey("myfunc"));
-        stream.close();
+        stream.flush();
     }
 
     @Test
     void backgroundPipelineWithPipe() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
-        final PrintStream stream = new PrintStream(bos, true, StandardCharsets.UTF_8);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 | true & jobs")));
         final String output = bos.toString(StandardCharsets.UTF_8);
@@ -4195,7 +4169,7 @@ final class ExecutorTest {
             output.contains("[1]"),
             String.format("expected [1] in output, got: %s", output)
         );
-        stream.close();
+        stream.flush();
     }
 
     private Parser parser(final String input) {
