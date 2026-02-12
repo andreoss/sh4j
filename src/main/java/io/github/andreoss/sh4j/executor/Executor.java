@@ -171,13 +171,11 @@ public final class Executor implements BuiltinContext {
         final Map<String, String> environment,
         final List<String> params
     ) {
-        this.environment = new Variables(
-            environment, System.getProperty("user.dir", "/")
-        );
+        this.environment = new Variables(environment);
         this.exported = new Exports(environment);
         this.readonly = new HashSet<>();
         this.traps = new HashMap<>();
-        this.cwd = new File(System.getProperty("user.dir", "/"));
+        this.cwd = new File(this.environment.get("PWD"));
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(params);
         this.jobs = new JobManager();

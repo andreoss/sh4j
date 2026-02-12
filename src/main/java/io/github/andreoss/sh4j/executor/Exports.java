@@ -11,8 +11,9 @@ import java.util.Set;
 /**
  * The names a child process inherits.
  *
- * <p>The POSIX default variables are always exported, so the set is completed
- * while it is built rather than by a follow-up call from the constructor.</p>
+ * <p>The inherited names arrive through the {@link HashSet#HashSet(Collection)}
+ * constructor and the POSIX defaults are added by the instance initialiser, so
+ * {@link Executor} keeps its own constructor free of method calls.</p>
  *
  * @since 1.0
  */
@@ -27,15 +28,19 @@ final class Exports extends HashSet<String> {
     /**
      * Creates the export set.
      *
-     * @param seed The inherited variable names
+     * @param seed The inherited variables
      */
     Exports(final Map<String, String> seed) {
-        super();
-        if (seed != null) {
-            this.addAll(seed.keySet());
-        }
+        super(seed == null ? Exports.none() : seed.keySet());
+    }
+
+    {
         for (final String name : Exports.GUARDED) {
             this.add(name);
         }
+    }
+
+    private static Set<String> none() {
+        return new HashSet<>();
     }
 }
