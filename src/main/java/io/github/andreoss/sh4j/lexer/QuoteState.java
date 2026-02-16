@@ -24,23 +24,6 @@ public final class QuoteState {
     }
 
     /**
-     * Resets both quote flags to false.
-     */
-    public void reset() {
-        this.squote = false;
-        this.dquote = false;
-    }
-
-    /**
-     * Checks whether no quotes are currently active.
-     *
-     * @return True when both flags are false
-     */
-    public boolean isEmpty() {
-        return !this.squote && !this.dquote;
-    }
-
-    /**
      * Returns whether we're inside a single quote.
      *
      * @return True when inside a single quote

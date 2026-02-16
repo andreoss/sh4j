@@ -43,14 +43,10 @@ final class Variables extends HashMap<String, String> {
     /**
      * Creates the table from a caller-supplied environment view.
      *
-     * @param seed The inherited variables, or null for none
+     * @param seed The inherited variables
      */
     Variables(final Map<String, String> seed) {
-        super(seed == null ? Variables.empty() : seed);
-    }
-
-    private static Map<String, String> empty() {
-        return new HashMap<>();
+        super(seed);
     }
 
     {

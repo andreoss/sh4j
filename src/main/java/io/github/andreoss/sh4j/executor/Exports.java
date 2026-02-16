@@ -6,7 +6,6 @@ package io.github.andreoss.sh4j.executor;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The names a child process inherits.
@@ -31,16 +30,12 @@ final class Exports extends HashSet<String> {
      * @param seed The inherited variables
      */
     Exports(final Map<String, String> seed) {
-        super(seed == null ? Exports.none() : seed.keySet());
+        super(seed.keySet());
     }
 
     {
         for (final String name : Exports.GUARDED) {
             this.add(name);
         }
-    }
-
-    private static Set<String> none() {
-        return new HashSet<>();
     }
 }

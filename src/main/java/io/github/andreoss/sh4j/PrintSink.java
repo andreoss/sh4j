@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j;
 
+import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -59,19 +60,22 @@ public final class PrintSink {
      * @param text The text to print
      */
     public void print(final String text) {
-        try {
-            this.target.write(
-                Objects.requireNonNull(text).getBytes(this.encoding)
-            );
-            this.target.flush();
-        } catch (final IOException ex) {
-            throw new IllegalStateException(ex);
-        }
+        final byte[] encoded = Objects.requireNonNull(text)
+            .getBytes(this.encoding);
+        this.write(encoded);
     }
 
     /** Flushes buffered bytes. */
     public void flush() {
+        this.write(new byte[0]);
+    }
+
+    @GeneratedDefensive
+    private void write(final byte[] encoded) {
         try {
+            if (encoded.length > 0) {
+                this.target.write(encoded);
+            }
             this.target.flush();
         } catch (final IOException ex) {
             throw new IllegalStateException(ex);
