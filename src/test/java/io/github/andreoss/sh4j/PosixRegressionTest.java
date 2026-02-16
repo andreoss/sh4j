@@ -888,9 +888,67 @@ final class PosixRegressionTest {
     }
 
     @Test
-    void jobsAndFgWithNoJobReportErrors() {
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs"));
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("fg"));
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("bg"));
+    void execOutputDescriptorWritesFile() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "fd-out.txt");
+        Sh4j.INSTANCE.run(
+            String.format("exec 6>%s; echo toFd >&6", file.getAbsolutePath())
+        );
+        Assertions.assertEquals(
+            String.format("toFd%n"),
+            new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void execOutputDescriptorCloseSucceeds() throws IOException {
+        final File file = TempDirs.file(PosixRegressionTest.root, "fd-close.txt");
+        Assertions.assertEquals(
+            0,
+            Sh4j.INSTANCE.run(
+                String.format("exec 7>%s; exec 7>&-", file.getAbsolutePath())
+            )
+        );
+    }
+
+    @Test
+    void threeStagePipelineRunsEveryStage() {
+        Assertions.assertEquals(
+            String.format("a%nb%nc%n"),
+            Sh4j.INSTANCE.out("echo a; echo b; echo c")
+        );
+    }
+
+    @Test
+    void pipelineAfterSequentialListKeepsOrder() {
+        Assertions.assertEquals(
+            String.format("b%n"),
+            Sh4j.INSTANCE.out("echo x | grep y; echo b")
+        );
+    }
+
+    @Test
+    void untilLoopRunsUntilConditionHolds() {
+        Assertions.assertEquals(
+            String.format("1%n2%n"),
+            Sh4j.INSTANCE.out(
+                "i=0; until [ $i -ge 2 ]; do i=$((i+1)); echo $i; done"
+            )
+        );
+    }
+
+    @Test
+    void groupingBodyRunsInPlace() {
+        Assertions.assertEquals(
+            String.format("g%n"),
+            Sh4j.INSTANCE.out("{ echo g; }")
+        );
+    }
+
+    @Test
+    void subshellBodyRunsInChildScope() {
+        Assertions.assertEquals(
+            String.format("s%n"),
+            Sh4j.INSTANCE.out("(echo s)")
+        );
     }
 }

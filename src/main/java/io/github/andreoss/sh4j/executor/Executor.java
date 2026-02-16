@@ -494,13 +494,6 @@ public final class Executor implements BuiltinContext {
     }
 
     /**
-     * Runs and removes the EXIT trap using the last exit status.
-     */
-    public void runExitTrap() {
-        this.runExitTrap(this.lastcode);
-    }
-
-    /**
      * Runs and removes the EXIT trap with the status the shell exits with.
      *
      * @param status The shell exit status the trap observes as {@code $?}
@@ -1490,17 +1483,7 @@ public final class Executor implements BuiltinContext {
         return result;
     }
 
-    private static PrintSink console(
-        final OutputStream destination
-    ) {
-        return new PrintSink(destination, StandardCharsets.UTF_8);
-    }
 
-    private static PrintSink printer(
-        final OutputStream sink, final boolean flush
-    ) {
-        return new PrintSink(sink, StandardCharsets.UTF_8);
-    }
 
     private String namedValue(final String name, final Map<String, String> env) {
         final String value = env.get(name);
