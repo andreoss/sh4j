@@ -86,7 +86,9 @@ public final class Executor implements BuiltinContext {
     private final Map<String, String> traps;
 
     /** Per-executor current working directory. */
-    private File cwd;
+    private File cwd = new File(System.getProperty(
+        "user.dir", Variables.FALLBACK_DIR
+    ));
 
     /** Defined shell functions keyed by name. */
     private final Map<String, FunctionNode> functions;
@@ -175,7 +177,6 @@ public final class Executor implements BuiltinContext {
         this.exported = new Exports(environment);
         this.readonly = new HashSet<>();
         this.traps = new HashMap<>();
-        this.cwd = new File(this.environment.get("PWD"));
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(params);
         this.jobs = new JobManager();

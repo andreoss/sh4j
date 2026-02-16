@@ -30,7 +30,7 @@ final class Variables extends HashMap<String, String> {
     private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
 
     /** Fallback working directory when the property is unset. */
-    private static final String FALLBACK_DIR = "/";
+    static final String FALLBACK_DIR = "/";
 
     /** Home-directory fallback when the property is unset. */
     private static final String FALLBACK_HOME = "/root";
