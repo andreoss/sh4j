@@ -647,6 +647,23 @@ final class WordExpanderTest {
     }
 
     @Test
+    void errorOnEmptyFiresForSetButEmptyVariable() {
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("v=; echo ${v:?boom}")
+                .stderr()
+                .contains("boom")
+        );
+    }
+
+    @Test
+    void errorOnNullIgnoresSetButEmptyVariable() {
+        Assertions.assertEquals(
+            String.format("%n"),
+            Sh4j.INSTANCE.out("v=; echo ${v?novalue}")
+        );
+    }
+
+    @Test
     void prefixAndSuffixFullMatchBoundaries() {
         Assertions.assertEquals(
             String.format("||||abc%n"),

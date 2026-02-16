@@ -925,13 +925,7 @@ public final class Executor implements BuiltinContext {
     }
 
     private Map<String, String> aliasTable() {
-        final Map<String, String> table;
-        if (this.snapshot == null) {
-            table = this.aliases;
-        } else {
-            table = this.snapshot;
-        }
-        return table;
+        return this.snapshot;
     }
 
     private void refreshAliases(final SimpleCommand cmd) {

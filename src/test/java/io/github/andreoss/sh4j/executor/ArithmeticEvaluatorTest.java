@@ -632,4 +632,36 @@ final class ArithmeticEvaluatorTest {
             CoreMatchers.equalTo("1")
         );
     }
+
+    @Test
+    void trailingWhitespaceInsideExpressionIsIgnored() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("3 + 4   ", new HashMap<>()),
+            CoreMatchers.equalTo("7")
+        );
+    }
+
+    @Test
+    void whitespaceBeforeEndOfInputEndsTheList() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("1 +  ", new HashMap<>()),
+            CoreMatchers.equalTo("1")
+        );
+    }
+
+    @Test
+    void unknownNameWithoutEnvironmentEvaluatesToZero() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("nope+1", null),
+            CoreMatchers.equalTo("1")
+        );
+    }
+
+    @Test
+    void nonDecimalDigitStopsNumberParsing() {
+        MatcherAssert.assertThat(
+            new ArithmeticEvaluator().evalArithmetic("0z12", new HashMap<>()),
+            CoreMatchers.equalTo("0")
+        );
+    }
 }
