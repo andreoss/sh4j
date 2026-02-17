@@ -217,7 +217,7 @@ public final class Parser {
         final Node first = this.parsePipelineStage(reserved);
         if (first != null) {
             pipeline.addCommand(first);
-            boolean done = false;
+            final boolean done = false;
             while (!done && this.check(TokenType.PIPE)) {
                 this.consume();
                 final Node stage = this.parsePipelineStage(reserved);

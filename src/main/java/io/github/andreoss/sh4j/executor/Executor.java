@@ -86,9 +86,7 @@ public final class Executor implements BuiltinContext {
     private final Map<String, String> traps;
 
     /** Per-executor current working directory. */
-    private File cwd = new File(System.getProperty(
-        "user.dir", Variables.FALLBACK_DIR
-    ));
+    private File cwd = Executor.initialDirectory();
 
     /** Defined shell functions keyed by name. */
     private final Map<String, FunctionNode> functions;
@@ -1191,7 +1189,7 @@ public final class Executor implements BuiltinContext {
         final SimpleCommand cmd, final String name, final Map<String, String> cenv
     ) {
         final String resolved = this.resolveCommand(name, cenv);
-        int code;
+        final int code;
         if (resolved == null) {
             code = EXIT_COMMAND_NOT_FOUND;
         } else {
@@ -1359,7 +1357,7 @@ public final class Executor implements BuiltinContext {
     }
 
     private String resolveCommand(final String name, final Map<String, String> env) {
-        String result;
+        final String result;
         if (name.contains("/")) {
             if (new File(name).isFile()) {
                 result = name;
@@ -1381,9 +1379,6 @@ public final class Executor implements BuiltinContext {
         String found = null;
         final String[] dirs = path.split(":", -1);
         for (final String dir : dirs) {
-            if (found != null) {
-                break;
-            }
             final File file;
             if (dir.isEmpty()) {
                 file = new File(name);
@@ -1392,6 +1387,7 @@ public final class Executor implements BuiltinContext {
             }
             if (file.isFile()) {
                 found = file.getAbsolutePath();
+                break;
             }
         }
         return found;
@@ -1519,5 +1515,10 @@ public final class Executor implements BuiltinContext {
             value = special;
         }
         return value;
+    }
+
+    private static File initialDirectory() {
+        final String property = System.getProperty("user.dir", Variables.FALLBACK_DIR);
+        return new File(property);
     }
 }

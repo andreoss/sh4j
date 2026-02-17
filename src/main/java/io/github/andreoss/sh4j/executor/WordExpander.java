@@ -839,10 +839,11 @@ public final class WordExpander {
         final String word,
         final BuiltinContext ctx
     ) {
-        String result = varvalue;
+        final String result = varvalue;
         if (varvalue == null || varvalue.isEmpty()) {
-            WordExpander.reportMissing(ctx, varname, word,
-                "parameter null or not set");
+            WordExpander.reportMissing(
+                ctx, varname, word, "parameter null or not set"
+            );
         }
         return result;
     }
@@ -868,10 +869,11 @@ public final class WordExpander {
         final String word,
         final BuiltinContext ctx
     ) {
-        String result = varvalue;
+        final String result = varvalue;
         if (varvalue == null) {
-            WordExpander.reportMissing(ctx, varname, word,
-                "parameter not set");
+            WordExpander.reportMissing(
+                ctx, varname, word, "parameter not set"
+            );
         }
         return result;
     }

@@ -385,7 +385,7 @@ final class BuiltinDispatcher {
         final List<String> args,
         final Map<String, String> env
     ) {
-        int code;
+        final int code;
         int idx = 0;
         boolean verbose = false;
         boolean locate = false;
@@ -623,7 +623,7 @@ final class BuiltinDispatcher {
         }
         final List<String> names = args.subList(idx, args.size());
         final String line = self.readInputLine();
-        int code;
+        final int code;
         if (line == null) {
             code = 1;
         } else {
@@ -752,7 +752,7 @@ final class BuiltinDispatcher {
         final List<String> args,
         final Map<String, String> env
     ) {
-        int code;
+        final int code;
         if (args.size() < 2) {
             code = 1;
         } else {
@@ -1714,7 +1714,7 @@ final class BuiltinDispatcher {
         } else {
             early = 0;
         }
-        int code;
+        final int code;
         if (early != 0) {
             code = early;
         } else {

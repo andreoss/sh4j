@@ -20,20 +20,16 @@ final class ParserCoverageTest {
     @Test
     void reservedWordAloneStillYieldsOnePipeline() {
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                new Parser(new Lexer(new CharReader("then"))).parse()
-                    .getPipelines().size()
-            ),
+            Integer.valueOf(this.parse("then").getPipelines().size()),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
     }
 
     @Test
     void heredocWithoutDescriptorDefaultsToStandardInput() {
-        final Node stage = new Parser(
-            new Lexer(new CharReader("cat <<EOF%nbody%nEOF%n"))
-        ).parse().getPipelines().get(0).getCommands().get(0);
-        final SimpleCommand cmd = (SimpleCommand) stage;
+        final SimpleCommand cmd = (SimpleCommand) this.command(
+            "cat <<EOF%nbody%nEOF%n"
+        );
         MatcherAssert.assertThat(
             Integer.valueOf(cmd.getRedirections().get(0).getFd()),
             CoreMatchers.equalTo(Integer.valueOf(0))
@@ -44,9 +40,7 @@ final class ParserCoverageTest {
     void assignmentWordBeforeReservedWordSplitsIntoThreePipelines() {
         MatcherAssert.assertThat(
             Integer.valueOf(
-                new Parser(new Lexer(
-                    new CharReader("a=1 if true; then :; fi")
-                )).parse().getPipelines().size()
+                this.parse("a=1 if true; then :; fi").getPipelines().size()
             ),
             CoreMatchers.equalTo(Integer.valueOf(3))
         );
@@ -65,12 +59,9 @@ final class ParserCoverageTest {
 
     @Test
     void pipeFollowedByReservedWordKeepsBothStages() {
+        final Pipeline pipe = this.parse("echo a | then").getPipelines().get(0);
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                new Parser(new Lexer(
-                    new CharReader("echo a | then")
-                )).parse().getPipelines().get(0).getCommands().size()
-            ),
+            Integer.valueOf(pipe.getCommands().size()),
             CoreMatchers.equalTo(Integer.valueOf(2))
         );
     }
@@ -79,9 +70,7 @@ final class ParserCoverageTest {
     void semicolonBeforeDoIsAcceptedInWhileHead() {
         MatcherAssert.assertThat(
             Integer.valueOf(
-                new Parser(new Lexer(
-                    new CharReader("while false; do :; done")
-                )).parse().getPipelines().size()
+                this.parse("while false; do :; done").getPipelines().size()
             ),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
@@ -89,13 +78,20 @@ final class ParserCoverageTest {
 
     @Test
     void ioNumberBeforeRedirectionIsParsed() {
-        final Node stage = new Parser(
-            new Lexer(new CharReader("cat <<EOF%nbody%nEOF%n"))
-        ).parse().getPipelines().get(0).getCommands().get(0);
-        final SimpleCommand cmd = (SimpleCommand) stage;
+        final SimpleCommand cmd = (SimpleCommand) this.command(
+            "cat <<EOF%nbody%nEOF%n"
+        );
         MatcherAssert.assertThat(
             Integer.valueOf(cmd.getRedirections().size()),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
+    }
+
+    private ListNode parse(final String source) {
+        return new Parser(new Lexer(new CharReader(source))).parse();
+    }
+
+    private Node command(final String source) {
+        return this.parse(source).getPipelines().get(0).getCommands().get(0);
     }
 }
