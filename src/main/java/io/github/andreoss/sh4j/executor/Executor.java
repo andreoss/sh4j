@@ -34,8 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -727,7 +727,7 @@ public final class Executor implements BuiltinContext {
 
     private int runFor(final ForNode node) {
         this.loops = this.loops + 1;
-        int lastcode2 = 0;
+        int laststatus = 0;
         boolean broken = false;
         final List<String> words;
         if (node.getWords() == null) {
@@ -750,7 +750,7 @@ public final class Executor implements BuiltinContext {
             }
             this.environment.put(node.getVariable(), word);
             try {
-                lastcode2 = this.execute(node.getBody());
+                laststatus = this.execute(node.getBody());
             } catch (final BreakSignal ex) {
                 if (ex.getLevels() > 1) {
                     throw new BreakSignal(ex.getLevels() - 1);
@@ -760,16 +760,16 @@ public final class Executor implements BuiltinContext {
                 if (ex.getLevels() > 1) {
                     throw new ContinueSignal(ex.getLevels() - 1);
                 }
-                lastcode2 = 0;
+                laststatus = 0;
             }
         }
         this.loops = this.loops - 1;
-        return lastcode2;
+        return laststatus;
     }
 
     private int runWhile(final WhileNode node) {
         this.loops = this.loops + 1;
-        int lastcode2 = 0;
+        int laststatus = 0;
         boolean running = true;
         while (running) {
             final int condexit = this.execute(node.getCondition());
@@ -783,7 +783,7 @@ public final class Executor implements BuiltinContext {
                 running = false;
             } else {
                 try {
-                    lastcode2 = this.execute(node.getBody());
+                    laststatus = this.execute(node.getBody());
                 } catch (final BreakSignal ex) {
                     if (ex.getLevels() > 1) {
                         throw new BreakSignal(ex.getLevels() - 1);
@@ -793,12 +793,12 @@ public final class Executor implements BuiltinContext {
                     if (ex.getLevels() > 1) {
                         throw new ContinueSignal(ex.getLevels() - 1);
                     }
-                    lastcode2 = 0;
+                    laststatus = 0;
                 }
             }
         }
         this.loops = this.loops - 1;
-        return lastcode2;
+        return laststatus;
     }
 
     private int runCase(final CaseNode node) {
@@ -1266,7 +1266,7 @@ public final class Executor implements BuiltinContext {
             this.out.flush();
             this.err.flush();
         } catch (final IOException ex) {
-            code = this.exitCodeForIoException(ex);
+            code = Executor.exitCodeForIoException(ex);
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
             code = 1;
@@ -1345,7 +1345,7 @@ public final class Executor implements BuiltinContext {
         return result;
     }
 
-    private int exitCodeForIoException(final IOException exc) {
+    private static int exitCodeForIoException(final IOException exc) {
         final String msg = exc.getMessage();
         final int code;
         if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
@@ -1369,13 +1369,13 @@ public final class Executor implements BuiltinContext {
             if (path == null || path.isEmpty()) {
                 result = null;
             } else {
-                result = this.searchPath(path, name);
+                result = Executor.searchPath(path, name);
             }
         }
         return result;
     }
 
-    private String searchPath(final String path, final String name) {
+    private static String searchPath(final String path, final String name) {
         String found = null;
         final String[] dirs = path.split(":", -1);
         for (final String dir : dirs) {

@@ -1515,14 +1515,14 @@ final class BuiltinDispatcher {
 
     private static String umaskSymbolic(final String mask) {
         int value = 0;
-        boolean ok = true;
+        boolean good = true;
         try {
             value = Integer.parseInt(mask, 8);
         } catch (final NumberFormatException ex) {
-            ok = false;
+            good = false;
         }
         final String symbolic;
-        if (!ok) {
+        if (!good) {
             symbolic = "u=,g=,o=";
         } else {
             final int allbits = 7;

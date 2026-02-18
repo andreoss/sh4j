@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LGPL-3.0-or-later
  */
 package io.github.andreoss.sh4j.lexer;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;

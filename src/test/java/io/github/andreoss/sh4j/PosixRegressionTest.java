@@ -27,12 +27,12 @@ final class PosixRegressionTest {
     private static Path root;
 
     @Test
-    void commentStartsAtTokenPositionOnly_caseA() {
+    void commentStartsAtTokenPositionOnlyFirstCase() {
         Assertions.assertEquals(String.format("a%n"), Sh4j.INSTANCE.out("echo a #c"));
     }
 
     @Test
-    void commentStartsAtTokenPositionOnly_caseB() {
+    void commentStartsAtTokenPositionOnlySecondCase() {
         Assertions.assertEquals(
             String.format("b%n"),
             Sh4j.INSTANCE.out(String.format("#lead%necho b"))
@@ -40,7 +40,7 @@ final class PosixRegressionTest {
     }
 
     @Test
-    void commentStartsAtTokenPositionOnly_caseC() {
+    void commentStartsAtTokenPositionOnlyThirdCase() {
         Assertions.assertEquals(String.format("one#two%n"), Sh4j.INSTANCE.out("echo one#two"));
     }
 

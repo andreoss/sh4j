@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Test;
 /**
  * POSIX compliance integration tests using the Sh4j helper API.
  * Tests are organised by POSIX section:
- *   - 2.5 Shell Command Language (expansion, quoting, etc.)
- *   - 2.6 Shell Commands (control flow, pipelines, etc.)
- *   - 2.14 Special Built-ins
- *   - 2.5.3 Shell Variables
+ * - 2.5 Shell Command Language (expansion, quoting, etc.)
+ * - 2.6 Shell Commands (control flow, pipelines, etc.)
+ * - 2.14 Special Built-ins
+ * - 2.5.3 Shell Variables
  *
  * @since 1.0
  */
