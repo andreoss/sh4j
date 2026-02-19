@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * CLI argument parsing for {@link Main}.
+ *
  * @since 1.0
  */
 final class MainArgs {
@@ -22,6 +23,7 @@ final class MainArgs {
 
     /**
      * Computes the process exit code for the given CLI arguments.
+     *
      * @param args The CLI arguments
      * @return The exit status the JVM should report
      */
@@ -114,7 +116,7 @@ final class MainArgs {
     private static List<String> params(
         final String[] args, final int start, final String first
     ) {
-        final List<String> params = new ArrayList<>();
+        final List<String> params = new ArrayList<>(0);
         params.add(first);
         for (int pos = start + 1; pos < args.length; pos = pos + 1) {
             params.add(args[pos]);

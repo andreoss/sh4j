@@ -119,5 +119,4 @@ public final class CharReader {
     private static Reader memory(final String text) {
         return new StringReader(text);
     }
-
 }

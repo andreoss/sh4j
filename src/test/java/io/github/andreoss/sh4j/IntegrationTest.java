@@ -19,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests for Integration.
+ *
  * @since 1.0
  */
 public final class IntegrationTest {

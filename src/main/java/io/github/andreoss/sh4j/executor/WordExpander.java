@@ -454,9 +454,7 @@ public final class WordExpander {
                 regex.append(".*");
             } else if (chr == '?') {
                 regex.append('.');
-            } else if (chr == '.' || chr == '(' || chr == ')' || chr == '+'
-                || chr == '^' || chr == '$' || chr == '{' || chr == '}'
-                || chr == '|' || chr == '\\') {
+            } else if (".()+^${}|\\".indexOf(chr) >= 0) {
                 regex.append('\\').append(chr);
             } else if (chr == '[') {
                 final int end = pattern.indexOf(']', idx + 1);
@@ -525,8 +523,10 @@ public final class WordExpander {
         return consumed;
     }
 
+    private static final String IDENT_START = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     private static boolean isIdentifierStart(final char chr) {
-        return chr == '_' || chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z';
+        return IDENT_START.indexOf(chr) >= 0;
     }
 
     private static boolean isIdentifierPart(final char chr) {
@@ -648,8 +648,7 @@ public final class WordExpander {
     }
 
     private static boolean isSpecialParamChar(final char chr) {
-        return chr == '?' || chr == '-' || chr == '$' || chr == '!'
-            || chr == '@' || chr == '*';
+        return "?-$!*@".indexOf(chr) >= 0;
     }
 
     private static int findNameEnd(final String inner) {
@@ -1032,5 +1031,4 @@ public final class WordExpander {
         }
         return next;
     }
-
 }

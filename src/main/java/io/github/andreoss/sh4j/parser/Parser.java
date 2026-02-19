@@ -22,6 +22,12 @@ import java.util.Set;
  */
 public final class Parser {
 
+    /** Tokens that terminate a pipeline. */
+    private static final Set<TokenType> SEPARATORS = Set.of(
+        TokenType.SEMI, TokenType.AMP, TokenType.AND_IF,
+        TokenType.OR_IF, TokenType.NEWLINE
+    );
+
     /** Source token stream. */
     private final Lexer lexer;
 
@@ -477,9 +483,7 @@ public final class Parser {
     }
 
     private boolean isPipelineSeparator() {
-        return this.check(TokenType.SEMI) || this.check(TokenType.AMP)
-            || this.check(TokenType.AND_IF) || this.check(TokenType.OR_IF)
-            || this.check(TokenType.NEWLINE);
+        return SEPARATORS.contains(this.current.type());
     }
 
     private ListNode.Separator pipelineSeparator() {

@@ -1660,9 +1660,7 @@ final class BuiltinDispatcher {
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
             String value = arg.substring(eqidx + 1);
-            if (value.length() >= 2
-                && (value.startsWith("'") && value.endsWith("'")
-                || value.startsWith("\"") && value.endsWith("\""))) {
+            if (value.length() >= 2 && BuiltinDispatcher.isQuoteWrapped(value)) {
                 value = value.substring(1, value.length() - 1);
             }
             aliases.put(arg.substring(0, eqidx), value);
@@ -1925,7 +1923,6 @@ final class BuiltinDispatcher {
         return flag;
     }
 
-
     private static int reportOldPwd(
         final BuiltinIo io, final String old
     ) {
@@ -1937,5 +1934,11 @@ final class BuiltinDispatcher {
             code = 0;
         }
         return code;
+    }
+
+    private static boolean isQuoteWrapped(final String text) {
+        final char first = text.charAt(0);
+        final char last = text.charAt(text.length() - 1);
+        return first == last && (first == '\'' || first == '"');
     }
 }

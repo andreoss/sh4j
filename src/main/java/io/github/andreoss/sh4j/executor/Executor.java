@@ -375,7 +375,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public List<String> expandFields(final String arg, final Map<String, String> env) {
-        final List<String> fields = new ArrayList<>();
+        final List<String> fields = new ArrayList<>(0);
         if (arg == null) {
             return fields;
         }
@@ -732,14 +732,14 @@ public final class Executor implements BuiltinContext {
         final List<String> words;
         if (node.getWords() == null) {
             if (this.params.size() <= 1) {
-                words = new ArrayList<>();
+                words = new ArrayList<>(0);
             } else {
                 words = new ArrayList<>(
                     this.params.subList(1, this.params.size())
                 );
             }
         } else {
-            words = new ArrayList<>();
+            words = new ArrayList<>(0);
             for (final String raw : node.getWords()) {
                 words.addAll(this.expandFields(raw, this.environment));
             }
@@ -1122,7 +1122,7 @@ public final class Executor implements BuiltinContext {
         final FunctionNode func, final SimpleCommand cmd, final Map<String, String> cenv
     ) {
         final List<String> keptargs = new ArrayList<>(this.params);
-        final List<String> fargs = new ArrayList<>();
+        final List<String> fargs = new ArrayList<>(0);
         for (final String arg : cmd.getArguments()) {
             fargs.addAll(this.expandArguments(arg, cenv));
         }
@@ -1398,7 +1398,7 @@ public final class Executor implements BuiltinContext {
         final SimpleCommand cmd,
         final Map<String, String> env
     ) {
-        final List<String> command = new ArrayList<>();
+        final List<String> command = new ArrayList<>(0);
         command.add(resolved);
         final boolean globbing = this.flags.indexOf('f') < 0;
         for (final String arg : cmd.getArguments()) {
@@ -1472,8 +1472,6 @@ public final class Executor implements BuiltinContext {
         }
         return result;
     }
-
-
 
     private String namedValue(final String name, final Map<String, String> env) {
         final String value = env.get(name);
