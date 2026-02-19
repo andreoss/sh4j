@@ -1691,7 +1691,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "casealt.sh",
                     String.format(
-                        "for w in a b c d; do case $w in a|b) echo letter;; *) echo other;; esac; done%n"
+                        String.join(
+                            "",
+                            "for w in a b c d; do case $w in ",
+                            "a|b) echo letter;; *) echo other;; esac; done%n"
+                        )
                     )
                 )
             )
@@ -1709,7 +1713,11 @@ public final class IntegrationTest {
                 this.writeScript(
                     "caseq.sh",
                     String.format(
-                        "for w in ab abc a; do case $w in ??) echo two;; *) echo not-two;; esac; done%n"
+                        String.join(
+                            "",
+                            "for w in ab abc a; do case $w in ",
+                            "??) echo two;; *) echo not-two;; esac; done%n"
+                        )
                     )
                 )
             )

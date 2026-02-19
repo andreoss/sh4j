@@ -22,18 +22,12 @@ final class Variables extends HashMap<String, String> {
     /** Serial id. */
     private static final long serialVersionUID = 1L;
 
-    /** Default IFS value (space, tab, newline). */
-    static final String DEFAULT_IFS =
-        new StringBuilder().append(' ').append('\t').append((char) 10).toString();
-
-    /** Default fallback PATH when none is set. */
-    private static final String DEFAULT_PATH = "/usr/local/bin:/usr/bin:/bin";
-
     /** Fallback working directory when the property is unset. */
     static final String FALLBACK_DIR = "/";
 
-    /** Home-directory fallback when the property is unset. */
-    private static final String FALLBACK_HOME = "/root";
+    /** Default IFS value (space, tab, newline). */
+    static final String DEFAULT_IFS =
+        new StringBuilder().append(' ').append('\t').append((char) 10).toString();
 
     /** Working directory backing {@code PWD}. */
     private final String directory = System.getProperty(
@@ -52,12 +46,12 @@ final class Variables extends HashMap<String, String> {
     {
         this.putIfAbsent("IFS", Variables.DEFAULT_IFS);
         this.putIfAbsent(
-            "HOME", System.getProperty("user.home", Variables.FALLBACK_HOME)
+            "HOME", System.getProperty("user.home", "/root")
         );
         this.putIfAbsent("PATH", System.getenv("PATH"));
         final String path = this.get("PATH");
         if (path == null || path.isEmpty()) {
-            this.put("PATH", Variables.DEFAULT_PATH);
+            this.put("PATH", "/usr/local/bin:/usr/bin:/bin");
         }
         this.putIfAbsent("PWD", this.directory);
         this.putIfAbsent(

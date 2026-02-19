@@ -798,7 +798,9 @@ final class BuiltinDispatcher {
                 case DONE -> "Done";
                 default -> "Stopped";
             };
-            self.outStream().println(String.format("[%d] %s %s", job.getId(), state, job.getCommand()));
+            self.outStream().println(
+                String.format("[%d] %s %s", job.getId(), state, job.getCommand())
+            );
         }
         return 0;
     }

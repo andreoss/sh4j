@@ -1056,7 +1056,9 @@ public final class Executor implements BuiltinContext {
                                 target.toPath(), StandardOpenOption.CREATE,
                                 StandardOpenOption.APPEND
                             );
-                            final PrintSink writer = new PrintSink(appended, StandardCharsets.UTF_8);
+                            final PrintSink writer = new PrintSink(
+                                appended, StandardCharsets.UTF_8
+                            );
                             this.outdescs.put(Integer.valueOf(desc), writer);
                         }
                         final InputStream source = Files.newInputStream(

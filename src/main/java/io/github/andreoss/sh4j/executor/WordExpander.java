@@ -523,10 +523,9 @@ public final class WordExpander {
         return consumed;
     }
 
-    private static final String IDENT_START = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
     private static boolean isIdentifierStart(final char chr) {
-        return IDENT_START.indexOf(chr) >= 0;
+        return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            .indexOf(chr) >= 0;
     }
 
     private static boolean isIdentifierPart(final char chr) {
