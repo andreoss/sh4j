@@ -607,19 +607,11 @@ public final class Executor implements BuiltinContext {
                     try {
                         status = this.executePipeline(pipeline);
                     } catch (final BreakSignal ex) {
-                        if (this.loops > 0) {
-                            throw ex;
-                        }
-                        this.err.println("sh: break: not in a loop");
-                        this.lastcode = 0;
+                        this.requireLoop(ex, "break");
                         idx = idx + 1;
                         continue;
                     } catch (final ContinueSignal ex) {
-                        if (this.loops > 0) {
-                            throw ex;
-                        }
-                        this.err.println("sh: continue: not in a loop");
-                        this.lastcode = 0;
+                        this.requireLoop(ex, "continue");
                         idx = idx + 1;
                         continue;
                     }
@@ -1052,14 +1044,7 @@ public final class Executor implements BuiltinContext {
                     final File target = this.redirectionFile(redir);
                     try {
                         if (type == RedirectionType.READWRITE) {
-                            final OutputStream appended = Files.newOutputStream(
-                                target.toPath(), StandardOpenOption.CREATE,
-                                StandardOpenOption.APPEND
-                            );
-                            final PrintSink writer = new PrintSink(
-                                appended, StandardCharsets.UTF_8
-                            );
-                            this.outdescs.put(Integer.valueOf(desc), writer);
+                            this.bindReadWriteDescriptor(desc, target);
                         }
                         final InputStream source = Files.newInputStream(
                             target.toPath()
@@ -1520,5 +1505,32 @@ public final class Executor implements BuiltinContext {
     private static File initialDirectory() {
         final String property = System.getProperty("user.dir", Variables.FALLBACK_DIR);
         return new File(property);
+    }
+
+    /**
+     * Rethrows a loop signal that belongs to an enclosing loop, otherwise reports
+     * it as used outside a loop and clears the exit status.
+     *
+     * @param ex The captured signal
+     * @param name The built-in name for the diagnostic
+     */
+    private void requireLoop(final RuntimeException ex, final String name) {
+        if (this.loops > 0) {
+            throw ex;
+        }
+        this.err.println(String.format("sh: %s: not in a loop", name));
+        this.lastcode = 0;
+    }
+
+    private void bindReadWriteDescriptor(final int desc, final File target)
+        throws IOException {
+        final OutputStream appended = Files.newOutputStream(
+            target.toPath(), StandardOpenOption.CREATE,
+            StandardOpenOption.APPEND
+        );
+        final PrintSink writer = new PrintSink(
+            appended, StandardCharsets.UTF_8
+        );
+        this.outdescs.put(Integer.valueOf(desc), writer);
     }
 }
