@@ -27,11 +27,8 @@ final class ParserCoverageTest {
 
     @Test
     void heredocWithoutDescriptorDefaultsToStandardInput() {
-        final SimpleCommand cmd = (SimpleCommand) this.command(
-            "cat <<EOF%nbody%nEOF%n"
-        );
         MatcherAssert.assertThat(
-            Integer.valueOf(cmd.getRedirections().get(0).getFd()),
+            Integer.valueOf(this.redirection("cat <<EOF%nbody%nEOF%n").getFd()),
             CoreMatchers.equalTo(Integer.valueOf(0))
         );
     }
@@ -48,20 +45,21 @@ final class ParserCoverageTest {
 
     @Test
     void compoundNodesReportZeroAsTheirLine() {
-        final Node node = new IfNode(
-            new ListNode(), new ListNode(), new ListNode()
-        );
         MatcherAssert.assertThat(
-            Integer.valueOf(node.getLineNumber()),
+            Integer.valueOf(new IfNode(
+                new ListNode(), new ListNode(), new ListNode()
+            ).getLineNumber()),
             CoreMatchers.equalTo(Integer.valueOf(0))
         );
     }
 
     @Test
     void pipeFollowedByReservedWordKeepsBothStages() {
-        final Pipeline pipe = this.parse("echo a | then").getPipelines().get(0);
         MatcherAssert.assertThat(
-            Integer.valueOf(pipe.getCommands().size()),
+            Integer.valueOf(
+                this.parse("echo a | then").getPipelines().get(0)
+                    .getCommands().size()
+            ),
             CoreMatchers.equalTo(Integer.valueOf(2))
         );
     }
@@ -78,11 +76,11 @@ final class ParserCoverageTest {
 
     @Test
     void ioNumberBeforeRedirectionIsParsed() {
-        final SimpleCommand cmd = (SimpleCommand) this.command(
-            "cat <<EOF%nbody%nEOF%n"
-        );
         MatcherAssert.assertThat(
-            Integer.valueOf(cmd.getRedirections().size()),
+            Integer.valueOf(
+                this.command("cat <<EOF%nbody%nEOF%n")
+                    .getRedirections().size()
+            ),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
     }
@@ -91,7 +89,12 @@ final class ParserCoverageTest {
         return new Parser(new Lexer(new CharReader(source))).parse();
     }
 
-    private Node command(final String source) {
-        return this.parse(source).getPipelines().get(0).getCommands().get(0);
+    private SimpleCommand command(final String source) {
+        return (SimpleCommand) this.parse(source)
+            .getPipelines().get(0).getCommands().get(0);
+    }
+
+    private Redirection redirection(final String source) {
+        return this.command(source).getRedirections().get(0);
     }
 }

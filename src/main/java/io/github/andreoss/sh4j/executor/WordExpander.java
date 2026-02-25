@@ -837,13 +837,12 @@ public final class WordExpander {
         final String word,
         final BuiltinContext ctx
     ) {
-        final String result = varvalue;
         if (varvalue == null || varvalue.isEmpty()) {
             WordExpander.reportMissing(
                 ctx, varname, word, "parameter null or not set"
             );
         }
-        return result;
+        return varvalue;
     }
 
     @GeneratedDefensive
@@ -867,13 +866,12 @@ public final class WordExpander {
         final String word,
         final BuiltinContext ctx
     ) {
-        final String result = varvalue;
         if (varvalue == null) {
             WordExpander.reportMissing(
                 ctx, varname, word, "parameter not set"
             );
         }
-        return result;
+        return varvalue;
     }
 
     private static String stripLongestPrefix(final String varvalue, final String pattern) {

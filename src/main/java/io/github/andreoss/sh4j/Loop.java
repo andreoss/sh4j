@@ -8,6 +8,7 @@ import io.github.andreoss.sh4j.executor.Executor;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -33,10 +34,7 @@ final class Loop {
      */
     Loop(final Executor executor) {
         this.executor = executor;
-        final InputStreamReader terminal = new InputStreamReader(
-            System.in, StandardCharsets.UTF_8
-        );
-        this.reader = new BufferedReader(terminal);
+        this.reader = Loop.console();
     }
 
     /** Runs until EOF or an IO failure. */
@@ -93,5 +91,12 @@ final class Loop {
             prompt = first;
         }
         return prompt;
+    }
+
+    private static BufferedReader console() {
+        final Reader terminal = new InputStreamReader(
+            System.in, StandardCharsets.UTF_8
+        );
+        return new BufferedReader(terminal);
     }
 }

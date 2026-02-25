@@ -908,6 +908,10 @@ final class PosixRegressionTest {
                 String.format("exec 7>%s; exec 7>&-", file.getAbsolutePath())
             )
         );
+        Assertions.assertTrue(
+            file.isFile() && file.length() == 0L,
+            "closing the descriptor must leave an empty file"
+        );
     }
 
     @Test

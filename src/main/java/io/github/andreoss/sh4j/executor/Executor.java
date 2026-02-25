@@ -1503,20 +1503,14 @@ public final class Executor implements BuiltinContext {
     }
 
     private static File initialDirectory() {
-        final String property = System.getProperty("user.dir", Variables.FALLBACK_DIR);
-        return new File(property);
+        return new File(
+            System.getProperty("user.dir", Variables.FALLBACK_DIR)
+        );
     }
 
-    /**
-     * Rethrows a loop signal that belongs to an enclosing loop, otherwise reports
-     * it as used outside a loop and clears the exit status.
-     *
-     * @param ex The captured signal
-     * @param name The built-in name for the diagnostic
-     */
-    private void requireLoop(final RuntimeException ex, final String name) {
+    private void requireLoop(final RuntimeException signal, final String name) {
         if (this.loops > 0) {
-            throw ex;
+            throw signal;
         }
         this.err.println(String.format("sh: %s: not in a loop", name));
         this.lastcode = 0;
@@ -1528,9 +1522,9 @@ public final class Executor implements BuiltinContext {
             target.toPath(), StandardOpenOption.CREATE,
             StandardOpenOption.APPEND
         );
-        final PrintSink writer = new PrintSink(
-            appended, StandardCharsets.UTF_8
+        this.outdescs.put(
+            Integer.valueOf(desc),
+            new PrintSink(appended, StandardCharsets.UTF_8)
         );
-        this.outdescs.put(Integer.valueOf(desc), writer);
     }
 }
