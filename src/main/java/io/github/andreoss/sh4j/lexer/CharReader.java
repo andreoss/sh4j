@@ -116,6 +116,7 @@ public final class CharReader {
             this.peeked = -1;
         }
     }
+
     private static Reader memory(final String text) {
         return new StringReader(text);
     }

@@ -20,6 +20,7 @@ public class Node {
      * Creates a new AST node.
      */
     public Node() {
+        // nothing to initialise
     }
 
     /**

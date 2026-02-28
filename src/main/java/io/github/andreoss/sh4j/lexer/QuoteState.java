@@ -21,6 +21,7 @@ public final class QuoteState {
      * Creates a new quote state with both quotes cleared.
      */
     public QuoteState() {
+        // both flags default to false
     }
 
     /**

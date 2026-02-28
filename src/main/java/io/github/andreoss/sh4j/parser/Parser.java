@@ -210,7 +210,7 @@ public final class Parser {
     }
 
     private Pipeline parsePipeline() {
-        return this.parsePipeline(new HashSet<String>());
+        return this.parsePipeline(new HashSet<>());
     }
 
     private Pipeline parsePipeline(final Set<String> reserved) {
@@ -483,7 +483,7 @@ public final class Parser {
     }
 
     private boolean isPipelineSeparator() {
-        return SEPARATORS.contains(this.current.type());
+        return Parser.SEPARATORS.contains(this.current.type());
     }
 
     private ListNode.Separator pipelineSeparator() {
