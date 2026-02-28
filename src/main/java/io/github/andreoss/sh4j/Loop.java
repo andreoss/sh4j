@@ -22,7 +22,7 @@ final class Loop {
     private final Executor executor;
 
     /** Reader for user input. */
-    private final BufferedReader reader;
+    private final BufferedReader reader = Loop.console();
 
     /** True while the loop should keep running. */
     private boolean ongoing;
@@ -34,7 +34,6 @@ final class Loop {
      */
     Loop(final Executor executor) {
         this.executor = executor;
-        this.reader = Loop.console();
     }
 
     /** Runs until EOF or an IO failure. */

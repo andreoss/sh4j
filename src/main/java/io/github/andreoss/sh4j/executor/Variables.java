@@ -8,58 +8,49 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The executor's live variable table, seeded with the POSIX defaults.
- *
- * <p>The caller's environment is copied by the {@link HashMap#HashMap(Map)}
- * constructor and the defaults are then applied by the instance initialiser, so
- * {@link Executor} can install the table with one assignment and keep its own
- * constructor free of method calls.</p>
+ * Builds the executor's live variable table with the POSIX defaults applied.
  *
  * @since 1.0
  */
-final class Variables extends HashMap<String, String> {
-
-    /** Serial id. */
-    private static final long serialVersionUID = 1L;
-
-    /** Fallback working directory when the property is unset. */
-    static final String FALLBACK_DIR = "/";
+final class Variables {
 
     /** Default IFS value (space, tab, newline). */
     static final String DEFAULT_IFS =
         new StringBuilder().append(' ').append('\t').append((char) 10).toString();
 
-    /** Working directory backing {@code PWD}. */
-    private final String directory = System.getProperty(
-        "user.dir", Variables.FALLBACK_DIR
-    );
+    /** Fallback working directory when the property is unset. */
+    static final String FALLBACK_DIR = "/";
+
+    private Variables() {
+    }
 
     /**
      * Creates the table from a caller-supplied environment view.
      *
      * @param seed The inherited variables
+     * @return The seeded table
      */
-    Variables(final Map<String, String> seed) {
-        super(seed);
-    }
-
-    {
-        this.putIfAbsent("IFS", Variables.DEFAULT_IFS);
-        this.putIfAbsent(
+    static Map<String, String> of(final Map<String, String> seed) {
+        final Map<String, String> table = new HashMap<>(seed);
+        table.putIfAbsent("IFS", Variables.DEFAULT_IFS);
+        table.putIfAbsent(
             "HOME", System.getProperty("user.home", "/root")
         );
-        this.putIfAbsent("PATH", System.getenv("PATH"));
-        final String path = this.get("PATH");
+        table.putIfAbsent("PATH", System.getenv("PATH"));
+        final String path = table.get("PATH");
         if (path == null || path.isEmpty()) {
-            this.put("PATH", "/usr/local/bin:/usr/bin:/bin");
+            table.put("PATH", "/usr/local/bin:/usr/bin:/bin");
         }
-        this.putIfAbsent("PWD", this.directory);
-        this.putIfAbsent(
+        table.putIfAbsent(
+            "PWD", System.getProperty("user.dir", Variables.FALLBACK_DIR)
+        );
+        table.putIfAbsent(
             "PPID",
             Long.toString(
                 ProcessHandle.current().parent()
                     .orElse(ProcessHandle.current()).pid()
             )
         );
+        return table;
     }
 }

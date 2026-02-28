@@ -1183,21 +1183,25 @@ final class BuiltinDispatcher {
             for (final Map.Entry<String, String> entry : environment.entrySet()) {
                 if (self.isReadonly(entry.getKey())) {
                     self.outStream().println(
-                        String.format("readonly %s=%s", entry.getKey(), entry.getValue())
+                        String.format(
+                            "readonly %s=%s", entry.getKey(), entry.getValue()
+                        )
                     );
                 }
             }
-            return 0;
-        }
-        for (final String arg : all) {
-            final int eqidx = arg.indexOf('=');
-            if (eqidx >= 0) {
-                final String name = arg.substring(0, eqidx);
-                final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
-                environment.put(name, WordExpander.removeQuotes(expanded));
-                self.markReadonly(name);
-            } else {
-                self.markReadonly(arg);
+        } else {
+            for (final String arg : all) {
+                final int eqidx = arg.indexOf('=');
+                if (eqidx >= 0) {
+                    final String name = arg.substring(0, eqidx);
+                    final String expanded = self.expandVariables(
+                        arg.substring(eqidx + 1), env
+                    );
+                    environment.put(name, WordExpander.removeQuotes(expanded));
+                    self.markReadonly(name);
+                } else {
+                    self.markReadonly(arg);
+                }
             }
         }
         return 0;
@@ -1856,11 +1860,13 @@ final class BuiltinDispatcher {
     }
 
     private static int parseFcNumber(final String arg) {
-        try {
-            return Integer.parseInt(arg);
-        } catch (final NumberFormatException ex) {
-            return -1;
+        final int parsed;
+        if (arg.matches("-?\\d+")) {
+            parsed = Integer.parseInt(arg);
+        } else {
+            parsed = -1;
         }
+        return parsed;
     }
 
     private static int fcList(

@@ -171,12 +171,20 @@ public final class Executor implements BuiltinContext {
         final Map<String, String> environment,
         final List<String> params
     ) {
-        this.environment = new Variables(environment);
-        this.exported = new Exports(environment);
+        this(Variables.of(environment), Exports.of(environment), params);
+    }
+
+    private Executor(
+        final Map<String, String> seeded,
+        final Set<String> guard,
+        final List<String> incoming
+    ) {
+        this.environment = seeded;
+        this.exported = guard;
         this.readonly = new HashSet<>();
         this.traps = new HashMap<>();
         this.functions = new HashMap<>();
-        this.params = new ArrayList<>(params);
+        this.params = new ArrayList<>(incoming);
         this.jobs = new JobManager();
         this.dispatcher = new BuiltinDispatcher();
         this.arith = new ArithmeticEvaluator();

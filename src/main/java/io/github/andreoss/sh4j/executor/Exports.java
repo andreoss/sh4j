@@ -6,36 +6,32 @@ package io.github.andreoss.sh4j.executor;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * The names a child process inherits.
- *
- * <p>The inherited names arrive through the {@link HashSet#HashSet(Collection)}
- * constructor and the POSIX defaults are added by the instance initialiser, so
- * {@link Executor} keeps its own constructor free of method calls.</p>
+ * Builds the set of names a child process inherits.
  *
  * @since 1.0
  */
-final class Exports extends HashSet<String> {
-
-    /** Serial id. */
-    private static final long serialVersionUID = 1L;
+final class Exports {
 
     /** Names the shell always exports. */
     private static final String[] GUARDED = {"HOME", "PATH", "PWD"};
 
-    /**
-     * Creates the export set.
-     *
-     * @param seed The inherited variables
-     */
-    Exports(final Map<String, String> seed) {
-        super(seed.keySet());
+    private Exports() {
     }
 
-    {
-        for (final String name : Exports.GUARDED) {
-            this.add(name);
+    /**
+     * Creates the export set from an inherited environment view.
+     *
+     * @param seed The inherited variables
+     * @return The names to export
+     */
+    static Set<String> of(final Map<String, String> seed) {
+        final Set<String> names = new HashSet<>(seed.keySet());
+        for (final String guarded : Exports.GUARDED) {
+            names.add(guarded);
         }
+        return names;
     }
 }
