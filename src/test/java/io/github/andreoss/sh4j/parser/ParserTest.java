@@ -233,7 +233,7 @@ final class ParserTest {
         try {
             this.parse("echo <");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException ex) {
+        } catch (final ParseException ex) {
             Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
@@ -459,7 +459,7 @@ final class ParserTest {
         try {
             this.parse("if true; then echo hi");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException ex) {
+        } catch (final ParseException ex) {
             Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
@@ -507,7 +507,7 @@ final class ParserTest {
         try {
             this.parse("foo() bar");
             Assertions.fail("Expected ParseException");
-        } catch (ParseException ex) {
+        } catch (final ParseException ex) {
             Assertions.assertEquals(ParseException.class, ex.getClass());
         }
     }
@@ -807,9 +807,5 @@ final class ParserTest {
 
     private Pipeline firstPipeline(final ListNode list) {
         return list.getPipelines().get(0);
-    }
-
-    private Node firstCommand(final ListNode list) {
-        return list.getPipelines().get(0).getCommands().get(0);
     }
 }
