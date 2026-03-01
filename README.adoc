@@ -1,0 +1,38 @@
+= sh4j
+
+A POSIX `sh` command-language interpreter in pure Java 17, buildable as a
+GraalVM native image.
+
+== Build
+
+[source,sh]
+----
+mvn compile
+----
+
+== Test
+
+[source,sh]
+----
+mvn test
+mvn jacoco:report
+----
+
+The coverage report is written to `target/site/jacoco/index.html`.
+
+== Run
+
+[source,sh]
+----
+java -cp target/classes io.github.andreoss.sh4j.Main -c 'echo hello'
+java -cp target/classes io.github.andreoss.sh4j.Main script.sh arg1 arg2
+java -cp target/classes io.github.andreoss.sh4j.Main -i
+----
+
+Native image, with a GraalVM JDK:
+
+[source,sh]
+----
+mvn package -Pnative-image
+./target/sh4j -c 'echo hello'
+----
