@@ -46,9 +46,11 @@ final class ParserCoverageTest {
     @Test
     void compoundNodesReportZeroAsTheirLine() {
         MatcherAssert.assertThat(
-            Integer.valueOf(new IfNode(
-                new ListNode(), new ListNode(), new ListNode()
-            ).getLineNumber()),
+            Integer.valueOf(
+                new IfNode(
+                    new ListNode(), new ListNode(), new ListNode()
+                ).getLineNumber()
+            ),
             CoreMatchers.equalTo(Integer.valueOf(0))
         );
     }
