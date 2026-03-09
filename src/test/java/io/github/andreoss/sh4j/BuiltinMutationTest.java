@@ -46,7 +46,8 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdLogicalAndPhysicalForms() throws IOException {
-        final Path real = TempDirs.folder(BuiltinMutationTest.root, "real").toPath().toRealPath();
+        final Path real = new TempDirs(BuiltinMutationTest.root)
+            .folder("real").toPath().toRealPath();
         Assertions.assertEquals(
             real + String.format("%n"),
             Sh4j.INSTANCE.out(String.format("cd %s; pwd -L", real))
@@ -388,7 +389,8 @@ final class BuiltinMutationTest {
     @Test
     void dotEmptyAndPositionalForms() throws IOException {
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("."));
-        final Path lib = TempDirs.file(BuiltinMutationTest.root, "dot.sh").toPath();
+        final Path lib = new TempDirs(BuiltinMutationTest.root)
+            .file("dot.sh").toPath();
         Files.write(lib, String.format("echo \"$1-$2\"%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             String.format("a-b%n"),
@@ -557,7 +559,8 @@ final class BuiltinMutationTest {
 
     @Test
     void dotRestoresPositionalParameters() throws IOException {
-        final Path lib = TempDirs.file(BuiltinMutationTest.root, "restore.sh").toPath();
+        final Path lib = new TempDirs(BuiltinMutationTest.root)
+            .file("restore.sh").toPath();
         Files.write(lib, String.format("echo \"in=$1\"%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             String.format("in=inner%nouter%n"),
@@ -572,8 +575,8 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdFlagOrder() throws IOException {
-        final Path dir = TempDirs.folder(
-            BuiltinMutationTest.root, "pwdorder"
+        final Path dir = new TempDirs(BuiltinMutationTest.root)
+            .folder("pwdorder"
         ).toPath().toRealPath();
         Assertions.assertEquals(
             dir + String.format("%n"),
@@ -778,7 +781,8 @@ final class BuiltinMutationTest {
             String.format("one%n1\techo one%n"),
             Sh4j.INSTANCE.out("echo one; fc -l abc")
         );
-        final Path fdesc = TempDirs.file(BuiltinMutationTest.root, "fdesc.txt").toPath();
+        final Path fdesc = new TempDirs(BuiltinMutationTest.root)
+            .file("fdesc.txt").toPath();
         Sh4j.INSTANCE.run(
             String.format(
                 "echo hi; exec 3>%s; fc -s nope 2>&3; exec 3>&-",
@@ -796,7 +800,8 @@ final class BuiltinMutationTest {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("__no_such__ | cat"));
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("echo x | __no_such__"));
         Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out("(exit 3); echo $?"));
-        final Path dir = TempDirs.folder(BuiltinMutationTest.root, "dotrel").toPath();
+        final Path dir = new TempDirs(BuiltinMutationTest.root)
+            .folder("dotrel").toPath();
         Files.write(
             dir.resolve("s.sh"),
             String.format("X=dot%n").getBytes(StandardCharsets.UTF_8)
@@ -860,7 +865,8 @@ final class BuiltinMutationTest {
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
         Assertions.assertEquals(1, unset.exitCode());
         Assertions.assertTrue(unset.stderr().contains("parameter not set"));
-        final Path dir = TempDirs.folder(BuiltinMutationTest.root, "glob").toPath();
+        final Path dir = new TempDirs(BuiltinMutationTest.root)
+            .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
         Files.createDirectories(dir.resolve("sub"));
         Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);

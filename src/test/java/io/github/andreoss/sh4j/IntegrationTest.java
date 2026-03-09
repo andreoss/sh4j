@@ -84,7 +84,7 @@ public final class IntegrationTest {
 
     @Test
     void childJvmCatFileProducesVisibleStdout() throws Exception {
-        final File probe = TempDirs.file(IntegrationTest.root, "probe.txt");
+        final File probe = new TempDirs(IntegrationTest.root).file("probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
         }
@@ -120,7 +120,8 @@ public final class IntegrationTest {
             nativebin.isFile() && nativebin.canExecute(),
             "target/sh4j native binary not built; skipping native smoke"
         );
-        final File probe = TempDirs.file(IntegrationTest.root, "nprobe.txt");
+        final File probe = new TempDirs(IntegrationTest.root)
+            .file("nprobe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-native%n"));
         }
@@ -159,7 +160,8 @@ public final class IntegrationTest {
 
     @Test
     void childJvmCatProbe() throws Exception {
-        final File probe = TempDirs.file(IntegrationTest.root, "h_probe.txt");
+        final File probe = new TempDirs(IntegrationTest.root)
+            .file("h_probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("child-probe%n"));
         }
@@ -349,7 +351,7 @@ public final class IntegrationTest {
 
     @Test
     void outputRedirection() throws IOException {
-        final File outfile = TempDirs.file(IntegrationTest.root, "out.txt");
+        final File outfile = new TempDirs(IntegrationTest.root).file("out.txt");
         Assertions.assertEquals(
             0,
             Main.runScript(
@@ -368,7 +370,7 @@ public final class IntegrationTest {
 
     @Test
     void inputRedirection() throws IOException {
-        final File infile = TempDirs.file(IntegrationTest.root, "in.txt");
+        final File infile = new TempDirs(IntegrationTest.root).file("in.txt");
         Files.writeString(infile.toPath(), String.format("input data%n"));
         Assertions.assertEquals(
             0,
@@ -383,7 +385,8 @@ public final class IntegrationTest {
 
     @Test
     void appendRedirection() throws IOException {
-        final File outfile = TempDirs.file(IntegrationTest.root, "append.txt");
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("append.txt");
         Assertions.assertEquals(
             0,
             Main.runScript(
@@ -405,7 +408,8 @@ public final class IntegrationTest {
 
     @Test
     void clobberRedirection() throws IOException {
-        final File outfile = TempDirs.file(IntegrationTest.root, "clobber.txt");
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("clobber.txt");
         Assertions.assertEquals(
             0,
             Main.runScript(
@@ -430,7 +434,8 @@ public final class IntegrationTest {
                     "stderr_redir.sh",
                     String.format(
                         "echo test 2>%s%n",
-                        TempDirs.file(IntegrationTest.root, "stderr.txt").getAbsolutePath()
+                        new TempDirs(IntegrationTest.root)
+                            .file("stderr.txt").getAbsolutePath()
                     )
                 ).getAbsolutePath()
             )
@@ -439,7 +444,8 @@ public final class IntegrationTest {
 
     @Test
     void variableExpansionWithRedirect() throws IOException {
-        final File outfile = TempDirs.file(IntegrationTest.root, "out2.txt");
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("out2.txt");
         Assertions.assertEquals(
             0,
             Main.runScript(
@@ -684,7 +690,7 @@ public final class IntegrationTest {
      */
     @Test
     void pathnameExpansionGlob() throws Exception {
-        final File dir = TempDirs.folder(IntegrationTest.root, "globdir");
+        final File dir = new TempDirs(IntegrationTest.root).folder("globdir");
         Assertions.assertTrue(new File(dir, "alpha.txt").createNewFile());
         Assertions.assertTrue(new File(dir, "beta.txt").createNewFile());
         Assertions.assertTrue(new File(dir, "other.log").createNewFile());
@@ -989,7 +995,7 @@ public final class IntegrationTest {
      */
     @Test
     void readWriteRedirection() throws Exception {
-        final File data = TempDirs.file(IntegrationTest.root, "rw.dat");
+        final File data = new TempDirs(IntegrationTest.root).file("rw.dat");
         Files.writeString(data.toPath(), String.format("stored%n"));
         Assertions.assertEquals(
             String.format("stored%n"),
@@ -1127,7 +1133,7 @@ public final class IntegrationTest {
      */
     @Test
     void pwdPrintsWorkingDirectory() throws Exception {
-        final File dir = TempDirs.folder(IntegrationTest.root, "wd");
+        final File dir = new TempDirs(IntegrationTest.root).folder("wd");
         final String out = this.runChildJvm(
             this.writeScript(
                 "pwd.sh",
@@ -1170,7 +1176,8 @@ public final class IntegrationTest {
      */
     @Test
     void cdChangesWorkingDirectory() throws Exception {
-        final File target = TempDirs.folder(IntegrationTest.root, "cd-target");
+        final File target = new TempDirs(IntegrationTest.root)
+            .folder("cd-target");
         final String out = this.runChildJvm(
             this.writeScript(
                 "cd.sh",
@@ -1334,7 +1341,7 @@ public final class IntegrationTest {
      */
     @Test
     void inputRedirectionFromFile() throws Exception {
-        final File data = TempDirs.file(IntegrationTest.root, "in.dat");
+        final File data = new TempDirs(IntegrationTest.root).file("in.dat");
         Files.writeString(data.toPath(), String.format("feed%n"));
         Assertions.assertEquals(
             String.format("feed%n"),
@@ -1353,8 +1360,8 @@ public final class IntegrationTest {
      */
     @Test
     void cdDashRevisitsPreviousDirectory() throws Exception {
-        final File first = TempDirs.folder(IntegrationTest.root, "first");
-        final File second = TempDirs.folder(IntegrationTest.root, "second");
+        final File first = new TempDirs(IntegrationTest.root).folder("first");
+        final File second = new TempDirs(IntegrationTest.root).folder("second");
         final String out = this.runChildJvm(
             this.writeScript(
                 "cdback.sh",
@@ -1889,7 +1896,7 @@ public final class IntegrationTest {
      */
     @Test
     void oldpwdAfterCd() throws Exception {
-        final File target = TempDirs.folder(IntegrationTest.root, "after");
+        final File target = new TempDirs(IntegrationTest.root).folder("after");
         final String out = this.runChildJvm(
             this.writeScript(
                 "oldpwd.sh",
@@ -2084,7 +2091,7 @@ public final class IntegrationTest {
      */
     @Test
     void multipleRedirectionsOnOneCommand() throws Exception {
-        final File data = TempDirs.file(IntegrationTest.root, "multi.dat");
+        final File data = new TempDirs(IntegrationTest.root).file("multi.dat");
         Files.writeString(data.toPath(), String.format("line%n"));
         Assertions.assertEquals(
             String.format("line%n"),
@@ -2343,7 +2350,7 @@ public final class IntegrationTest {
      */
     @Test
     void higherNumberedFdRedirection() throws Exception {
-        final File data = TempDirs.file(IntegrationTest.root, "fd3.dat");
+        final File data = new TempDirs(IntegrationTest.root).file("fd3.dat");
         Files.writeString(data.toPath(), String.format("from-fd3%n"));
         Assertions.assertEquals(
             String.format("from-fd3%n"),
@@ -2393,7 +2400,7 @@ public final class IntegrationTest {
      */
     @Test
     void clobberRedirectWritesFile() throws Exception {
-        final File target = TempDirs.file(IntegrationTest.root, "clob.dat");
+        final File target = new TempDirs(IntegrationTest.root).file("clob.dat");
         Files.writeString(target.toPath(), String.format("old%n"));
         Assertions.assertEquals(
             String.format("new%n"),
@@ -2467,8 +2474,8 @@ public final class IntegrationTest {
      */
     @Test
     void multipleOutputRedirectsLastWins() throws Exception {
-        final File filea = TempDirs.file(IntegrationTest.root, "a.dat");
-        final File fileb = TempDirs.file(IntegrationTest.root, "b.dat");
+        final File filea = new TempDirs(IntegrationTest.root).file("a.dat");
+        final File fileb = new TempDirs(IntegrationTest.root).file("b.dat");
         Assertions.assertEquals(
             String.format("hi%n"),
             this.runChildJvm(
@@ -2533,7 +2540,7 @@ public final class IntegrationTest {
     }
 
     private File writeScript(final String name, final String content) throws IOException {
-        final File script = TempDirs.file(IntegrationTest.root, name);
+        final File script = new TempDirs(IntegrationTest.root).file(name);
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(content);
         }

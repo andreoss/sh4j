@@ -144,7 +144,7 @@ final class PosixConformanceTest {
     }
 
     private String run(final String script, final String... args) throws Exception {
-        final File str = TempDirs.file(PosixConformanceTest.root, "c.sh");
+        final File str = new TempDirs(PosixConformanceTest.root).file("c.sh");
         try (BufferedWriter w = Files.newBufferedWriter(str.toPath(), StandardCharsets.UTF_8)) {
             w.write(script);
         }

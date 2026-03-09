@@ -77,7 +77,7 @@ final class MainTest {
 
     @Test
     void runScriptWithEcho() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "echo.sh");
+        final File script = new TempDirs(MainTest.root).file("echo.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("echo hello%n"));
         }
@@ -86,7 +86,7 @@ final class MainTest {
 
     @Test
     void runScriptWithExitZero() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "exit0.sh");
+        final File script = new TempDirs(MainTest.root).file("exit0.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 0%n"));
         }
@@ -95,7 +95,7 @@ final class MainTest {
 
     @Test
     void runScriptWithExitOne() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "exit1.sh");
+        final File script = new TempDirs(MainTest.root).file("exit1.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 1%n"));
         }
@@ -114,7 +114,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithArgsReturnsRunScriptResult() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "test_exit.sh");
+        final File script = new TempDirs(MainTest.root).file("test_exit.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit 42%n"));
         }
@@ -158,7 +158,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithMultipleArgsPassesPositionalParams() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "args.sh");
+        final File script = new TempDirs(MainTest.root).file("args.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit $#%n"));
         }
@@ -170,7 +170,7 @@ final class MainTest {
 
     @Test
     void exitCodeWithTwoArgsExitsOnFirstPositional() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "first.sh");
+        final File script = new TempDirs(MainTest.root).file("first.sh");
         try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("exit $1%n"));
         }
@@ -203,7 +203,7 @@ final class MainTest {
 
     @Test
     void exitCodeDashDashRunsScript() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "dashdash.sh");
+        final File script = new TempDirs(MainTest.root).file("dashdash.sh");
         Files.write(script.toPath(), String.format("exit 4%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             4, Main.exitCode(new String[] {"--", script.getAbsolutePath()})
@@ -212,7 +212,7 @@ final class MainTest {
 
     @Test
     void exitCodeUnknownOptionSkipsToScript() throws IOException {
-        final File script = TempDirs.file(MainTest.root, "unknown.sh");
+        final File script = new TempDirs(MainTest.root).file("unknown.sh");
         Files.write(script.toPath(), String.format("exit 5%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             5, Main.exitCode(new String[] {"-x", script.getAbsolutePath()})
@@ -233,7 +233,7 @@ final class MainTest {
 
     @Test
     void runStartupFileExecutesScript() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "env.sh");
+        final File startup = new TempDirs(MainTest.root).file("env.sh");
         try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("export STARTUP_LOADED=yes%n"));
         }
@@ -251,7 +251,7 @@ final class MainTest {
 
     @Test
     void interactiveWithEnvFileLoadsStartup() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "env.sh");
+        final File startup = new TempDirs(MainTest.root).file("env.sh");
         try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("export FROM_ENV=yes%n"));
         }
@@ -272,7 +272,7 @@ final class MainTest {
 
     @Test
     void interactiveWithEnvFileExecutesStartup() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "env.sh");
+        final File startup = new TempDirs(MainTest.root).file("env.sh");
         try (BufferedWriter w = Files.newBufferedWriter(startup.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("export STARTUP_RAN=yes%n"));
         }
@@ -309,7 +309,7 @@ final class MainTest {
 
     @Test
     void runSourceRunsExitTrap() throws IOException {
-        final File marker = TempDirs.file(MainTest.root, "trap-marker.txt");
+        final File marker = new TempDirs(MainTest.root).file("trap-marker.txt");
         Assertions.assertEquals(
             0,
             Main.runSource(
@@ -328,7 +328,8 @@ final class MainTest {
 
     @Test
     void runSourcePropagatesExitAndRunsTrap() throws IOException {
-        final File marker = TempDirs.file(MainTest.root, "exit-trap-marker.txt");
+        final File marker = new TempDirs(MainTest.root)
+            .file("exit-trap-marker.txt");
         Assertions.assertEquals(
             3,
             Main.runSource(
@@ -366,7 +367,7 @@ final class MainTest {
 
     @Test
     void interactiveCustomPromptsAndContinuation() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "prompt-env.sh");
+        final File startup = new TempDirs(MainTest.root).file("prompt-env.sh");
         Files.write(
             startup.toPath(),
             String.format("PS1='p1> '%nPS2='p2> '%n").getBytes(StandardCharsets.UTF_8)
@@ -382,7 +383,7 @@ final class MainTest {
 
     @Test
     void interactiveCapturedOutputAndPrompts() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "capture-env.sh");
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
         Files.write(
             startup.toPath(),
             String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
@@ -441,7 +442,7 @@ final class MainTest {
 
     @Test
     void runStartupFileWithParseError() throws IOException {
-        final File startup = TempDirs.file(MainTest.root, "bad-env.sh");
+        final File startup = new TempDirs(MainTest.root).file("bad-env.sh");
         Files.write(startup.toPath(), String.format("if%n").getBytes(StandardCharsets.UTF_8));
         final Executor executor = new Executor();
         Main.runStartupFile(executor, startup.getAbsolutePath());

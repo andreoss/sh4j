@@ -19,31 +19,40 @@ import java.util.stream.Stream;
  */
 public final class TempDirs {
 
-    private TempDirs() {
+    /**
+     * The {@code @TempDir} root.
+     */
+    private final Path root;
+
+    /**
+     * Ctor.
+     *
+     * @param root The {@code @TempDir} root
+     */
+    public TempDirs(final Path root) {
+        this.root = root;
     }
 
     /**
      * Creates a uniquely named file inside the temporary root.
      *
-     * @param root The {@code @TempDir} root
      * @return The created file
      * @throws IOException When the file cannot be created
      */
-    public static File file(final Path root) throws IOException {
-        return TempDirs.file(root, UUID.randomUUID().toString());
+    public File file() throws IOException {
+        return this.file(UUID.randomUUID().toString());
     }
 
     /**
      * Creates a named file inside the temporary root.
      *
-     * @param root The {@code @TempDir} root
      * @param name The file name
      * @return The created file
      * @throws IOException When the file cannot be created
      */
-    public static File file(final Path root, final String name)
+    public File file(final String name)
         throws IOException {
-        final Path file = root.resolve(name);
+        final Path file = this.root.resolve(name);
         Files.deleteIfExists(file);
         return Files.createFile(file).toFile();
     }
@@ -51,26 +60,24 @@ public final class TempDirs {
     /**
      * Creates a uniquely named directory inside the temporary root.
      *
-     * @param root The {@code @TempDir} root
      * @return The created directory
      * @throws IOException When the directory cannot be created
      */
-    public static File folder(final Path root) throws IOException {
-        return TempDirs.folder(root, UUID.randomUUID().toString());
+    public File folder() throws IOException {
+        return this.folder(UUID.randomUUID().toString());
     }
 
     /**
      * Creates a named directory inside the temporary root, replacing any
      * existing one of the same name.
      *
-     * @param root The {@code @TempDir} root
      * @param name The directory name
      * @return The created directory
      * @throws IOException When the directory cannot be created
      */
-    public static File folder(final Path root, final String name)
+    public File folder(final String name)
         throws IOException {
-        final Path dir = root.resolve(name);
+        final Path dir = this.root.resolve(name);
         if (Files.exists(dir)) {
             try (Stream<Path> walk = Files.walk(dir)) {
                 walk.sorted(Comparator.reverseOrder())

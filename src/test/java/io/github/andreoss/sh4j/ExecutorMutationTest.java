@@ -36,7 +36,8 @@ final class ExecutorMutationTest {
 
     @Test
     void subshellInheritsFlagsAndCwd() throws IOException {
-        final File dir = TempDirs.folder(ExecutorMutationTest.root, "subcwd");
+        final File dir = new TempDirs(ExecutorMutationTest.root)
+            .folder("subcwd");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(
                 String.format("set -u; cd %s; (echo $-); (pwd)", dir.getAbsolutePath())
@@ -205,7 +206,8 @@ final class ExecutorMutationTest {
             ).stdout(),
             CoreMatchers.equalTo(String.format("piped%n"))
         );
-        final File file = TempDirs.file(ExecutorMutationTest.root, "ext.out");
+        final File file = new TempDirs(ExecutorMutationTest.root)
+            .file("ext.out");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format("echo redirected > %s", file.getAbsolutePath())
@@ -260,7 +262,8 @@ final class ExecutorMutationTest {
 
     @Test
     void nonExecutableFileReturnsError() throws IOException {
-        final File file = TempDirs.file(ExecutorMutationTest.root, "not-executable.sh");
+        final File file = new TempDirs(ExecutorMutationTest.root)
+            .file("not-executable.sh");
         Files.write(file.toPath(), String.format("echo hi%n").getBytes(StandardCharsets.UTF_8));
         MatcherAssert.assertThat(file.setExecutable(false), CoreMatchers.is(true));
         MatcherAssert.assertThat(
@@ -271,7 +274,8 @@ final class ExecutorMutationTest {
 
     @Test
     void quotedGlobIsNotExpandedForExternalCommand() throws IOException {
-        final File dir = TempDirs.folder(ExecutorMutationTest.root, "quoted-glob");
+        final File dir = new TempDirs(ExecutorMutationTest.root)
+            .folder("quoted-glob");
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(
@@ -289,7 +293,8 @@ final class ExecutorMutationTest {
 
     @Test
     void functionStderrRedirection() throws IOException {
-        final File file = TempDirs.file(ExecutorMutationTest.root, "fn-err.txt");
+        final File file = new TempDirs(ExecutorMutationTest.root)
+            .file("fn-err.txt");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format(
@@ -304,7 +309,8 @@ final class ExecutorMutationTest {
 
     @Test
     void execInputRedirectionPersists() throws IOException {
-        final File file = TempDirs.file(ExecutorMutationTest.root, "exec-in.txt");
+        final File file = new TempDirs(ExecutorMutationTest.root)
+            .file("exec-in.txt");
         Files.write(file.toPath(), String.format("input%n").getBytes(StandardCharsets.UTF_8));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(String.format("exec < %s; read x; echo $x", file.getAbsolutePath())),

@@ -716,7 +716,7 @@ final class WordExpanderTest {
 
     @Test
     void pathnameExpansionSkipsDotfilesAndSorts() throws IOException {
-        final File dir = TempDirs.folder(WordExpanderTest.root, "we-glob");
+        final File dir = new TempDirs(WordExpanderTest.root).folder("we-glob");
         Files.write(new File(dir, "b.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
         Files.write(new File(dir, ".hidden").toPath(), new byte[0]);

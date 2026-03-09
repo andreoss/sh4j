@@ -210,7 +210,7 @@ final class PosixTests {
     }
 
     private int run(final String script) throws IOException {
-        final File file = TempDirs.file(this.root, "t.sh");
+        final File file = new TempDirs(this.root).file("t.sh");
         Files.writeString(file.toPath(), script);
         return Main.runScript(
             file.getAbsolutePath(),
