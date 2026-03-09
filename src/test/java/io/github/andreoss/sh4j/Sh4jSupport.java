@@ -4,7 +4,6 @@
  */
 package io.github.andreoss.sh4j;
 
-import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.executor.Executor;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
@@ -32,7 +31,14 @@ public final class Sh4jSupport {
     }
 
     /** Environment used when no explicit environment is supplied. */
-    private final Map<String, String> defaultenv = Sh4jSupport.DEFAULT_ENV;
+    private final Map<String, String> defaultenv;
+
+    /**
+     * Ctor.
+     */
+    public Sh4jSupport() {
+        this.defaultenv = Sh4jSupport.DEFAULT_ENV;
+    }
 
     /**
      * Runs commands with a custom environment and stdin.
@@ -166,17 +172,24 @@ public final class Sh4jSupport {
     }
 
     /**
-     * Runs commands with custom environment, stdin, and returns a full result.
+     * Runs commands with stdin and returns their stdout.
      *
-     * @param env The environment variables
      * @param stdin The stdin input (may be null)
      * @param commands The commands to execute
-     * @return The result containing exit code, stdout, stderr, and environment
+     * @return The captured stdout
      */
     public String stdout(final InputStream stdin, final String... commands) {
         return this.runFull(Sh4jSupport.DEFAULT_ENV, stdin, commands).stdout();
     }
 
+    /**
+     * Runs commands with the given environment and stdin.
+     *
+     * @param env The environment variables
+     * @param stdin The stdin input (may be null)
+     * @param commands The commands to execute
+     * @return The result containing exit code, stdout and stderr
+     */
     public Sh4j.Result runFull(
         final Map<String, String> env,
         final InputStream stdin,
