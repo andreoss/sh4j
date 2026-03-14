@@ -10,13 +10,9 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,16 +28,16 @@ import java.util.function.UnaryOperator;
 public final class RedirectionHandler {
 
     /** Sentinel target value indicating {@code &-} (close fd). */
-    private static final String CLOSE = "-";
+    static final String CLOSE = "-";
 
     /** Sentinel target value indicating fd 1. */
-    private static final String STDOUT_FD = "1";
+    static final String STDOUT_FD = "1";
 
     /** Sentinel target value indicating fd 2. */
-    private static final String STDERR_FD = "2";
+    static final String STDERR_FD = "2";
 
     /** Path that acts as a black-hole sink for the close-fd duplicate. */
-    private static final String DEV_NULL = "/dev/null";
+    static final String DEV_NULL = "/dev/null";
 
     @GeneratedDefensive
     private RedirectionHandler() {
@@ -82,14 +78,7 @@ public final class RedirectionHandler {
         final List<Redirection> redirs, final Streams streams,
         final RedirectionHandler.RedirectContext context
     ) {
-        final RedirectionState state =
-            new RedirectionState(
-                streams.out(), streams.err(), context
-            );
-        for (final Redirection redir : redirs) {
-            RedirectionHandler.applyRedirect(state, redir);
-        }
-        return state.swap();
+        return BuiltinRedirects.swap(redirs, streams, context);
     }
 
     /**
@@ -147,6 +136,7 @@ public final class RedirectionHandler {
     }
 
     private static File createHeredocFile(final String content) {
+        File result;
         try {
             final File temp = File.createTempFile("sh4j_heredoc", ".tmp");
             temp.deleteOnExit();
@@ -158,92 +148,11 @@ public final class RedirectionHandler {
             ) {
                 writer.write(content);
             }
-            return temp;
+            result = temp;
         } catch (final IOException ex) {
-            return RedirectionHandler.heredocFileIoFailure();
+            result = RedirectionHandler.heredocFileIoFailure();
         }
-    }
-
-    private static void applyRedirect(
-        final RedirectionState state,
-        final Redirection redir
-    ) {
-        final RedirectionType type = redir.getType();
-        if (type == RedirectionType.OUTPUT
-            || type == RedirectionType.CLOBBER
-            || type == RedirectionType.APPEND) {
-            RedirectionHandler.applyOutput(state, redir);
-        } else if (type == RedirectionType.DUP_OUTPUT) {
-            RedirectionHandler.applyDup(state, redir);
-        }
-    }
-
-    private static void applyOutput(
-        final RedirectionState state,
-        final Redirection redir
-    ) {
-        RedirectionHandler.assign(
-            state,
-            RedirectionHandler.openForWrite(
-                state.expand(redir.getTarget()),
-                redir.getType() == RedirectionType.APPEND,
-                state.base()
-            ),
-            redir.getFd()
-        );
-    }
-
-    private static void applyDup(
-        final RedirectionState state,
-        final Redirection redir
-    ) {
-        final String target = state.expand(redir.getTarget());
-        final int desc = redir.getFd();
-        if (RedirectionHandler.CLOSE.equals(target)) {
-            RedirectionHandler.applyClose(state, desc);
-        } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
-            state.dupErrToOut();
-        } else if (RedirectionHandler.STDERR_FD.equals(target) && desc == 1) {
-            state.dupOutToErr();
-        } else {
-            RedirectionHandler.applyBound(state, target, desc);
-        }
-    }
-
-    private static void applyClose(
-        final RedirectionState state, final int desc
-    ) {
-        RedirectionHandler.assign(
-            state,
-            RedirectionHandler.openForWrite(
-                RedirectionHandler.DEV_NULL, false, state.base()
-            ),
-            desc
-        );
-    }
-
-    private static void applyBound(
-        final RedirectionState state,
-        final String target, final int desc
-    ) {
-        RedirectionHandler.assign(
-            state,
-            RedirectionHandler.descriptor(state.descriptors(), target),
-            desc
-        );
-    }
-
-    private static void assign(
-        final RedirectionState state,
-        final PrintSink stream, final int desc
-    ) {
-        if (stream == null) {
-            state.fail();
-        } else if (desc == 1) {
-            state.replaceOut(stream);
-        } else if (desc == 2) {
-            state.replaceErr(stream);
-        }
+        return result;
     }
 
     @GeneratedDefensive
@@ -251,7 +160,7 @@ public final class RedirectionHandler {
         return null;
     }
 
-    private static File resolve(final String target, final File base) {
+    static File resolve(final String target, final File base) {
         final File file = new File(target);
         final File result;
         if (base == null || file.isAbsolute()) {
@@ -262,50 +171,6 @@ public final class RedirectionHandler {
         return result;
     }
 
-    private static PrintSink descriptor(
-        final Map<Integer, PrintSink> descriptors, final String target
-    ) {
-        PrintSink result = null;
-        try {
-            result = descriptors.get(Integer.parseInt(target.trim()));
-        } catch (final NumberFormatException ex) {
-            result = null;
-        }
-        return result;
-    }
-
-    private static PrintSink openForWrite(
-        final String target, final boolean append, final File base
-    ) {
-        PrintSink result;
-        try {
-            result = new PrintSink(
-                RedirectionHandler.sink(
-                    RedirectionHandler.resolve(target, base).toPath(), append
-                ),
-                StandardCharsets.UTF_8
-            );
-        } catch (final IOException ex) {
-            result = null;
-        }
-        return result;
-    }
-
-    private static OutputStream sink(final Path path, final boolean append)
-        throws IOException {
-        final OpenOption[] modes;
-        if (append) {
-            modes = new OpenOption[]{
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND,
-            };
-        } else {
-            modes = new OpenOption[]{
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-            };
-        }
-        return Files.newOutputStream(path, modes);
-    }
 
     private static void applyOne(
         final ProcessBuilder builder, final Redirection redir,
