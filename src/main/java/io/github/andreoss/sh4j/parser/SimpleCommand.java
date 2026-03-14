@@ -53,11 +53,6 @@ public final class SimpleCommand extends Node {
         return this.name;
     }
 
-    /**
-     * Returns the source line number.
-     *
-     * @return One-based source line number
-     */
     @Override
     public int getLineNumber() {
         return this.line;
