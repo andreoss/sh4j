@@ -50,8 +50,7 @@ public final class TempDirs {
      * @return The created file
      * @throws IOException When the file cannot be created
      */
-    public File file(final String name)
-        throws IOException {
+    public File file(final String name) throws IOException {
         final Path file = this.root.resolve(name);
         Files.deleteIfExists(file);
         return Files.createFile(file).toFile();
@@ -75,8 +74,7 @@ public final class TempDirs {
      * @return The created directory
      * @throws IOException When the directory cannot be created
      */
-    public File folder(final String name)
-        throws IOException {
+    public File folder(final String name) throws IOException {
         final Path dir = this.root.resolve(name);
         if (Files.exists(dir)) {
             try (Stream<Path> walk = Files.walk(dir)) {
