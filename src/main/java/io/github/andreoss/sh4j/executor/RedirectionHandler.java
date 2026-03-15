@@ -7,7 +7,6 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.parser.Redirection;
-import io.github.andreoss.sh4j.parser.RedirectionType;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -113,9 +112,7 @@ public final class RedirectionHandler {
         final ProcessBuilder builder, final List<Redirection> redirections,
         final RedirectionHandler.RedirectContext context
     ) {
-        for (final Redirection redir : redirections) {
-            RedirectionHandler.applyOne(builder, redir, context);
-        }
+        ProcessRedirects.apply(builder, redirections, context);
     }
 
     /**
@@ -131,6 +128,24 @@ public final class RedirectionHandler {
             result = RedirectionHandler.createHeredocFile(content);
         } else {
             result = null;
+        }
+        return result;
+    }
+
+    /**
+     * Resolves a redirection target against a base directory.
+     *
+     * @param target The expanded target path
+     * @param base Directory for relative targets (null = process cwd)
+     * @return The file to open
+     */
+    static File resolve(final String target, final File base) {
+        final File file = new File(target);
+        final File result;
+        if (base == null || file.isAbsolute()) {
+            result = file;
+        } else {
+            result = new File(base, target);
         }
         return result;
     }
@@ -158,140 +173,6 @@ public final class RedirectionHandler {
     @GeneratedDefensive
     private static File heredocFileIoFailure() {
         return null;
-    }
-
-    static File resolve(final String target, final File base) {
-        final File file = new File(target);
-        final File result;
-        if (base == null || file.isAbsolute()) {
-            result = file;
-        } else {
-            result = new File(base, target);
-        }
-        return result;
-    }
-
-
-    private static void applyOne(
-        final ProcessBuilder builder, final Redirection redir,
-        final RedirectionHandler.RedirectContext context
-    ) {
-        final RedirectionType type = redir.getType();
-        if (type == RedirectionType.DUP_INPUT) {
-            RedirectionHandler.applyDupInput(builder, redir);
-        } else if (type == RedirectionType.DUP_OUTPUT) {
-            RedirectionHandler.applyDupOutput(builder, redir);
-        } else if (type == RedirectionType.HERE_DOC
-            || type == RedirectionType.HERE_DOC_DASH) {
-            RedirectionHandler.applyHereDoc(builder, redir, context.expander());
-        } else {
-            RedirectionHandler.applyFileRedirect(
-                builder, redir,
-                RedirectionHandler.resolve(
-                    context.expander().apply(redir.getTarget()), context.base()
-                )
-            );
-        }
-    }
-
-    private static void applyDupInput(
-        final ProcessBuilder builder, final Redirection redir
-    ) {
-        if (RedirectionHandler.CLOSE.equals(redir.getTarget())
-            && redir.getFd() == 0) {
-            builder.redirectInput(new File(RedirectionHandler.DEV_NULL));
-        }
-    }
-
-    private static void applyDupOutput(
-        final ProcessBuilder builder, final Redirection redir
-    ) {
-        final int desc = redir.getFd();
-        final String target = redir.getTarget();
-        if (RedirectionHandler.CLOSE.equals(target)) {
-            if (desc == 1) {
-                builder.redirectOutput(new File(RedirectionHandler.DEV_NULL));
-            } else if (desc == 2) {
-                builder.redirectError(new File(RedirectionHandler.DEV_NULL));
-            }
-        } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
-            builder.redirectError(builder.redirectOutput());
-        } else if (RedirectionHandler.STDERR_FD.equals(target) && desc == 1) {
-            builder.redirectOutput(builder.redirectError());
-        }
-    }
-
-    private static void applyHereDoc(
-        final ProcessBuilder builder, final Redirection redir,
-        final UnaryOperator<String> expander
-    ) {
-        String content = redir.getHereDocContent();
-        if (content != null && !redir.isHereDocQuoted()) {
-            content = expander.apply(content);
-        }
-        final File src = RedirectionHandler.heredocFile(content);
-        if (src != null && redir.getFd() == 0) {
-            builder.redirectInput(src);
-        }
-    }
-
-    private static void applyFileRedirect(
-        final ProcessBuilder builder, final Redirection redir, final File file
-    ) {
-        final RedirectionType type = redir.getType();
-        if (type == RedirectionType.READWRITE) {
-            RedirectionHandler.applyReadWrite(builder, redir, file);
-        } else if (type == RedirectionType.INPUT) {
-            RedirectionHandler.applyInput(builder, redir, file);
-        } else if (type == RedirectionType.OUTPUT
-            || type == RedirectionType.CLOBBER) {
-            RedirectionHandler.applyTruncate(builder, redir, file);
-        } else if (type == RedirectionType.APPEND) {
-            RedirectionHandler.applyAppend(builder, redir, file);
-        }
-    }
-
-    private static void applyInput(
-        final ProcessBuilder builder, final Redirection redir, final File file
-    ) {
-        if (redir.getFd() == 0) {
-            builder.redirectInput(file);
-        }
-    }
-
-    private static void applyReadWrite(
-        final ProcessBuilder builder, final Redirection redir, final File file
-    ) {
-        final int desc = redir.getFd();
-        if (desc == 0) {
-            builder.redirectInput(file);
-        } else if (desc == 1) {
-            builder.redirectOutput(ProcessBuilder.Redirect.to(file));
-        } else if (desc == 2) {
-            builder.redirectError(ProcessBuilder.Redirect.to(file));
-        }
-    }
-
-    private static void applyTruncate(
-        final ProcessBuilder builder, final Redirection redir, final File file
-    ) {
-        final int desc = redir.getFd();
-        if (desc == 1) {
-            builder.redirectOutput(ProcessBuilder.Redirect.to(file));
-        } else if (desc == 2) {
-            builder.redirectError(ProcessBuilder.Redirect.to(file));
-        }
-    }
-
-    private static void applyAppend(
-        final ProcessBuilder builder, final Redirection redir, final File file
-    ) {
-        final int desc = redir.getFd();
-        if (desc == 1) {
-            builder.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
-        } else if (desc == 2) {
-            builder.redirectError(ProcessBuilder.Redirect.appendTo(file));
-        }
     }
 
     /**
