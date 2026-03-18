@@ -33,47 +33,27 @@ final class MainTest {
     private static Path root;
 
     @Test
-    void exitCodeNoArgsInteractiveIoException() {
-        Assertions.assertEquals(
-            0,
-            MainTest.withStdin(
-                new InputStream() {
-                    @Override
-                    public int read() throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public int read(final byte[] buf, final int off, final int len)
-                        throws IOException {
-                        throw new IOException();
-                    }
-                },
-                () -> Main.exitCode(new String[0])
-            )
-        );
+    void exitCodeNoArgsInteractiveIoException() throws IOException {
+        try (InputStream failing = new MainTest.FailingInput()) {
+            Assertions.assertEquals(
+                0,
+                MainTest.withStdin(
+                    failing, () -> Main.exitCode(new String[0])
+                )
+            );
+        }
     }
 
     @Test
-    void exitCodeDashSReadFailure() {
-        Assertions.assertThrows(
-            IllegalStateException.class,
-            () -> MainTest.withStdin(
-                new InputStream() {
-                    @Override
-                    public int read() throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public int read(final byte[] buf, final int off, final int len)
-                        throws IOException {
-                        throw new IOException();
-                    }
-                },
-                () -> Main.exitCode(new String[] {"-s"})
-            )
-        );
+    void exitCodeDashSReadFailure() throws IOException {
+        try (InputStream failing = new MainTest.FailingInput()) {
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> MainTest.withStdin(
+                    failing, () -> Main.exitCode(new String[] {"-s"})
+                )
+            );
+        }
     }
 
     @Test
@@ -544,18 +524,21 @@ final class MainTest {
         );
     }
 
-    private static ByteArrayInputStream input(final String format, final Object... args) {
+    private static ByteArrayInputStream input(final String format) {
         return new ByteArrayInputStream(
-            String.format(format, args).getBytes(StandardCharsets.UTF_8)
+            String.format(format).getBytes(StandardCharsets.UTF_8)
         );
     }
 
-    private static int withStdin(final InputStream input, final IntSupplier action) {
+    private static int withStdin(
+        final InputStream input, final IntSupplier action
+    ) {
+        final InputStream priorin = System.in;
         System.setIn(input);
         try {
             return action.getAsInt();
         } finally {
-            System.setIn(System.in);
+            System.setIn(priorin);
         }
     }
 
@@ -563,17 +546,40 @@ final class MainTest {
         final InputStream input, final ByteArrayOutputStream out,
         final ByteArrayOutputStream err, final IntSupplier action
     ) {
+        final InputStream priorin = System.in;
         final PrintStream priorout = System.out;
         final PrintStream priorerr = System.err;
-        System.setIn(input);
-        System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
-        System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
-        try {
+        try (
+            PrintStream sout = new PrintStream(out, true, StandardCharsets.UTF_8);
+            PrintStream serr = new PrintStream(err, true, StandardCharsets.UTF_8)
+        ) {
+            System.setIn(input);
+            System.setOut(sout);
+            System.setErr(serr);
             return action.getAsInt();
         } finally {
-            System.setIn(System.in);
+            System.setIn(priorin);
             System.setOut(priorout);
             System.setErr(priorerr);
+        }
+    }
+
+    /**
+     * Input stream whose every read fails.
+     *
+     * @since 1.0
+     */
+    private static final class FailingInput extends InputStream {
+
+        @Override
+        public int read() throws IOException {
+            throw new IOException();
+        }
+
+        @Override
+        public int read(final byte[] buf, final int off, final int len)
+            throws IOException {
+            throw new IOException();
         }
     }
 }
