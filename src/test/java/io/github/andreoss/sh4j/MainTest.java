@@ -28,6 +28,15 @@ import org.junit.jupiter.api.io.TempDir;
  */
 final class MainTest {
 
+    /** Standard input at class load. */
+    private static final InputStream STDIN = System.in;
+
+    /** Standard output at class load. */
+    private static final PrintStream STDOUT = System.out;
+
+    /** Standard error at class load. */
+    private static final PrintStream STDERR = System.err;
+
     /** Temporary root directory. */
     @TempDir
     private static Path root;
@@ -533,12 +542,11 @@ final class MainTest {
     private static int withStdin(
         final InputStream input, final IntSupplier action
     ) {
-        final InputStream priorin = System.in;
         System.setIn(input);
         try {
             return action.getAsInt();
         } finally {
-            System.setIn(priorin);
+            System.setIn(MainTest.STDIN);
         }
     }
 
@@ -546,9 +554,6 @@ final class MainTest {
         final InputStream input, final ByteArrayOutputStream out,
         final ByteArrayOutputStream err, final IntSupplier action
     ) {
-        final InputStream priorin = System.in;
-        final PrintStream priorout = System.out;
-        final PrintStream priorerr = System.err;
         try (
             PrintStream sout = new PrintStream(out, true, StandardCharsets.UTF_8);
             PrintStream serr = new PrintStream(err, true, StandardCharsets.UTF_8)
@@ -558,9 +563,9 @@ final class MainTest {
             System.setErr(serr);
             return action.getAsInt();
         } finally {
-            System.setIn(priorin);
-            System.setOut(priorout);
-            System.setErr(priorerr);
+            System.setIn(MainTest.STDIN);
+            System.setOut(MainTest.STDOUT);
+            System.setErr(MainTest.STDERR);
         }
     }
 
