@@ -28,14 +28,10 @@ import org.junit.jupiter.api.io.TempDir;
  */
 final class MainTest {
 
-    /** Standard input at class load. */
-    private static final InputStream STDIN = System.in;
-
-    /** Standard output at class load. */
-    private static final PrintStream STDOUT = System.out;
-
-    /** Standard error at class load. */
-    private static final PrintStream STDERR = System.err;
+    /** Standard streams at class load. */
+    private static final MainTest.Console ORIGINAL = new MainTest.Console(
+        System.in, System.out, System.err
+    );
 
     /** Temporary root directory. */
     @TempDir
@@ -546,7 +542,7 @@ final class MainTest {
         try {
             return action.getAsInt();
         } finally {
-            System.setIn(MainTest.STDIN);
+            MainTest.ORIGINAL.restore();
         }
     }
 
@@ -563,9 +559,27 @@ final class MainTest {
             System.setErr(serr);
             return action.getAsInt();
         } finally {
-            System.setIn(MainTest.STDIN);
-            System.setOut(MainTest.STDOUT);
-            System.setErr(MainTest.STDERR);
+            MainTest.ORIGINAL.restore();
+        }
+    }
+
+    /**
+     * Standard streams to put back after a test swaps them.
+     *
+     * @param in Standard input
+     * @param out Standard output
+     * @param err Standard error
+     * @since 1.0
+     */
+    private record Console(InputStream in, PrintStream out, PrintStream err) {
+
+        /**
+         * Installs these streams as the standard streams.
+         */
+        void restore() {
+            System.setIn(this.in);
+            System.setOut(this.out);
+            System.setErr(this.err);
         }
     }
 
