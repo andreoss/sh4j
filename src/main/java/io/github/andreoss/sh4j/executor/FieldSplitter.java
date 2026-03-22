@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class FieldSplitter {
+final class FieldSplitter {
 
     private FieldSplitter() {
     }
@@ -25,7 +25,7 @@ public final class FieldSplitter {
      * @param ifs   The IFS value (each character is a separator)
      * @return One field per non-IFS run
      */
-    public static List<String> splitFields(final String value, final String ifs) {
+    static List<String> splitFields(final String value, final String ifs) {
         final List<String> result;
         if (ifs == null || ifs.isEmpty()) {
             result = Collections.singletonList(value);
@@ -44,12 +44,12 @@ public final class FieldSplitter {
             }
             wschars = wsbuf.toString();
             nwschars = nwsbuf.toString();
-            result = splitByIfs(value, wschars, nwschars);
+            result = FieldSplitter.splitByIfs(value, wschars, nwschars);
         }
         return result;
     }
 
-    public static List<String> splitByIfs(
+    private static List<String> splitByIfs(
         final String value,
         final String wschars,
         final String nwschars

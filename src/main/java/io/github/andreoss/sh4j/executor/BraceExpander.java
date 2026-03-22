@@ -46,13 +46,23 @@ final class BraceExpander {
             if ("*".equals(name) || "@".equals(name)) {
                 result = String.valueOf(ctx.positionalParamsList().size() - 1);
             } else {
-                final String val = ctx.lookupVariable(name, env);
-                if (val == null) {
-                    result = "0";
-                } else {
-                    result = String.valueOf(val.length());
-                }
+                result = BraceExpander.lengthOfVariable(name, env, ctx);
             }
+        }
+        return result;
+    }
+
+    private static String lengthOfVariable(
+        final String name,
+        final Map<String, String> env,
+        final BuiltinContext ctx
+    ) {
+        final String val = ctx.lookupVariable(name, env);
+        final String result;
+        if (val == null) {
+            result = "0";
+        } else {
+            result = String.valueOf(val.length());
         }
         return result;
     }

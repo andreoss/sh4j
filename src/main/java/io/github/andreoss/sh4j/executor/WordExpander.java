@@ -165,7 +165,7 @@ public final class WordExpander {
      * @param word The source word
      * @return The de-quoted text
      */
-    public static String removeQuotes(final String word) {
+    static String removeQuotes(final String word) {
         return QuoteRemover.removeQuotes(word);
     }
 
