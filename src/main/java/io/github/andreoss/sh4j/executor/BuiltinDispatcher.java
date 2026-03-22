@@ -4,7 +4,6 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,12 +16,13 @@ import java.util.Map;
 final class BuiltinDispatcher {
 
     /** Map from built-in name to its implementation. */
-    private final Map<String, Builtin> registry = BuiltinRegistry.build();
+    private final Map<String, Builtin> registry;
 
     /**
      * Builds the dispatcher and registers every shell built-in.
      */
     BuiltinDispatcher() {
+        this.registry = BuiltinRegistry.build();
     }
 
     /**
@@ -51,24 +51,20 @@ final class BuiltinDispatcher {
      *
      * @param name        The command name
      * @param self        Narrow façade over the executor
-     * @param arguments   Command arguments (excluding the name)
-     * @param env         The live environment view
-     * @param assignments Inline assignments attached to this call
+     * @param call        Arguments, environment and inline assignments
      * @return The built-in's exit code, or null when not a built-in
      */
     Integer dispatch(
         final String name,
         final BuiltinContext self,
-        final List<String> arguments,
-        final Map<String, String> env,
-        final List<String> assignments
+        final Invocation call
     ) {
         final Builtin builtin = this.registry.get(name);
         final Integer code;
         if (builtin == null) {
             code = null;
         } else {
-            code = builtin.invoke(self, new Invocation(arguments, env, assignments));
+            code = builtin.invoke(self, call);
         }
         return code;
     }

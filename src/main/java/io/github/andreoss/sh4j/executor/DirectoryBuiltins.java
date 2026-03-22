@@ -46,11 +46,8 @@ final class DirectoryBuiltins {
         } else {
             target = self.expandVariables(args.get(0), env);
             if ("-".equals(target)) {
-                final String old = environment.get("OLDPWD");
-                code = DirectoryBuiltins.reportOldPwd(self, old);
-                if (old != null) {
-                    target = old;
-                }
+                target = environment.get("OLDPWD");
+                code = DirectoryBuiltins.reportOldPwd(self, target);
             }
         }
         if (code == 0) {
@@ -194,9 +191,7 @@ final class DirectoryBuiltins {
             good = false;
         }
         final String symbolic;
-        if (!good) {
-            symbolic = "u=,g=,o=";
-        } else {
+        if (good) {
             final int allbits = 7;
             symbolic = String.format(
                 "u=%s,g=%s,o=%s",
@@ -204,6 +199,8 @@ final class DirectoryBuiltins {
                 umaskBitsToString(allbits & ~((value >> 3) & allbits)),
                 umaskBitsToString(allbits & ~(value & allbits))
             );
+        } else {
+            symbolic = "u=,g=,o=";
         }
         return symbolic;
     }

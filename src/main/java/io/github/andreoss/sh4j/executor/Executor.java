@@ -980,7 +980,8 @@ public final class Executor implements BuiltinContext {
                     this.applyAssignments(cmd.getAssignments(), cenv);
                 }
                 final Integer bresult = this.dispatcher.dispatch(
-                    name, this, cmd.getArguments(), cenv, cmd.getAssignments()
+                    name, this,
+                    new Invocation(cmd.getArguments(), cenv, cmd.getAssignments())
                 );
                 if (bresult != null) {
                     code = bresult;

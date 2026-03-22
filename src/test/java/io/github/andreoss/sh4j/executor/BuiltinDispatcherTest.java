@@ -41,7 +41,8 @@ final class BuiltinDispatcherTest {
     void dispatchTrueReturnsZero() {
         MatcherAssert.assertThat(
             new BuiltinDispatcher().dispatch(
-                "true", null, Arrays.asList(), new HashMap<>(), Arrays.asList()
+                "true", null,
+                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
             ),
             CoreMatchers.equalTo(0)
         );
@@ -51,7 +52,8 @@ final class BuiltinDispatcherTest {
     void dispatchFalseReturnsOne() {
         MatcherAssert.assertThat(
             new BuiltinDispatcher().dispatch(
-                "false", null, Arrays.asList(), new HashMap<>(), Arrays.asList()
+                "false", null,
+                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
             ),
             CoreMatchers.equalTo(1)
         );
@@ -61,7 +63,8 @@ final class BuiltinDispatcherTest {
     void dispatchColonReturnsZero() {
         MatcherAssert.assertThat(
             new BuiltinDispatcher().dispatch(
-                ":", null, Arrays.asList(), new HashMap<>(), Arrays.asList()
+                ":", null,
+                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
             ),
             CoreMatchers.equalTo(0)
         );
@@ -71,7 +74,8 @@ final class BuiltinDispatcherTest {
     void dispatchUnknownReturnsNull() {
         MatcherAssert.assertThat(
             new BuiltinDispatcher().dispatch(
-                "nope", null, Arrays.asList(), new HashMap<>(), Arrays.asList()
+                "nope", null,
+                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
             ),
             CoreMatchers.nullValue()
         );
@@ -111,7 +115,10 @@ final class BuiltinDispatcherTest {
         disp.register("mybuiltin", (self, call) -> 42);
         MatcherAssert.assertThat(disp.isBuiltin("mybuiltin"), CoreMatchers.is(true));
         MatcherAssert.assertThat(
-            disp.dispatch("mybuiltin", null, Arrays.asList(), new HashMap<>(), Arrays.asList()),
+            disp.dispatch(
+                "mybuiltin", null,
+                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
+            ),
             CoreMatchers.equalTo(42)
         );
     }

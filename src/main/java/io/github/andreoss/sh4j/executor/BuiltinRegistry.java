@@ -27,6 +27,17 @@ final class BuiltinRegistry {
      */
     static Map<String, Builtin> build() {
         final Map<String, Builtin> registry = new HashMap<>();
+        BuiltinRegistry.addControl(registry);
+        BuiltinRegistry.addVariable(registry);
+        BuiltinRegistry.addDirectory(registry);
+        BuiltinRegistry.addCommand(registry);
+        BuiltinRegistry.addJob(registry);
+        BuiltinRegistry.addRead(registry);
+        BuiltinRegistry.addHistory(registry);
+        return registry;
+    }
+
+    private static void addControl(final Map<String, Builtin> registry) {
         registry.put("true", (self, call) -> 0);
         registry.put("false", (self, call) -> 1);
         registry.put(":", (self, call) -> 0);
@@ -57,6 +68,9 @@ final class BuiltinRegistry {
                 throw new ReturnSignal(code);
             }
         );
+    }
+
+    private static void addVariable(final Map<String, Builtin> registry) {
         registry.put(
             "unset",
             (self, call) -> VariableBuiltins.doUnset(
@@ -74,6 +88,51 @@ final class BuiltinRegistry {
             )
         );
         registry.put(
+            "shift",
+            (self, call) -> VariableBuiltins.doShift(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
+            "alias",
+            (self, call) -> VariableBuiltins.doAlias(
+                self,
+                call.arguments(),
+                call.env(),
+                call.assignments()
+            )
+        );
+        registry.put(
+            "unalias",
+            (self, call) -> VariableBuiltins.doUnalias(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
+            "set",
+            (self, call) -> VariableBuiltins.doSet(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
+            "readonly",
+            (self, call) -> VariableBuiltins.doReadonly(
+                self,
+                call.arguments(),
+                call.env(),
+                call.assignments()
+            )
+        );
+    }
+
+    private static void addDirectory(final Map<String, Builtin> registry) {
+        registry.put(
             "cd",
             (self, call) -> DirectoryBuiltins.doCd(
                 self,
@@ -90,6 +149,17 @@ final class BuiltinRegistry {
             )
         );
         registry.put(
+            "umask",
+            (self, call) -> DirectoryBuiltins.doUmask(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+    }
+
+    private static void addCommand(final Map<String, Builtin> registry) {
+        registry.put(
             "echo",
             (self, call) -> CommandBuiltins.doEcho(
                 self,
@@ -99,7 +169,7 @@ final class BuiltinRegistry {
         );
         registry.put(
             "eval",
-            (self, call) -> CommandBuiltins.doEval(
+            (self, call) -> ScriptBuiltins.doEval(
                 self,
                 call.arguments(),
                 call.env()
@@ -130,14 +200,6 @@ final class BuiltinRegistry {
             )
         );
         registry.put(
-            "wait",
-            (self, call) -> JobBuiltins.doWait(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
             "hash",
             (self, call) -> CommandBuiltins.doHash(
                 self,
@@ -146,57 +208,42 @@ final class BuiltinRegistry {
             )
         );
         registry.put(
+            "trap",
+            (self, call) -> ScriptBuiltins.doTrap(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
+            "times",
+            (self, call) -> ScriptBuiltins.doTimes(
+                self,
+                call.env()
+            )
+        );
+        registry.put(
+            ".",
+            (self, call) -> ScriptBuiltins.doDot(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+    }
+
+    private static void addJob(final Map<String, Builtin> registry) {
+        registry.put(
+            "wait",
+            (self, call) -> SignalBuiltins.doWait(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
             "kill",
-            (self, call) -> JobBuiltins.doKill(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "umask",
-            (self, call) -> DirectoryBuiltins.doUmask(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "shift",
-            (self, call) -> VariableBuiltins.doShift(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "read",
-            (self, call) -> ReadBuiltins.doRead(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "alias",
-            (self, call) -> VariableBuiltins.doAlias(
-                self,
-                call.arguments(),
-                call.env(),
-                call.assignments()
-            )
-        );
-        registry.put(
-            "unalias",
-            (self, call) -> VariableBuiltins.doUnalias(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "getopts",
-            (self, call) -> ReadBuiltins.doGetopts(
+            (self, call) -> SignalBuiltins.doKill(
                 self,
                 call.arguments(),
                 call.env()
@@ -226,6 +273,28 @@ final class BuiltinRegistry {
                 call.env()
             )
         );
+    }
+
+    private static void addRead(final Map<String, Builtin> registry) {
+        registry.put(
+            "read",
+            (self, call) -> ReadBuiltins.doRead(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+        registry.put(
+            "getopts",
+            (self, call) -> ReadBuiltins.doGetopts(
+                self,
+                call.arguments(),
+                call.env()
+            )
+        );
+    }
+
+    private static void addHistory(final Map<String, Builtin> registry) {
         registry.put(
             "fc",
             (self, call) -> HistoryBuiltins.doFc(
@@ -235,47 +304,6 @@ final class BuiltinRegistry {
                 call.assignments()
             )
         );
-        registry.put(
-            "set",
-            (self, call) -> VariableBuiltins.doSet(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "readonly",
-            (self, call) -> VariableBuiltins.doReadonly(
-                self,
-                call.arguments(),
-                call.env(),
-                call.assignments()
-            )
-        );
-        registry.put(
-            "trap",
-            (self, call) -> CommandBuiltins.doTrap(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        registry.put(
-            "times",
-            (self, call) -> CommandBuiltins.doTimes(
-                self,
-                call.env()
-            )
-        );
-        registry.put(
-            ".",
-            (self, call) -> CommandBuiltins.doDot(
-                self,
-                call.arguments(),
-                call.env()
-            )
-        );
-        return registry;
     }
 
     private static int parseLoopLevels(final List<String> args) {

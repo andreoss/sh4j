@@ -5,17 +5,7 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
-import io.github.andreoss.sh4j.lexer.CharReader;
-import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.parser.Parser;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -62,38 +52,6 @@ final class CommandBuiltins {
             self.outStream().println();
         }
         return 0;
-    }
-
-    /**
-     * Implementation of {@code eval STRING ...}.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code (0 on success)
-     */
-    static int doEval(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        final StringBuilder buf = new StringBuilder();
-        for (final String arg : args) {
-            if (buf.length() > 0) {
-                buf.append(' ');
-            }
-            buf.append(WordExpander.removeQuotes(self.expandVariables(arg, env)));
-        }
-        final String input = buf.toString();
-        final int code;
-        if (input.isEmpty()) {
-            code = 0;
-        } else {
-            code = self.execute(
-                new Parser(new Lexer(new CharReader(input))).parse()
-            );
-        }
-        return code;
     }
 
     /**
@@ -170,18 +128,9 @@ final class CommandBuiltins {
         final Map<String, String> env
     ) {
         final int code;
-        int idx = 0;
-        boolean verbose = false;
-        boolean locate = false;
-        while (idx < args.size() && args.get(idx).startsWith("-")) {
-            final String flag = args.get(idx);
-            if ("-v".equals(flag)) {
-                locate = true;
-            } else if ("-V".equals(flag)) {
-                verbose = true;
-            }
-            idx += 1;
-        }
+        final int idx = CommandBuiltins.firstOperand(args);
+        final boolean verbose = args.subList(0, idx).contains("-V");
+        final boolean locate = args.subList(0, idx).contains("-v");
         if (idx >= args.size()) {
             if (locate || verbose) {
                 code = 1;
@@ -199,6 +148,32 @@ final class CommandBuiltins {
             }
         }
         return code;
+    }
+
+    static int doHash(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env
+    ) {
+        int code = 0;
+        for (final String arg : args) {
+            if ("-r".equals(arg)) {
+                continue;
+            }
+            final String name = self.expandVariables(arg, env);
+            if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
+                code = 127;
+            }
+        }
+        return code;
+    }
+
+    private static int firstOperand(final List<String> args) {
+        int idx = 0;
+        while (idx < args.size() && args.get(idx).startsWith("-")) {
+            idx += 1;
+        }
+        return idx;
     }
 
     private static int describeCommand(
@@ -225,135 +200,6 @@ final class CommandBuiltins {
                 self.outStream().println(String.format("%s is %s", name, resolved));
             } else {
                 self.outStream().println(resolved);
-            }
-        }
-        return code;
-    }
-
-    static int doHash(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        int code = 0;
-        for (final String arg : args) {
-            if ("-r".equals(arg)) {
-                continue;
-            }
-            final String name = self.expandVariables(arg, env);
-            if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
-                code = 127;
-            }
-        }
-        return code;
-    }
-
-    /**
-     * Implementation of {@code trap [action signal ...]}.
-     * Only the EXIT trap is executed by the executor; other signals are
-     * recorded but the JDK does not expose portable signal handlers.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code: 0
-     */
-    static int doTrap(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        final int code;
-        if (args.isEmpty()) {
-            for (final Map.Entry<String, String> entry : self.traps().entrySet()) {
-                self.outStream().println(
-                    String.format("trap -- '%s' %s", entry.getValue(), entry.getKey())
-                );
-            }
-            code = 0;
-        } else if ("-".equals(args.get(0))) {
-            for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                self.setTrap(args.get(idx).toUpperCase(Locale.ROOT), null);
-            }
-            code = 0;
-        } else {
-            final String action = WordExpander.removeQuotes(args.get(0));
-            for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                self.setTrap(
-                    args.get(idx).toUpperCase(Locale.ROOT), action
-                );
-            }
-            code = 0;
-        }
-        return code;
-    }
-
-    /**
-     * Implementation of {@code times}.
-     *
-     * @param self The context
-     * @param env The environment
-     * @return The exit code: 0
-     */
-    static int doTimes(
-        final BuiltinContext self,
-        final Map<String, String> env
-    ) {
-        self.outStream().println("0m0.000s 0m0.000s");
-        self.outStream().println("0m0.000s 0m0.000s");
-        return 0;
-    }
-
-    /**
-     * Implementation of {@code . file [args...]}.
-     *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param env     Environment for word expansion
-     * @return The sourced script's exit status, or 1 on IO/parse failure
-     */
-    static int doDot(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        int code;
-        if (args.isEmpty()) {
-            code = 1;
-        } else {
-            final String path = WordExpander.removeQuotes(
-                self.expandVariables(args.get(0), env)
-            );
-            try {
-                final File raw = new File(path);
-                final Path rawpath;
-                if (raw.isAbsolute()) {
-                    rawpath = raw.toPath();
-                } else {
-                    rawpath = new File(self.currentDirectory(), path).toPath();
-                }
-                final String source = new String(
-                    Files.readAllBytes(rawpath), StandardCharsets.UTF_8
-                );
-                final List<String> saved = new ArrayList<>(self.positionalParamsList());
-                if (args.size() > 1) {
-                    self.setPositionalParams(args.subList(1, args.size()));
-                }
-                try {
-                    try {
-                        code = self.execute(
-                            new Parser(new Lexer(new CharReader(source))).parse()
-                        );
-                    } catch (final ReturnSignal ex) {
-                        code = ex.getCode();
-                    }
-                } finally {
-                    self.positionalParamsList().clear();
-                    self.positionalParamsList().addAll(saved);
-                }
-            } catch (final IOException ex) {
-                self.errStream().println(String.format("sh: %s: cannot open", path));
-                code = 1;
             }
         }
         return code;

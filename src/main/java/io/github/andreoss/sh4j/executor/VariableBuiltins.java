@@ -246,28 +246,6 @@ final class VariableBuiltins {
         return 0;
     }
 
-    private static char optionFlag(final String option) {
-        final char flag;
-        if ("errexit".equals(option)) {
-            flag = 'e';
-        } else if ("nounset".equals(option)) {
-            flag = 'u';
-        } else if ("noglob".equals(option)) {
-            flag = 'f';
-        } else if ("xtrace".equals(option)) {
-            flag = 'x';
-        } else if ("noexec".equals(option)) {
-            flag = 'n';
-        } else if ("verbose".equals(option)) {
-            flag = 'v';
-        } else if ("allexport".equals(option)) {
-            flag = 'a';
-        } else {
-            flag = 0;
-        }
-        return flag;
-    }
-
     /**
      * Implementation of {@code alias [name[=value]...]}.
      * POSIX 2.14: without args, prints all aliases.
@@ -340,6 +318,28 @@ final class VariableBuiltins {
             }
         }
         return code;
+    }
+
+    private static char optionFlag(final String option) {
+        final char flag;
+        if ("errexit".equals(option)) {
+            flag = 'e';
+        } else if ("nounset".equals(option)) {
+            flag = 'u';
+        } else if ("noglob".equals(option)) {
+            flag = 'f';
+        } else if ("xtrace".equals(option)) {
+            flag = 'x';
+        } else if ("noexec".equals(option)) {
+            flag = 'n';
+        } else if ("verbose".equals(option)) {
+            flag = 'v';
+        } else if ("allexport".equals(option)) {
+            flag = 'a';
+        } else {
+            flag = 0;
+        }
+        return flag;
     }
 
     private static int applyAliasArg(

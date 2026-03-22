@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Built-ins that signal, wait for and move jobs.
+ * Built-ins that list and move background jobs.
  *
  * @since 1.0
  */
@@ -21,113 +21,6 @@ final class JobBuiltins {
     private JobBuiltins() {
     }
 
-    /**
-     * Implementation of {@code kill [-s SIG | -SIG] PID... | -l}.
-     * POSIX 2.14. JDK constraint: ProcessHandle only supports TERM
-     * (destroy) and KILL (destroyForcibly); other signals are
-     * accepted at the command line but mapped to TERM (which is the
-     * POSIX default) and a soft warning is not emitted.
-     *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param env     Environment for word expansion
-     * @return The exit code: 0 on success, 1 on usage error, 127 if any PID cannot be signalled
-     */
-    static int doKill(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        int code = 0;
-        if (args.isEmpty()) {
-            code = 1;
-        } else if ("-l".equals(args.get(0))) {
-            self.outStream().println("HUP INT QUIT KILL TERM");
-        } else {
-            boolean forcibly = false;
-            int idx = 0;
-            if ("-s".equals(args.get(0)) && args.size() >= 2) {
-                forcibly = "KILL".equals(args.get(1)) || "9".equals(args.get(1));
-                idx = 2;
-            } else if (args.get(0).startsWith("-") && args.get(0).length() > 1) {
-                final String sig = args.get(0).substring(1);
-                forcibly = "KILL".equals(sig) || "9".equals(sig);
-                idx = 1;
-            }
-            if (idx >= args.size()) {
-                code = 1;
-            }
-            while (idx < args.size() && code == 0) {
-                code = signalOne(
-                    self.expandVariables(args.get(idx), env), forcibly
-                );
-                idx += 1;
-            }
-        }
-        return code;
-    }
-
-    private static int signalOne(final String pidstr, final boolean forcibly) {
-        int code;
-        try {
-            final long pid = Long.parseLong(pidstr);
-            if (JobManager.isJobPid(pid)) {
-                code = 127;
-            } else {
-                final Optional<ProcessHandle> handle = ProcessHandle.of(pid);
-                if (handle.isPresent()) {
-                    final boolean sent;
-                    if (forcibly) {
-                        sent = handle.get().destroyForcibly();
-                    } else {
-                        sent = handle.get().destroy();
-                    }
-                    if (sent) {
-                        code = 0;
-                    } else {
-                        code = 127;
-                    }
-                } else {
-                    code = 127;
-                }
-            }
-        } catch (final NumberFormatException ex) {
-            code = 127;
-        }
-        return code;
-    }
-
-    /**
-     * Implementation of {@code wait [PID...]}.
-     * POSIX 2.14: without args, waits for all background jobs (exit 0).
-     * With PID, waits for that bg job if known (exit 0), else returns 127
-     * (POSIX "unknown process" status).
-     *
-     * @param self    Builtin context
-     * @param args    Args after the command name (PIDs)
-     * @param env     Environment for word expansion
-     * @return The exit code: 0 on success, 127 when a named PID is not a known bg job
-     */
-    static int doWait(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        int code = 0;
-        if (args.isEmpty()) {
-            self.waitForBackgroundJobs();
-        } else {
-            for (final String arg : args) {
-                final String expanded = self.expandVariables(arg, env);
-                try {
-                    code = self.jobManager().waitForPid(Long.parseLong(expanded));
-                } catch (final NumberFormatException ex) {
-                    code = 127;
-                }
-            }
-        }
-        return code;
-    }
 
     /**
      * Implementation of {@code jobs [%n...]}.
@@ -144,23 +37,7 @@ final class JobBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        final JobManager mgr = self.jobManager();
-        final List<Job> all;
-        if (args.isEmpty()) {
-            all = mgr.listJobs();
-        } else {
-            all = new ArrayList<>(0);
-            for (final String arg : args) {
-                final int id = parseJobId(arg);
-                if (id > 0) {
-                    final Job job = mgr.getJob(id);
-                    if (job != null) {
-                        all.add(job);
-                    }
-                }
-            }
-        }
-        for (final Job job : all) {
+        for (final Job job : JobBuiltins.selectJobs(self.jobManager(), args)) {
             final String state = switch (job.getState()) {
                 case RUNNING -> "Running";
                 case DONE -> "Done";
@@ -189,38 +66,20 @@ final class JobBuiltins {
         final Map<String, String> env
     ) {
         final JobManager mgr = self.jobManager();
-        final List<Integer> ids = new ArrayList<>(0);
+        final Optional<List<Integer>> ids;
         if (args.isEmpty()) {
-            final List<Job> all = mgr.listJobs();
-            if (all.isEmpty()) {
-                self.errStream().println("sh: bg: no current job");
-                return 1;
-            }
-            ids.add(all.get(all.size() - 1).getId());
+            ids = JobBuiltins.currentJob(self, mgr, "bg").map(List::of);
         } else {
-            for (final String arg : args) {
-                final int id = parseJobId(arg);
-                if (id <= 0 || mgr.getJob(id) == null) {
-                    self.errStream().println(String.format("sh: bg: %s: no such job", arg));
-                    return 1;
-                }
-                ids.add(id);
-            }
+            ids = JobBuiltins.namedJobs(self, mgr, args);
         }
-        for (final int id : ids) {
-            final Job job = mgr.getJob(id);
-            if (job != null && job.getState() == JobManager.State.STOPPED) {
-                job.resume();
-            }
-            final String command;
-            if (job == null) {
-                command = "";
-            } else {
-                command = job.getCommand();
-            }
-            self.outStream().println(String.format("[%d] %s", id, command));
+        final int code;
+        if (ids.isPresent()) {
+            JobBuiltins.resumeAll(self, mgr, ids.get());
+            code = 0;
+        } else {
+            code = 1;
         }
-        return 0;
+        return code;
     }
 
     /**
@@ -239,28 +98,133 @@ final class JobBuiltins {
         final Map<String, String> env
     ) {
         final JobManager mgr = self.jobManager();
-        final int id;
+        final Optional<Integer> id;
         if (args.isEmpty()) {
-            final List<Job> all = mgr.listJobs();
-            if (all.isEmpty()) {
-                self.errStream().println("sh: fg: no current job");
-                return 1;
-            }
-            id = all.get(all.size() - 1).getId();
+            id = JobBuiltins.currentJob(self, mgr, "fg");
         } else {
-            id = parseJobId(args.get(0));
-            if (id <= 0) {
-                self.errStream().println(String.format("sh: fg: %s: no such job", args.get(0)));
-                return 1;
+            id = JobBuiltins.fgTarget(self, args.get(0));
+        }
+        final Optional<Job> job = id.flatMap(
+            num -> JobBuiltins.existing(self, mgr, num)
+        );
+        final int code;
+        if (job.isPresent()) {
+            self.outStream().println(job.get().getCommand());
+            code = mgr.waitForJob(id.get());
+        } else {
+            code = 1;
+        }
+        return code;
+    }
+
+    private static List<Job> selectJobs(
+        final JobManager mgr, final List<String> args
+    ) {
+        final List<Job> all;
+        if (args.isEmpty()) {
+            all = mgr.listJobs();
+        } else {
+            all = new ArrayList<>(0);
+            for (final String arg : args) {
+                JobBuiltins.lookup(mgr, arg).ifPresent(all::add);
             }
         }
-        final Job job = mgr.getJob(id);
-        if (job == null) {
-            self.errStream().println(String.format("sh: fg: %d: no such job", id));
-            return 1;
+        return all;
+    }
+
+    private static Optional<Job> lookup(final JobManager mgr, final String arg) {
+        final int id = JobBuiltins.parseJobId(arg);
+        final Optional<Job> job;
+        if (id > 0) {
+            job = Optional.ofNullable(mgr.getJob(id));
+        } else {
+            job = Optional.empty();
         }
-        self.outStream().println(job.getCommand());
-        return mgr.waitForJob(id);
+        return job;
+    }
+
+    private static Optional<Integer> currentJob(
+        final BuiltinIo self, final JobManager mgr, final String name
+    ) {
+        final List<Job> all = mgr.listJobs();
+        final Optional<Integer> id;
+        if (all.isEmpty()) {
+            self.errStream().println(String.format("sh: %s: no current job", name));
+            id = Optional.empty();
+        } else {
+            id = Optional.of(all.get(all.size() - 1).getId());
+        }
+        return id;
+    }
+
+    private static Optional<List<Integer>> namedJobs(
+        final BuiltinIo self, final JobManager mgr, final List<String> args
+    ) {
+        final List<Integer> ids = new ArrayList<>(args.size());
+        boolean found = true;
+        int idx = 0;
+        while (found && idx < args.size()) {
+            final String arg = args.get(idx);
+            final int id = JobBuiltins.parseJobId(arg);
+            found = id > 0 && mgr.getJob(id) != null;
+            if (found) {
+                ids.add(id);
+            } else {
+                self.errStream().println(String.format("sh: bg: %s: no such job", arg));
+            }
+            idx += 1;
+        }
+        final Optional<List<Integer>> result;
+        if (found) {
+            result = Optional.of(ids);
+        } else {
+            result = Optional.empty();
+        }
+        return result;
+    }
+
+    private static void resumeAll(
+        final BuiltinIo self, final JobManager mgr, final List<Integer> ids
+    ) {
+        for (final int id : ids) {
+            final Job job = mgr.getJob(id);
+            final String command;
+            if (job == null) {
+                command = "";
+            } else {
+                command = job.getCommand();
+                JobBuiltins.resumeStopped(job);
+            }
+            self.outStream().println(String.format("[%d] %s", id, command));
+        }
+    }
+
+    private static void resumeStopped(final Job job) {
+        if (job.getState() == JobManager.State.STOPPED) {
+            job.resume();
+        }
+    }
+
+    private static Optional<Integer> fgTarget(final BuiltinIo self, final String arg) {
+        final int id = JobBuiltins.parseJobId(arg);
+        final Optional<Integer> result;
+        if (id > 0) {
+            result = Optional.of(id);
+        } else {
+            self.errStream().println(String.format("sh: fg: %s: no such job", arg));
+            result = Optional.empty();
+        }
+        return result;
+    }
+
+    private static Optional<Job> existing(
+        final BuiltinIo self, final JobManager mgr, final int id
+    ) {
+        final Optional<Job> job = Optional.ofNullable(mgr.getJob(id));
+        if (job.isEmpty()) {
+            self.errStream().println(String.format("sh: fg: %d: no such job", id));
+        }
+        return job;
     }
 
     private static int parseJobId(final String arg) {
@@ -270,7 +234,7 @@ final class JobBuiltins {
         } else {
             digits = arg;
         }
-        int parsed = -1;
+        int parsed;
         try {
             parsed = Integer.parseInt(digits);
         } catch (final NumberFormatException ex) {

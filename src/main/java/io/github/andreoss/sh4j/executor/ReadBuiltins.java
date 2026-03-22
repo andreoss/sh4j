@@ -84,6 +84,30 @@ final class ReadBuiltins {
         return code;
     }
 
+    /**
+     * Implementation of {@code getopts optstring var [args...]}.
+     * POSIX 2.14: parses option characters from positional parameters
+     * (or optional args). Uses OPTIND/OPTARG/OPTERR env vars for state.
+     *
+     * @param self The context
+     * @param args The arguments
+     * @param env The environment
+     * @return The exit code: 0 if an option was found, 1 if all options processed
+     */
+    static int doGetopts(
+        final BuiltinContext self,
+        final List<String> args,
+        final Map<String, String> env
+    ) {
+        final int code;
+        if (args.size() < 2) {
+            code = 1;
+        } else {
+            code = doGetoptsBody(self, args);
+        }
+        return code;
+    }
+
     private static String processReadEscapes(final String line) {
         final StringBuilder out = new StringBuilder(line.length());
         boolean escaped = false;
@@ -151,30 +175,6 @@ final class ReadBuiltins {
             out.append(fields.get(idx));
         }
         return out.toString();
-    }
-
-    /**
-     * Implementation of {@code getopts optstring var [args...]}.
-     * POSIX 2.14: parses option characters from positional parameters
-     * (or optional args). Uses OPTIND/OPTARG/OPTERR env vars for state.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code: 0 if an option was found, 1 if all options processed
-     */
-    static int doGetopts(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        final int code;
-        if (args.size() < 2) {
-            code = 1;
-        } else {
-            code = doGetoptsBody(self, args);
-        }
-        return code;
     }
 
     private static int doGetoptsBody(
