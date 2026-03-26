@@ -99,47 +99,21 @@ final class VariableBuiltins {
      * Implementation of {@code readonly [-p] [name[=value]...]}.
      * POSIX 2.14: marks variables as read-only.
      *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param env     Environment for variable lookup
-     * @param assigns Inline assignments (unused)
+     * @param self Builtin context
+     * @param call Arguments, environment and inline assignments
      * @return The exit code: 0 on success, 1 on error
      */
-    static int doReadonly(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env,
-        final List<String> assigns
-    ) {
-        final List<String> all = new ArrayList<>(args);
-        all.addAll(assigns);
-        final Map<String, String> environment = self.environmentMap();
+    static int doReadonly(final BuiltinContext self, final Invocation call) {
+        final List<String> all = new ArrayList<>(call.arguments());
+        all.addAll(call.assignments());
         if (!all.isEmpty() && "-p".equals(all.get(0))) {
             all.remove(0);
         }
         if (all.isEmpty()) {
-            for (final Map.Entry<String, String> entry : environment.entrySet()) {
-                if (self.isReadonly(entry.getKey())) {
-                    self.outStream().println(
-                        String.format(
-                            "readonly %s=%s", entry.getKey(), entry.getValue()
-                        )
-                    );
-                }
-            }
+            VariableBuiltins.printReadonly(self);
         } else {
             for (final String arg : all) {
-                final int eqidx = arg.indexOf('=');
-                if (eqidx >= 0) {
-                    final String name = arg.substring(0, eqidx);
-                    final String expanded = self.expandVariables(
-                        arg.substring(eqidx + 1), env
-                    );
-                    environment.put(name, WordExpander.removeQuotes(expanded));
-                    self.markReadonly(name);
-                } else {
-                    self.markReadonly(arg);
-                }
+                VariableBuiltins.markReadonly(self, arg, call.env());
             }
         }
         return 0;
@@ -180,197 +154,27 @@ final class VariableBuiltins {
         }
         return code;
     }
-
-    /**
-     * Implementation of {@code set [-efux] [--] [arg...]}.
-     * POSIX 2.14: sets shell options and positional parameters.
-     *
-     * @param self    Builtin context
-     * @param args    Args after the command name
-     * @param env     Environment (unused)
-     * @return The exit code: 0
-     */
-    static int doSet(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        String flags = self.shellFlags();
-        int idx = 0;
-        boolean sawdash = false;
-        while (idx < args.size()) {
-            final String flag = args.get(idx);
-            if ("--".equals(flag)) {
-                idx = idx + 1;
-                sawdash = true;
-                break;
-            }
-            if (("-o".equals(flag) || "+o".equals(flag)) && idx + 1 < args.size()) {
-                final String option = args.get(idx + 1);
-                final char opt = optionFlag(option);
-                if (opt != 0) {
-                    if ("-o".equals(flag)) {
-                        if (flags.indexOf(opt) < 0) {
-                            flags = flags + opt;
-                        }
-                    } else {
-                        flags = flags.replace(String.valueOf(opt), "");
-                    }
-                }
-                idx = idx + 2;
-                continue;
-            }
-            if (flag.length() < 2
-                || !("-".equals(flag.substring(0, 1)) || "+".equals(flag.substring(0, 1)))) {
-                break;
-            }
-            final boolean enable = "-".equals(flag.substring(0, 1));
-            for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
-                final char chr = flag.charAt(fidx);
-                if (enable && flags.indexOf(chr) < 0) {
-                    flags = flags + chr;
-                } else if (!enable) {
-                    flags = flags.replace(String.valueOf(chr), "");
-                }
-            }
-            idx = idx + 1;
-        }
-        self.setShellFlags(flags);
-        if (sawdash || idx < args.size()) {
-            final List<String> params = new ArrayList<>(0);
-            for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
-                params.addAll(self.expandArguments(args.get(aidx), env));
-            }
-            self.setPositionalParams(params);
-        }
-        return 0;
-    }
-
-    /**
-     * Implementation of {@code alias [name[=value]...]}.
-     * POSIX 2.14: without args, prints all aliases.
-     * With name=value, sets an alias. With plain name, prints that alias.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @param assigns The assignments
-     * @return The exit code: 0 on success, 1 if any named alias is undefined
-     */
-    static int doAlias(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env,
-        final List<String> assigns
-    ) {
-        final Map<String, String> aliases = self.aliases();
-        int code = 0;
-        final boolean hasargs = !args.isEmpty() || !assigns.isEmpty();
-        if (!hasargs) {
-            for (final Map.Entry<String, String> entry : aliases.entrySet()) {
+    private static void printReadonly(final BuiltinContext self) {
+        for (final Map.Entry<String, String> entry : self.environmentMap().entrySet()) {
+            if (self.isReadonly(entry.getKey())) {
                 self.outStream().println(
-                    String.format("%s='%s'", entry.getKey(), entry.getValue())
+                    String.format("readonly %s=%s", entry.getKey(), entry.getValue())
                 );
             }
-        } else {
-            for (final String arg : args) {
-                code = applyAliasArg(self, aliases, arg, code);
-            }
-            for (final String assign : assigns) {
-                code = applyAliasArg(self, aliases, assign, code);
-            }
         }
-        return code;
     }
 
-    /**
-     * Implementation of {@code unalias [-a] name...}.
-     * POSIX 2.14: removes named aliases, or all aliases with -a.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code: 0 on success, 1 if any named alias doesn't exist
-     */
-    static int doUnalias(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
+    private static void markReadonly(
+        final BuiltinContext self, final String arg, final Map<String, String> env
     ) {
-        final Map<String, String> aliases = self.aliases();
-        int code = 0;
-        boolean all = false;
-        int idx = 0;
-        if (!args.isEmpty() && "-a".equals(args.get(0))) {
-            all = true;
-            idx = 1;
-        }
-        if (all) {
-            aliases.clear();
-        } else {
-            for (; idx < args.size(); idx = idx + 1) {
-                final String name = args.get(idx);
-                if (aliases.containsKey(name)) {
-                    aliases.remove(name);
-                } else {
-                    code = 1;
-                }
-            }
-        }
-        return code;
-    }
-
-    private static char optionFlag(final String option) {
-        final char flag;
-        if ("errexit".equals(option)) {
-            flag = 'e';
-        } else if ("nounset".equals(option)) {
-            flag = 'u';
-        } else if ("noglob".equals(option)) {
-            flag = 'f';
-        } else if ("xtrace".equals(option)) {
-            flag = 'x';
-        } else if ("noexec".equals(option)) {
-            flag = 'n';
-        } else if ("verbose".equals(option)) {
-            flag = 'v';
-        } else if ("allexport".equals(option)) {
-            flag = 'a';
-        } else {
-            flag = 0;
-        }
-        return flag;
-    }
-
-    private static int applyAliasArg(
-        final BuiltinContext self, final Map<String, String> aliases,
-        final String arg, final int code
-    ) {
-        int result = code;
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
-            String value = arg.substring(eqidx + 1);
-            if (VariableBuiltins.isQuoteWrapped(value)) {
-                value = value.substring(1, value.length() - 1);
-            }
-            aliases.put(arg.substring(0, eqidx), value);
-        } else if (aliases.containsKey(arg)) {
-            self.outStream().println(
-                String.format("%s='%s'", arg, aliases.get(arg))
-            );
+            final String name = arg.substring(0, eqidx);
+            final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
+            self.environmentMap().put(name, WordExpander.removeQuotes(expanded));
+            self.markReadonly(name);
         } else {
-            result = 1;
+            self.markReadonly(arg);
         }
-        return result;
-    }
-
-    private static boolean isQuoteWrapped(final String text) {
-        final int edge = text.length() - 1;
-        if (edge < 1) {
-            return false;
-        }
-        final char quote = text.charAt(0);
-        return text.charAt(edge) == quote
-            && (quote == '\'' || quote == '"');
     }
 }

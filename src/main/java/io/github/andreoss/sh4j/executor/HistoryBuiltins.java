@@ -9,7 +9,6 @@ import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.Parser;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The command-history built-in.
@@ -22,6 +21,7 @@ final class HistoryBuiltins {
     private HistoryBuiltins() {
     }
 
+
     /**
      * Implementation of {@code fc [-l] [-n] [-s pat=rep] [first [last]]}.
      * POSIX 2.14: lists or re-executes history entries.
@@ -29,83 +29,53 @@ final class HistoryBuiltins {
      * {@code -s pat=rep} substitutes and re-executes the last command.
      *
      * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @param assigns The assignments
+     * @param call Arguments, environment and inline assignments
      * @return The exit code: 0 on success, 1 on error
      */
-    static int doFc(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env,
-        final List<String> assigns
-    ) {
-        boolean listmode = true;
-        boolean nonumbers = false;
-        String substitute = null;
-        int idx = 0;
-        while (idx < args.size() && args.get(idx).startsWith("-")
-            && !args.get(idx).matches("-\\d+")) {
-            final String flag = args.get(idx);
-            for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
-                final char chr = flag.charAt(fidx);
-                if (chr == 'l') {
-                    listmode = true;
-                } else if (chr == 'n') {
-                    nonumbers = true;
-                } else if (chr == 'e') {
-                    idx = idx + 1;
-                    if (idx >= args.size()) {
-                        self.errStream().println("sh: fc: -e requires argument");
-                        return 1;
-                    }
-                } else if (chr == 's') {
-                    listmode = false;
-                    if (idx + 1 < args.size() && args.get(idx + 1).contains("=")) {
-                        substitute = args.get(idx + 1);
-                        idx = idx + 1;
-                    } else if (!assigns.isEmpty()) {
-                        substitute = assigns.get(0);
-                    } else {
-                        self.errStream().println("sh: fc: -s requires pat=rep");
-                        return 1;
-                    }
-                    fidx = flag.length();
-                } else {
-                    self.errStream().println(String.format("sh: fc: unknown option -%s", chr));
-                    return 1;
-                }
-            }
-            idx = idx + 1;
-        }
-        final CommandHistory hist = self.history();
-        if (hist.size() == 0) {
+    static int doFc(final BuiltinContext self, final Invocation call) {
+        final FcOptions opts = new FcOptions(
+            call.arguments(), call.assignments()
+        ).parse();
+        final int code;
+        if (opts.error().isPresent()) {
+            self.errStream().println(opts.error().get());
+            code = 1;
+        } else if (self.history().size() == 0) {
             self.errStream().println("sh: fc: history is empty");
-            return 1;
-        }
-        int first;
-        if (idx < args.size()) {
-            first = parseFcNumber(args.get(idx));
-            idx = idx + 1;
+            code = 1;
         } else {
-            first = hist.lastNumber() - 15;
-            if (first < 1) {
-                first = 1;
-            }
+            code = HistoryBuiltins.run(self, opts);
+        }
+        return code;
+    }
+
+    private static int run(final BuiltinContext self, final FcOptions opts) {
+        final CommandHistory hist = self.history();
+        final List<String> rest = opts.operands();
+        final int first;
+        if (rest.isEmpty()) {
+            first = Math.max(1, hist.lastNumber() - 15);
+        } else {
+            first = HistoryBuiltins.parseFcNumber(rest.get(0));
         }
         final int last;
-        if (idx < args.size()) {
-            last = parseFcNumber(args.get(idx));
+        if (rest.size() > 1) {
+            last = HistoryBuiltins.parseFcNumber(rest.get(1));
         } else {
             last = hist.lastNumber();
         }
-        if (substitute != null) {
-            return fcSubstitute(self, hist, substitute, first);
+        final int code;
+        if (opts.substitution().isPresent()) {
+            code = HistoryBuiltins.fcSubstitute(
+                self, opts.substitution().get(), hist.get(first), first
+            );
+        } else if (opts.listing()) {
+            HistoryBuiltins.fcList(self, hist.list(first, last), opts.unnumbered());
+            code = 0;
+        } else {
+            code = 0;
         }
-        if (listmode) {
-            return fcList(self, hist, first, last, nonumbers);
-        }
-        return 0;
+        return code;
     }
 
     private static int parseFcNumber(final String arg) {
@@ -118,11 +88,10 @@ final class HistoryBuiltins {
         return parsed;
     }
 
-    private static int fcList(
-        final BuiltinContext self, final CommandHistory hist,
-        final int first, final int last, final boolean nonumbers
+    private static void fcList(
+        final BuiltinIo self, final List<HistoryEntry> entries,
+        final boolean nonumbers
     ) {
-        final List<HistoryEntry> entries = hist.list(first, last);
         for (final HistoryEntry entry : entries) {
             if (nonumbers) {
                 self.outStream().println(String.format("\t%s", entry.command()));
@@ -132,29 +101,31 @@ final class HistoryBuiltins {
                 );
             }
         }
-        return 0;
     }
 
     private static int fcSubstitute(
-        final BuiltinContext self, final CommandHistory hist,
-        final String pattern, final int number
+        final BuiltinContext self, final String pattern,
+        final String cmd, final int number
     ) {
         final int eqidx = pattern.indexOf('=');
+        final int code;
         if (eqidx < 0) {
             self.errStream().println("sh: fc: invalid substitution pattern");
-            return 1;
+            code = 1;
+        } else if (cmd == null) {
+            self.errStream().println(
+                String.format("sh: fc: %d: no such history entry", number)
+            );
+            code = 1;
+        } else {
+            final String replaced = cmd.replace(
+                pattern.substring(0, eqidx), pattern.substring(eqidx + 1)
+            );
+            self.outStream().println(replaced);
+            code = self.execute(
+                new Parser(new Lexer(new CharReader(replaced))).parse()
+            );
         }
-        final String oldstr = pattern.substring(0, eqidx);
-        final String newstr = pattern.substring(eqidx + 1);
-        final String cmd = hist.get(number);
-        if (cmd == null) {
-            self.errStream().println(String.format("sh: fc: %d: no such history entry", number));
-            return 1;
-        }
-        final String replaced = cmd.replace(oldstr, newstr);
-        self.outStream().println(replaced);
-        return self.execute(
-            new Parser(new Lexer(new CharReader(replaced))).parse()
-        );
+        return code;
     }
 }

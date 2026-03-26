@@ -97,16 +97,11 @@ final class BuiltinRegistry {
         );
         registry.put(
             "alias",
-            (self, call) -> VariableBuiltins.doAlias(
-                self,
-                call.arguments(),
-                call.env(),
-                call.assignments()
-            )
+            AliasBuiltins::doAlias
         );
         registry.put(
             "unalias",
-            (self, call) -> VariableBuiltins.doUnalias(
+            (self, call) -> AliasBuiltins.doUnalias(
                 self,
                 call.arguments(),
                 call.env()
@@ -114,20 +109,11 @@ final class BuiltinRegistry {
         );
         registry.put(
             "set",
-            (self, call) -> VariableBuiltins.doSet(
-                self,
-                call.arguments(),
-                call.env()
-            )
+            (self, call) -> new SetCommand(self, call.arguments()).run(call.env())
         );
         registry.put(
             "readonly",
-            (self, call) -> VariableBuiltins.doReadonly(
-                self,
-                call.arguments(),
-                call.env(),
-                call.assignments()
-            )
+            VariableBuiltins::doReadonly
         );
     }
 
@@ -297,12 +283,7 @@ final class BuiltinRegistry {
     private static void addHistory(final Map<String, Builtin> registry) {
         registry.put(
             "fc",
-            (self, call) -> HistoryBuiltins.doFc(
-                self,
-                call.arguments(),
-                call.env(),
-                call.assignments()
-            )
+            HistoryBuiltins::doFc
         );
     }
 
