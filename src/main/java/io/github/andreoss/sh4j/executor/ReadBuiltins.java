@@ -20,7 +20,6 @@ final class ReadBuiltins {
     private ReadBuiltins() {
     }
 
-
     /**
      * Implementation of {@code read [-r] var...}.
      * POSIX 2.14: reads one line from stdin, splits by IFS into variables.

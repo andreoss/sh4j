@@ -21,7 +21,6 @@ final class HistoryBuiltins {
     private HistoryBuiltins() {
     }
 
-
     /**
      * Implementation of {@code fc [-l] [-n] [-s pat=rep] [first [last]]}.
      * POSIX 2.14: lists or re-executes history entries.

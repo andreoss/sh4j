@@ -23,7 +23,7 @@ final class SetCommand {
     private final List<String> args;
 
     /** Shell flags being built. */
-    private final StringBuilder flags;
+    private String flags;
 
     /** Index of the next unread argument. */
     private int idx;
@@ -41,9 +41,22 @@ final class SetCommand {
      * @param args Arguments after the command name
      */
     SetCommand(final BuiltinContext self, final List<String> args) {
+        this(self, args, self.shellFlags());
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param self The context
+     * @param args Arguments after the command name
+     * @param flags The current shell flags
+     */
+    private SetCommand(
+        final BuiltinContext self, final List<String> args, final String flags
+    ) {
         this.self = self;
         this.args = args;
-        this.flags = new StringBuilder(self.shellFlags());
+        this.flags = flags;
         this.idx = 0;
         this.sawdash = false;
         this.done = false;
@@ -59,7 +72,7 @@ final class SetCommand {
         while (!this.done && this.idx < this.args.size()) {
             this.step(this.args.get(this.idx));
         }
-        this.self.setShellFlags(this.flags.toString());
+        this.self.setShellFlags(this.flags);
         if (this.sawdash || this.idx < this.args.size()) {
             final List<String> params = new ArrayList<>(0);
             for (int aidx = this.idx; aidx < this.args.size(); aidx = aidx + 1) {
@@ -127,14 +140,10 @@ final class SetCommand {
 
     private void toggle(final boolean enable, final char opt) {
         final String letter = String.valueOf(opt);
-        if (enable && this.flags.indexOf(letter) < 0) {
-            this.flags.append(opt);
+        if (enable && this.flags.indexOf(opt) < 0) {
+            this.flags = this.flags.concat(letter);
         } else if (!enable) {
-            int at = this.flags.indexOf(letter);
-            while (at >= 0) {
-                this.flags.deleteCharAt(at);
-                at = this.flags.indexOf(letter);
-            }
+            this.flags = this.flags.replace(letter, "");
         }
     }
 }

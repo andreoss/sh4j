@@ -22,7 +22,16 @@ final class BuiltinDispatcher {
      * Builds the dispatcher and registers every shell built-in.
      */
     BuiltinDispatcher() {
-        this.registry = BuiltinRegistry.build();
+        this(BuiltinRegistry.build());
+    }
+
+    /**
+     * Builds the dispatcher over a given table.
+     *
+     * @param registry Map from built-in name to its implementation
+     */
+    private BuiltinDispatcher(final Map<String, Builtin> registry) {
+        this.registry = registry;
     }
 
     /**

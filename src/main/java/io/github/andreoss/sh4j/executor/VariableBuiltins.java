@@ -154,6 +154,7 @@ final class VariableBuiltins {
         }
         return code;
     }
+
     private static void printReadonly(final BuiltinContext self) {
         for (final Map.Entry<String, String> entry : self.environmentMap().entrySet()) {
             if (self.isReadonly(entry.getKey())) {
@@ -170,8 +171,12 @@ final class VariableBuiltins {
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
             final String name = arg.substring(0, eqidx);
-            final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
-            self.environmentMap().put(name, WordExpander.removeQuotes(expanded));
+            self.environmentMap().put(
+                name,
+                WordExpander.removeQuotes(
+                    self.expandVariables(arg.substring(eqidx + 1), env)
+                )
+            );
             self.markReadonly(name);
         } else {
             self.markReadonly(arg);

@@ -21,7 +21,6 @@ final class JobBuiltins {
     private JobBuiltins() {
     }
 
-
     /**
      * Implementation of {@code jobs [%n...]}.
      * POSIX 2.14: without args, lists all background jobs with their

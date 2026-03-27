@@ -20,17 +20,14 @@ final class ReadSplitter {
     /** The IFS characters. */
     private final String ifs;
 
-    /** The first IFS character. */
-    private final char first;
-
     /** Fields found so far. */
     private final List<String> fields;
 
-    /** The field being built. */
-    private final StringBuilder current;
-
     /** Index of the next character. */
     private int pos;
+
+    /** Index where the field being built starts. */
+    private int start;
 
     /**
      * Ctor.
@@ -41,10 +38,9 @@ final class ReadSplitter {
     ReadSplitter(final String line, final String ifs) {
         this.line = line;
         this.ifs = ifs;
-        this.first = ifs.charAt(0);
         this.fields = new ArrayList<>(0);
-        this.current = new StringBuilder();
         this.pos = 0;
+        this.start = 0;
     }
 
     /**
@@ -54,12 +50,13 @@ final class ReadSplitter {
      */
     List<String> split() {
         this.skipBlanks();
+        this.start = this.pos;
         while (this.pos < this.line.length()) {
             this.step(this.line.charAt(this.pos));
             this.pos += 1;
         }
         if (!this.trailingBlank() || this.fields.isEmpty()) {
-            this.fields.add(this.current.toString());
+            this.fields.add(this.line.substring(this.start));
         }
         return this.fields;
     }
@@ -77,19 +74,19 @@ final class ReadSplitter {
     }
 
     private void step(final char chr) {
-        if (chr == this.first && !ReadSplitter.blank(this.first)) {
+        final char first = this.ifs.charAt(0);
+        if (chr == first && !ReadSplitter.blank(first)) {
             this.cut();
         } else if (this.ifs.indexOf(chr) >= 0) {
             this.cut();
             this.skipSeparators();
-        } else {
-            this.current.append(chr);
+            this.start = this.pos + 1;
         }
     }
 
     private void cut() {
-        this.fields.add(this.current.toString());
-        this.current.setLength(0);
+        this.fields.add(this.line.substring(this.start, this.pos));
+        this.start = this.pos + 1;
     }
 
     private void skipSeparators() {
@@ -100,7 +97,7 @@ final class ReadSplitter {
     }
 
     private boolean trailingBlank() {
-        return this.current.length() == 0 && this.pos > 0
+        return this.start >= this.pos && this.pos > 0
             && ReadSplitter.blank(this.line.charAt(this.pos - 1));
     }
 }

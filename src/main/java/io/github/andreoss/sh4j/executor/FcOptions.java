@@ -42,13 +42,27 @@ final class FcOptions {
      * @param assigns Inline assignments attached to the call
      */
     FcOptions(final List<String> args, final List<String> assigns) {
+        this(args, assigns, Optional.empty());
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param args Arguments after the command name
+     * @param assigns Inline assignments attached to the call
+     * @param none The empty substitution and error
+     */
+    private FcOptions(
+        final List<String> args, final List<String> assigns,
+        final Optional<String> none
+    ) {
         this.args = args;
         this.assigns = assigns;
         this.idx = 0;
         this.listmode = true;
         this.nonumbers = false;
-        this.substitute = Optional.empty();
-        this.error = Optional.empty();
+        this.substitute = none;
+        this.error = none;
     }
 
     /**
