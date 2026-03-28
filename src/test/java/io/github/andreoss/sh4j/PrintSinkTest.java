@@ -31,21 +31,23 @@ final class PrintSinkTest {
     }
 
     @Test
-    void reportsFailedWrite() {
-        Assertions.assertThrows(
-            IllegalStateException.class,
-            () -> new PrintSink(new PrintSinkTest.Broken(), StandardCharsets.UTF_8)
-                .print("x")
-        );
+    void reportsFailedWrite() throws IOException {
+        try (OutputStream broken = new PrintSinkTest.Broken()) {
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new PrintSink(broken, StandardCharsets.UTF_8).print("x")
+            );
+        }
     }
 
     @Test
-    void reportsFailedFlush() {
-        Assertions.assertThrows(
-            IllegalStateException.class,
-            () -> new PrintSink(new PrintSinkTest.Broken(), StandardCharsets.UTF_8)
-                .flush()
-        );
+    void reportsFailedFlush() throws IOException {
+        try (OutputStream broken = new PrintSinkTest.Broken()) {
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new PrintSink(broken, StandardCharsets.UTF_8).flush()
+            );
+        }
     }
 
     /**
