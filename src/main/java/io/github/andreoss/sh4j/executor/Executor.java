@@ -34,10 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,37 +54,28 @@ public final class Executor implements BuiltinContext {
      * POSIX 2.14 special built-in utilities - these take priority over user-
      * defined functions in command search (POSIX 2.9.1.1).
      */
-    private static final java.util.Set<String> SPECIAL_BUILTINS = Set.of(
+    private static final Set<String> SPECIAL_BUILTINS = Set.of(
         ":", ".", "break", "continue", "eval", "exec", "exit", "export",
         "readonly", "return", "set", "shift", "times", "trap", "unset"
     );
-
-    /** Default IFS value (space, tab, newline). */
-    private static final String DEFAULT_IFS = Variables.DEFAULT_IFS;
 
     /** Exit code for a command that could not be found on PATH. */
     static final int EXIT_COMMAND_NOT_FOUND = 127;
 
     /** Input streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, InputStream> descriptors = new HashMap<>();
+    private final Map<Integer, InputStream> descriptors;
 
     /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintSink> outdescs = new HashMap<>();
+    private final Map<Integer, PrintSink> outdescs;
 
-    /** Live shell-variable table. */
-    private final Map<String, String> environment;
-
-    /** Names of variables visible to child processes. */
-    private final Set<String> exported;
-
-    /** Names of read-only variables. */
-    private final Set<String> readonly;
+    /** Live shell variables with their export and read-only markers. */
+    private final ShellVariables vars;
 
     /** Trap actions keyed by signal name (EXIT is the only executed one). */
     private final Map<String, String> traps;
 
     /** Per-executor current working directory. */
-    private File cwd = Executor.initialDirectory();
+    private File cwd;
 
     /** Defined shell functions keyed by name. */
     private final Map<String, FunctionNode> functions;
@@ -137,7 +126,7 @@ public final class Executor implements BuiltinContext {
     private int snapline;
 
     /** Exit status of the last command substitution (-1 when none ran). */
-    private int substat = -1;
+    private int substat;
 
     /** True when the current input swap borrowed a descriptor stream. */
     private boolean borrowed;
@@ -149,7 +138,7 @@ public final class Executor implements BuiltinContext {
      * Builds an executor seeded with the current process environment.
      */
     public Executor() {
-        this(System.getenv(), Arrays.asList("sh"));
+        this(System.getenv(), Collections.singletonList("sh"));
     }
 
     /**
@@ -158,7 +147,7 @@ public final class Executor implements BuiltinContext {
      * @param environment Environment variables (copied, not aliased)
      */
     public Executor(final Map<String, String> environment) {
-        this(environment, Arrays.asList("sh"));
+        this(environment, Collections.singletonList("sh"));
     }
 
     /**
@@ -171,17 +160,22 @@ public final class Executor implements BuiltinContext {
         final Map<String, String> environment,
         final List<String> params
     ) {
-        this(Variables.of(environment), Exports.of(environment), params);
+        this(
+            new ShellVariables(Variables.of(environment), Exports.of(environment)),
+            params, Executor.initialDirectory()
+        );
     }
 
     private Executor(
-        final Map<String, String> seeded,
-        final Set<String> guard,
-        final List<String> incoming
+        final ShellVariables vars,
+        final List<String> incoming,
+        final File dir
     ) {
-        this.environment = seeded;
-        this.exported = guard;
-        this.readonly = new HashSet<>();
+        this.descriptors = new HashMap<>();
+        this.outdescs = new HashMap<>();
+        this.vars = vars;
+        this.cwd = dir;
+        this.substat = -1;
         this.traps = new HashMap<>();
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(incoming);
@@ -200,42 +194,27 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public Map<String, String> exportedEnvironment() {
-        final Map<String, String> result = new HashMap<>();
-        for (final String name : this.exported) {
-            final String value = this.environment.get(name);
-            if (value != null) {
-                result.put(name, value);
-            }
-        }
-        return result;
+        return this.vars.exports();
     }
 
     @Override
     public void markExported(final String name) {
-        this.exported.add(name);
+        this.vars.export(name);
     }
 
     @Override
     public void markReadonly(final String name) {
-        this.readonly.add(name);
+        this.vars.protect(name);
     }
 
     @Override
     public boolean isReadonly(final String name) {
-        return this.readonly.contains(name);
+        return this.vars.locked(name);
     }
 
     @Override
     public boolean unsetVariable(final String name) {
-        final boolean removed;
-        if (this.readonly.contains(name)) {
-            removed = false;
-        } else {
-            this.environment.remove(name);
-            this.exported.remove(name);
-            removed = true;
-        }
-        return removed;
+        return this.vars.unset(name);
     }
 
     @Override
@@ -255,21 +234,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String readInputLine() {
-        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        String line = null;
-        try {
-            int read = this.instream.read();
-            while (read != -1 && read != '\n') {
-                buffer.write(read);
-                read = this.instream.read();
-            }
-            if (read != -1 || buffer.size() > 0) {
-                line = buffer.toString(StandardCharsets.UTF_8);
-            }
-        } catch (final IOException ex) {
-            line = null;
-        }
-        return line;
+        return InputLine.read(this.instream);
     }
 
     @Override
@@ -373,72 +338,32 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public List<String> expandArguments(final String arg, final Map<String, String> env) {
-        List<String> fields = this.expandFields(arg, env);
-        if (arg != null && !WordExpander.isQuoted(arg)
-            && this.flags.indexOf('f') < 0) {
-            fields = WordExpander.pathnameExpand(fields, this.cwd);
-        }
-        return fields;
+        return new Fields(this).arguments(arg, env);
     }
 
     @Override
     public List<String> expandFields(final String arg, final Map<String, String> env) {
-        final List<String> fields = new ArrayList<>(0);
-        if (arg == null) {
-            return fields;
-        }
-        if ("\"$@\"".equals(arg) || "\"${@}\"".equals(arg)) {
-            if (this.params.size() > 1) {
-                fields.addAll(this.params.subList(1, this.params.size()));
-            }
-        } else {
-            final String expanded = this.expandVariables(arg, env);
-            if (WordExpander.isQuoted(arg)) {
-                fields.add(WordExpander.removeQuotes(expanded));
-            } else {
-                final String ifsvalue = env.getOrDefault("IFS", DEFAULT_IFS);
-                for (final String field : WordExpander.splitFields(expanded, ifsvalue)) {
-                    fields.add(WordExpander.removeQuotes(field));
-                }
-            }
-        }
-        return fields;
+        return new Fields(this).split(arg, env);
     }
 
     @Override
     public String lookupVariable(final String name, final Map<String, String> env) {
-        final String result;
-        if (name.isEmpty()) {
-            result = "";
-        } else if (name.length() == 1) {
-            result = this.soleParam(name, env);
-        } else {
-            result = this.lookupNamed(name, env);
-        }
-        return result;
+        return new Parameters(this, this.lastcode).lookup(name, env);
     }
 
     @Override
     public String getSpecialParam(final char name) {
-        return switch (name) {
-            case '?' -> String.valueOf(this.lastcode);
-            case '-' -> this.flags;
-            case '$' -> String.valueOf(ProcessHandle.current().pid());
-            case '!' -> String.valueOf(this.bgpid);
-            case '#' -> String.valueOf(this.params.size() - 1);
-            case '@', '*' -> this.positionalParamsJoined();
-            default -> this.positionalParamForDigit(name);
-        };
+        return new Parameters(this, this.lastcode).special(name);
     }
 
     @Override
     public String resolveCommand(final String name) {
-        return this.resolveCommand(name, this.environment);
+        return this.resolveCommand(name, this.vars.table());
     }
 
     @Override
     public Map<String, String> environmentMap() {
-        return this.environment;
+        return this.vars.table();
     }
 
     @Override
@@ -488,15 +413,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public void setPositionalParams(final List<String> incoming) {
-        final String zeroth;
-        if (this.params.isEmpty()) {
-            zeroth = "";
-        } else {
-            zeroth = this.params.get(0);
-        }
-        this.params.clear();
-        this.params.add(zeroth);
-        this.params.addAll(incoming);
+        Parameters.replace(this.params, incoming);
     }
 
     /**
@@ -525,7 +442,7 @@ public final class Executor implements BuiltinContext {
      * @return The variable's current value, or null when unset
      */
     public String getVariable(final String name) {
-        return this.environment.get(name);
+        return this.vars.table().get(name);
     }
 
     /**
@@ -576,11 +493,7 @@ public final class Executor implements BuiltinContext {
 
     private Executor subshell() {
         final Executor child = new Executor(this.exportedEnvironment());
-        child.environment.clear();
-        child.environment.putAll(this.environment);
-        child.exported.clear();
-        child.exported.addAll(this.exported);
-        child.readonly.addAll(this.readonly);
+        child.vars.inherit(this.vars);
         child.traps.putAll(this.traps);
         child.functions.putAll(this.functions);
         child.aliases.putAll(this.aliases);
@@ -681,7 +594,7 @@ public final class Executor implements BuiltinContext {
         int code;
         if (node instanceof SimpleCommand cmd) {
             this.refreshAliases(cmd);
-            this.environment.put("LINENO", String.valueOf(cmd.getLineNumber()));
+            this.vars.table().put("LINENO", String.valueOf(cmd.getLineNumber()));
             if (this.flags.indexOf('x') >= 0) {
                 this.err.println(String.format("+ %s", cmd));
             }
@@ -741,14 +654,14 @@ public final class Executor implements BuiltinContext {
         } else {
             words = new ArrayList<>(0);
             for (final String raw : node.getWords()) {
-                words.addAll(this.expandFields(raw, this.environment));
+                words.addAll(this.expandFields(raw, this.vars.table()));
             }
         }
         for (final String word : words) {
             if (broken) {
                 break;
             }
-            this.environment.put(node.getVariable(), word);
+            this.vars.table().put(node.getVariable(), word);
             try {
                 laststatus = this.execute(node.getBody());
             } catch (final BreakSignal ex) {
@@ -803,7 +716,7 @@ public final class Executor implements BuiltinContext {
 
     private int runCase(final CaseNode node) {
         final String word = WordExpander.removeQuotes(
-            this.expandVariables(node.getWord(), this.environment)
+            this.expandVariables(node.getWord(), this.vars.table())
         );
         int code = 0;
         boolean matched = false;
@@ -812,7 +725,7 @@ public final class Executor implements BuiltinContext {
                 break;
             }
             for (final String pattern : item.getPatterns()) {
-                final String expanded = this.expandVariables(pattern, this.environment);
+                final String expanded = this.expandVariables(pattern, this.vars.table());
                 final String cleaned = WordExpander.removeQuotes(expanded);
                 final boolean quoted = pattern.indexOf('\'') >= 0 || pattern.indexOf('"') >= 0;
                 final boolean hits;
@@ -898,13 +811,13 @@ public final class Executor implements BuiltinContext {
     }
 
     private int executeCommand(final SimpleCommand cmd) {
-        final Map<String, String> cenv = new HashMap<>(this.environment);
+        final Map<String, String> cenv = new HashMap<>(this.vars.table());
         this.substat = -1;
         final int assign = this.processAssignments(cmd.getAssignments(), cenv);
         final String name = cmd.getName();
         final int code;
         if (name == null || name.isEmpty()) {
-            this.environment.putAll(cenv);
+            this.vars.table().putAll(cenv);
             if (this.substat >= 0) {
                 code = this.substat;
             } else {
@@ -960,7 +873,7 @@ public final class Executor implements BuiltinContext {
             cmd.getRedirections(),
             new RedirectionHandler.Streams(this.out, this.err),
             new RedirectionHandler.RedirectContext(
-                text -> this.expandVariables(text, this.environment),
+                text -> this.expandVariables(text, this.vars.table()),
                 this.cwd, this.outdescs
             )
         );
@@ -973,7 +886,7 @@ public final class Executor implements BuiltinContext {
                 code = 1;
             } else if (!skipfunc && this.functions.containsKey(name)
                 && !isSpecialBuiltin(name)) {
-                this.environment.putAll(cenv);
+                this.vars.table().putAll(cenv);
                 code = this.invokeFunction(this.functions.get(name), cmd, cenv);
             } else {
                 if (isSpecialBuiltin(name)) {
@@ -1012,7 +925,7 @@ public final class Executor implements BuiltinContext {
     }
 
     private File redirectionFile(final Redirection redir) {
-        final File raw = new File(this.expandVariables(redir.getTarget(), this.environment));
+        final File raw = new File(this.expandVariables(redir.getTarget(), this.vars.table()));
         final File result;
         if (raw.isAbsolute()) {
             result = raw;
@@ -1030,7 +943,7 @@ public final class Executor implements BuiltinContext {
                     cmd.getRedirections(),
                     new RedirectionHandler.Streams(this.out, this.err),
                     new RedirectionHandler.RedirectContext(
-                        text -> this.expandVariables(text, this.environment),
+                        text -> this.expandVariables(text, this.vars.table()),
                         this.cwd, this.outdescs
                     )
                 );
@@ -1144,7 +1057,7 @@ public final class Executor implements BuiltinContext {
                     if (redir.isHereDocQuoted()) {
                         body = content;
                     } else {
-                        body = this.expandVariables(content, this.environment);
+                        body = this.expandVariables(content, this.vars.table());
                     }
                     replacement = new ByteArrayInputStream(
                         body.getBytes(StandardCharsets.UTF_8)
@@ -1152,7 +1065,7 @@ public final class Executor implements BuiltinContext {
                 }
             } else if (type == RedirectionType.DUP_INPUT) {
                 final InputStream bound = this.descriptors.get(
-                    parseDescriptor(this.expandVariables(redir.getTarget(), this.environment))
+                    parseDescriptor(this.expandVariables(redir.getTarget(), this.vars.table()))
                 );
                 if (bound != null) {
                     replacement = bound;
@@ -1193,7 +1106,7 @@ public final class Executor implements BuiltinContext {
             RedirectionHandler.setupRedirections(
                 builder, cmd.getRedirections(),
                 new RedirectionHandler.RedirectContext(
-                    text -> this.expandVariables(text, this.environment),
+                    text -> this.expandVariables(text, this.vars.table()),
                     this.cwd, Collections.emptyMap()
                 )
             );
@@ -1279,7 +1192,7 @@ public final class Executor implements BuiltinContext {
                 final String name = assignment.substring(0, equals);
                 final String value = source.get(name);
                 if (value != null) {
-                    this.environment.put(name, value);
+                    this.vars.table().put(name, value);
                 }
             }
         }
@@ -1292,7 +1205,7 @@ public final class Executor implements BuiltinContext {
             final int eqpos = assignment.indexOf('=');
             if (eqpos > 0) {
                 final String vname = assignment.substring(0, eqpos);
-                if (this.readonly.contains(vname)) {
+                if (this.vars.locked(vname)) {
                     this.err.println(
                         String.format("sh: %s: readonly variable", vname)
                     );
@@ -1304,41 +1217,6 @@ public final class Executor implements BuiltinContext {
             }
         }
         return 0;
-    }
-
-    private String positionalParamsJoined() {
-        final String joined;
-        if (this.params.size() <= 1) {
-            joined = "";
-        } else {
-            String separator = " ";
-            final String ifs = this.environment.get("IFS");
-            if (ifs != null) {
-                if (ifs.isEmpty()) {
-                    separator = "";
-                } else {
-                    separator = ifs.substring(0, 1);
-                }
-            }
-            joined = String.join(
-                separator,
-                this.params.subList(1, this.params.size())
-            );
-        }
-        return joined;
-    }
-
-    private String positionalParamForDigit(final char chr) {
-        String result = null;
-        if (chr >= '0' && chr <= '9') {
-            final int idx = chr - '0';
-            if (idx < this.params.size()) {
-                result = this.params.get(idx);
-            } else {
-                result = "";
-            }
-        }
-        return result;
     }
 
     private static int exitCodeForIoException(final IOException exc) {
@@ -1467,48 +1345,6 @@ public final class Executor implements BuiltinContext {
             result = -1;
         }
         return result;
-    }
-
-    private String namedValue(final String name, final Map<String, String> env) {
-        final String value = env.get(name);
-        if (value == null && this.flags.indexOf('u') >= 0) {
-            this.err.println(
-                String.format("sh: %s: parameter not set", name)
-            );
-            throw new ExitSignal(1);
-        }
-        return value;
-    }
-
-    private String positionalAt(final int idx) {
-        final String value;
-        if (idx < this.params.size()) {
-            value = this.params.get(idx);
-        } else {
-            value = null;
-        }
-        return value;
-    }
-
-    private String lookupNamed(final String name, final Map<String, String> env) {
-        final String value;
-        if (name.chars().allMatch(Character::isDigit)) {
-            value = this.positionalAt(Integer.parseInt(name));
-        } else {
-            value = this.namedValue(name, env);
-        }
-        return value;
-    }
-
-    private String soleParam(final String name, final Map<String, String> env) {
-        final String special = this.getSpecialParam(name.charAt(0));
-        final String value;
-        if (special == null) {
-            value = this.lookupNamed(name, env);
-        } else {
-            value = special;
-        }
-        return value;
     }
 
     private static File initialDirectory() {
