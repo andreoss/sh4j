@@ -7,12 +7,8 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.parser.CaseItem;
-import io.github.andreoss.sh4j.parser.CaseNode;
-import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.Grouping;
-import io.github.andreoss.sh4j.parser.IfNode;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
@@ -21,7 +17,6 @@ import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
-import io.github.andreoss.sh4j.parser.WhileNode;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -131,8 +126,8 @@ public final class Executor implements BuiltinContext {
     /** True when the current input swap borrowed a descriptor stream. */
     private boolean borrowed;
 
-    /** Nesting depth of active loop bodies. */
-    private int loops;
+    /** Runner of compound commands, tracking the loop depth. */
+    private final Compound compound;
 
     /**
      * Builds an executor seeded with the current process environment.
@@ -176,6 +171,7 @@ public final class Executor implements BuiltinContext {
         this.vars = vars;
         this.cwd = dir;
         this.substat = -1;
+        this.compound = new Compound(this);
         this.traps = new HashMap<>();
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(incoming);
@@ -608,138 +604,8 @@ public final class Executor implements BuiltinContext {
             }
         } else if (node instanceof Grouping group) {
             code = this.execute(group.getList());
-        } else if (node instanceof IfNode ifNode) {
-            code = this.runIf(ifNode);
-        } else if (node instanceof ForNode forNode) {
-            code = this.runFor(forNode);
-        } else if (node instanceof WhileNode whileNode) {
-            code = this.runWhile(whileNode);
-        } else if (node instanceof CaseNode caseNode) {
-            code = this.runCase(caseNode);
-        } else if (node instanceof FunctionNode fnNode) {
-            this.functions.put(fnNode.getName(), fnNode);
-            code = 0;
         } else {
-            code = 0;
-        }
-        return code;
-    }
-
-    private int runIf(final IfNode node) {
-        final int condexit = this.execute(node.getCondition());
-        final int code;
-        if (condexit == 0) {
-            code = this.execute(node.getThenBody());
-        } else if (node.getElseBody() == null) {
-            code = 0;
-        } else {
-            code = this.execute(node.getElseBody());
-        }
-        return code;
-    }
-
-    private int runFor(final ForNode node) {
-        this.loops = this.loops + 1;
-        int laststatus = 0;
-        boolean broken = false;
-        final List<String> words;
-        if (node.getWords() == null) {
-            if (this.params.size() <= 1) {
-                words = new ArrayList<>(0);
-            } else {
-                words = new ArrayList<>(
-                    this.params.subList(1, this.params.size())
-                );
-            }
-        } else {
-            words = new ArrayList<>(0);
-            for (final String raw : node.getWords()) {
-                words.addAll(this.expandFields(raw, this.vars.table()));
-            }
-        }
-        for (final String word : words) {
-            if (broken) {
-                break;
-            }
-            this.vars.table().put(node.getVariable(), word);
-            try {
-                laststatus = this.execute(node.getBody());
-            } catch (final BreakSignal ex) {
-                if (ex.getLevels() > 1) {
-                    throw new BreakSignal(ex.getLevels() - 1);
-                }
-                broken = true;
-            } catch (final ContinueSignal ex) {
-                if (ex.getLevels() > 1) {
-                    throw new ContinueSignal(ex.getLevels() - 1);
-                }
-                laststatus = 0;
-            }
-        }
-        this.loops = this.loops - 1;
-        return laststatus;
-    }
-
-    private int runWhile(final WhileNode node) {
-        this.loops = this.loops + 1;
-        int laststatus = 0;
-        boolean running = true;
-        while (running) {
-            final int condexit = this.execute(node.getCondition());
-            final boolean dobody;
-            if (node.isUntil()) {
-                dobody = condexit != 0;
-            } else {
-                dobody = condexit == 0;
-            }
-            if (!dobody) {
-                running = false;
-            } else {
-                try {
-                    laststatus = this.execute(node.getBody());
-                } catch (final BreakSignal ex) {
-                    if (ex.getLevels() > 1) {
-                        throw new BreakSignal(ex.getLevels() - 1);
-                    }
-                    running = false;
-                } catch (final ContinueSignal ex) {
-                    if (ex.getLevels() > 1) {
-                        throw new ContinueSignal(ex.getLevels() - 1);
-                    }
-                    laststatus = 0;
-                }
-            }
-        }
-        this.loops = this.loops - 1;
-        return laststatus;
-    }
-
-    private int runCase(final CaseNode node) {
-        final String word = WordExpander.removeQuotes(
-            this.expandVariables(node.getWord(), this.vars.table())
-        );
-        int code = 0;
-        boolean matched = false;
-        for (final CaseItem item : node.getItems()) {
-            if (matched) {
-                break;
-            }
-            for (final String pattern : item.getPatterns()) {
-                final String expanded = this.expandVariables(pattern, this.vars.table());
-                final String cleaned = WordExpander.removeQuotes(expanded);
-                final boolean quoted = pattern.indexOf('\'') >= 0 || pattern.indexOf('"') >= 0;
-                final boolean hits;
-                if (quoted) {
-                    hits = cleaned.equals(word);
-                } else {
-                    hits = WordExpander.globMatches(cleaned, word);
-                }
-                if (hits) {
-                    code = this.execute(item.getBody());
-                    matched = true;
-                    break;
-                }
-            }
+            code = this.compound.run(node);
         }
         return code;
     }
@@ -1354,7 +1220,7 @@ public final class Executor implements BuiltinContext {
     }
 
     private void requireLoop(final RuntimeException signal, final String name) {
-        if (this.loops > 0) {
+        if (this.compound.inLoop()) {
             throw signal;
         }
         this.err.println(String.format("sh: %s: not in a loop", name));
