@@ -54,9 +54,6 @@ public final class Executor implements BuiltinContext {
         "readonly", "return", "set", "shift", "times", "trap", "unset"
     );
 
-    /** Exit code for a command that could not be found on PATH. */
-    static final int EXIT_COMMAND_NOT_FOUND = 127;
-
     /** Input streams bound to descriptors by a redirection-only exec. */
     private final Map<Integer, InputStream> descriptors;
 
@@ -354,7 +351,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String resolveCommand(final String name) {
-        return this.resolveCommand(name, this.vars.table());
+        return ExternalCommand.resolve(name, this.vars.table());
     }
 
     @Override
@@ -485,6 +482,15 @@ public final class Executor implements BuiltinContext {
      */
     int getLastBgPid() {
         return this.bgpid;
+    }
+
+    /**
+     * Returns the live stdin.
+     *
+     * @return The live stdin
+     */
+    InputStream inputStream() {
+        return this.instream;
     }
 
     private Executor subshell() {
@@ -765,7 +771,7 @@ public final class Executor implements BuiltinContext {
                 if (bresult != null) {
                     code = bresult;
                 } else {
-                    code = this.runExternalCommand(cmd, name, cenv);
+                    code = new ExternalCommand(this).run(cmd, name, cenv);
                 }
             }
         } finally {
@@ -887,7 +893,7 @@ public final class Executor implements BuiltinContext {
             for (final Redirection redir : cmd.getRedirections()) {
                 external.addRedirection(redir);
             }
-            code = this.runExternalCommand(external, name, cenv);
+            code = new ExternalCommand(this).run(external, name, cenv);
             throw new ExitSignal(code);
         }
         return code;
@@ -960,95 +966,6 @@ public final class Executor implements BuiltinContext {
         return previous;
     }
 
-    private int runExternalCommand(
-        final SimpleCommand cmd, final String name, final Map<String, String> cenv
-    ) {
-        final String resolved = this.resolveCommand(name, cenv);
-        final int code;
-        if (resolved == null) {
-            code = EXIT_COMMAND_NOT_FOUND;
-        } else {
-            final ProcessBuilder builder = this.createProcessBuilder(resolved, cmd, cenv);
-            RedirectionHandler.setupRedirections(
-                builder, cmd.getRedirections(),
-                new RedirectionHandler.RedirectContext(
-                    text -> this.expandVariables(text, this.vars.table()),
-                    this.cwd, Collections.emptyMap()
-                )
-            );
-            code = this.startAndAwaitOne(builder);
-        }
-        return code;
-    }
-
-    private int startAndAwaitOne(final ProcessBuilder builder) {
-        if (Thread.currentThread().isInterrupted()) {
-            return 1;
-        }
-        final ProcessBuilder.Redirect output = builder.redirectOutput();
-        final ProcessBuilder.Redirect error = builder.redirectError();
-        final ProcessBuilder.Redirect input = builder.redirectInput();
-        if (ProcessBuilder.Redirect.PIPE.equals(input) && this.instream == System.in) {
-            builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
-        }
-        int code;
-        try {
-            final Process process = builder.start();
-            Thread writer = null;
-            Thread reader = null;
-            if (ProcessBuilder.Redirect.PIPE.equals(error)
-                && process.getErrorStream() != null) {
-                writer = new Thread(
-                    () -> {
-                        try (InputStream stream = process.getErrorStream()) {
-                            stream.transferTo(this.err.bytes());
-                        } catch (final IOException ignored) {
-                            this.err.flush();
-                        }
-                    },
-                    "sh-stderr"
-                );
-                writer.start();
-            }
-            if (ProcessBuilder.Redirect.PIPE.equals(input)
-                && this.instream != System.in) {
-                reader = new Thread(
-                    () -> {
-                        try (
-                            OutputStream stream = process.getOutputStream()
-                        ) {
-                            this.instream.transferTo(stream);
-                        } catch (final IOException ignored) {
-                            this.err.flush();
-                        }
-                    },
-                    "sh-stdin"
-                );
-                reader.start();
-            }
-            if (ProcessBuilder.Redirect.PIPE.equals(output)) {
-                try (InputStream stream = process.getInputStream()) {
-                    stream.transferTo(this.out.bytes());
-                }
-            }
-            code = process.waitFor();
-            if (writer != null) {
-                writer.join();
-            }
-            if (reader != null) {
-                reader.join();
-            }
-            this.out.flush();
-            this.err.flush();
-        } catch (final IOException ex) {
-            code = Executor.exitCodeForIoException(ex);
-        } catch (final InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            code = 1;
-        }
-        return code;
-    }
-
     private void applyAssignments(
         final List<String> assignments, final Map<String, String> source
     ) {
@@ -1083,92 +1000,6 @@ public final class Executor implements BuiltinContext {
             }
         }
         return 0;
-    }
-
-    private static int exitCodeForIoException(final IOException exc) {
-        final String msg = exc.getMessage();
-        final int code;
-        if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
-            code = EXIT_COMMAND_NOT_FOUND;
-        } else {
-            code = 126;
-        }
-        return code;
-    }
-
-    private String resolveCommand(final String name, final Map<String, String> env) {
-        final String result;
-        if (name.contains("/")) {
-            if (new File(name).isFile()) {
-                result = name;
-            } else {
-                result = null;
-            }
-        } else {
-            final String path = env.get("PATH");
-            if (path == null || path.isEmpty()) {
-                result = null;
-            } else {
-                result = Executor.searchPath(path, name);
-            }
-        }
-        return result;
-    }
-
-    private static String searchPath(final String path, final String name) {
-        String found = null;
-        final String[] dirs = path.split(":", -1);
-        for (final String dir : dirs) {
-            final File file;
-            if (dir.isEmpty()) {
-                file = new File(name);
-            } else {
-                file = new File(dir, name);
-            }
-            if (file.isFile()) {
-                found = file.getAbsolutePath();
-                break;
-            }
-        }
-        return found;
-    }
-
-    private ProcessBuilder createProcessBuilder(
-        final String resolved,
-        final SimpleCommand cmd,
-        final Map<String, String> env
-    ) {
-        final List<String> command = new ArrayList<>(0);
-        command.add(resolved);
-        final boolean globbing = this.flags.indexOf('f') < 0;
-        for (final String arg : cmd.getArguments()) {
-            List<String> fields = this.expandFields(arg, env);
-            if (!WordExpander.isQuoted(arg) && globbing) {
-                fields = WordExpander.pathnameExpand(fields, this.cwd);
-            }
-            command.addAll(fields);
-        }
-        final ProcessBuilder builder = new ProcessBuilder(command);
-        builder.environment().putAll(this.childEnvironment(cmd, env));
-        builder.directory(this.cwd);
-        return builder;
-    }
-
-    private Map<String, String> childEnvironment(
-        final SimpleCommand cmd, final Map<String, String> cenv
-    ) {
-        final Map<String, String> child = this.exportedEnvironment();
-        for (final String assignment : cmd.getAssignments()) {
-            final int equals = assignment.indexOf('=');
-            if (equals > 0) {
-                final String name = assignment.substring(0, equals);
-                final String value = cenv.get(name);
-                if (value != null) {
-                    child.put(name, value);
-                }
-            }
-        }
-        return child;
     }
 
     private static boolean shouldRunNext(
