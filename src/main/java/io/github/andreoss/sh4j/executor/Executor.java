@@ -14,25 +14,21 @@ import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.Redirection;
-import io.github.andreoss.sh4j.parser.RedirectionType;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -54,11 +50,8 @@ public final class Executor implements BuiltinContext {
         "readonly", "return", "set", "shift", "times", "trap", "unset"
     );
 
-    /** Input streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, InputStream> descriptors;
-
-    /** Output streams bound to descriptors by a redirection-only exec. */
-    private final Map<Integer, PrintSink> outdescs;
+    /** Descriptors bound by a redirection-only exec. */
+    private final Descriptors fds;
 
     /** Live shell variables with their export and read-only markers. */
     private final ShellVariables vars;
@@ -120,9 +113,6 @@ public final class Executor implements BuiltinContext {
     /** Exit status of the last command substitution (-1 when none ran). */
     private int substat;
 
-    /** True when the current input swap borrowed a descriptor stream. */
-    private boolean borrowed;
-
     /** Runner of compound commands, tracking the loop depth. */
     private final Compound compound;
 
@@ -163,8 +153,7 @@ public final class Executor implements BuiltinContext {
         final List<String> incoming,
         final File dir
     ) {
-        this.descriptors = new HashMap<>();
-        this.outdescs = new HashMap<>();
+        this.fds = new Descriptors();
         this.vars = vars;
         this.cwd = dir;
         this.substat = -1;
@@ -493,6 +482,52 @@ public final class Executor implements BuiltinContext {
         return this.instream;
     }
 
+    /**
+     * Returns the descriptors bound by a redirection-only {@code exec}.
+     *
+     * @return The bound descriptors
+     */
+    Descriptors descriptors() {
+        return this.fds;
+    }
+
+    /**
+     * Applies the output redirections of a built-in to the live streams.
+     *
+     * @param redirs The redirections of the command
+     * @return The swap that {@link #restore(RedirectionHandler.StreamSwap)}
+     *  undoes
+     */
+    RedirectionHandler.StreamSwap redirect(final List<Redirection> redirs) {
+        final RedirectionHandler.StreamSwap swap =
+            RedirectionHandler.redirectOutputForBuiltin(
+                redirs,
+                new RedirectionHandler.Streams(this.out, this.err),
+                new RedirectionHandler.RedirectContext(
+                    text -> this.expandVariables(text, this.vars.table()),
+                    this.cwd, this.fds.outputs()
+                )
+            );
+        this.out = swap.out();
+        this.err = swap.err();
+        return swap;
+    }
+
+    /**
+     * Puts back the streams replaced by
+     * {@link #redirect(List)}.
+     *
+     * @param swap The swap returned by {@link #redirect(List)}
+     */
+    void restore(final RedirectionHandler.StreamSwap swap) {
+        if (swap.savedout() != null) {
+            this.out = swap.savedout();
+        }
+        if (swap.savederr() != null) {
+            this.err = swap.savederr();
+        }
+    }
+
     private Executor subshell() {
         final Executor child = new Executor(this.exportedEnvironment());
         child.vars.inherit(this.vars);
@@ -739,19 +774,11 @@ public final class Executor implements BuiltinContext {
             );
         }
         if ("exec".equals(name)) {
-            return this.runExec(cmd, cenv);
+            return new ExecCommand(this).run(cmd, cenv);
         }
-        final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
-            cmd.getRedirections(),
-            new RedirectionHandler.Streams(this.out, this.err),
-            new RedirectionHandler.RedirectContext(
-                text -> this.expandVariables(text, this.vars.table()),
-                this.cwd, this.outdescs
-            )
-        );
-        this.out = swap.out();
-        this.err = swap.err();
-        final InputStream keptin = this.swapInputForBuiltin(cmd.getRedirections());
+        final RedirectionHandler.StreamSwap swap = this.redirect(cmd.getRedirections());
+        final InputSwap input = new InputSwap(this);
+        final Optional<InputStream> keptin = input.install(cmd.getRedirections());
         final int code;
         try {
             if (swap.failed()) {
@@ -775,126 +802,8 @@ public final class Executor implements BuiltinContext {
                 }
             }
         } finally {
-            if (keptin != null) {
-                if (!this.borrowed) {
-                    try {
-                        this.instream.close();
-                    } catch (final IOException ignored) {
-                        // The borrowed stream is closed on a best-effort basis.
-                    }
-                }
-                this.borrowed = false;
-                this.instream = keptin;
-            }
-            if (swap.savedout() != null) {
-                this.out = swap.savedout();
-            }
-            if (swap.savederr() != null) {
-                this.err = swap.savederr();
-            }
-        }
-        return code;
-    }
-
-    private File redirectionFile(final Redirection redir) {
-        final File raw = new File(this.expandVariables(redir.getTarget(), this.vars.table()));
-        final File result;
-        if (raw.isAbsolute()) {
-            result = raw;
-        } else {
-            result = new File(this.cwd, raw.getPath());
-        }
-        return result;
-    }
-
-    private int runExec(final SimpleCommand cmd, final Map<String, String> cenv) {
-        final int code;
-        if (cmd.getArguments().isEmpty()) {
-            final RedirectionHandler.StreamSwap swap =
-                RedirectionHandler.redirectOutputForBuiltin(
-                    cmd.getRedirections(),
-                    new RedirectionHandler.Streams(this.out, this.err),
-                    new RedirectionHandler.RedirectContext(
-                        text -> this.expandVariables(text, this.vars.table()),
-                        this.cwd, this.outdescs
-                    )
-                );
-            this.out = swap.out();
-            this.err = swap.err();
-            final InputStream saved = this.swapInputForBuiltin(cmd.getRedirections());
-            if (saved != null && saved != System.in) {
-                try {
-                    saved.close();
-                } catch (final IOException ignored) {
-                    // The temporary input stream is closed on a best-effort basis.
-                }
-            }
-            boolean bound = !swap.failed();
-            for (final Redirection redir : cmd.getRedirections()) {
-                final RedirectionType type = redir.getType();
-                final int desc = redir.getFd();
-                if (desc > 0 && (type == RedirectionType.READWRITE
-                    || type == RedirectionType.INPUT)) {
-                    final File target = this.redirectionFile(redir);
-                    try {
-                        if (type == RedirectionType.READWRITE) {
-                            this.bindReadWriteDescriptor(desc, target);
-                        }
-                        final InputStream source = Files.newInputStream(
-                            target.toPath()
-                        );
-                        this.descriptors.put(Integer.valueOf(desc), source);
-                    } catch (final IOException ex) {
-                        bound = false;
-                    }
-                } else if (desc > 0 && (type == RedirectionType.OUTPUT
-                    || type == RedirectionType.CLOBBER || type == RedirectionType.APPEND)) {
-                    final File target = this.redirectionFile(redir);
-                    try {
-                        final OutputStream appended = type == RedirectionType.APPEND
-                            ? Files.newOutputStream(
-                                target.toPath(), StandardOpenOption.CREATE,
-                                StandardOpenOption.APPEND
-                            )
-                            : Files.newOutputStream(target.toPath());
-                        this.outdescs.put(
-                            Integer.valueOf(desc),
-                            new PrintSink(appended, StandardCharsets.UTF_8)
-                        );
-                    } catch (final IOException ex) {
-                        bound = false;
-                    }
-                } else if (desc > 0 && type == RedirectionType.DUP_INPUT
-                    && "-".equals(redir.getTarget())) {
-                    final InputStream closed = this.descriptors.remove(desc);
-                    if (closed != null) {
-                        try {
-                            closed.close();
-                        } catch (final IOException ex) {
-                            bound = false;
-                        }
-                    }
-                } else if (desc > 0 && type == RedirectionType.DUP_OUTPUT
-                    && "-".equals(redir.getTarget())) {
-                        this.outdescs.remove(Integer.valueOf(desc));
-                }
-            }
-            if (!bound) {
-                throw new ExitSignal(1);
-            }
-            code = 0;
-        } else {
-            final List<String> args = cmd.getArguments();
-            final String name = this.expandVariables(args.get(0), cenv);
-            final SimpleCommand external = new SimpleCommand(name);
-            for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                external.addArgument(args.get(idx));
-            }
-            for (final Redirection redir : cmd.getRedirections()) {
-                external.addRedirection(redir);
-            }
-            code = new ExternalCommand(this).run(external, name, cenv);
-            throw new ExitSignal(code);
+            input.restore(keptin);
+            this.restore(swap);
         }
         return code;
     }
@@ -916,54 +825,6 @@ public final class Executor implements BuiltinContext {
             this.params.clear();
             this.params.addAll(keptargs);
         }
-    }
-
-    private InputStream swapInputForBuiltin(final List<Redirection> redirs) {
-        InputStream replacement = null;
-        for (final Redirection redir : redirs) {
-            final RedirectionType type = redir.getType();
-            if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
-                final String content = redir.getHereDocContent();
-                if (content != null) {
-                    final String body;
-                    if (redir.isHereDocQuoted()) {
-                        body = content;
-                    } else {
-                        body = this.expandVariables(content, this.vars.table());
-                    }
-                    replacement = new ByteArrayInputStream(
-                        body.getBytes(StandardCharsets.UTF_8)
-                    );
-                }
-            } else if (type == RedirectionType.DUP_INPUT) {
-                final InputStream bound = this.descriptors.get(
-                    parseDescriptor(this.expandVariables(redir.getTarget(), this.vars.table()))
-                );
-                if (bound != null) {
-                    replacement = bound;
-                    this.borrowed = true;
-                }
-            } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
-                final File target = this.redirectionFile(redir);
-                try {
-                    replacement = Files.newInputStream(target.toPath());
-                } catch (final IOException ex) {
-                    replacement = null;
-                }
-            }
-        }
-        if (replacement == null) {
-            return null;
-        }
-        return this.installInput(replacement);
-    }
-
-    private InputStream installInput(final InputStream replacement) {
-        final InputStream previous = this.instream;
-        if (previous != replacement) {
-            this.instream = replacement;
-        }
-        return previous;
     }
 
     private void applyAssignments(
@@ -1034,16 +895,6 @@ public final class Executor implements BuiltinContext {
         return SPECIAL_BUILTINS.contains(name);
     }
 
-    private static int parseDescriptor(final String text) {
-        int result = -1;
-        try {
-            result = Integer.parseInt(text.trim());
-        } catch (final NumberFormatException ex) {
-            result = -1;
-        }
-        return result;
-    }
-
     private static File initialDirectory() {
         return new File(
             System.getProperty("user.dir", Variables.FALLBACK_DIR)
@@ -1058,15 +909,4 @@ public final class Executor implements BuiltinContext {
         this.lastcode = 0;
     }
 
-    private void bindReadWriteDescriptor(final int desc, final File target)
-        throws IOException {
-        final OutputStream appended = Files.newOutputStream(
-            target.toPath(), StandardOpenOption.CREATE,
-            StandardOpenOption.APPEND
-        );
-        this.outdescs.put(
-            Integer.valueOf(desc),
-            new PrintSink(appended, StandardCharsets.UTF_8)
-        );
-    }
 }
