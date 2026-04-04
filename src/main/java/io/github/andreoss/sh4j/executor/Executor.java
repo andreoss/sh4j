@@ -12,16 +12,12 @@ import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
-import io.github.andreoss.sh4j.parser.Pipeline;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -261,30 +257,16 @@ public final class Executor implements BuiltinContext {
         this.depth = this.depth + 1;
         int code;
         try {
-            code = 0;
-            if (!list.getPipelines().isEmpty()) {
-                code = this.runPipelineList(list);
-            }
+            code = new Pipelines(this).run(list);
         } catch (final ExitSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
+            this.nested(ex);
             code = ex.getCode();
         } catch (final ReturnSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
+            this.nested(ex);
             this.err.println("sh: return: not in a function");
             code = ex.getCode();
-        } catch (final BreakSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
-            code = 0;
-        } catch (final ContinueSignal ex) {
-            if (this.depth > 1) {
-                throw ex;
-            }
+        } catch (final BreakSignal | ContinueSignal ex) {
+            this.nested(ex);
             code = 0;
         } finally {
             this.depth = this.depth - 1;
@@ -407,13 +389,11 @@ public final class Executor implements BuiltinContext {
         this.lastcode = status;
         final String action = this.traps.remove("EXIT");
         if (action != null && !action.isEmpty() && !"-".equals(action)) {
-            try {
-                this.execute(
-                    new Parser(new Lexer(new CharReader(action))).parse()
-                );
-            } catch (final RuntimeException ex) {
-                this.err.println("sh: trap: " + ex.getMessage());
-            }
+            Attempt.failure(
+                () -> this.execute(new Parser(new Lexer(new CharReader(action))).parse())
+            ).ifPresent(
+                ex -> this.err.println(String.format("sh: trap: %s", ex.getMessage()))
+            );
         }
     }
 
@@ -483,6 +463,99 @@ public final class Executor implements BuiltinContext {
     }
 
     /**
+     * Returns the exit status of the most recent foreground pipeline.
+     *
+     * @return The value of {@code $?}
+     */
+    int status() {
+        return this.lastcode;
+    }
+
+    /**
+     * Records the exit status of the most recent foreground pipeline.
+     *
+     * @param code The new value of {@code $?}
+     */
+    void status(final int code) {
+        this.lastcode = code;
+    }
+
+    /**
+     * Records the PID of the most recent background job.
+     *
+     * @param pid The new value of {@code $!}
+     */
+    void background(final int pid) {
+        this.bgpid = pid;
+    }
+
+    /**
+     * Handles a {@code break} or {@code continue} that reached a list.
+     *
+     * @param signal The signal, rethrown inside a loop
+     * @param name The name of the built-in for the diagnostic
+     */
+    void requireLoop(final RuntimeException signal, final String name) {
+        if (this.compound.inLoop()) {
+            throw signal;
+        }
+        this.err.println(String.format("sh: %s: not in a loop", name));
+        this.lastcode = 0;
+    }
+
+    /**
+     * Creates a subshell environment copied from this shell.
+     *
+     * @return A new executor sharing nothing mutable with this one
+     */
+    Executor subshell() {
+        final Executor child = new Executor(this.exportedEnvironment());
+        child.vars.inherit(this.vars);
+        child.traps.putAll(this.traps);
+        child.functions.putAll(this.functions);
+        child.aliases.putAll(this.aliases);
+        child.params.clear();
+        child.params.addAll(this.params);
+        child.flags = this.flags;
+        child.cwd = this.cwd;
+        child.out = this.out;
+        child.err = this.err;
+        child.instream = this.instream;
+        child.lastcode = this.lastcode;
+        return child;
+    }
+
+    /**
+     * Runs one command node.
+     *
+     * @param node The node
+     * @return The exit status
+     */
+    int executeNode(final Node node) {
+        int code;
+        if (node instanceof SimpleCommand cmd) {
+            this.refreshAliases(cmd);
+            this.vars.table().put("LINENO", String.valueOf(cmd.getLineNumber()));
+            if (this.flags.indexOf('x') >= 0) {
+                this.err.println(String.format("+ %s", cmd));
+            }
+            code = this.executeCommand(cmd);
+        } else if (node instanceof Subshell sub) {
+            final Executor child = this.subshell();
+            try {
+                code = child.execute(sub.getList());
+            } catch (final ExitSignal ex) {
+                code = ex.getCode();
+            }
+        } else if (node instanceof Grouping group) {
+            code = this.execute(group.getList());
+        } else {
+            code = this.compound.run(node);
+        }
+        return code;
+    }
+
+    /**
      * Returns the descriptors bound by a redirection-only {@code exec}.
      *
      * @return The bound descriptors
@@ -526,195 +599,6 @@ public final class Executor implements BuiltinContext {
         if (swap.savederr() != null) {
             this.err = swap.savederr();
         }
-    }
-
-    private Executor subshell() {
-        final Executor child = new Executor(this.exportedEnvironment());
-        child.vars.inherit(this.vars);
-        child.traps.putAll(this.traps);
-        child.functions.putAll(this.functions);
-        child.aliases.putAll(this.aliases);
-        child.params.clear();
-        child.params.addAll(this.params);
-        child.flags = this.flags;
-        child.cwd = this.cwd;
-        child.out = this.out;
-        child.err = this.err;
-        child.instream = this.instream;
-        child.lastcode = this.lastcode;
-        return child;
-    }
-
-    private int runPipelineList(final ListNode list) {
-        final List<Pipeline> pipelines = list.getPipelines();
-        final List<ListNode.Separator> separators = list.getSeparators();
-        int idx = 0;
-        boolean stopped = false;
-        while (!stopped && idx < pipelines.size()) {
-            final Pipeline pipeline = pipelines.get(idx);
-            final ListNode.Separator sep = separators.get(idx);
-            final boolean run = idx == 0 || shouldRunNext(
-                separators.get(idx - 1), this.lastcode
-            );
-            if (run) {
-                if (sep == ListNode.Separator.AMP) {
-                    this.executeAsync(pipeline);
-                    this.lastcode = 0;
-                } else {
-                    final int status;
-                    try {
-                        status = this.executePipeline(pipeline);
-                    } catch (final BreakSignal ex) {
-                        this.requireLoop(ex, "break");
-                        idx = idx + 1;
-                        continue;
-                    } catch (final ContinueSignal ex) {
-                        this.requireLoop(ex, "continue");
-                        idx = idx + 1;
-                        continue;
-                    }
-                    this.lastcode = status;
-                    this.history.add(pipelineToString(pipeline));
-                    if (this.flags.indexOf('e') >= 0 && status != 0
-                        && sep != ListNode.Separator.AND_IF
-                        && sep != ListNode.Separator.OR_IF) {
-                        stopped = true;
-                    }
-                }
-            }
-            idx = idx + 1;
-        }
-        return this.lastcode;
-    }
-
-    private void executeAsync(final Pipeline pipeline) {
-        final String cmdtext = pipelineToString(pipeline);
-        final Executor parent = this;
-        final int jobnum = this.jobs.submit(
-            () -> {
-                final Executor bgexecutor = parent.subshell();
-                bgexecutor.out = parent.out;
-                bgexecutor.err = parent.err;
-                return bgexecutor.executePipeline(pipeline);
-            },
-            cmdtext
-        );
-        this.bgpid = (int) (JobManager.JOB_PID_BASE + jobnum);
-    }
-
-    private int executePipeline(final Pipeline pipeline) {
-        final List<Node> commands = pipeline.getCommands();
-        final int code;
-        if (commands.isEmpty() || commands.get(0) == null) {
-            code = 0;
-        } else {
-            final int exit;
-            if (commands.size() == 1) {
-                exit = this.executeNode(commands.get(0));
-            } else {
-                exit = this.executePipelineInternal(pipeline);
-            }
-            if (pipeline.isBang()) {
-                if (exit == 0) {
-                    code = 1;
-                } else {
-                    code = 0;
-                }
-            } else {
-                code = exit;
-            }
-        }
-        return code;
-    }
-
-    private int executeNode(final Node node) {
-        int code;
-        if (node instanceof SimpleCommand cmd) {
-            this.refreshAliases(cmd);
-            this.vars.table().put("LINENO", String.valueOf(cmd.getLineNumber()));
-            if (this.flags.indexOf('x') >= 0) {
-                this.err.println(String.format("+ %s", cmd));
-            }
-            code = this.executeCommand(cmd);
-        } else if (node instanceof Subshell sub) {
-            final Executor child = this.subshell();
-            try {
-                code = child.execute(sub.getList());
-            } catch (final ExitSignal ex) {
-                code = ex.getCode();
-            }
-        } else if (node instanceof Grouping group) {
-            code = this.execute(group.getList());
-        } else {
-            code = this.compound.run(node);
-        }
-        return code;
-    }
-
-    private int executePipelineInternal(final Pipeline pipeline) {
-        final List<Node> commands = pipeline.getCommands();
-        final int count = commands.size();
-        final int[] codes = new int[count];
-        final PipedInputStream[] inputs = new PipedInputStream[count];
-        final PipedOutputStream[] outputs = new PipedOutputStream[count];
-        try {
-            for (int idx = 0; idx < count - 1; idx = idx + 1) {
-                outputs[idx] = new PipedOutputStream();
-                inputs[idx + 1] = new PipedInputStream(outputs[idx], 65536);
-            }
-        } catch (final IOException ex) {
-            return 1;
-        }
-        final Thread[] threads = new Thread[count];
-        for (int idx = 0; idx < count; idx = idx + 1) {
-            final int index = idx;
-            final boolean last = index == count - 1;
-            final Executor child = this.subshell();
-            if (index == 0) {
-                child.instream = this.instream;
-            } else {
-                child.instream = inputs[index];
-            }
-            if (last) {
-                child.out = this.out;
-            } else {
-                child.out = new PrintSink(outputs[index], StandardCharsets.UTF_8);
-            }
-            child.err = this.err;
-            final Node node = commands.get(index);
-            threads[index] = new Thread(
-                () -> {
-                    try {
-                        codes[index] = child.executeNode(node);
-                    } catch (final ExitSignal ex) {
-                        codes[index] = ex.getCode();
-                    } catch (final RuntimeException ex) {
-                        codes[index] = 1;
-                    } finally {
-                        if (!last) {
-                            try {
-                                outputs[index].close();
-                            } catch (final IOException ignored) {
-                                codes[index] = 1;
-                            }
-                        }
-                    }
-                },
-                String.format("sh-pipe-%d", index)
-            );
-        }
-        for (final Thread thread : threads) {
-            thread.start();
-        }
-        for (final Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (final InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                return 1;
-            }
-        }
-        return codes[count - 1];
     }
 
     private int executeCommand(final SimpleCommand cmd) {
@@ -863,34 +747,6 @@ public final class Executor implements BuiltinContext {
         return 0;
     }
 
-    private static boolean shouldRunNext(
-        final ListNode.Separator psep, final int pexit
-    ) {
-        final boolean run;
-        if (psep == ListNode.Separator.AND_IF) {
-            run = pexit == 0;
-        } else if (psep == ListNode.Separator.OR_IF) {
-            run = pexit != 0;
-        } else {
-            run = true;
-        }
-        return run;
-    }
-
-    private static String pipelineToString(final Pipeline pipeline) {
-        final StringBuilder line = new StringBuilder();
-        for (final Node node : pipeline.getCommands()) {
-            if (node == null) {
-                continue;
-            }
-            if (line.length() > 0) {
-                line.append(" | ");
-            }
-            line.append(node.toString());
-        }
-        return line.toString();
-    }
-
     private static boolean isSpecialBuiltin(final String name) {
         return SPECIAL_BUILTINS.contains(name);
     }
@@ -901,12 +757,9 @@ public final class Executor implements BuiltinContext {
         );
     }
 
-    private void requireLoop(final RuntimeException signal, final String name) {
-        if (this.compound.inLoop()) {
+    private void nested(final RuntimeException signal) {
+        if (this.depth > 1) {
             throw signal;
         }
-        this.err.println(String.format("sh: %s: not in a loop", name));
-        this.lastcode = 0;
     }
-
 }

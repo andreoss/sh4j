@@ -143,11 +143,12 @@ final class ExternalCommand {
         if (ProcessBuilder.Redirect.PIPE.equals(input) && console) {
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
         }
-        final boolean feed = ProcessBuilder.Redirect.PIPE.equals(input) && !console;
         int code;
         try {
             final Process process = builder.start();
-            final List<Thread> pumps = this.pumps(process, error, feed);
+            final List<Thread> pumps = this.pumps(
+                process, error, ProcessBuilder.Redirect.PIPE.equals(input) && !console
+            );
             if (ProcessBuilder.Redirect.PIPE.equals(output)) {
                 this.collect(process);
             }

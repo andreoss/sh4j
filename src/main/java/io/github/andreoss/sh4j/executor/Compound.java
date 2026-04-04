@@ -120,8 +120,7 @@ final class Compound {
     }
 
     private boolean proceeds(final WhileNode node) {
-        final int condexit = this.shell.execute(node.getCondition());
-        return node.isUntil() == (condexit != 0);
+        return node.isUntil() == (this.shell.execute(node.getCondition()) != 0);
     }
 
     private int choose(final CaseNode node) {
