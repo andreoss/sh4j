@@ -8,13 +8,11 @@ import io.github.andreoss.sh4j.PrintSink;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.FunctionNode;
-import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.Redirection;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
-import io.github.andreoss.sh4j.parser.Subshell;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -24,8 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Tree-walking executor for the AST produced by {@link Parser}. Top-level
@@ -36,15 +32,6 @@ import java.util.Set;
  * @since 1.0
  */
 public final class Executor implements BuiltinContext {
-
-    /**
-     * POSIX 2.14 special built-in utilities - these take priority over user-
-     * defined functions in command search (POSIX 2.9.1.1).
-     */
-    private static final Set<String> SPECIAL_BUILTINS = Set.of(
-        ":", ".", "break", "continue", "eval", "exec", "exit", "export",
-        "readonly", "return", "set", "shift", "times", "trap", "unset"
-    );
 
     /** Descriptors bound by a redirection-only exec. */
     private final Descriptors fds;
@@ -101,10 +88,7 @@ public final class Executor implements BuiltinContext {
     private int depth;
 
     /** Alias table captured when the current source line started. */
-    private Map<String, String> snapshot;
-
-    /** Source line the alias snapshot belongs to. */
-    private int snapline;
+    private final AliasSnapshot snapshot;
 
     /** Exit status of the last command substitution (-1 when none ran). */
     private int substat;
@@ -153,6 +137,7 @@ public final class Executor implements BuiltinContext {
         this.vars = vars;
         this.cwd = dir;
         this.substat = -1;
+        this.snapshot = new AliasSnapshot();
         this.compound = new Compound(this);
         this.traps = new HashMap<>();
         this.functions = new HashMap<>();
@@ -236,11 +221,7 @@ public final class Executor implements BuiltinContext {
         final Executor sub = this.subshell();
         sub.setCaptureStream(baos);
         this.substat = sub.execute(ast);
-        String captured = baos.toString(StandardCharsets.UTF_8);
-        while (captured.endsWith("\n")) {
-            captured = captured.substring(0, captured.length() - 1);
-        }
-        return captured;
+        return Executor.chomp(baos.toString(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -251,8 +232,7 @@ public final class Executor implements BuiltinContext {
     @Override
     public int execute(final ListNode list) {
         if (this.depth == 0) {
-            this.snapshot = null;
-            this.snapline = -1;
+            this.snapshot.reset();
         }
         this.depth = this.depth + 1;
         int code;
@@ -292,7 +272,9 @@ public final class Executor implements BuiltinContext {
         for (final String arg : args) {
             command.addArgument(arg);
         }
-        return this.runNamedCommand(command, name, new HashMap<>(env), true);
+        return new NamedCommand(this).run(
+            new CommandCall(command, name, new HashMap<>(env), true)
+        );
     }
 
     @Override
@@ -532,27 +514,7 @@ public final class Executor implements BuiltinContext {
      * @return The exit status
      */
     int executeNode(final Node node) {
-        int code;
-        if (node instanceof SimpleCommand cmd) {
-            this.refreshAliases(cmd);
-            this.vars.table().put("LINENO", String.valueOf(cmd.getLineNumber()));
-            if (this.flags.indexOf('x') >= 0) {
-                this.err.println(String.format("+ %s", cmd));
-            }
-            code = this.executeCommand(cmd);
-        } else if (node instanceof Subshell sub) {
-            final Executor child = this.subshell();
-            try {
-                code = child.execute(sub.getList());
-            } catch (final ExitSignal ex) {
-                code = ex.getCode();
-            }
-        } else if (node instanceof Grouping group) {
-            code = this.execute(group.getList());
-        } else {
-            code = this.compound.run(node);
-        }
-        return code;
+        return new NodeRunner(this, this.compound).run(node);
     }
 
     /**
@@ -562,6 +524,44 @@ public final class Executor implements BuiltinContext {
      */
     Descriptors descriptors() {
         return this.fds;
+    }
+
+    /**
+     * Returns the alias table captured for the current source line.
+     *
+     * @return The alias snapshot
+     */
+    AliasSnapshot snapshot() {
+        return this.snapshot;
+    }
+
+    /**
+     * Returns the exit status of the last command substitution.
+     *
+     * @return The exit status, -1 when none ran since the last reset
+     */
+    int substitution() {
+        return this.substat;
+    }
+
+    /**
+     * Records the exit status of the last command substitution.
+     *
+     * @param code The exit status, -1 to reset
+     */
+    void substitution(final int code) {
+        this.substat = code;
+    }
+
+    /**
+     * Runs a built-in.
+     *
+     * @param name The built-in name
+     * @param call The arguments, environment, and assignments of the call
+     * @return The exit status, or null when the name is not a built-in
+     */
+    Integer builtin(final String name, final Invocation call) {
+        return this.dispatcher.dispatch(name, this, call);
     }
 
     /**
@@ -601,154 +601,12 @@ public final class Executor implements BuiltinContext {
         }
     }
 
-    private int executeCommand(final SimpleCommand cmd) {
-        final Map<String, String> cenv = new HashMap<>(this.vars.table());
-        this.substat = -1;
-        final int assign = this.processAssignments(cmd.getAssignments(), cenv);
-        final String name = cmd.getName();
-        final int code;
-        if (name == null || name.isEmpty()) {
-            this.vars.table().putAll(cenv);
-            if (this.substat >= 0) {
-                code = this.substat;
-            } else {
-                code = assign;
-            }
-        } else {
-            code = this.runNamedCommand(cmd, name, cenv);
+    private static String chomp(final String text) {
+        int end = text.length();
+        while (end > 0 && text.charAt(end - 1) == '\n') {
+            end = end - 1;
         }
-        return code;
-    }
-
-    private int runNamedCommand(
-        final SimpleCommand cmd, final String name, final Map<String, String> cenv
-    ) {
-        return this.runNamedCommand(cmd, name, cenv, false);
-    }
-
-    private Map<String, String> aliasTable() {
-        return this.snapshot;
-    }
-
-    private void refreshAliases(final SimpleCommand cmd) {
-        final int line = cmd.getLineNumber();
-        if (this.snapshot == null || line != this.snapline) {
-            this.snapshot = new HashMap<>(this.aliases);
-            this.snapline = line;
-        }
-    }
-
-    private int runNamedCommand(
-        final SimpleCommand cmd, final String name, final Map<String, String> cenv,
-        final boolean skipfunc
-    ) {
-        final String alias;
-        if (skipfunc) {
-            alias = null;
-        } else {
-            alias = this.aliasTable().get(name);
-        }
-        if (alias != null) {
-            final StringBuilder line = new StringBuilder(alias);
-            for (final String arg : cmd.getArguments()) {
-                line.append(' ').append(arg);
-            }
-            return this.execute(
-                new Parser(new Lexer(new CharReader(line.toString()))).parse()
-            );
-        }
-        if ("exec".equals(name)) {
-            return new ExecCommand(this).run(cmd, cenv);
-        }
-        final RedirectionHandler.StreamSwap swap = this.redirect(cmd.getRedirections());
-        final InputSwap input = new InputSwap(this);
-        final Optional<InputStream> keptin = input.install(cmd.getRedirections());
-        final int code;
-        try {
-            if (swap.failed()) {
-                code = 1;
-            } else if (!skipfunc && this.functions.containsKey(name)
-                && !isSpecialBuiltin(name)) {
-                this.vars.table().putAll(cenv);
-                code = this.invokeFunction(this.functions.get(name), cmd, cenv);
-            } else {
-                if (isSpecialBuiltin(name)) {
-                    this.applyAssignments(cmd.getAssignments(), cenv);
-                }
-                final Integer bresult = this.dispatcher.dispatch(
-                    name, this,
-                    new Invocation(cmd.getArguments(), cenv, cmd.getAssignments())
-                );
-                if (bresult != null) {
-                    code = bresult;
-                } else {
-                    code = new ExternalCommand(this).run(cmd, name, cenv);
-                }
-            }
-        } finally {
-            input.restore(keptin);
-            this.restore(swap);
-        }
-        return code;
-    }
-
-    private int invokeFunction(
-        final FunctionNode func, final SimpleCommand cmd, final Map<String, String> cenv
-    ) {
-        final List<String> keptargs = new ArrayList<>(this.params);
-        final List<String> fargs = new ArrayList<>(0);
-        for (final String arg : cmd.getArguments()) {
-            fargs.addAll(this.expandArguments(arg, cenv));
-        }
-        this.setPositionalParams(fargs);
-        try {
-            return this.executeNode(func.getBody());
-        } catch (final ReturnSignal ex) {
-            return ex.getCode();
-        } finally {
-            this.params.clear();
-            this.params.addAll(keptargs);
-        }
-    }
-
-    private void applyAssignments(
-        final List<String> assignments, final Map<String, String> source
-    ) {
-        for (final String assignment : assignments) {
-            final int equals = assignment.indexOf('=');
-            if (equals > 0) {
-                final String name = assignment.substring(0, equals);
-                final String value = source.get(name);
-                if (value != null) {
-                    this.vars.table().put(name, value);
-                }
-            }
-        }
-    }
-
-    private int processAssignments(
-        final List<String> assignments, final Map<String, String> tenv
-    ) {
-        for (final String assignment : assignments) {
-            final int eqpos = assignment.indexOf('=');
-            if (eqpos > 0) {
-                final String vname = assignment.substring(0, eqpos);
-                if (this.vars.locked(vname)) {
-                    this.err.println(
-                        String.format("sh: %s: readonly variable", vname)
-                    );
-                    throw new ExitSignal(1);
-                }
-                final String rvalue = assignment.substring(eqpos + 1);
-                final String expanded = this.expandVariables(rvalue, tenv);
-                tenv.put(vname, WordExpander.removeQuotes(expanded));
-            }
-        }
-        return 0;
-    }
-
-    private static boolean isSpecialBuiltin(final String name) {
-        return SPECIAL_BUILTINS.contains(name);
+        return text.substring(0, end);
     }
 
     private static File initialDirectory() {
