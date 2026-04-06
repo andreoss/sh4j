@@ -294,7 +294,7 @@ final class MainTest {
     }
 
     @Test
-    void runSourceRunsExitTrap() throws IOException {
+    void runSourceRunsExitTrapCheck1() throws IOException {
         final File marker = new TempDirs(MainTest.root).file("trap-marker.txt");
         Assertions.assertEquals(
             0,
@@ -306,6 +306,18 @@ final class MainTest {
                 Collections.singletonList("sh")
             )
         );
+    }
+
+    @Test
+    void runSourceRunsExitTrapCheck2() throws IOException {
+        final File marker = new TempDirs(MainTest.root).file("trap-marker.txt");
+        Main.runSource(
+                String.format(
+                    "trap 'echo trapped > %s' EXIT; echo body",
+                    marker.getAbsolutePath()
+                ),
+                Collections.singletonList("sh")
+            );
         Assertions.assertEquals(
             String.format("trapped%s", System.lineSeparator()),
             new String(Files.readAllBytes(marker.toPath()), StandardCharsets.UTF_8)
@@ -313,7 +325,7 @@ final class MainTest {
     }
 
     @Test
-    void runSourcePropagatesExitAndRunsTrap() throws IOException {
+    void runSourcePropagatesExitAndRunsTrapCheck1() throws IOException {
         final File marker = new TempDirs(MainTest.root)
             .file("exit-trap-marker.txt");
         Assertions.assertEquals(
@@ -326,6 +338,19 @@ final class MainTest {
                 Collections.singletonList("sh")
             )
         );
+    }
+
+    @Test
+    void runSourcePropagatesExitAndRunsTrapCheck2() throws IOException {
+        final File marker = new TempDirs(MainTest.root)
+            .file("exit-trap-marker.txt");
+        Main.runSource(
+                String.format(
+                    "trap 'echo trapped > %s' EXIT; exit 3",
+                    marker.getAbsolutePath()
+                ),
+                Collections.singletonList("sh")
+            );
         Assertions.assertTrue(marker.isFile());
     }
 
@@ -368,7 +393,7 @@ final class MainTest {
     }
 
     @Test
-    void interactiveCapturedOutputAndPrompts() throws IOException {
+    void interactiveCapturedOutputAndPromptsCheck1() throws IOException {
         final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
         Files.write(
             startup.toPath(),
@@ -385,16 +410,105 @@ final class MainTest {
                 () -> Main.interactive(startup.getAbsolutePath())
             )
         );
+    }
+
+    @Test
+    void interactiveCapturedOutputAndPromptsCheck2() throws IOException {
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            );
         final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(text.contains("one> "));
+    }
+
+    @Test
+    void interactiveCapturedOutputAndPromptsCheck3() throws IOException {
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            );
+        final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(text.contains("two> "));
+    }
+
+    @Test
+    void interactiveCapturedOutputAndPromptsCheck4() throws IOException {
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            );
+        final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(text.contains("hello"));
+    }
+
+    @Test
+    void interactiveCapturedOutputAndPromptsCheck5() throws IOException {
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            );
+        final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(text.contains("a"));
+    }
+
+    @Test
+    void interactiveCapturedOutputAndPromptsCheck6() throws IOException {
+        final File startup = new TempDirs(MainTest.root).file("capture-env.sh");
+        Files.write(
+            startup.toPath(),
+            String.format("PS1='one> '%nPS2='two> '%n").getBytes(StandardCharsets.UTF_8)
+        );
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("echo hello%necho 'a%nb'%n%nif%n"),
+                out,
+                err,
+                () -> Main.interactive(startup.getAbsolutePath())
+            );
+        final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(err.toString(StandardCharsets.UTF_8).contains("syntax error"));
     }
 
     @Test
-    void interactiveBlankAndIncompleteDoubleQuoteAtEof() {
+    void interactiveBlankAndIncompleteDoubleQuoteAtEofCheck1() {
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
         final ByteArrayOutputStream recorded = new ByteArrayOutputStream();
         Assertions.assertEquals(
@@ -406,6 +520,18 @@ final class MainTest {
                 () -> Main.interactive(null)
             )
         );
+    }
+
+    @Test
+    void interactiveBlankAndIncompleteDoubleQuoteAtEofCheck2() {
+        final ByteArrayOutputStream err = new ByteArrayOutputStream();
+        final ByteArrayOutputStream recorded = new ByteArrayOutputStream();
+        MainTest.withStreams(
+                MainTest.input("%n%n%necho \"x"),
+                recorded,
+                err,
+                () -> Main.interactive(null)
+            );
         Assertions.assertTrue(
             recorded.toString(StandardCharsets.UTF_8).contains("$"),
             "the REPL must print a prompt before reporting EOF"

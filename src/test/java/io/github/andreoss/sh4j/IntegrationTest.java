@@ -83,7 +83,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void childJvmCatFileProducesVisibleStdout() throws Exception {
+    void childJvmCatFileProducesVisibleStdoutCheck1() throws Exception {
         final File probe = new TempDirs(IntegrationTest.root).file("probe.txt");
         try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
             w.write(String.format("hello-from-cat%n"));
@@ -107,6 +107,29 @@ public final class IntegrationTest {
             proc.exitValue(),
             String.format("sh4j exit code; output: %s", out)
         );
+    }
+
+    @Test
+    void childJvmCatFileProducesVisibleStdoutCheck2() throws Exception {
+        final File probe = new TempDirs(IntegrationTest.root).file("probe.txt");
+        try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
+            w.write(String.format("hello-from-cat%n"));
+        }
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            this.writeScript(
+                "catprobe.sh",
+                String.format("cat %s%n", probe.getAbsolutePath())
+            ).getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        proc.exitValue();
         Assertions.assertTrue(
             out.contains("hello-from-cat"),
             String.format("external cat stdout must reach test; got: '%s'", out)
@@ -114,7 +137,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void nativeBinaryCatProbeSmoke() throws Exception {
+    void nativeBinaryCatProbeSmokeCheck1() throws Exception {
         final File nativebin = new File("target/sh4j");
         Assumptions.assumeTrue(
             nativebin.isFile() && nativebin.canExecute(),
@@ -141,6 +164,32 @@ public final class IntegrationTest {
             proc.exitValue(),
             String.format("native sh4j exit code; output: %s", out)
         );
+    }
+
+    @Test
+    void nativeBinaryCatProbeSmokeCheck2() throws Exception {
+        final File nativebin = new File("target/sh4j");
+        Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native smoke"
+        );
+        final File probe = new TempDirs(IntegrationTest.root)
+            .file("nprobe.txt");
+        try (BufferedWriter w = Files.newBufferedWriter(probe.toPath(), StandardCharsets.UTF_8)) {
+            w.write(String.format("hello-native%n"));
+        }
+        final ProcessBuilder builder = new ProcessBuilder(
+            nativebin.getAbsolutePath(),
+            this.writeScript(
+                "ncatprobe.sh",
+                String.format("cat %s%n", probe.getAbsolutePath())
+            ).getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        proc.exitValue();
         Assertions.assertTrue(
             out.contains("hello-native"),
             String.format("native sh4j must propagate external cat stdout; got: '%s'", out)
@@ -189,7 +238,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void nativeBinaryPipelineSmoke() throws Exception {
+    void nativeBinaryPipelineSmokeCheck1() throws Exception {
         final File nativebin = new File("target/sh4j");
         Assumptions.assumeTrue(
             nativebin.isFile() && nativebin.canExecute(),
@@ -211,6 +260,27 @@ public final class IntegrationTest {
             proc.exitValue(),
             String.format("native sh4j pipeline exit code; output: %s", out)
         );
+    }
+
+    @Test
+    void nativeBinaryPipelineSmokeCheck2() throws Exception {
+        final File nativebin = new File("target/sh4j");
+        Assumptions.assumeTrue(
+            nativebin.isFile() && nativebin.canExecute(),
+            "target/sh4j native binary not built; skipping native pipeline smoke"
+        );
+        final ProcessBuilder builder = new ProcessBuilder(
+            nativebin.getAbsolutePath(),
+            this.writeScript(
+                "npipe.sh",
+                String.format("echo native-pipe | cat%n")
+            ).getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        proc.exitValue();
         Assertions.assertTrue(
             out.contains("native-pipe"),
             String.format("native sh4j pipeline must propagate stdout; got: '%s'", out)
@@ -350,7 +420,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void outputRedirection() throws IOException {
+    void outputRedirectionCheck1() throws IOException {
         final File outfile = new TempDirs(IntegrationTest.root).file("out.txt");
         Assertions.assertEquals(
             0,
@@ -361,7 +431,29 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
+    }
+
+    @Test
+    void outputRedirectionCheck2() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root).file("out.txt");
+        Main.runScript(
+                this.writeScript(
+                    "redir_out.sh",
+                    String.format("echo test > %s", outfile.getAbsolutePath()) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertTrue(outfile.exists());
+    }
+
+    @Test
+    void outputRedirectionCheck3() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root).file("out.txt");
+        Main.runScript(
+                this.writeScript(
+                    "redir_out.sh",
+                    String.format("echo test > %s", outfile.getAbsolutePath()) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertEquals(
             "test",
             new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
@@ -384,7 +476,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void appendRedirection() throws IOException {
+    void appendRedirectionCheck1() throws IOException {
         final File outfile = new TempDirs(IntegrationTest.root)
             .file("append.txt");
         Assertions.assertEquals(
@@ -399,7 +491,37 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
+    }
+
+    @Test
+    void appendRedirectionCheck2() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("append.txt");
+        Main.runScript(
+                this.writeScript(
+                    "append.sh",
+                    String.format(
+                        "echo line2 >> %s",
+                        outfile.getAbsolutePath()
+                    ) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertTrue(outfile.exists(), "append.txt should exist");
+    }
+
+    @Test
+    void appendRedirectionCheck3() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("append.txt");
+        Main.runScript(
+                this.writeScript(
+                    "append.sh",
+                    String.format(
+                        "echo line2 >> %s",
+                        outfile.getAbsolutePath()
+                    ) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertEquals(
             "line2",
             new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).trim()
@@ -407,7 +529,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void clobberRedirection() throws IOException {
+    void clobberRedirectionCheck1() throws IOException {
         final File outfile = new TempDirs(IntegrationTest.root)
             .file("clobber.txt");
         Assertions.assertEquals(
@@ -422,6 +544,21 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
+    }
+
+    @Test
+    void clobberRedirectionCheck2() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("clobber.txt");
+        Main.runScript(
+                this.writeScript(
+                    "clobber.sh",
+                    String.format(
+                        "echo test >| %s",
+                        outfile.getAbsolutePath()
+                    ) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertTrue(outfile.exists());
     }
 
@@ -443,7 +580,7 @@ public final class IntegrationTest {
     }
 
     @Test
-    void variableExpansionWithRedirect() throws IOException {
+    void variableExpansionWithRedirectCheck1() throws IOException {
         final File outfile = new TempDirs(IntegrationTest.root)
             .file("out2.txt");
         Assertions.assertEquals(
@@ -458,7 +595,37 @@ public final class IntegrationTest {
                 ).getAbsolutePath()
             )
         );
+    }
+
+    @Test
+    void variableExpansionWithRedirectCheck2() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("out2.txt");
+        Main.runScript(
+                this.writeScript(
+                    "varexp_redir.sh",
+                    String.format(
+                        "echo $HOME > %s",
+                        outfile.getAbsolutePath()
+                    ) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
+    }
+
+    @Test
+    void variableExpansionWithRedirectCheck3() throws IOException {
+        final File outfile = new TempDirs(IntegrationTest.root)
+            .file("out2.txt");
+        Main.runScript(
+                this.writeScript(
+                    "varexp_redir.sh",
+                    String.format(
+                        "echo $HOME > %s",
+                        outfile.getAbsolutePath()
+                    ) + String.format("%n")
+                ).getAbsolutePath()
+            );
         Assertions.assertFalse(
             new String(
                 Files.readAllBytes(outfile.toPath()),
@@ -689,11 +856,32 @@ public final class IntegrationTest {
      * POSIX 2.6.6 Pathname Expansion - glob characters match filenames.
      */
     @Test
-    void pathnameExpansionGlob() throws Exception {
+    void pathnameExpansionGlobCheck1() throws Exception {
         final File dir = new TempDirs(IntegrationTest.root).folder("globdir");
         Assertions.assertTrue(new File(dir, "alpha.txt").createNewFile());
+    }
+
+    @Test
+    void pathnameExpansionGlobCheck2() throws Exception {
+        final File dir = new TempDirs(IntegrationTest.root).folder("globdir");
+        new File(dir, "alpha.txt").createNewFile();
         Assertions.assertTrue(new File(dir, "beta.txt").createNewFile());
+    }
+
+    @Test
+    void pathnameExpansionGlobCheck3() throws Exception {
+        final File dir = new TempDirs(IntegrationTest.root).folder("globdir");
+        new File(dir, "alpha.txt").createNewFile();
+        new File(dir, "beta.txt").createNewFile();
         Assertions.assertTrue(new File(dir, "other.log").createNewFile());
+    }
+
+    @Test
+    void pathnameExpansionGlobCheck4() throws Exception {
+        final File dir = new TempDirs(IntegrationTest.root).folder("globdir");
+        new File(dir, "alpha.txt").createNewFile();
+        new File(dir, "beta.txt").createNewFile();
+        new File(dir, "other.log").createNewFile();
         Assertions.assertEquals(
             String.format("alpha.txt%nbeta.txt%n"),
             this.runChildJvm(
@@ -1082,7 +1270,7 @@ public final class IntegrationTest {
      * POSIX 2.14 readonly builtin - prevents reassignment.
      */
     @Test
-    void readonlyPreventsReassignment() throws Exception {
+    void readonlyPreventsReassignmentCheck1() throws Exception {
         final String out = this.runChildJvmAllowingFailure(
             this.writeScript(
                 "ro.sh",
@@ -1096,11 +1284,31 @@ public final class IntegrationTest {
                 out
             )
         );
+    }
+
+    @Test
+    void readonlyPreventsReassignmentCheck2() throws Exception {
+        final String out = this.runChildJvmAllowingFailure(
+            this.writeScript(
+                "ro.sh",
+                String.format("readonly R=fixed%nR=changed%necho $R%n")
+            )
+        );
         Assertions.assertFalse(
             out.contains("fixed"),
             String.format(
                 "assignment to a readonly variable must abort a non-interactive shell, got: %s",
                 out
+            )
+        );
+    }
+
+    @Test
+    void readonlyPreventsReassignmentCheck3() throws Exception {
+        final String out = this.runChildJvmAllowingFailure(
+            this.writeScript(
+                "ro.sh",
+                String.format("readonly R=fixed%nR=changed%necho $R%n")
             )
         );
         Assertions.assertFalse(
@@ -1132,7 +1340,7 @@ public final class IntegrationTest {
      * POSIX 2.14 pwd builtin - prints the working directory.
      */
     @Test
-    void pwdPrintsWorkingDirectory() throws Exception {
+    void pwdPrintsWorkingDirectoryCheck1() throws Exception {
         final File dir = new TempDirs(IntegrationTest.root).folder("wd");
         final String out = this.runChildJvm(
             this.writeScript(
@@ -1147,6 +1355,17 @@ public final class IntegrationTest {
                 out
             )
         );
+    }
+
+    @Test
+    void pwdPrintsWorkingDirectoryCheck2() throws Exception {
+        final File dir = new TempDirs(IntegrationTest.root).folder("wd");
+        final String out = this.runChildJvm(
+            this.writeScript(
+                "pwd.sh",
+                String.format("cd %s%npwd%n", dir.getAbsolutePath())
+            )
+        ).trim();
         Assertions.assertTrue(
             out.contains(dir.getName()),
             String.format(
@@ -1175,7 +1394,7 @@ public final class IntegrationTest {
      * POSIX 2.14 cd builtin - changes the working directory.
      */
     @Test
-    void cdChangesWorkingDirectory() throws Exception {
+    void cdChangesWorkingDirectoryCheck1() throws Exception {
         final File target = new TempDirs(IntegrationTest.root)
             .folder("cd-target");
         final String out = this.runChildJvm(
@@ -1188,6 +1407,18 @@ public final class IntegrationTest {
             out.endsWith("/cd-target"),
             String.format("expected to land in /cd-target, got %s", out)
         );
+    }
+
+    @Test
+    void cdChangesWorkingDirectoryCheck2() throws Exception {
+        final File target = new TempDirs(IntegrationTest.root)
+            .folder("cd-target");
+        final String out = this.runChildJvm(
+            this.writeScript(
+                "cd.sh",
+                String.format("cd %s%npwd%n", target.getAbsolutePath())
+            )
+        ).trim();
         Assertions.assertTrue(
             out.contains(target.getName()),
             String.format("expected pwd to mention %s", target.getName())
@@ -1359,7 +1590,7 @@ public final class IntegrationTest {
      * directory recorded in OLDPWD.
      */
     @Test
-    void cdDashRevisitsPreviousDirectory() throws Exception {
+    void cdDashRevisitsPreviousDirectoryCheck1() throws Exception {
         final File first = new TempDirs(IntegrationTest.root).folder("first");
         final File second = new TempDirs(IntegrationTest.root).folder("second");
         final String out = this.runChildJvm(
@@ -1375,6 +1606,21 @@ public final class IntegrationTest {
             out.endsWith("/first"),
             String.format("expected to return to /first, got %s", out)
         );
+    }
+
+    @Test
+    void cdDashRevisitsPreviousDirectoryCheck2() throws Exception {
+        final File first = new TempDirs(IntegrationTest.root).folder("first");
+        final File second = new TempDirs(IntegrationTest.root).folder("second");
+        final String out = this.runChildJvm(
+            this.writeScript(
+                "cdback.sh",
+                String.format(
+                    "cd %s%ncd %s%ncd - >/dev/null%npwd%n",
+                    first.getAbsolutePath(), second.getAbsolutePath()
+                )
+            )
+        ).trim();
         Assertions.assertNotEquals(
             second.getAbsolutePath(), out,
             "cd - must not land on the directory just left"
@@ -1895,7 +2141,7 @@ public final class IntegrationTest {
      * POSIX 2.5.3 OLDPWD - previous working directory after cd.
      */
     @Test
-    void oldpwdAfterCd() throws Exception {
+    void oldpwdAfterCdCheck1() throws Exception {
         final File target = new TempDirs(IntegrationTest.root).folder("after");
         final String out = this.runChildJvm(
             this.writeScript(
@@ -1906,6 +2152,19 @@ public final class IntegrationTest {
             )
         ).trim();
         Assertions.assertFalse(out.isEmpty(), "OLDPWD should not be empty");
+    }
+
+    @Test
+    void oldpwdAfterCdCheck2() throws Exception {
+        final File target = new TempDirs(IntegrationTest.root).folder("after");
+        final String out = this.runChildJvm(
+            this.writeScript(
+                "oldpwd.sh",
+                String.format(
+                    "ORIG=$PWD%ncd %s%necho $OLDPWD%n", target.getAbsolutePath()
+                )
+            )
+        ).trim();
         Assertions.assertNotEquals(
             target.getAbsolutePath(), out,
             "OLDPWD should name the directory left behind"
@@ -1965,7 +2224,7 @@ public final class IntegrationTest {
      * POSIX 2.14 type - resolves multiple names in one invocation.
      */
     @Test
-    void typeWithMultipleNames() throws Exception {
+    void typeWithMultipleNamesCheck1() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript(
                 "tmulti.sh",
@@ -1975,6 +2234,16 @@ public final class IntegrationTest {
         Assertions.assertTrue(
             out.contains("echo"),
             String.format("expected echo in output, got: %s", out)
+        );
+    }
+
+    @Test
+    void typeWithMultipleNamesCheck2() throws Exception {
+        final String out = this.runChildJvm(
+            this.writeScript(
+                "tmulti.sh",
+                String.format("type echo cd%n")
+            )
         );
         Assertions.assertTrue(
             out.contains("cd"),

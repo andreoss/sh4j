@@ -139,9 +139,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeAssignmentOnly() {
+    void executeAssignmentOnlyCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("FOO=bar")));
+    }
+
+    @Test
+    void executeAssignmentOnlyCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("FOO=bar"));
         Assertions.assertEquals("bar", executor.getVariable("FOO"));
     }
 
@@ -151,10 +157,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeMultipleAssignments() {
+    void executeMultipleAssignmentsCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("A=1 B=2")));
+    }
+
+    @Test
+    void executeMultipleAssignmentsCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("A=1 B=2"));
         Assertions.assertEquals("1", executor.getVariable("A"));
+    }
+
+    @Test
+    void executeMultipleAssignmentsCheck3() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("A=1 B=2"));
         Assertions.assertEquals("2", executor.getVariable("B"));
     }
 
@@ -587,7 +605,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeWhileBodyRunsOnce() {
+    void executeWhileBodyRunsOnceCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -596,12 +614,22 @@ final class ExecutorTest {
             1,
             executor.execute(this.parse("i=; while [ -z \"$i\" ]; do echo ran; i=1; false; done"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void executeWhileBodyRunsOnceCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("i=; while [ -z \"$i\" ]; do echo ran; i=1; false; done"));
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void executeUntilBodyRunsOnce() {
+    void executeUntilBodyRunsOnceCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -610,6 +638,16 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("i=; until [ -n \"$i\" ]; do echo ran; i=1; true; done"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void executeUntilBodyRunsOnceCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("i=; until [ -n \"$i\" ]; do echo ran; i=1; true; done"));
         Assertions.assertEquals(String.format("ran%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
@@ -645,7 +683,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void exportNoArgs() {
+    void exportNoArgsCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
@@ -653,6 +691,18 @@ final class ExecutorTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("export")));
+        stream.flush();
+    }
+
+    @Test
+    void exportNoArgsCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_EXPORT_VAR", ExecutorTest.HELLO);
+        final Executor executor = new Executor(env);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("export"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("export TEST_EXPORT_VAR=hello")
         );
@@ -668,7 +718,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void executeElifWhenIfFalse() {
+    void executeElifWhenIfFalseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -677,12 +727,22 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("if false; then echo no; elif true; then echo yes; fi"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void executeElifWhenIfFalseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("if false; then echo no; elif true; then echo yes; fi"));
         Assertions.assertEquals(String.format("yes%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void executeElifChainFalseFalse() {
+    void executeElifChainFalseFalseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -693,12 +753,24 @@ final class ExecutorTest {
                 this.parse("if false; then echo a; elif false; then echo b; else echo c; fi")
             )
         );
+        stream.flush();
+    }
+
+    @Test
+    void executeElifChainFalseFalseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(
+                this.parse("if false; then echo a; elif false; then echo b; else echo c; fi")
+            );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void executeElifChainSecondElifTrue() {
+    void executeElifChainSecondElifTrueCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -711,6 +783,20 @@ final class ExecutorTest {
                 )
             )
         );
+        stream.flush();
+    }
+
+    @Test
+    void executeElifChainSecondElifTrueCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(
+                this.parse(
+                    "if false; then echo a; elif false; then echo b; elif true; then echo c; fi"
+                )
+            );
         Assertions.assertEquals(String.format("c%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
@@ -729,7 +815,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void heredocExpansion() {
+    void heredocExpansionCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("TEST_HVAR", "expanded");
@@ -739,11 +825,21 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse(String.format("cat << EOF%nhello $TEST_HVAR%nEOF%n")))
         );
+    }
+
+    @Test
+    void heredocExpansionCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_HVAR", "expanded");
+        final Executor executor = new Executor(env);
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse(String.format("cat << EOF%nhello $TEST_HVAR%nEOF%n")));
         Assertions.assertEquals("hello expanded", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void redirectTargetExpansionOutput() throws Exception {
+    void redirectTargetExpansionOutputCheck1() throws Exception {
         final File file = new File("/tmp/sh4j_redir_expand_test.txt");
         file.delete();
         final Map<String, String> env = new HashMap<>();
@@ -752,7 +848,27 @@ final class ExecutorTest {
             0,
             new Executor(env).execute(this.parse("echo hello > $TEST_FILE"))
         );
+        file.delete();
+    }
+
+    @Test
+    void redirectTargetExpansionOutputCheck2() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_expand_test.txt");
+        file.delete();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
+        new Executor(env).execute(this.parse("echo hello > $TEST_FILE"));
         Assertions.assertTrue(file.exists());
+        file.delete();
+    }
+
+    @Test
+    void redirectTargetExpansionOutputCheck3() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_expand_test.txt");
+        file.delete();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_expand_test.txt");
+        new Executor(env).execute(this.parse("echo hello > $TEST_FILE"));
         Assertions.assertEquals(
             String.format("hello%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -761,7 +877,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void redirectTargetExpansionAppend() throws Exception {
+    void redirectTargetExpansionAppendCheck1() throws Exception {
         final File file = new File("/tmp/sh4j_redir_append_expand.txt");
         file.delete();
         final Map<String, String> env = new HashMap<>();
@@ -770,7 +886,27 @@ final class ExecutorTest {
             0,
             new Executor(env).execute(this.parse("echo hello >> $TEST_FILE"))
         );
+        file.delete();
+    }
+
+    @Test
+    void redirectTargetExpansionAppendCheck2() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_append_expand.txt");
+        file.delete();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
+        new Executor(env).execute(this.parse("echo hello >> $TEST_FILE"));
         Assertions.assertTrue(file.exists());
+        file.delete();
+    }
+
+    @Test
+    void redirectTargetExpansionAppendCheck3() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_append_expand.txt");
+        file.delete();
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_append_expand.txt");
+        new Executor(env).execute(this.parse("echo hello >> $TEST_FILE"));
         Assertions.assertEquals(
             String.format("hello%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -779,7 +915,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void redirectTargetExpansionInput() throws Exception {
+    void redirectTargetExpansionInputCheck1() throws Exception {
         final File file = new File("/tmp/sh4j_redir_input_expand.txt");
         file.delete();
         try (
@@ -796,6 +932,27 @@ final class ExecutorTest {
         final Executor executor = new Executor(env);
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("cat < $TEST_FILE")));
+        file.delete();
+    }
+
+    @Test
+    void redirectTargetExpansionInputCheck2() throws Exception {
+        final File file = new File("/tmp/sh4j_redir_input_expand.txt");
+        file.delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                file.toPath(),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write("hello from file");
+        }
+        final Map<String, String> env = new HashMap<>();
+        env.put("TEST_FILE", "/tmp/sh4j_redir_input_expand.txt");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor(env);
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("cat < $TEST_FILE"));
         Assertions.assertEquals("hello from file", bos.toString(StandardCharsets.UTF_8).trim());
         file.delete();
     }
@@ -929,10 +1086,20 @@ final class ExecutorTest {
     }
 
     @Test
-    void expandDollarDollar() {
+    void expandDollarDollarCheck1() {
         final String pid = new Executor().expandVariables("$$", new HashMap<>());
         Assertions.assertNotNull(pid);
+    }
+
+    @Test
+    void expandDollarDollarCheck2() {
+        final String pid = new Executor().expandVariables("$$", new HashMap<>());
         Assertions.assertFalse(pid.isEmpty());
+    }
+
+    @Test
+    void expandDollarDollarCheck3() {
+        final String pid = new Executor().expandVariables("$$", new HashMap<>());
         final String jvm = ManagementFactory.getRuntimeMXBean().getName();
         Assertions.assertEquals(
             String.valueOf(Long.parseLong(jvm.substring(0, jvm.indexOf('@')))),
@@ -1033,12 +1200,18 @@ final class ExecutorTest {
     }
 
     @Test
-    void expandVarAssignDefault() {
+    void expandVarAssignDefaultCheck1() {
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals(
             "assigned",
             new Executor().expandVariables("${var:=assigned}", env)
         );
+    }
+
+    @Test
+    void expandVarAssignDefaultCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("${var:=assigned}", env);
         Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
@@ -1055,17 +1228,30 @@ final class ExecutorTest {
     }
 
     @Test
-    void expandVarAssignNullOnly() {
+    void expandVarAssignNullOnlyCheck1() {
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("assigned", new Executor().expandVariables("${var=assigned}", env));
+    }
+
+    @Test
+    void expandVarAssignNullOnlyCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("${var=assigned}", env);
         Assertions.assertEquals("assigned", env.get(ExecutorTest.VAR_NAME));
     }
 
     @Test
-    void expandVarAssignNullOnlySetSkips() {
+    void expandVarAssignNullOnlySetSkipsCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.VAR_NAME, "existing");
         Assertions.assertEquals("existing", new Executor().expandVariables("${var=assigned}", env));
+    }
+
+    @Test
+    void expandVarAssignNullOnlySetSkipsCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.VAR_NAME, "existing");
+        new Executor().expandVariables("${var=assigned}", env);
         Assertions.assertEquals("existing", env.get(ExecutorTest.VAR_NAME));
     }
 
@@ -1251,7 +1437,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void globMatchesQuestionMarkInCase() {
+    void globMatchesQuestionMarkInCaseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1259,11 +1445,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case ab in a?) echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesQuestionMarkInCaseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case ab in a?) echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    void globMatchesQuestionMarkNoMatch() {
+    void globMatchesQuestionMarkNoMatchCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1271,11 +1465,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case abc in a?) echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesQuestionMarkNoMatchCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case abc in a?) echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("NO".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    void globMatchesCharClassInCase() {
+    void globMatchesCharClassInCaseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1283,11 +1485,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case b in [abc]) echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesCharClassInCaseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case b in [abc]) echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    void globMatchesCharClassNoMatch() {
+    void globMatchesCharClassNoMatchCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1295,11 +1505,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case z in [abc]) echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesCharClassNoMatchCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case z in [abc]) echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("NO".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    void globMatchesCharClassRangeInCase() {
+    void globMatchesCharClassRangeInCaseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1307,11 +1525,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case m in [a-z]) echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesCharClassRangeInCaseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case m in [a-z]) echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
     @Test
-    void globMatchesUnclosedBracketInCase() {
+    void globMatchesUnclosedBracketInCaseCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -1319,6 +1545,14 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("case '[abc' in '[abc') echo MATCHED;; *) echo NO;; esac"))
         );
+    }
+
+    @Test
+    void globMatchesUnclosedBracketInCaseCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("case '[abc' in '[abc') echo MATCHED;; *) echo NO;; esac"));
         Assertions.assertTrue("MATCHED".equals(bos.toString(StandardCharsets.UTF_8).trim()));
     }
 
@@ -1395,50 +1629,92 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticLessThan() {
+    void arithmeticLessThanCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((3 < 5))", env));
+    }
+
+    @Test
+    void arithmeticLessThanCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((3 < 5))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((5 < 3))", env));
     }
 
     @Test
-    void arithmeticLessEqual() {
+    void arithmeticLessEqualCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((5 <= 5))", env));
+    }
+
+    @Test
+    void arithmeticLessEqualCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((5 <= 5))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((6 <= 5))", env));
     }
 
     @Test
-    void arithmeticGreaterThan() {
+    void arithmeticGreaterThanCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((5 > 3))", env));
+    }
+
+    @Test
+    void arithmeticGreaterThanCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((5 > 3))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((3 > 5))", env));
     }
 
     @Test
-    void arithmeticGreaterEqual() {
+    void arithmeticGreaterEqualCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((5 >= 5))", env));
+    }
+
+    @Test
+    void arithmeticGreaterEqualCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((5 >= 5))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((4 >= 5))", env));
     }
 
     @Test
-    void arithmeticEqualEqual() {
+    void arithmeticEqualEqualCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((7 == 7))", env));
+    }
+
+    @Test
+    void arithmeticEqualEqualCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((7 == 7))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((7 == 8))", env));
     }
 
     @Test
-    void arithmeticNotEqual() {
+    void arithmeticNotEqualCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((7 != 8))", env));
+    }
+
+    @Test
+    void arithmeticNotEqualCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((7 != 8))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((7 != 7))", env));
     }
 
@@ -1467,34 +1743,62 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticLogicalAnd() {
+    void arithmeticLogicalAndCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((1 && 2))", env));
+    }
+
+    @Test
+    void arithmeticLogicalAndCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 && 2))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((0 && 2))", env));
     }
 
     @Test
-    void arithmeticLogicalOr() {
+    void arithmeticLogicalOrCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((0 || 5))", env));
+    }
+
+    @Test
+    void arithmeticLogicalOrCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((0 || 5))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((0 || 0))", env));
     }
 
     @Test
-    void arithmeticUnaryNot() {
+    void arithmeticUnaryNotCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((!0))", env));
+    }
+
+    @Test
+    void arithmeticUnaryNotCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((!0))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((!5))", env));
     }
 
     @Test
-    void arithmeticUnaryBitNot() {
+    void arithmeticUnaryBitNotCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("-1", executor.expandVariables("$((~0))", env));
+    }
+
+    @Test
+    void arithmeticUnaryBitNotCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((~0))", env);
         Assertions.assertEquals("-6", executor.expandVariables("$((~5))", env));
     }
 
@@ -1515,93 +1819,199 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticTernaryNested() {
+    void arithmeticTernaryNestedCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("30", executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env));
+    }
+
+    @Test
+    void arithmeticTernaryNestedCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env);
         Assertions.assertEquals("40", executor.expandVariables("$((1 ? 0 ? 30 : 40 : 50))", env));
+    }
+
+    @Test
+    void arithmeticTernaryNestedCheck3() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? 2 ? 30 : 40 : 50))", env);
+        executor.expandVariables("$((1 ? 0 ? 30 : 40 : 50))", env);
         Assertions.assertEquals("50", executor.expandVariables("$((0 ? 30 : 40 ? 50 : 60))", env));
     }
 
     @Test
-    void arithmeticTernaryWithComparison() {
+    void arithmeticTernaryWithComparisonCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "5");
         Assertions.assertEquals("1", executor.expandVariables("$((x > 3 ? 1 : 0))", env));
+    }
+
+    @Test
+    void arithmeticTernaryWithComparisonCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "5");
+        executor.expandVariables("$((x > 3 ? 1 : 0))", env);
         Assertions.assertEquals("0", executor.expandVariables("$((x > 10 ? 1 : 0))", env));
     }
 
     @Test
-    void arithmeticTernaryArithmeticBranches() {
+    void arithmeticTernaryArithmeticBranchesCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("7", executor.expandVariables("$((1 ? 3 + 4 : 99))", env));
+    }
+
+    @Test
+    void arithmeticTernaryArithmeticBranchesCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? 3 + 4 : 99))", env);
         Assertions.assertEquals("99", executor.expandVariables("$((0 ? 3 + 4 : 99))", env));
     }
 
     @Test
-    void arithmeticAssign() {
+    void arithmeticAssignCheck1() {
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("5", new Executor().expandVariables("$((x = 5))", env));
+    }
+
+    @Test
+    void arithmeticAssignCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("$((x = 5))", env);
         Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
-    void arithmeticPlusAssign() {
+    void arithmeticPlusAssignCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
         Assertions.assertEquals("13", new Executor().expandVariables("$((x += 3))", env));
+    }
+
+    @Test
+    void arithmeticPlusAssignCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        new Executor().expandVariables("$((x += 3))", env);
         Assertions.assertEquals("13", env.get("x"));
     }
 
     @Test
-    void arithmeticMinusAssign() {
+    void arithmeticMinusAssignCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
         Assertions.assertEquals("7", new Executor().expandVariables("$((x -= 3))", env));
+    }
+
+    @Test
+    void arithmeticMinusAssignCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        new Executor().expandVariables("$((x -= 3))", env);
         Assertions.assertEquals("7", env.get("x"));
     }
 
     @Test
-    void arithmeticMulDivModAssign() {
+    void arithmeticMulDivModAssignCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
         Assertions.assertEquals("30", executor.expandVariables("$((x *= 3))", env));
+    }
+
+    @Test
+    void arithmeticMulDivModAssignCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        executor.expandVariables("$((x *= 3))", env);
         env.put("y", "20");
         Assertions.assertEquals("4", executor.expandVariables("$((y /= 5))", env));
+    }
+
+    @Test
+    void arithmeticMulDivModAssignCheck3() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        executor.expandVariables("$((x *= 3))", env);
+        env.put("y", "20");
+        executor.expandVariables("$((y /= 5))", env);
         env.put("z", "23");
         Assertions.assertEquals("3", executor.expandVariables("$((z %= 5))", env));
     }
 
     @Test
-    void arithmeticShiftAssign() {
+    void arithmeticShiftAssignCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "4");
         Assertions.assertEquals("32", executor.expandVariables("$((x <<= 3))", env));
+    }
+
+    @Test
+    void arithmeticShiftAssignCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "4");
+        executor.expandVariables("$((x <<= 3))", env);
         env.put("y", "32");
         Assertions.assertEquals("4", executor.expandVariables("$((y >>= 3))", env));
     }
 
     @Test
-    void arithmeticBitAssign() {
+    void arithmeticBitAssignCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         env.put("x", "12");
         Assertions.assertEquals("4", executor.expandVariables("$((x &= 6))", env));
+    }
+
+    @Test
+    void arithmeticBitAssignCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "12");
+        executor.expandVariables("$((x &= 6))", env);
         env.put("y", "12");
         Assertions.assertEquals("10", executor.expandVariables("$((y ^= 6))", env));
+    }
+
+    @Test
+    void arithmeticBitAssignCheck3() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "12");
+        executor.expandVariables("$((x &= 6))", env);
+        env.put("y", "12");
+        executor.expandVariables("$((y ^= 6))", env);
         env.put("z", "12");
         Assertions.assertEquals("14", executor.expandVariables("$((z |= 6))", env));
     }
 
     @Test
-    void arithmeticAssignRightAssoc() {
+    void arithmeticAssignRightAssocCheck1() {
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("7", new Executor().expandVariables("$((a = b = 7))", env));
+    }
+
+    @Test
+    void arithmeticAssignRightAssocCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("$((a = b = 7))", env);
         Assertions.assertEquals("7", env.get("a"));
+    }
+
+    @Test
+    void arithmeticAssignRightAssocCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("$((a = b = 7))", env);
         Assertions.assertEquals("7", env.get("b"));
     }
 
@@ -1620,14 +2030,36 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticTernaryShortCircuit() {
+    void arithmeticTernaryShortCircuitCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
         Assertions.assertEquals("1", env.get("a"));
+    }
+
+    @Test
+    void arithmeticTernaryShortCircuitCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
         Assertions.assertEquals(null, env.get("b"));
+    }
+
+    @Test
+    void arithmeticTernaryShortCircuitCheck3() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
         executor.expandVariables("$((0 ? (c = 3) : (d = 4)))", env);
         Assertions.assertEquals(null, env.get("c"));
+    }
+
+    @Test
+    void arithmeticTernaryShortCircuitCheck4() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 ? (a = 1) : (b = 2)))", env);
+        executor.expandVariables("$((0 ? (c = 3) : (d = 4)))", env);
         Assertions.assertEquals("4", env.get("d"));
     }
 
@@ -1699,9 +2131,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void exportArgWithEqualsNonStandardName() throws Exception {
+    void exportArgWithEqualsNonStandardNameCheck1() throws Exception {
         final Executor executor = new Executor(new HashMap<>());
         Assertions.assertEquals(0, executor.execute(this.parse("export 1foo=bar")));
+    }
+
+    @Test
+    void exportArgWithEqualsNonStandardNameCheck2() throws Exception {
+        final Executor executor = new Executor(new HashMap<>());
+        executor.execute(this.parse("export 1foo=bar"));
         Assertions.assertEquals("bar", executor.getVariable("1foo"));
     }
 
@@ -1756,10 +2194,17 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticAssignDivByZero() {
+    void arithmeticAssignDivByZeroCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
         Assertions.assertEquals("0", new Executor().expandVariables("$((x /= 0))", env));
+    }
+
+    @Test
+    void arithmeticAssignDivByZeroCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "10");
+        new Executor().expandVariables("$((x /= 0))", env);
         Assertions.assertEquals("0", env.get("x"));
     }
 
@@ -1771,17 +2216,30 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticAssignNonNumericEnvTreatedAsZero() {
+    void arithmeticAssignNonNumericEnvTreatedAsZeroCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "abc");
         Assertions.assertEquals("5", new Executor().expandVariables("$((x += 5))", env));
+    }
+
+    @Test
+    void arithmeticAssignNonNumericEnvTreatedAsZeroCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("x", "abc");
+        new Executor().expandVariables("$((x += 5))", env);
         Assertions.assertEquals("5", env.get("x"));
     }
 
     @Test
-    void arithmeticAssignWithUnderscoreName() {
+    void arithmeticAssignWithUnderscoreNameCheck1() {
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("42", new Executor().expandVariables("$((_foo = 42))", env));
+    }
+
+    @Test
+    void arithmeticAssignWithUnderscoreNameCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        new Executor().expandVariables("$((_foo = 42))", env);
         Assertions.assertEquals("42", env.get("_foo"));
     }
 
@@ -1859,11 +2317,19 @@ final class ExecutorTest {
     }
 
     @Test
-    void typeForExternalNonBuiltinCommand() {
+    void typeForExternalNonBuiltinCommandCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("type ls")));
+    }
+
+    @Test
+    void typeForExternalNonBuiltinCommandCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type ls"));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("ls is"));
     }
 
@@ -1923,11 +2389,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void ppidIsSetToParentProcessIdOnInit() {
+    void ppidIsSetToParentProcessIdOnInitCheck1() {
         final String ppid = new Executor().getVariable("PPID");
         Assertions.assertNotNull(ppid);
+    }
+
+    @Test
+    void ppidIsSetToParentProcessIdOnInitCheck2() {
+        final String ppid = new Executor().getVariable("PPID");
         final long parsed = Long.parseLong(ppid);
         Assertions.assertTrue(parsed > 0L, "PPID should be a positive PID");
+    }
+
+    @Test
+    void ppidIsSetToParentProcessIdOnInitCheck3() {
+        final String ppid = new Executor().getVariable("PPID");
+        final long parsed = Long.parseLong(ppid);
         Assertions.assertEquals(
             ProcessHandle.current()
                 .parent().orElse(ProcessHandle.current()).pid(),
@@ -1959,13 +2436,23 @@ final class ExecutorTest {
     }
 
     @Test
-    void specialParamAtStarWithPositionals() {
+    void specialParamAtStarWithPositionalsCheck1() {
         final Executor executor = new Executor(
             new HashMap<>(),
             Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
         );
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$@", env));
+    }
+
+    @Test
+    void specialParamAtStarWithPositionalsCheck2() {
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            Arrays.asList(ExecutorTest.SCRIPT_KEY, "a", "b", "c")
+        );
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$@", env);
         Assertions.assertEquals(ExecutorTest.A_B_C, executor.expandVariables("$*", env));
     }
 
@@ -2009,7 +2496,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void forLoopWithContinue() {
+    void forLoopWithContinueCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -2017,15 +2504,31 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("for i in 1 2 3; do continue; echo $i; done"))
         );
+    }
+
+    @Test
+    void forLoopWithContinueCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("for i in 1 2 3; do continue; echo $i; done"));
         Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void typeForExternalCommand() {
+    void typeForExternalCommandCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("type true")));
+    }
+
+    @Test
+    void typeForExternalCommandCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type true"));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is"));
     }
 
@@ -2038,9 +2541,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void exportArgWithEquals() {
+    void exportArgWithEqualsCheck1() {
         final Executor executor = new Executor(new HashMap<>());
         Assertions.assertEquals(0, executor.execute(this.parse("export FOO=hello")));
+    }
+
+    @Test
+    void exportArgWithEqualsCheck2() {
+        final Executor executor = new Executor(new HashMap<>());
+        executor.execute(this.parse("export FOO=hello"));
         Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("FOO"));
     }
 
@@ -2084,11 +2593,26 @@ final class ExecutorTest {
     }
 
     @Test
-    void arithmeticPrecedenceMixed() {
+    void arithmeticPrecedenceMixedCheck1() {
         final Executor executor = new Executor();
         final Map<String, String> env = new HashMap<>();
         Assertions.assertEquals("1", executor.expandVariables("$((1 + 2 == 3))", env));
+    }
+
+    @Test
+    void arithmeticPrecedenceMixedCheck2() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 + 2 == 3))", env);
         Assertions.assertEquals("1", executor.expandVariables("$((1 < 2 && 3 < 4))", env));
+    }
+
+    @Test
+    void arithmeticPrecedenceMixedCheck3() {
+        final Executor executor = new Executor();
+        final Map<String, String> env = new HashMap<>();
+        executor.expandVariables("$((1 + 2 == 3))", env);
+        executor.expandVariables("$((1 < 2 && 3 < 4))", env);
         Assertions.assertEquals("7", executor.expandVariables("$((1 | 2 | 4 & 6))", env));
     }
 
@@ -2119,13 +2643,29 @@ final class ExecutorTest {
     }
 
     @Test
-    void defaultsDoNotOverrideExistingEnv() {
+    void defaultsDoNotOverrideExistingEnvCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorTest.HOME_KEY, "/custom/home");
         env.put(ExecutorTest.PATH_KEY, "/custom/path");
         final Executor executor = new Executor(env);
         Assertions.assertEquals("/custom/home", executor.getVariable(ExecutorTest.HOME_KEY));
+    }
+
+    @Test
+    void defaultsDoNotOverrideExistingEnvCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.HOME_KEY, "/custom/home");
+        env.put(ExecutorTest.PATH_KEY, "/custom/path");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals("/custom/path", executor.getVariable(ExecutorTest.PATH_KEY));
+    }
+
+    @Test
+    void defaultsDoNotOverrideExistingEnvCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.HOME_KEY, "/custom/home");
+        env.put(ExecutorTest.PATH_KEY, "/custom/path");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals(
             String.format(ExecutorTest.IFS_TAB_NL),
             executor.getVariable("IFS")
@@ -2201,9 +2741,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void exportWithValue() {
+    void exportWithValueCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("export FOO=bar")));
+    }
+
+    @Test
+    void exportWithValueCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("export FOO=bar"));
         Assertions.assertEquals("bar", executor.getVariable("FOO"));
     }
 
@@ -2213,9 +2759,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void exportThenVariableExpands() {
+    void exportThenVariableExpandsCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("export MSG=hello; echo $MSG")));
+    }
+
+    @Test
+    void exportThenVariableExpandsCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("export MSG=hello; echo $MSG"));
         Assertions.assertEquals(ExecutorTest.HELLO, executor.getVariable("MSG"));
     }
 
@@ -2402,8 +2954,13 @@ final class ExecutorTest {
     }
 
     @Test
-    void removeQuotesEmptyQuotes() {
+    void removeQuotesEmptyQuotesCheck1() {
         Assertions.assertEquals("", WordExpander.removeQuotes("\"\""));
+    }
+
+    @Test
+    void removeQuotesEmptyQuotesCheck2() {
+        WordExpander.removeQuotes("\"\"");
         Assertions.assertEquals("", WordExpander.removeQuotes("''"));
     }
 
@@ -2519,22 +3076,12 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonQuestionUnset() {
-        try {
-            new Executor(new HashMap<>()).expandVariables("${x:?my error}", new HashMap<>());
-            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final ExitSignal ex) {
-            Assertions.assertEquals(1, ex.getCode());
-        }
+        Assertions.assertEquals(1, ExecutorTest.exitCode(() -> new Executor(new HashMap<>()).expandVariables("${x:?my error}", new HashMap<>())));
     }
 
     @Test
     void expandBracedQuestionUnset() {
-        try {
-            new Executor(new HashMap<>()).expandVariables("${x?my error}", new HashMap<>());
-            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final ExitSignal ex) {
-            Assertions.assertEquals(1, ex.getCode());
-        }
+        Assertions.assertEquals(1, ExecutorTest.exitCode(() -> new Executor(new HashMap<>()).expandVariables("${x?my error}", new HashMap<>())));
     }
 
     @Test
@@ -2549,26 +3096,26 @@ final class ExecutorTest {
 
     @Test
     void expandBracedColonQuestionDefaultMsg() {
-        try {
-            new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>());
-            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final ExitSignal ex) {
-            Assertions.assertEquals(1, ex.getCode());
-        }
+        Assertions.assertEquals(1, ExecutorTest.exitCode(() -> new Executor(new HashMap<>()).expandVariables("${x:?}", new HashMap<>())));
     }
 
     @Test
-    void expandBracedColonQuestionErrorStream() {
+    void expandBracedColonQuestionErrorStreamCheck1() {
         final Executor executor = new Executor(new HashMap<>());
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setErrorStream(stream);
-        try {
-            executor.expandVariables("${x:?my error}", new HashMap<>());
-            Assertions.fail("POSIX 2.6.2 requires the non-interactive shell to exit");
-        } catch (final ExitSignal ex) {
-            Assertions.assertEquals(1, ex.getCode());
-        }
+        Assertions.assertEquals(1, ExecutorTest.exitCode(() -> executor.expandVariables("${x:?my error}", new HashMap<>())));
+        stream.flush();
+    }
+
+    @Test
+    void expandBracedColonQuestionErrorStreamCheck2() {
+        final Executor executor = new Executor(new HashMap<>());
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setErrorStream(stream);
+        ExecutorTest.exitCode(() -> executor.expandVariables("${x:?my error}", new HashMap<>()));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),
             "error message should go to injected stream"
@@ -2577,7 +3124,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void pwdPrintsCurrentDirectory() {
+    void pwdPrintsCurrentDirectoryCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
@@ -2585,6 +3132,18 @@ final class ExecutorTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd")));
+        stream.flush();
+    }
+
+    @Test
+    void pwdPrintsCurrentDirectoryCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("pwd"));
         Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
@@ -2592,7 +3151,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void pwdLogicalFlagPrintsPwdEnv() {
+    void pwdLogicalFlagPrintsPwdEnvCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
@@ -2600,6 +3159,18 @@ final class ExecutorTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd -L")));
+        stream.flush();
+    }
+
+    @Test
+    void pwdLogicalFlagPrintsPwdEnvCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("pwd -L"));
         Assertions.assertEquals(
             ExecutorTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim()
         );
@@ -2607,12 +3178,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void commandDashVOnBuiltinPrintsName() {
+    void commandDashVOnBuiltinPrintsNameCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command -v echo")));
+        stream.flush();
+    }
+
+    @Test
+    void commandDashVOnBuiltinPrintsNameCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("command -v echo"));
         Assertions.assertEquals(
             ExecutorTest.HELLO.replace(ExecutorTest.HELLO, "echo"),
             bos.toString(StandardCharsets.UTF_8).trim()
@@ -2621,12 +3202,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void commandDashUppervOnBuiltinDescribes() {
+    void commandDashUppervOnBuiltinDescribesCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command -V true")));
+        stream.flush();
+    }
+
+    @Test
+    void commandDashUppervOnBuiltinDescribesCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("command -V true"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("shell built-in")
         );
@@ -2634,46 +3225,97 @@ final class ExecutorTest {
     }
 
     @Test
-    void commandWithoutFlagsRunsCommand() {
+    void commandWithoutFlagsRunsCommandCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("command echo hi")));
+        stream.flush();
+    }
+
+    @Test
+    void commandWithoutFlagsRunsCommandCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("command echo hi"));
         Assertions.assertEquals("hi", bos.toString(StandardCharsets.UTF_8).trim());
         stream.flush();
     }
 
     @Test
-    void umaskNoArgsPrintsDefault() {
+    void umaskNoArgsPrintsDefaultCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        stream.flush();
+    }
+
+    @Test
+    void umaskNoArgsPrintsDefaultCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("umask"));
         Assertions.assertEquals("0022", bos.toString(StandardCharsets.UTF_8).trim());
         stream.flush();
     }
 
     @Test
-    void umaskSetThenReadEchoesValue() {
+    void umaskSetThenReadEchoesValueCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask 077")));
+        stream.flush();
+    }
+
+    @Test
+    void umaskSetThenReadEchoesValueCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("umask 077"));
         Assertions.assertEquals(0, executor.execute(this.parse("umask")));
+        stream.flush();
+    }
+
+    @Test
+    void umaskSetThenReadEchoesValueCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("umask 077"));
+        executor.execute(this.parse("umask"));
         Assertions.assertEquals("0077", bos.toString(StandardCharsets.UTF_8).trim());
         stream.flush();
     }
 
     @Test
-    void umaskDashSPrintsSymbolic() {
+    void umaskDashSPrintsSymbolicCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("umask -S")));
+        stream.flush();
+    }
+
+    @Test
+    void umaskDashSPrintsSymbolicCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("umask -S"));
         Assertions.assertEquals(
             "u=rwx,g=rx,o=rx", bos.toString(StandardCharsets.UTF_8).trim()
         );
@@ -2686,12 +3328,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void killDashLListsSignals() {
+    void killDashLListsSignalsCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("kill -l")));
+        stream.flush();
+    }
+
+    @Test
+    void killDashLListsSignalsCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("kill -l"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("TERM")
         );
@@ -2748,9 +3400,15 @@ final class ExecutorTest {
     }
 
     @Test
-    void waitOnKnownBgPidReturnsZero() {
+    void waitOnKnownBgPidReturnsZeroCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 &")));
+    }
+
+    @Test
+    void waitOnKnownBgPidReturnsZeroCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("sleep 0 &"));
         Assertions.assertEquals(
             0,
             executor.execute(this.parse(String.format("wait %d", executor.lastBackgroundPid())))
@@ -2766,17 +3424,38 @@ final class ExecutorTest {
     }
 
     @Test
-    void jobsListsBackgroundJobs() {
+    void jobsListsBackgroundJobsCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs")));
+        stream.flush();
+    }
+
+    @Test
+    void jobsListsBackgroundJobsCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & jobs"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("[1]"),
             String.format("expected [1] in output, got: %s", output)
         );
+        stream.flush();
+    }
+
+    @Test
+    void jobsListsBackgroundJobsCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & jobs"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("sleep 0"),
             String.format("expected 'sleep 0' in output, got: %s", output)
@@ -2785,12 +3464,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void jobsWithPercentId() {
+    void jobsWithPercentIdCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs %1")));
+        stream.flush();
+    }
+
+    @Test
+    void jobsWithPercentIdCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & jobs %1"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("[1]"),
@@ -2800,23 +3489,43 @@ final class ExecutorTest {
     }
 
     @Test
-    void jobsEmptyWhenNoBackgroundJobs() {
+    void jobsEmptyWhenNoBackgroundJobsCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("jobs")));
+        stream.flush();
+    }
+
+    @Test
+    void jobsEmptyWhenNoBackgroundJobsCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("jobs"));
         Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
         stream.flush();
     }
 
     @Test
-    void jobsWithNumericId() {
+    void jobsWithNumericIdCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 1")));
+        stream.flush();
+    }
+
+    @Test
+    void jobsWithNumericIdCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & jobs 1"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("[1]"),
             String.format("output was: %s", bos)
@@ -2836,12 +3545,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void jobsWithInvalidJobIdReturnsZero() {
+    void jobsWithInvalidJobIdReturnsZeroCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs notanumber")));
+        stream.flush();
+    }
+
+    @Test
+    void jobsWithInvalidJobIdReturnsZeroCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & jobs notanumber"));
         Assertions.assertEquals("", bos.toString(StandardCharsets.UTF_8).trim());
         stream.flush();
     }
@@ -2863,12 +3582,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void bgConfirmsBackgroundJob() {
+    void bgConfirmsBackgroundJobCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg")));
+        stream.flush();
+    }
+
+    @Test
+    void bgConfirmsBackgroundJobCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & bg"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("[1]"),
@@ -2889,12 +3618,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void bgWithPercentId() {
+    void bgWithPercentIdCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & bg %1")));
+        stream.flush();
+    }
+
+    @Test
+    void bgWithPercentIdCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & bg %1"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("[1]"),
             String.format("output was: %s", bos)
@@ -2925,7 +3664,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void bgResumesStoppedJob() {
+    void bgResumesStoppedJobCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -2946,6 +3685,28 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse(String.format("bg %d", id)))
         );
+        stream.flush();
+    }
+
+    @Test
+    void bgResumesStoppedJobCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        final JobManager mgr = executor.jobManager();
+        final int id = mgr.submit(
+            () -> {
+                try {
+                    Thread.sleep(10000);
+                } catch (final InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            },
+            "test-cmd"
+        );
+        mgr.getJob(id).cancel();
+        executor.execute(this.parse(String.format("bg %d", id)));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains(String.format("[%s]", id)),
@@ -2955,12 +3716,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void fgBringsJobToForeground() {
+    void fgBringsJobToForegroundCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg")));
+        stream.flush();
+    }
+
+    @Test
+    void fgBringsJobToForegroundCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & fg"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("sleep 0"),
@@ -2970,12 +3741,22 @@ final class ExecutorTest {
     }
 
     @Test
-    void fgWithSpecificJobId() {
+    void fgWithSpecificJobIdCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & fg %1")));
+        stream.flush();
+    }
+
+    @Test
+    void fgWithSpecificJobIdCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 & fg %1"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("sleep 0"),
@@ -3006,7 +3787,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void fcListsHistoryEntries() {
+    void fcListsHistoryEntriesCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -3015,29 +3796,93 @@ final class ExecutorTest {
         executor.execute(this.parse("echo two"));
         executor.execute(this.parse("echo three"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -l 1 3")));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsHistoryEntriesCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo one"));
+        executor.execute(this.parse("echo two"));
+        executor.execute(this.parse("echo three"));
+        executor.execute(this.parse("fc -l 1 3"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("1\techo one"));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsHistoryEntriesCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo one"));
+        executor.execute(this.parse("echo two"));
+        executor.execute(this.parse("echo three"));
+        executor.execute(this.parse("fc -l 1 3"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("2\techo two"));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsHistoryEntriesCheck4() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo one"));
+        executor.execute(this.parse("echo two"));
+        executor.execute(this.parse("echo three"));
+        executor.execute(this.parse("fc -l 1 3"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("3\techo three"));
         stream.flush();
     }
 
     @Test
-    void fcListsNoNumbers() {
+    void fcListsNoNumbersCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -ln 1 1")));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsNoNumbersCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo hello"));
+        executor.execute(this.parse("fc -ln 1 1"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("\techo hello"));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsNoNumbersCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo hello"));
+        executor.execute(this.parse("fc -ln 1 1"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertFalse(output.contains("1\t"));
         stream.flush();
     }
 
     @Test
-    void fcListsLastEntry() {
+    void fcListsLastEntryCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -3045,8 +3890,33 @@ final class ExecutorTest {
         executor.execute(this.parse("echo first"));
         executor.execute(this.parse("echo second"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -l -1 -1")));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsLastEntryCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo first"));
+        executor.execute(this.parse("echo second"));
+        executor.execute(this.parse("fc -l -1 -1"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("echo second"));
+        stream.flush();
+    }
+
+    @Test
+    void fcListsLastEntryCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo first"));
+        executor.execute(this.parse("echo second"));
+        executor.execute(this.parse("fc -l -1 -1"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertFalse(output.contains("echo first"));
         stream.flush();
     }
@@ -3057,13 +3927,24 @@ final class ExecutorTest {
     }
 
     @Test
-    void fcSubstituteAndReExecute() {
+    void fcSubstituteAndReExecuteCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(0, executor.execute(this.parse("fc -s hello=world")));
+        stream.flush();
+    }
+
+    @Test
+    void fcSubstituteAndReExecuteCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo hello"));
+        executor.execute(this.parse("fc -s hello=world"));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("echo world"));
         stream.flush();
     }
@@ -3105,7 +3986,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void fcDefaultRangeListsLastItem() {
+    void fcDefaultRangeListsLastItemCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -3116,14 +3997,45 @@ final class ExecutorTest {
             );
         }
         Assertions.assertEquals(0, executor.execute(this.parse("fc -l")));
+        stream.flush();
+    }
+
+    @Test
+    void fcDefaultRangeListsLastItemCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        for (int idx = 1; idx <= 5; idx = idx + 1) {
+            executor.execute(
+                this.parse(String.format("echo cmd%d", idx))
+            );
+        }
+        executor.execute(this.parse("fc -l"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("echo cmd1"));
+        stream.flush();
+    }
+
+    @Test
+    void fcDefaultRangeListsLastItemCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        for (int idx = 1; idx <= 5; idx = idx + 1) {
+            executor.execute(
+                this.parse(String.format("echo cmd%d", idx))
+            );
+        }
+        executor.execute(this.parse("fc -l"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains("echo cmd5"));
         stream.flush();
     }
 
     @Test
-    void linenoReflectsSourceLine() {
+    void linenoReflectsSourceLineCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -3131,12 +4043,22 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void linenoReflectsSourceLineCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo $LINENO"));
         Assertions.assertEquals(String.format("1%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void linenoUpdatesPerCommand() {
+    void linenoUpdatesPerCommandCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -3144,8 +4066,29 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo $LINENO; echo $LINENO"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void linenoUpdatesPerCommandCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo $LINENO; echo $LINENO"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(output.contains(String.format("1%n")));
+        stream.flush();
+    }
+
+    @Test
+    void linenoUpdatesPerCommandCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo $LINENO; echo $LINENO"));
+        final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains(String.format("1%n1%n"))
                 || output.split(String.format("%n")).length >= 2
@@ -3154,42 +4097,72 @@ final class ExecutorTest {
     }
 
     @Test
-    void langVariableCanBeSet() {
+    void langVariableCanBeSetCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("LANG=en_US.UTF-8")));
+    }
+
+    @Test
+    void langVariableCanBeSetCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("LANG=en_US.UTF-8"));
         Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LANG"));
     }
 
     @Test
-    void lcAllVariableOverridesOthers() {
+    void lcAllVariableOverridesOthersCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("LC_ALL=C")));
+    }
+
+    @Test
+    void lcAllVariableOverridesOthersCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("LC_ALL=C"));
         Assertions.assertEquals("C", executor.getVariable("LC_ALL"));
     }
 
     @Test
-    void lcCollateVariableCanBeSet() {
+    void lcCollateVariableCanBeSetCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("LC_COLLATE=en_US.UTF-8")));
+    }
+
+    @Test
+    void lcCollateVariableCanBeSetCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("LC_COLLATE=en_US.UTF-8"));
         Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_COLLATE"));
     }
 
     @Test
-    void lcCtypeVariableCanBeSet() {
+    void lcCtypeVariableCanBeSetCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("LC_CTYPE=en_US.UTF-8")));
+    }
+
+    @Test
+    void lcCtypeVariableCanBeSetCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("LC_CTYPE=en_US.UTF-8"));
         Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_CTYPE"));
     }
 
     @Test
-    void lcMessagesVariableCanBeSet() {
+    void lcMessagesVariableCanBeSetCheck1() {
         final Executor executor = new Executor();
         Assertions.assertEquals(0, executor.execute(this.parse("LC_MESSAGES=en_US.UTF-8")));
+    }
+
+    @Test
+    void lcMessagesVariableCanBeSetCheck2() {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("LC_MESSAGES=en_US.UTF-8"));
         Assertions.assertEquals("en_US.UTF-8", executor.getVariable("LC_MESSAGES"));
     }
 
     @Test
-    void localeVariablesCanBeExported() {
+    void localeVariablesCanBeExportedCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("LANG", "C");
         env.put("LC_ALL", "C");
@@ -3198,9 +4171,53 @@ final class ExecutorTest {
         env.put("LC_MESSAGES", "C");
         final Executor executor = new Executor(env);
         Assertions.assertEquals("C", executor.getVariable("LANG"));
+    }
+
+    @Test
+    void localeVariablesCanBeExportedCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("LANG", "C");
+        env.put("LC_ALL", "C");
+        env.put("LC_COLLATE", "POSIX");
+        env.put("LC_CTYPE", "UTF-8");
+        env.put("LC_MESSAGES", "C");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals("C", executor.getVariable("LC_ALL"));
+    }
+
+    @Test
+    void localeVariablesCanBeExportedCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("LANG", "C");
+        env.put("LC_ALL", "C");
+        env.put("LC_COLLATE", "POSIX");
+        env.put("LC_CTYPE", "UTF-8");
+        env.put("LC_MESSAGES", "C");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals("POSIX", executor.getVariable("LC_COLLATE"));
+    }
+
+    @Test
+    void localeVariablesCanBeExportedCheck4() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("LANG", "C");
+        env.put("LC_ALL", "C");
+        env.put("LC_COLLATE", "POSIX");
+        env.put("LC_CTYPE", "UTF-8");
+        env.put("LC_MESSAGES", "C");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals("UTF-8", executor.getVariable("LC_CTYPE"));
+    }
+
+    @Test
+    void localeVariablesCanBeExportedCheck5() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("LANG", "C");
+        env.put("LC_ALL", "C");
+        env.put("LC_COLLATE", "POSIX");
+        env.put("LC_CTYPE", "UTF-8");
+        env.put("LC_MESSAGES", "C");
+        final Executor executor = new Executor(env);
         Assertions.assertEquals("C", executor.getVariable("LC_MESSAGES"));
     }
 
@@ -3213,7 +4230,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void pwdPhysicalFlagResolvesSymlinks() {
+    void pwdPhysicalFlagResolvesSymlinksCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Map<String, String> env = new HashMap<>();
         env.put("PWD", ExecutorTest.TMP_DIR);
@@ -3221,44 +4238,56 @@ final class ExecutorTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("pwd -P")));
+        stream.flush();
+    }
+
+    @Test
+    void pwdPhysicalFlagResolvesSymlinksCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> env = new HashMap<>();
+        env.put("PWD", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("pwd -P"));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).startsWith("/"));
         stream.flush();
     }
 
     @Test
-    void cdToDirectory() throws Exception {
-        try {
-            final Executor executor = new Executor();
-            Assertions.assertEquals(0, executor.execute(this.parse("cd /tmp")));
-            Assertions.assertEquals(
-                ExecutorTest.TMP_DIR,
-                executor.getVariable(ExecutorTest.PWD_KEY)
-            );
-        } finally {
-            System.setProperty(
-                ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP)
-            );
-        }
+    void cdToDirectoryCheck1() throws Exception {
+        final Executor executor = new Executor();
+        Assertions.assertEquals(0, executor.execute(this.parse("cd /tmp")));
     }
 
     @Test
-    void cdToHome() throws Exception {
-        try {
-            final Map<String, String> env = new HashMap<>();
-            env.put(ExecutorTest.HOME_KEY, ExecutorTest.TMP_DIR);
-            final Executor executor = new Executor(env);
-            Assertions.assertEquals(0, executor.execute(this.parse("cd")));
-            Assertions.assertEquals(
-                ExecutorTest.TMP_DIR,
-                executor.getVariable(ExecutorTest.PWD_KEY)
-            );
-        } finally {
-            System.setProperty(
-                ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP)
-            );
-        }
+    void cdToDirectoryCheck2() throws Exception {
+        final Executor executor = new Executor();
+        executor.execute(this.parse("cd /tmp"));
+        Assertions.assertEquals(
+            ExecutorTest.TMP_DIR,
+            executor.getVariable(ExecutorTest.PWD_KEY)
+        );
+    }
+
+    @Test
+    void cdToHomeCheck1() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.HOME_KEY, ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        Assertions.assertEquals(0, executor.execute(this.parse("cd")));
+    }
+
+    @Test
+    void cdToHomeCheck2() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.HOME_KEY, ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        executor.execute(this.parse("cd"));
+        Assertions.assertEquals(
+            ExecutorTest.TMP_DIR,
+            executor.getVariable(ExecutorTest.PWD_KEY)
+        );
     }
 
     @Test
@@ -3270,47 +4299,74 @@ final class ExecutorTest {
     }
 
     @Test
-    void cdMinus() throws Exception {
-        try {
-            final Map<String, String> env = new HashMap<>();
-            env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
-            env.put("OLDPWD", "/");
-            final Executor executor = new Executor(env);
-            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            executor.setCaptureStream(bos);
-            Assertions.assertEquals(0, executor.execute(this.parse("cd -")));
-            Assertions.assertEquals("/", executor.getVariable(ExecutorTest.PWD_KEY));
-            Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
-            Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
-        } finally {
-            System.setProperty(
-                ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP)
-            );
-        }
+    void cdMinusCheck1() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
+        env.put("OLDPWD", "/");
+        final Executor executor = new Executor(env);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setCaptureStream(bos);
+        Assertions.assertEquals(0, executor.execute(this.parse("cd -")));
     }
 
     @Test
-    void cdWithExpandedVar() throws Exception {
-        try {
-            final Map<String, String> env = new HashMap<>();
-            env.put("MYDIR", ExecutorTest.TMP_DIR);
-            final Executor executor = new Executor(env);
-            Assertions.assertEquals(0, executor.execute(this.parse("cd $MYDIR")));
-            Assertions.assertEquals(
-                ExecutorTest.TMP_DIR,
-                executor.getVariable(ExecutorTest.PWD_KEY)
-            );
-        } finally {
-            System.setProperty(
-                ExecutorTest.USER_DIR_PROP,
-                System.getProperty(ExecutorTest.USER_DIR_PROP)
-            );
-        }
+    void cdMinusCheck2() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
+        env.put("OLDPWD", "/");
+        final Executor executor = new Executor(env);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("cd -"));
+        Assertions.assertEquals("/", executor.getVariable(ExecutorTest.PWD_KEY));
     }
 
     @Test
-    void typeBuiltin() {
+    void cdMinusCheck3() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
+        env.put("OLDPWD", "/");
+        final Executor executor = new Executor(env);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("cd -"));
+        Assertions.assertEquals(ExecutorTest.TMP_DIR, executor.getVariable("OLDPWD"));
+    }
+
+    @Test
+    void cdMinusCheck4() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put(ExecutorTest.PWD_KEY, ExecutorTest.TMP_DIR);
+        env.put("OLDPWD", "/");
+        final Executor executor = new Executor(env);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("cd -"));
+        Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    @Test
+    void cdWithExpandedVarCheck1() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put("MYDIR", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        Assertions.assertEquals(0, executor.execute(this.parse("cd $MYDIR")));
+    }
+
+    @Test
+    void cdWithExpandedVarCheck2() throws Exception {
+        final Map<String, String> env = new HashMap<>();
+        env.put("MYDIR", ExecutorTest.TMP_DIR);
+        final Executor executor = new Executor(env);
+        executor.execute(this.parse("cd $MYDIR"));
+        Assertions.assertEquals(
+            ExecutorTest.TMP_DIR,
+            executor.getVariable(ExecutorTest.PWD_KEY)
+        );
+    }
+
+    @Test
+    void typeBuiltinCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3318,22 +4374,92 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("type echo cd exit export type true false shift unset"))
         );
+    }
+
+    @Test
+    void typeBuiltinCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
         final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("echo is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("cd is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck4() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("exit is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck5() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("export is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck6() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("type is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck7() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("true is a shell built-in"));
+    }
+
+    @Test
+    void typeBuiltinCheck8() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type echo cd exit export type true false shift unset"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("false is a shell built-in"));
     }
 
     @Test
-    void typeExternal() {
+    void typeExternalCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("type true")));
+    }
+
+    @Test
+    void typeExternalCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("type true"));
         Assertions.assertTrue(bos.toString(StandardCharsets.UTF_8).contains("true is "));
     }
 
@@ -3371,16 +4497,24 @@ final class ExecutorTest {
     }
 
     @Test
-    void unsetRemovesVariable() {
+    void unsetRemovesVariableCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("MYVAR", ExecutorTest.VALUE);
         final Executor executor = new Executor(env);
         Assertions.assertEquals(0, executor.execute(this.parse("unset MYVAR")));
+    }
+
+    @Test
+    void unsetRemovesVariableCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("MYVAR", ExecutorTest.VALUE);
+        final Executor executor = new Executor(env);
+        executor.execute(this.parse("unset MYVAR"));
         Assertions.assertNull(executor.getVariable("MYVAR"));
     }
 
     @Test
-    void shiftRemovesPositionalParam() {
+    void shiftRemovesPositionalParamCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(
             new HashMap<>(),
@@ -3388,11 +4522,22 @@ final class ExecutorTest {
         );
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("shift; echo $#")));
+    }
+
+    @Test
+    void shiftRemovesPositionalParamCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            new ArrayList<>(Arrays.asList("sh", "a", "b", "c"))
+        );
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("shift; echo $#"));
         Assertions.assertEquals("2", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void shiftWithCount() {
+    void shiftWithCountCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor(
             new HashMap<>(),
@@ -3400,11 +4545,22 @@ final class ExecutorTest {
         );
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("shift 2; echo $#")));
+    }
+
+    @Test
+    void shiftWithCountCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor(
+            new HashMap<>(),
+            new ArrayList<>(Arrays.asList("sh", "a", "b", "c"))
+        );
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("shift 2; echo $#"));
         Assertions.assertEquals("1", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void breakStopsWhileLoop() {
+    void breakStopsWhileLoopCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3412,11 +4568,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("while true; do echo ran; break; done"))
         );
+    }
+
+    @Test
+    void breakStopsWhileLoopCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("while true; do echo ran; break; done"));
         Assertions.assertEquals("ran", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void breakStopsForLoop() {
+    void breakStopsForLoopCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3424,11 +4588,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("for i in a b c; do echo $i; break; done"))
         );
+    }
+
+    @Test
+    void breakStopsForLoopCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("for i in a b c; do echo $i; break; done"));
         Assertions.assertEquals("a", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void continueInForLoop() {
+    void continueInForLoopCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3436,7 +4608,23 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse("for i in a b; do echo $i; continue; echo after; done"))
         );
+    }
+
+    @Test
+    void continueInForLoopCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("for i in a b; do echo $i; continue; echo after; done"));
         Assertions.assertEquals(String.format("a%nb"), bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    @Test
+    void continueInForLoopCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("for i in a b; do echo $i; continue; echo after; done"));
         Assertions.assertFalse(bos.toString(StandardCharsets.UTF_8).contains("after"));
     }
 
@@ -3446,11 +4634,19 @@ final class ExecutorTest {
     }
 
     @Test
-    void evalBuiltinRunsCommand() {
+    void evalBuiltinRunsCommandCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("eval echo hello world")));
+    }
+
+    @Test
+    void evalBuiltinRunsCommandCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("eval echo hello world"));
         Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             bos.toString(StandardCharsets.UTF_8).trim()
@@ -3463,7 +4659,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void externalOutputRedirect() throws Exception {
+    void externalOutputRedirectCheck1() throws Exception {
         final String inpath = "/tmp/sh4j_ext_in.txt";
         final String outpath = "/tmp/sh4j_ext_out.txt";
         new File(outpath).delete();
@@ -3479,7 +4675,44 @@ final class ExecutorTest {
             0,
             new Executor().execute(this.parse(String.format("cat < %s > %s", inpath, outpath)))
         );
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalOutputRedirectCheck2() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_in.txt";
+        final String outpath = "/tmp/sh4j_ext_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write(ExecutorTest.HELLO_WORLD);
+        }
+        new Executor().execute(this.parse(String.format("cat < %s > %s", inpath, outpath)));
         Assertions.assertTrue(new File(outpath).exists());
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalOutputRedirectCheck3() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_in.txt";
+        final String outpath = "/tmp/sh4j_ext_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write(ExecutorTest.HELLO_WORLD);
+        }
+        new Executor().execute(this.parse(String.format("cat < %s > %s", inpath, outpath)));
+        new File(outpath).exists();
         Assertions.assertEquals(
             ExecutorTest.HELLO_WORLD,
             new String(Files.readAllBytes(Paths.get(outpath)), StandardCharsets.UTF_8).trim()
@@ -3489,7 +4722,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void externalAppendRedirect() throws Exception {
+    void externalAppendRedirectCheck1() throws Exception {
         final String inpath = "/tmp/sh4j_ext_append_in.txt";
         final String outpath = "/tmp/sh4j_ext_append_out.txt";
         new File(outpath).delete();
@@ -3513,18 +4746,74 @@ final class ExecutorTest {
             0,
             new Executor().execute(this.parse(String.format("cat < %s >> %s", inpath, outpath)))
         );
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalAppendRedirectCheck2() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_append_in.txt";
+        final String outpath = "/tmp/sh4j_ext_append_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write("second");
+        }
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(outpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write(String.format("first%n"));
+        }
+        new Executor().execute(this.parse(String.format("cat < %s >> %s", inpath, outpath)));
         final String content = new String(
             Files.readAllBytes(Paths.get(outpath)),
             StandardCharsets.UTF_8
         ).trim();
         Assertions.assertTrue(content.startsWith("first"));
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalAppendRedirectCheck3() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_append_in.txt";
+        final String outpath = "/tmp/sh4j_ext_append_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write("second");
+        }
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(outpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write(String.format("first%n"));
+        }
+        new Executor().execute(this.parse(String.format("cat < %s >> %s", inpath, outpath)));
+        final String content = new String(
+            Files.readAllBytes(Paths.get(outpath)),
+            StandardCharsets.UTF_8
+        ).trim();
         Assertions.assertTrue(content.contains("second"));
         new File(inpath).delete();
         new File(outpath).delete();
     }
 
     @Test
-    void externalClobberRedirect() throws Exception {
+    void externalClobberRedirectCheck1() throws Exception {
         final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
         final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
         new File(outpath).delete();
@@ -3540,7 +4829,44 @@ final class ExecutorTest {
             0,
             new Executor().execute(this.parse(String.format("cat < %s >| %s", inpath, outpath)))
         );
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalClobberRedirectCheck2() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
+        final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write("hello clobber");
+        }
+        new Executor().execute(this.parse(String.format("cat < %s >| %s", inpath, outpath)));
         Assertions.assertTrue(new File(outpath).exists());
+        new File(inpath).delete();
+        new File(outpath).delete();
+    }
+
+    @Test
+    void externalClobberRedirectCheck3() throws Exception {
+        final String inpath = "/tmp/sh4j_ext_clobber_in.txt";
+        final String outpath = "/tmp/sh4j_ext_clobber_out.txt";
+        new File(outpath).delete();
+        try (
+            BufferedWriter w = Files.newBufferedWriter(
+                Paths.get(inpath),
+                StandardCharsets.UTF_8
+            )
+        ) {
+            w.write("hello clobber");
+        }
+        new Executor().execute(this.parse(String.format("cat < %s >| %s", inpath, outpath)));
+        new File(outpath).exists();
         Assertions.assertEquals(
             "hello clobber",
             new String(Files.readAllBytes(Paths.get(outpath)), StandardCharsets.UTF_8).trim()
@@ -3647,7 +4973,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void heredocStripTabsBasic() {
+    void heredocStripTabsBasicCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3655,11 +4981,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n")))
         );
+    }
+
+    @Test
+    void heredocStripTabsBasicCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n")));
         Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void heredocStripTabsMultiple() {
+    void heredocStripTabsMultipleCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3667,11 +5001,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n")))
         );
+    }
+
+    @Test
+    void heredocStripTabsMultipleCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n")));
         Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void heredocStripTabsDelimiterWithTabs() {
+    void heredocStripTabsDelimiterWithTabsCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3679,11 +5021,19 @@ final class ExecutorTest {
             0,
             executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n")))
         );
+    }
+
+    @Test
+    void heredocStripTabsDelimiterWithTabsCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n")));
         Assertions.assertEquals(ExecutorTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
-    void heredocStripTabsMixed() {
+    void heredocStripTabsMixedCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
@@ -3693,6 +5043,16 @@ final class ExecutorTest {
                 this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))
             )
         );
+    }
+
+    @Test
+    void heredocStripTabsMixedCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(
+                this.parse(String.format("cat <<- MARKER%n\tfirst%nsecond%n\tthird%nMARKER%n"))
+            );
         Assertions.assertEquals(
             String.format("first%nsecond%nthird"),
             bos.toString(StandardCharsets.UTF_8).trim()
@@ -3700,11 +5060,19 @@ final class ExecutorTest {
     }
 
     @Test
-    void typeFunction() {
+    void typeFunctionCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { true; }; type myfunc")));
+    }
+
+    @Test
+    void typeFunctionCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        executor.setCaptureStream(bos);
+        executor.execute(this.parse("myfunc() { true; }; type myfunc"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("myfunc is a function")
         );
@@ -3721,40 +5089,94 @@ final class ExecutorTest {
     }
 
     @Test
-    void readWithOneVar() {
+    void readWithOneVarCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8))
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+    }
+
+    @Test
+    void readWithOneVarCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read var"));
         Assertions.assertEquals("hello", executor.getVariable("var"));
     }
 
     @Test
-    void readWithMultipleVars() {
+    void readWithMultipleVarsCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8))
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read x y z")));
+    }
+
+    @Test
+    void readWithMultipleVarsCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read x y z"));
         Assertions.assertEquals("a", executor.getVariable("x"));
+    }
+
+    @Test
+    void readWithMultipleVarsCheck3() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read x y z"));
         Assertions.assertEquals("b", executor.getVariable("y"));
+    }
+
+    @Test
+    void readWithMultipleVarsCheck4() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read x y z"));
         Assertions.assertEquals("c", executor.getVariable("z"));
     }
 
     @Test
-    void readLastVarGetsRemainingFields() {
+    void readLastVarGetsRemainingFieldsCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(String.format("a b c d%n").getBytes(StandardCharsets.UTF_8))
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read x y")));
+    }
+
+    @Test
+    void readLastVarGetsRemainingFieldsCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a b c d%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read x y"));
         Assertions.assertEquals("a", executor.getVariable("x"));
+    }
+
+    @Test
+    void readLastVarGetsRemainingFieldsCheck3() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a b c d%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read x y"));
         Assertions.assertEquals("b c d", executor.getVariable("y"));
     }
 
     @Test
-    void readReplyWhenNoVar() {
+    void readReplyWhenNoVarCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(
@@ -3762,6 +5184,17 @@ final class ExecutorTest {
             )
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read")));
+    }
+
+    @Test
+    void readReplyWhenNoVarCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(
+                String.format("hello world%n").getBytes(StandardCharsets.UTF_8)
+            )
+        );
+        executor.execute(this.parse("read"));
         Assertions.assertEquals("hello world", executor.getVariable("REPLY"));
     }
 
@@ -3773,45 +5206,85 @@ final class ExecutorTest {
     }
 
     @Test
-    void readRawModePreservesBackslash() {
+    void readRawModePreservesBackslashCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read -r var")));
+    }
+
+    @Test
+    void readRawModePreservesBackslashCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read -r var"));
         Assertions.assertEquals("a\\tb", executor.getVariable("var"));
     }
 
     @Test
-    void readBackslashWithoutRawRemovesEscape() {
+    void readBackslashWithoutRawRemovesEscapeCheck1() {
         final Executor executor = new Executor();
         executor.setInputStream(
             new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
         );
         Assertions.assertEquals(0, executor.execute(this.parse("read var")));
+    }
+
+    @Test
+    void readBackslashWithoutRawRemovesEscapeCheck2() {
+        final Executor executor = new Executor();
+        executor.setInputStream(
+            new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8))
+        );
+        executor.execute(this.parse("read var"));
         Assertions.assertEquals("atb", executor.getVariable("var"));
     }
 
     @Test
-    void aliasExpandsToBuiltin() {
+    void aliasExpandsToBuiltinCheck1() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasExpandsToBuiltinCheck2() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "echo hello");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("ll"));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void aliasExpandsWithArgs() {
+    void aliasExpandsWithArgsCheck1() {
         final Executor executor = new Executor();
         executor.aliases().put("greet", "echo hello");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("greet world")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasExpandsWithArgsCheck2() {
+        final Executor executor = new Executor();
+        executor.aliases().put("greet", "echo hello");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("greet world"));
         Assertions.assertEquals(
             String.format("hello world%n"),
             bos.toString(StandardCharsets.UTF_8)
@@ -3820,49 +5293,103 @@ final class ExecutorTest {
     }
 
     @Test
-    void aliasDoesNotAffectOtherCommands() {
+    void aliasDoesNotAffectOtherCommandsCheck1() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "echo hi");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("echo hello")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasDoesNotAffectOtherCommandsCheck2() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "echo hi");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo hello"));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void aliasBuiltinSetAndExpand() {
+    void aliasBuiltinSetAndExpandCheck1() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "echo hello");
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasBuiltinSetAndExpandCheck2() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.aliases().put("ll", "echo hello");
+        executor.execute(this.parse("ll"));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void aliasBuiltinSetViaEq() {
+    void aliasBuiltinSetViaEqCheck1() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("alias ll='echo hello'")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasBuiltinSetViaEqCheck2() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("alias ll='echo hello'"));
         Assertions.assertEquals(0, executor.execute(this.parse("ll")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasBuiltinSetViaEqCheck3() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("alias ll='echo hello'"));
+        executor.execute(this.parse("ll"));
         Assertions.assertEquals(String.format("hello%n"), bos.toString(StandardCharsets.UTF_8));
         stream.flush();
     }
 
     @Test
-    void aliasBuiltinPrintAll() {
+    void aliasBuiltinPrintAllCheck1() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
         Assertions.assertEquals(0, executor.execute(this.parse("alias")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasBuiltinPrintAllCheck2() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.aliases().put("ll", "ls -l");
+        executor.execute(this.parse("alias"));
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).contains("ll='ls -l'")
         );
@@ -3870,13 +5397,24 @@ final class ExecutorTest {
     }
 
     @Test
-    void aliasBuiltinPrintOne() {
+    void aliasBuiltinPrintOneCheck1() {
         final Executor executor = new Executor();
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.aliases().put("ll", "ls -l");
         Assertions.assertEquals(0, executor.execute(this.parse("alias ll")));
+        stream.flush();
+    }
+
+    @Test
+    void aliasBuiltinPrintOneCheck2() {
+        final Executor executor = new Executor();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.aliases().put("ll", "ls -l");
+        executor.execute(this.parse("alias ll"));
         Assertions.assertEquals(
             String.format("ll='ls -l'%n"),
             bos.toString(StandardCharsets.UTF_8)
@@ -3890,21 +5428,46 @@ final class ExecutorTest {
     }
 
     @Test
-    void unaliasRemovesOne() {
+    void unaliasRemovesOneCheck1() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "ls -l");
         executor.aliases().put("gg", "grep");
         Assertions.assertEquals(0, executor.execute(this.parse("unalias ll")));
+    }
+
+    @Test
+    void unaliasRemovesOneCheck2() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        executor.execute(this.parse("unalias ll"));
         Assertions.assertFalse(executor.aliases().containsKey("ll"));
+    }
+
+    @Test
+    void unaliasRemovesOneCheck3() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        executor.execute(this.parse("unalias ll"));
+        executor.aliases().containsKey("ll");
         Assertions.assertTrue(executor.aliases().containsKey("gg"));
     }
 
     @Test
-    void unaliasAllRemovesAll() {
+    void unaliasAllRemovesAllCheck1() {
         final Executor executor = new Executor();
         executor.aliases().put("ll", "ls -l");
         executor.aliases().put("gg", "grep");
         Assertions.assertEquals(0, executor.execute(this.parse("unalias -a")));
+    }
+
+    @Test
+    void unaliasAllRemovesAllCheck2() {
+        final Executor executor = new Executor();
+        executor.aliases().put("ll", "ls -l");
+        executor.aliases().put("gg", "grep");
+        executor.execute(this.parse("unalias -a"));
         Assertions.assertTrue(executor.aliases().isEmpty());
     }
 
@@ -3914,26 +5477,58 @@ final class ExecutorTest {
     }
 
     @Test
-    void getoptsParsesSimpleFlag() {
+    void getoptsParsesSimpleFlagCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "file"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
+    }
+
+    @Test
+    void getoptsParsesSimpleFlagCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("a", executor.getVariable("opt"));
+    }
+
+    @Test
+    void getoptsParsesSimpleFlagCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("", executor.getVariable("OPTARG"));
     }
 
     @Test
-    void getoptsParsesFlagWithArg() {
+    void getoptsParsesFlagWithArgCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b", "val", "file"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
+    }
+
+    @Test
+    void getoptsParsesFlagWithArgCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("b", executor.getVariable("opt"));
+    }
+
+    @Test
+    void getoptsParsesFlagWithArgCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("val", executor.getVariable("OPTARG"));
     }
 
@@ -3947,19 +5542,62 @@ final class ExecutorTest {
     }
 
     @Test
-    void getoptsParsesMultipleFlags() {
+    void getoptsParsesMultipleFlagsCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
+    }
+
+    @Test
+    void getoptsParsesMultipleFlagsCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("a", executor.getVariable("opt"));
+    }
+
+    @Test
+    void getoptsParsesMultipleFlagsCheck3() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
+    }
+
+    @Test
+    void getoptsParsesMultipleFlagsCheck4() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("b", executor.getVariable("opt"));
+    }
+
+    @Test
+    void getoptsParsesMultipleFlagsCheck5() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("val", executor.getVariable("OPTARG"));
+    }
+
+    @Test
+    void getoptsParsesMultipleFlagsCheck6() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a", "-b", "val", "file"));
+        executor.execute(this.parse("getopts ab: opt"));
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals(
             1, executor.execute(this.parse("getopts ab: opt"))
         );
@@ -3971,18 +5609,26 @@ final class ExecutorTest {
     }
 
     @Test
-    void getoptsWithDoubleDash() {
+    void getoptsWithDoubleDashCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "--", "file"));
         Assertions.assertEquals(
             1, executor.execute(this.parse("getopts ab opt"))
         );
+    }
+
+    @Test
+    void getoptsWithDoubleDashCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "--", "file"));
+        executor.execute(this.parse("getopts ab opt"));
         Assertions.assertEquals("?", executor.getVariable("opt"));
     }
 
     @Test
-    void getoptsIllegalOption() {
+    void getoptsIllegalOptionCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-c", "file"));
@@ -3993,23 +5639,44 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void getoptsIllegalOptionCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-c", "file"));
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
+        executor.setErrorStream(stream);
+        executor.execute(this.parse("getopts ab opt"));
         Assertions.assertEquals("?", executor.getVariable("opt"));
         stream.flush();
     }
 
     @Test
-    void getoptsMissingArgWithColon() {
+    void getoptsMissingArgWithColonCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts :ab: opt"))
         );
+    }
+
+    @Test
+    void getoptsMissingArgWithColonCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
+        executor.execute(this.parse("getopts :ab: opt"));
         Assertions.assertEquals(":", executor.getVariable("opt"));
     }
 
     @Test
-    void getoptsMissingArgWithoutColon() {
+    void getoptsMissingArgWithoutColonCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
@@ -4020,40 +5687,77 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab: opt"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void getoptsMissingArgWithoutColonCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-b"));
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
+        executor.setErrorStream(stream);
+        executor.execute(this.parse("getopts ab: opt"));
         Assertions.assertEquals("?", executor.getVariable("opt"));
         stream.flush();
     }
 
     @Test
-    void getoptsWithExplicitArgs() {
+    void getoptsWithExplicitArgsCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "1");
         final Executor executor = new Executor(env);
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts ab opt -a -b val"))
         );
+    }
+
+    @Test
+    void getoptsWithExplicitArgsCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "1");
+        final Executor executor = new Executor(env);
+        executor.execute(this.parse("getopts ab opt -a -b val"));
         Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
     @Test
-    void getoptsInvalidOptind() {
+    void getoptsInvalidOptindCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "notanumber");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts a opt"))
         );
+    }
+
+    @Test
+    void getoptsInvalidOptindCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "notanumber");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
+        executor.execute(this.parse("getopts a opt"));
         Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
     @Test
-    void getoptsNegativeOptind() {
+    void getoptsNegativeOptindCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("OPTIND", "-5");
         final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
         Assertions.assertEquals(
             0, executor.execute(this.parse("getopts a opt"))
         );
+    }
+
+    @Test
+    void getoptsNegativeOptindCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("OPTIND", "-5");
+        final Executor executor = new Executor(env, Arrays.asList("sh", "-a"));
+        executor.execute(this.parse("getopts a opt"));
         Assertions.assertEquals("a", executor.getVariable("opt"));
     }
 
@@ -4074,7 +5778,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void echoQuotedFieldWithSpace() {
+    void echoQuotedFieldWithSpaceCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
@@ -4082,6 +5786,16 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("echo 'hello world'"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void echoQuotedFieldWithSpaceCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("echo 'hello world'"));
         Assertions.assertEquals(
             String.format("hello world%n"),
             bos.toString(StandardCharsets.UTF_8)
@@ -4090,7 +5804,7 @@ final class ExecutorTest {
     }
 
     @Test
-    void aliasWithDoubleQuotedValue() {
+    void aliasWithDoubleQuotedValueCheck1() {
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(
             new ByteArrayOutputStream(), StandardCharsets.UTF_8
@@ -4099,12 +5813,23 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias ll=\"ls -l\""))
         );
+        stream.flush();
+    }
+
+    @Test
+    void aliasWithDoubleQuotedValueCheck2() {
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("alias ll=\"ls -l\""));
         Assertions.assertEquals("ls -l", executor.aliases().get("ll"));
         stream.flush();
     }
 
     @Test
-    void aliasShortValueNoUnquote() {
+    void aliasShortValueNoUnquoteCheck1() {
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(
             new ByteArrayOutputStream(), StandardCharsets.UTF_8
@@ -4113,6 +5838,17 @@ final class ExecutorTest {
         Assertions.assertEquals(
             0, executor.execute(this.parse("alias x='a'"))
         );
+        stream.flush();
+    }
+
+    @Test
+    void aliasShortValueNoUnquoteCheck2() {
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("alias x='a'"));
         Assertions.assertEquals("a", executor.aliases().get("x"));
         stream.flush();
     }
@@ -4123,47 +5859,107 @@ final class ExecutorTest {
     }
 
     @Test
-    void typeBuiltinsBreakContinueEval() {
+    void typeBuiltinsBreakContinueEvalCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("type break continue eval")));
+        stream.flush();
+    }
+
+    @Test
+    void typeBuiltinsBreakContinueEvalCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("type break continue eval"));
         final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("break is a shell built-in"));
+        stream.flush();
+    }
+
+    @Test
+    void typeBuiltinsBreakContinueEvalCheck3() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("type break continue eval"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("continue is a shell built-in"));
+        stream.flush();
+    }
+
+    @Test
+    void typeBuiltinsBreakContinueEvalCheck4() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("type break continue eval"));
+        final String out = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(out.contains("eval is a shell built-in"));
         stream.flush();
     }
 
     @Test
-    void executorDefaultsPathWhenMissing() {
+    void executorDefaultsPathWhenMissingCheck1() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/tmp");
         final Executor executor = new Executor(env);
         Assertions.assertNotNull(executor.getVariable("PATH"));
+    }
+
+    @Test
+    void executorDefaultsPathWhenMissingCheck2() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("HOME", "/tmp");
+        final Executor executor = new Executor(env);
         Assertions.assertFalse(executor.getVariable("PATH").isEmpty());
     }
 
     @Test
-    void functionDefinitionParsing() {
+    void functionDefinitionParsingCheck1() {
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(
             new ByteArrayOutputStream(), StandardCharsets.UTF_8
             );
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
+        stream.flush();
+    }
+
+    @Test
+    void functionDefinitionParsingCheck2() {
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(
+            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+            );
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("myfunc() { echo hi; }"));
         Assertions.assertTrue(executor.functionsMap().containsKey("myfunc"));
         stream.flush();
     }
 
     @Test
-    void backgroundPipelineWithPipe() {
+    void backgroundPipelineWithPipeCheck1() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 | true & jobs")));
+        stream.flush();
+    }
+
+    @Test
+    void backgroundPipelineWithPipeCheck2() {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Executor executor = new Executor();
+        final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
+        executor.setOutputStream(stream);
+        executor.execute(this.parse("sleep 0 | true & jobs"));
         final String output = bos.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(
             output.contains("[1]"),
@@ -4178,5 +5974,15 @@ final class ExecutorTest {
 
     private ListNode parse(final String input) {
         return this.parser(input).parse();
+    }
+
+    private static int exitCode(final Runnable action) {
+        int code = -1;
+        try {
+            action.run();
+        } catch (final ExitSignal ex) {
+            code = ex.getCode();
+        }
+        return code;
     }
 }

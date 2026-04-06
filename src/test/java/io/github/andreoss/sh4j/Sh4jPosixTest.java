@@ -92,8 +92,13 @@ final class Sh4jPosixTest {
     }
 
     @Test
-    void pipelineExitCodeIsLast() {
+    void pipelineExitCodeIsLastCheck1() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("false | true"));
+    }
+
+    @Test
+    void pipelineExitCodeIsLastCheck2() {
+        Sh4j.INSTANCE.run("false | true");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("true | false"));
     }
 
@@ -102,8 +107,13 @@ final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    void andListShortCircuitsOnFailure() {
+    void andListShortCircuitsOnFailureCheck1() {
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("false && echo 1"));
+    }
+
+    @Test
+    void andListShortCircuitsOnFailureCheck2() {
+        Sh4j.INSTANCE.run("false && echo 1");
         Assertions.assertEquals("", Sh4j.INSTANCE.out("false && echo 1"));
     }
 
@@ -113,8 +123,13 @@ final class Sh4jPosixTest {
     }
 
     @Test
-    void orListShortCircuitsOnSuccess() {
+    void orListShortCircuitsOnSuccessCheck1() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("true || echo 1"));
+    }
+
+    @Test
+    void orListShortCircuitsOnSuccessCheck2() {
+        Sh4j.INSTANCE.run("true || echo 1");
         Assertions.assertEquals("", Sh4j.INSTANCE.out("true || echo 1"));
     }
 
@@ -407,11 +422,16 @@ final class Sh4jPosixTest {
     }
 
     @Test
-    void equalsAssignDefaultIfUnset() {
+    void equalsAssignDefaultIfUnsetCheck1() {
         Assertions.assertEquals(
             String.format("default%n"),
             Sh4j.INSTANCE.out("echo ${UNSET_XYZ=default}")
         );
+    }
+
+    @Test
+    void equalsAssignDefaultIfUnsetCheck2() {
+        Sh4j.INSTANCE.out("echo ${UNSET_XYZ=default}");
         Assertions.assertEquals(
             "default",
             Sh4j.INSTANCE.getVar("UNSET_XYZ", "echo ${UNSET_XYZ=default}")
@@ -517,9 +537,15 @@ final class Sh4jPosixTest {
     }
 
     @Test
-    void exportWithValue() {
+    void exportWithValueCheck1() {
         final Sh4j.Result result = Sh4j.INSTANCE.runFull("export X=hello", "echo $X");
         Assertions.assertEquals(0, result.exitCode());
+    }
+
+    @Test
+    void exportWithValueCheck2() {
+        final Sh4j.Result result = Sh4j.INSTANCE.runFull("export X=hello", "echo $X");
+        result.exitCode();
         Assertions.assertEquals(String.format("hello%n"), result.stdout());
     }
 
@@ -731,11 +757,26 @@ final class Sh4jPosixTest {
     // ============================================================
 
     @Test
-    void fcListsHistory() {
+    void fcListsHistoryCheck1() {
         final String out = Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2");
         Assertions.assertTrue(out.contains("1"));
+    }
+
+    @Test
+    void fcListsHistoryCheck2() {
+        final String out = Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2");
         Assertions.assertTrue(out.contains("echo one"));
+    }
+
+    @Test
+    void fcListsHistoryCheck3() {
+        final String out = Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2");
         Assertions.assertTrue(out.contains("2"));
+    }
+
+    @Test
+    void fcListsHistoryCheck4() {
+        final String out = Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2");
         Assertions.assertTrue(out.contains("echo two"));
     }
 
