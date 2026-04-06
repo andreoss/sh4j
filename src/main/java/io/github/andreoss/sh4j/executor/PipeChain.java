@@ -22,9 +22,6 @@ import java.util.List;
  */
 final class PipeChain {
 
-    /** Capacity of each pipe in bytes. */
-    private static final int CAPACITY = 65_536;
-
     /** The shell that runs the pipeline. */
     private final Executor shell;
 
@@ -57,7 +54,7 @@ final class PipeChain {
                 inputs[idx + 1] = PipeChain.reader();
                 outputs[idx] = PipeChain.writer(inputs, idx + 1);
             }
-            code = this.start(inputs, outputs);
+            code = this.start(inputs, outputs, count);
         } catch (final IOException ex) {
             code = 1;
         }
@@ -65,13 +62,13 @@ final class PipeChain {
     }
 
     private int start(
-        final PipedInputStream[] inputs, final PipedOutputStream[] outputs
+        final PipedInputStream[] inputs, final PipedOutputStream[] outputs,
+        final int count
     ) {
-        final int count = this.commands.size();
         final List<PipeStage> stages = new ArrayList<>(count);
         final List<Thread> threads = new ArrayList<>(count);
         for (int idx = 0; idx < count; idx = idx + 1) {
-            final PipeStage stage = this.stage(idx, inputs, outputs);
+            final PipeStage stage = this.stage(inputs, outputs, idx);
             stages.add(stage);
             threads.add(new Thread(stage, String.format("sh-pipe-%d", idx)));
         }
@@ -92,8 +89,8 @@ final class PipeChain {
     }
 
     private PipeStage stage(
-        final int idx, final PipedInputStream[] inputs,
-        final PipedOutputStream[] outputs
+        final PipedInputStream[] inputs, final PipedOutputStream[] outputs,
+        final int idx
     ) {
         final Executor child = this.shell.subshell();
         if (idx == 0) {
@@ -116,7 +113,7 @@ final class PipeChain {
     }
 
     private static PipedInputStream reader() {
-        return new PipedInputStream(PipeChain.CAPACITY);
+        return new PipedInputStream(65_536);
     }
 
     private static PipedOutputStream writer(

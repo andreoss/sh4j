@@ -72,7 +72,7 @@ final class ExecCommand {
     }
 
     private void bind(final List<Redirection> redirs) {
-        final RedirectionHandler.StreamSwap swap = this.shell.redirect(redirs);
+        final RedirectionHandler.StreamSwap swap = OutputSwap.apply(this.shell, redirs);
         InputSwap.discard(new InputSwap(this.shell).install(redirs));
         boolean bound = !swap.failed();
         for (final Redirection redir : redirs) {

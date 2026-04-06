@@ -5,14 +5,10 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.PrintSink;
-import io.github.andreoss.sh4j.lexer.CharReader;
-import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Parser;
-import io.github.andreoss.sh4j.parser.Redirection;
-import io.github.andreoss.sh4j.parser.SimpleCommand;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -216,12 +212,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String executeCommandSubstitution(final String text) {
-        final ListNode ast = new Parser(new Lexer(new CharReader(text))).parse();
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final Executor sub = this.subshell();
-        sub.setCaptureStream(baos);
-        this.substat = sub.execute(ast);
-        return Executor.chomp(baos.toString(StandardCharsets.UTF_8));
+        return new Substitution(this).capture(text);
     }
 
     @Override
@@ -268,13 +259,7 @@ public final class Executor implements BuiltinContext {
     public int executeBypassingFunctions(
         final String name, final List<String> args, final Map<String, String> env
     ) {
-        final SimpleCommand command = new SimpleCommand(name);
-        for (final String arg : args) {
-            command.addArgument(arg);
-        }
-        return new NamedCommand(this).run(
-            new CommandCall(command, name, new HashMap<>(env), true)
-        );
+        return new NamedCommand(this).bypass(name, args, env);
     }
 
     @Override
@@ -369,14 +354,7 @@ public final class Executor implements BuiltinContext {
      */
     public void runExitTrap(final int status) {
         this.lastcode = status;
-        final String action = this.traps.remove("EXIT");
-        if (action != null && !action.isEmpty() && !"-".equals(action)) {
-            Attempt.failure(
-                () -> this.execute(new Parser(new Lexer(new CharReader(action))).parse())
-            ).ifPresent(
-                ex -> this.err.println(String.format("sh: trap: %s", ex.getMessage()))
-            );
-        }
+        ExitTrap.run(this, this.traps.remove("EXIT"));
     }
 
     /**
@@ -562,51 +540,6 @@ public final class Executor implements BuiltinContext {
      */
     Integer builtin(final String name, final Invocation call) {
         return this.dispatcher.dispatch(name, this, call);
-    }
-
-    /**
-     * Applies the output redirections of a built-in to the live streams.
-     *
-     * @param redirs The redirections of the command
-     * @return The swap that {@link #restore(RedirectionHandler.StreamSwap)}
-     *  undoes
-     */
-    RedirectionHandler.StreamSwap redirect(final List<Redirection> redirs) {
-        final RedirectionHandler.StreamSwap swap =
-            RedirectionHandler.redirectOutputForBuiltin(
-                redirs,
-                new RedirectionHandler.Streams(this.out, this.err),
-                new RedirectionHandler.RedirectContext(
-                    text -> this.expandVariables(text, this.vars.table()),
-                    this.cwd, this.fds.outputs()
-                )
-            );
-        this.out = swap.out();
-        this.err = swap.err();
-        return swap;
-    }
-
-    /**
-     * Puts back the streams replaced by
-     * {@link #redirect(List)}.
-     *
-     * @param swap The swap returned by {@link #redirect(List)}
-     */
-    void restore(final RedirectionHandler.StreamSwap swap) {
-        if (swap.savedout() != null) {
-            this.out = swap.savedout();
-        }
-        if (swap.savederr() != null) {
-            this.err = swap.savederr();
-        }
-    }
-
-    private static String chomp(final String text) {
-        int end = text.length();
-        while (end > 0 && text.charAt(end - 1) == '\n') {
-            end = end - 1;
-        }
-        return text.substring(0, end);
     }
 
     private static File initialDirectory() {

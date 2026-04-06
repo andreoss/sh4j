@@ -102,16 +102,19 @@ final class Pipelines {
     private void async(final Pipeline pipeline) {
         final String cmdtext = Pipelines.text(pipeline);
         final Executor parent = this.shell;
-        final int jobnum = parent.jobManager().submit(
-            () -> {
-                final Executor bgexecutor = parent.subshell();
-                bgexecutor.setOutputStream(parent.outStream());
-                bgexecutor.setErrorStream(parent.errStream());
-                return new Pipelines(bgexecutor).pipeline(pipeline);
-            },
-            cmdtext
+        this.shell.background(
+            Math.toIntExact(
+                JobManager.JOB_PID_BASE + parent.jobManager().submit(
+                    () -> {
+                        final Executor bgexecutor = parent.subshell();
+                        bgexecutor.setOutputStream(parent.outStream());
+                        bgexecutor.setErrorStream(parent.errStream());
+                        return new Pipelines(bgexecutor).pipeline(pipeline);
+                    },
+                    cmdtext
+                )
+            )
         );
-        this.shell.background((int) (JobManager.JOB_PID_BASE + jobnum));
     }
 
     private int exit(final List<Node> commands) {

@@ -11,6 +11,7 @@ import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +65,25 @@ final class NamedCommand {
         return code;
     }
 
+    /**
+     * Runs a built-in or an external command, bypassing aliases and
+     * functions.
+     *
+     * @param name The command name
+     * @param args The command arguments
+     * @param env The command environment (copied)
+     * @return The exit status
+     */
+    int bypass(
+        final String name, final List<String> args, final Map<String, String> env
+    ) {
+        final SimpleCommand command = new SimpleCommand(name);
+        for (final String arg : args) {
+            command.addArgument(arg);
+        }
+        return this.run(new CommandCall(command, name, new HashMap<>(env), true));
+    }
+
     private Optional<String> alias(final CommandCall call) {
         Optional<String> alias = Optional.empty();
         if (!call.bypass()) {
@@ -84,7 +104,7 @@ final class NamedCommand {
 
     private int redirected(final CommandCall call) {
         final RedirectionHandler.StreamSwap swap =
-            this.shell.redirect(call.cmd().getRedirections());
+            OutputSwap.apply(this.shell, call.cmd().getRedirections());
         final InputSwap input = new InputSwap(this.shell);
         final Optional<InputStream> kept = input.install(call.cmd().getRedirections());
         final int code;
@@ -92,7 +112,7 @@ final class NamedCommand {
             code = this.dispatch(call, swap.failed());
         } finally {
             input.restore(kept);
-            this.shell.restore(swap);
+            OutputSwap.restore(this.shell, swap);
         }
         return code;
     }

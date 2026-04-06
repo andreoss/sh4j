@@ -28,16 +28,16 @@ final class Attempt {
      *  completed normally
      */
     static Optional<RuntimeException> failure(final Runnable action) {
-        final Optional<Throwable> thrown = CompletableFuture
+        return CompletableFuture
             .runAsync(action, Runnable::run)
             .handle((done, error) -> Optional.ofNullable(error).map(Throwable::getCause))
-            .join();
-        return thrown.map(Attempt::unchecked);
+            .join()
+            .map(Attempt::unchecked);
     }
 
     private static RuntimeException unchecked(final Throwable thrown) {
-        if (thrown instanceof Error) {
-            throw (Error) thrown;
+        if (thrown instanceof Error error) {
+            throw error;
         }
         return (RuntimeException) thrown;
     }
