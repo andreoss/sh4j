@@ -21,293 +21,259 @@ final class LexerTest {
     private static final String ECHO_CMD = "echo";
 
     @Test
-    void eofOnEmptyInputCheck1() {
-        final Token tokn = this.lexer("").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.END_OF_FILE));
+    void eofOnEmptyInputFirst() {
+        MatcherAssert.assertThat(this.lexer("").nextToken().type(), CoreMatchers.equalTo(TokenType.END_OF_FILE));
     }
 
     @Test
-    void eofOnEmptyInputCheck2() {
+    void eofOnEmptyInputSecond() {
         final Token tokn = this.lexer("").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.END_OF_FILE);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(""));
     }
 
     @Test
-    void newlineCheck1() {
-        final Token tokn = this.lexer(String.format("%n")).nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.NEWLINE));
+    void newlineFirst() {
+        MatcherAssert.assertThat(this.lexer(String.format("%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
     }
 
     @Test
-    void newlineCheck2() {
+    void newlineSecond() {
         final Token tokn = this.lexer(String.format("%n")).nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.NEWLINE);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(String.format("%n")));
     }
 
     @Test
-    void singleCharOperatorsCheck1() {
+    void singleCharOperatorsFirst() {
         this.assertOperator("|", TokenType.PIPE);
     }
 
     @Test
-    void singleCharOperatorsCheck2() {
+    void singleCharOperatorsSecond() {
         this.assertOperator("&", TokenType.AMP);
     }
 
     @Test
-    void singleCharOperatorsCheck3() {
+    void singleCharOperatorsThird() {
         this.assertOperator(";", TokenType.SEMI);
     }
 
     @Test
-    void singleCharOperatorsCheck4() {
+    void singleCharOperatorsFourth() {
         this.assertOperator("<", TokenType.LESS);
     }
 
     @Test
-    void singleCharOperatorsCheck5() {
+    void singleCharOperatorsFifth() {
         this.assertOperator(">", TokenType.GREAT);
     }
 
     @Test
-    void singleCharOperatorsCheck6() {
+    void singleCharOperatorsSixth() {
         this.assertOperator("(", TokenType.LPAREN);
     }
 
     @Test
-    void singleCharOperatorsCheck7() {
+    void singleCharOperatorsSeventh() {
         this.assertOperator(")", TokenType.RPAREN);
     }
 
     @Test
-    void multiCharOperatorsCheck1() {
+    void multiCharOperatorsFirst() {
         this.assertOperator("&&", TokenType.AND_IF);
     }
 
     @Test
-    void multiCharOperatorsCheck2() {
+    void multiCharOperatorsSecond() {
         this.assertOperator("||", TokenType.OR_IF);
     }
 
     @Test
-    void multiCharOperatorsCheck3() {
+    void multiCharOperatorsThird() {
         this.assertOperator(";;", TokenType.DSEMI);
     }
 
     @Test
-    void multiCharOperatorsCheck4() {
+    void multiCharOperatorsFourth() {
         this.assertOperator("<<", TokenType.DLESS);
     }
 
     @Test
-    void multiCharOperatorsCheck5() {
+    void multiCharOperatorsFifth() {
         this.assertOperator(">>", TokenType.DGREATER);
     }
 
     @Test
-    void multiCharOperatorsCheck6() {
+    void multiCharOperatorsSixth() {
         this.assertOperator("<&", TokenType.LESSAND);
     }
 
     @Test
-    void multiCharOperatorsCheck7() {
+    void multiCharOperatorsSeventh() {
         this.assertOperator(">&", TokenType.GREATAND);
     }
 
     @Test
-    void multiCharOperatorsCheck8() {
+    void multiCharOperatorsEighth() {
         this.assertOperator("<>", TokenType.LESSGREATER);
     }
 
     @Test
-    void multiCharOperatorsCheck9() {
+    void multiCharOperatorsNinth() {
         this.assertOperator("<<-", TokenType.DLESSDASH);
     }
 
     @Test
-    void multiCharOperatorsCheck10() {
+    void multiCharOperatorsTenth() {
         this.assertOperator(">|", TokenType.CLOBBER);
     }
 
     @Test
-    void simpleWordCheck1() {
-        final Token tokn = this.lexer(LexerTest.ECHO_CMD).nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void simpleWordFirst() {
+        MatcherAssert.assertThat(this.lexer(LexerTest.ECHO_CMD).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void simpleWordCheck2() {
+    void simpleWordSecond() {
         final Token tokn = this.lexer(LexerTest.ECHO_CMD).nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(LexerTest.ECHO_CMD));
     }
 
     @Test
-    void wordWithWhitespacePrefixCheck1() {
-        final Token tokn = this.lexer("  ls").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void wordWithWhitespacePrefixFirst() {
+        MatcherAssert.assertThat(this.lexer("  ls").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void wordWithWhitespacePrefixCheck2() {
+    void wordWithWhitespacePrefixSecond() {
         final Token tokn = this.lexer("  ls").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("ls"));
     }
 
     @Test
-    void multipleTokensCheck1() {
-        final Lexer list = this.lexer(String.format("echo hello%n"));
-        final Token tokfirst = list.nextToken();
-        MatcherAssert.assertThat(tokfirst.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void multipleTokensFirst() {
+        MatcherAssert.assertThat(this.lexer(String.format("echo hello%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void multipleTokensCheck2() {
-        final Lexer list = this.lexer(String.format("echo hello%n"));
-        final Token tokfirst = list.nextToken();
-        tokfirst.type();
+    void multipleTokensSecond() {
+        final Token tokfirst = this.lexer(String.format("echo hello%n")).nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerTest.ECHO_CMD));
     }
 
     @Test
-    void multipleTokensCheck3() {
+    void multipleTokensThird() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
-        final Token toksecond = list.nextToken();
-        MatcherAssert.assertThat(toksecond.type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void multipleTokensCheck4() {
+    void multipleTokensFourth() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         final Token toksecond = list.nextToken();
-        toksecond.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(toksecond.text(), CoreMatchers.equalTo("hello"));
     }
 
     @Test
-    void multipleTokensCheck5() {
+    void multipleTokensFifth() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         final Token toksecond = list.nextToken();
-        toksecond.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        toksecond.text();
         CoreMatchers.equalTo("hello");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
     }
 
     @Test
-    void operatorsSeparatedBySpacesCheck1() {
-        final Lexer list = this.lexer("&& ||");
-        MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.AND_IF));
+    void operatorsSeparatedBySpacesFirst() {
+        MatcherAssert.assertThat(this.lexer("&& ||").nextToken().type(), CoreMatchers.equalTo(TokenType.AND_IF));
     }
 
     @Test
-    void operatorsSeparatedBySpacesCheck2() {
+    void operatorsSeparatedBySpacesSecond() {
         final Lexer list = this.lexer("&& ||");
-        list.nextToken().type();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.AND_IF);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.OR_IF));
     }
 
     @Test
-    void wordThenOperatorCheck1() {
-        final Lexer list = this.lexer("cmd&");
-        final Token tokfirst = list.nextToken();
-        MatcherAssert.assertThat(tokfirst.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void wordThenOperatorFirst() {
+        MatcherAssert.assertThat(this.lexer("cmd&").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void wordThenOperatorCheck2() {
-        final Lexer list = this.lexer("cmd&");
-        final Token tokfirst = list.nextToken();
-        tokfirst.type();
+    void wordThenOperatorSecond() {
+        final Token tokfirst = this.lexer("cmd&").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo("cmd"));
     }
 
     @Test
-    void wordThenOperatorCheck3() {
+    void wordThenOperatorThird() {
         final Lexer list = this.lexer("cmd&");
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo("cmd");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.AMP));
     }
 
     @Test
-    void operatorThenWordCheck1() {
-        final Lexer list = this.lexer(">out");
-        MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
+    void operatorThenWordFirst() {
+        MatcherAssert.assertThat(this.lexer(">out").nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
     }
 
     @Test
-    void operatorThenWordCheck2() {
+    void operatorThenWordSecond() {
         final Lexer list = this.lexer(">out");
-        list.nextToken().type();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.GREAT);
-        final Token toksecond = list.nextToken();
-        MatcherAssert.assertThat(toksecond.type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void operatorThenWordCheck3() {
+    void operatorThenWordThird() {
         final Lexer list = this.lexer(">out");
-        list.nextToken().type();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.GREAT);
         final Token toksecond = list.nextToken();
-        toksecond.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(toksecond.text(), CoreMatchers.equalTo("out"));
     }
 
     @Test
-    void consecutiveNewlinesCheck1() {
-        final Lexer list = this.lexer(String.format("%n%n"));
-        MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
+    void consecutiveNewlinesFirst() {
+        MatcherAssert.assertThat(this.lexer(String.format("%n%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
     }
 
     @Test
-    void consecutiveNewlinesCheck2() {
+    void consecutiveNewlinesSecond() {
         final Lexer list = this.lexer(String.format("%n%n"));
-        list.nextToken().type();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.NEWLINE);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
     }
 
     @Test
-    void tokenPositionsCheck1() {
-        final Token tokn = this.lexer("  word").nextToken();
-        MatcherAssert.assertThat(tokn.line(), CoreMatchers.equalTo(1));
+    void tokenPositionsFirst() {
+        MatcherAssert.assertThat(this.lexer("  word").nextToken().line(), CoreMatchers.equalTo(1));
     }
 
     @Test
-    void tokenPositionsCheck2() {
+    void tokenPositionsSecond() {
         final Token tokn = this.lexer("  word").nextToken();
         tokn.line();
         CoreMatchers.equalTo(1);
@@ -325,43 +291,38 @@ final class LexerTest {
     }
 
     @Test
-    void whitespaceSkippedBetweenTokensCheck1() {
-        final Lexer list = this.lexer("a   b");
-        MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo("a"));
+    void whitespaceSkippedBetweenTokensFirst() {
+        MatcherAssert.assertThat(this.lexer("a   b").nextToken().text(), CoreMatchers.equalTo("a"));
     }
 
     @Test
-    void whitespaceSkippedBetweenTokensCheck2() {
+    void whitespaceSkippedBetweenTokensSecond() {
         final Lexer list = this.lexer("a   b");
-        list.nextToken().text();
+        list.nextToken();
         CoreMatchers.equalTo("a");
         MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo("b"));
     }
 
     @Test
-    void tabIsWhitespaceCheck1() {
-        final Token tokn = this.lexer("\tword").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void tabIsWhitespaceFirst() {
+        MatcherAssert.assertThat(this.lexer("\tword").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void tabIsWhitespaceCheck2() {
+    void tabIsWhitespaceSecond() {
         final Token tokn = this.lexer("\tword").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("word"));
     }
 
     @Test
-    void equalsAloneIsWordNotAssignmentCheck1() {
-        final Token tokn = this.lexer("=").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void equalsAloneIsWordNotAssignmentFirst() {
+        MatcherAssert.assertThat(this.lexer("=").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void equalsAloneIsWordNotAssignmentCheck2() {
+    void equalsAloneIsWordNotAssignmentSecond() {
         final Token tokn = this.lexer("=").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("="));
     }
@@ -383,97 +344,79 @@ final class LexerTest {
     }
 
     @Test
-    void wordBreaksAtLeftParenCheck1() {
-        final Lexer list = this.lexer("echo(");
-        final Token tokfirst = list.nextToken();
-        MatcherAssert.assertThat(tokfirst.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void wordBreaksAtLeftParenFirst() {
+        MatcherAssert.assertThat(this.lexer("echo(").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void wordBreaksAtLeftParenCheck2() {
-        final Lexer list = this.lexer("echo(");
-        final Token tokfirst = list.nextToken();
-        tokfirst.type();
+    void wordBreaksAtLeftParenSecond() {
+        final Token tokfirst = this.lexer("echo(").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerTest.ECHO_CMD));
     }
 
     @Test
-    void wordBreaksAtLeftParenCheck3() {
+    void wordBreaksAtLeftParenThird() {
         final Lexer list = this.lexer("echo(");
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.LPAREN));
     }
 
     @Test
-    void wordBreaksAtRightParenCheck1() {
-        final Lexer list = this.lexer("echo)");
-        final Token tokfirst = list.nextToken();
-        MatcherAssert.assertThat(tokfirst.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void wordBreaksAtRightParenFirst() {
+        MatcherAssert.assertThat(this.lexer("echo)").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void wordBreaksAtRightParenCheck2() {
-        final Lexer list = this.lexer("echo)");
-        final Token tokfirst = list.nextToken();
-        tokfirst.type();
+    void wordBreaksAtRightParenSecond() {
+        final Token tokfirst = this.lexer("echo)").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerTest.ECHO_CMD));
     }
 
     @Test
-    void wordBreaksAtRightParenCheck3() {
+    void wordBreaksAtRightParenThird() {
         final Lexer list = this.lexer("echo)");
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.WORD);
-        tokfirst.text();
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.RPAREN));
     }
 
     @Test
-    void singleQuotedWordCheck1() {
-        final Token tokn = this.lexer("'hello'").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void singleQuotedWordFirst() {
+        MatcherAssert.assertThat(this.lexer("'hello'").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void singleQuotedWordCheck2() {
+    void singleQuotedWordSecond() {
         final Token tokn = this.lexer("'hello'").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("'hello'"));
     }
 
     @Test
-    void doubleQuotedWordCheck1() {
-        final Token tokn = this.lexer("\"hello\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedWordFirst() {
+        MatcherAssert.assertThat(this.lexer("\"hello\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedWordCheck2() {
+    void doubleQuotedWordSecond() {
         final Token tokn = this.lexer("\"hello\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"hello\""));
     }
 
     @Test
-    void backslashEscapesInsideWordCheck1() {
-        final Token tokn = this.lexer("a\\ b").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void backslashEscapesInsideWordFirst() {
+        MatcherAssert.assertThat(this.lexer("a\\ b").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void backslashEscapesInsideWordCheck2() {
+    void backslashEscapesInsideWordSecond() {
         final Token tokn = this.lexer("a\\ b").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("a\\ b"));
     }
@@ -487,85 +430,73 @@ final class LexerTest {
     }
 
     @Test
-    void mixedQuotingCheck1() {
-        final Token tokn = this.lexer("a'b'c").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void mixedQuotingFirst() {
+        MatcherAssert.assertThat(this.lexer("a'b'c").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void mixedQuotingCheck2() {
+    void mixedQuotingSecond() {
         final Token tokn = this.lexer("a'b'c").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("a'b'c"));
     }
 
     @Test
-    void doubleQuotedBackslashDollarCheck1() {
-        final Token tokn = this.lexer("\"\\$\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashDollarFirst() {
+        MatcherAssert.assertThat(this.lexer("\"\\$\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashDollarCheck2() {
+    void doubleQuotedBackslashDollarSecond() {
         final Token tokn = this.lexer("\"\\$\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\$\""));
     }
 
     @Test
-    void doubleQuotedBackslashBacktickCheck1() {
-        final Token tokn = this.lexer("\"\\`\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashBacktickFirst() {
+        MatcherAssert.assertThat(this.lexer("\"\\`\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashBacktickCheck2() {
+    void doubleQuotedBackslashBacktickSecond() {
         final Token tokn = this.lexer("\"\\`\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\`\""));
     }
 
     @Test
-    void doubleQuotedBackslashNewlineCheck1() {
-        final Token tokn = this.lexer(String.format("\"a\\%nb\"")).nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashNewlineFirst() {
+        MatcherAssert.assertThat(this.lexer(String.format("\"a\\%nb\"")).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashNewlineCheck2() {
+    void doubleQuotedBackslashNewlineSecond() {
         final Token tokn = this.lexer(String.format("\"a\\%nb\"")).nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"ab\""));
     }
 
     @Test
-    void doubleQuotedBackslashBackslashCheck1() {
-        final Token tokn = this.lexer("\"a\\\\b\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashBackslashFirst() {
+        MatcherAssert.assertThat(this.lexer("\"a\\\\b\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashBackslashCheck2() {
+    void doubleQuotedBackslashBackslashSecond() {
         final Token tokn = this.lexer("\"a\\\\b\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\\b\""));
     }
 
     @Test
-    void doubleQuotedBackslashDoublequoteCheck1() {
-        final Token tokn = this.lexer("\"a\\\"b\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashDoublequoteFirst() {
+        MatcherAssert.assertThat(this.lexer("\"a\\\"b\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashDoublequoteCheck2() {
+    void doubleQuotedBackslashDoublequoteSecond() {
         final Token tokn = this.lexer("\"a\\\"b\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\"b\""));
     }
@@ -588,7 +519,7 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordEdgeCasesCheck1() {
+    void assignmentWordEdgeCasesFirst() {
         MatcherAssert.assertThat(
             this.lexer("=value").nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
@@ -596,8 +527,8 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordEdgeCasesCheck2() {
-        this.lexer("=value").nextToken().type();
+    void assignmentWordEdgeCasesSecond() {
+        this.lexer("=value").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             this.lexer("_=value").nextToken().type(),
@@ -619,62 +550,52 @@ final class LexerTest {
     }
 
     @Test
-    void doubleQuotedBackslashNonSpecialKeptLiteralCheck1() {
-        final Token tokn = this.lexer("\"\\a\"").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void doubleQuotedBackslashNonSpecialKeptLiteralFirst() {
+        MatcherAssert.assertThat(this.lexer("\"\\a\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void doubleQuotedBackslashNonSpecialKeptLiteralCheck2() {
+    void doubleQuotedBackslashNonSpecialKeptLiteralSecond() {
         final Token tokn = this.lexer("\"\\a\"").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\a\""));
     }
 
     @Test
-    void ioNumberBeforeInputRedirectCheck1() {
-        final Lexer list = this.lexer("2<file");
-        final Token tokfirst = list.nextToken();
-        MatcherAssert.assertThat(tokfirst.type(), CoreMatchers.equalTo(TokenType.IO_NUMBER));
+    void ioNumberBeforeInputRedirectFirst() {
+        MatcherAssert.assertThat(this.lexer("2<file").nextToken().type(), CoreMatchers.equalTo(TokenType.IO_NUMBER));
     }
 
     @Test
-    void ioNumberBeforeInputRedirectCheck2() {
-        final Lexer list = this.lexer("2<file");
-        final Token tokfirst = list.nextToken();
-        tokfirst.type();
+    void ioNumberBeforeInputRedirectSecond() {
+        final Token tokfirst = this.lexer("2<file").nextToken();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo("2"));
     }
 
     @Test
-    void ioNumberBeforeInputRedirectCheck3() {
+    void ioNumberBeforeInputRedirectThird() {
         final Lexer list = this.lexer("2<file");
         final Token tokfirst = list.nextToken();
-        tokfirst.type();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
-        tokfirst.text();
         CoreMatchers.equalTo("2");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.LESS));
     }
 
     @Test
-    void digitsThenSpaceIsWordNotIoNumberCheck1() {
-        final Token tokn = this.lexer("42 ").nextToken();
-        MatcherAssert.assertThat(tokn.type(), CoreMatchers.equalTo(TokenType.WORD));
+    void digitsThenSpaceIsWordNotIoNumberFirst() {
+        MatcherAssert.assertThat(this.lexer("42 ").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void digitsThenSpaceIsWordNotIoNumberCheck2() {
+    void digitsThenSpaceIsWordNotIoNumberSecond() {
         final Token tokn = this.lexer("42 ").nextToken();
-        tokn.type();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("42"));
     }
 
     @Test
-    void singleQuoteLiteralInsideDoubleQuoteCheck1() {
+    void singleQuoteLiteralInsideDoubleQuoteFirst() {
         MatcherAssert.assertThat(
             this.lexer("\"a'b\"").nextToken().text(),
             CoreMatchers.equalTo("\"a'b\"")
@@ -682,8 +603,8 @@ final class LexerTest {
     }
 
     @Test
-    void singleQuoteLiteralInsideDoubleQuoteCheck2() {
-        this.lexer("\"a'b\"").nextToken().text();
+    void singleQuoteLiteralInsideDoubleQuoteSecond() {
+        this.lexer("\"a'b\"").nextToken();
         CoreMatchers.equalTo("\"a'b\"");
         MatcherAssert.assertThat(
             this.lexer("'a\"b'").nextToken().text(),
@@ -700,7 +621,7 @@ final class LexerTest {
     }
 
     @Test
-    void doubleQuotedEscapesCheck1() {
+    void doubleQuotedEscapesFirst() {
         MatcherAssert.assertThat(
             this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken().text(),
             CoreMatchers.equalTo("\"a\\$b\\`c\\\"d\\\\e\"")
@@ -708,8 +629,8 @@ final class LexerTest {
     }
 
     @Test
-    void doubleQuotedEscapesCheck2() {
-        this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken().text();
+    void doubleQuotedEscapesSecond() {
+        this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken();
         CoreMatchers.equalTo("\"a\\$b\\`c\\\"d\\\\e\"");
         MatcherAssert.assertThat(
             this.lexer("\"a\\qb\"").nextToken().text(),
@@ -718,10 +639,10 @@ final class LexerTest {
     }
 
     @Test
-    void doubleQuotedEscapesCheck3() {
-        this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken().text();
+    void doubleQuotedEscapesThird() {
+        this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken();
         CoreMatchers.equalTo("\"a\\$b\\`c\\\"d\\\\e\"");
-        this.lexer("\"a\\qb\"").nextToken().text();
+        this.lexer("\"a\\qb\"").nextToken();
         CoreMatchers.equalTo("\"a\\qb\"");
         MatcherAssert.assertThat(
             this.lexer(String.format("\"a\\%nb\"")).nextToken().text(),
@@ -730,7 +651,7 @@ final class LexerTest {
     }
 
     @Test
-    void nestedCommandAndArithmeticSubstitutionsCheck1() {
+    void nestedCommandAndArithmeticSubstitutionsFirst() {
         MatcherAssert.assertThat(
             this.lexer("$((1+(2)))").nextToken().text(),
             CoreMatchers.equalTo("$((1+(2)))")
@@ -738,8 +659,8 @@ final class LexerTest {
     }
 
     @Test
-    void nestedCommandAndArithmeticSubstitutionsCheck2() {
-        this.lexer("$((1+(2)))").nextToken().text();
+    void nestedCommandAndArithmeticSubstitutionsSecond() {
+        this.lexer("$((1+(2)))").nextToken();
         CoreMatchers.equalTo("$((1+(2)))");
         MatcherAssert.assertThat(
             this.lexer("$(echo (x))").nextToken().text(),
@@ -748,10 +669,10 @@ final class LexerTest {
     }
 
     @Test
-    void nestedCommandAndArithmeticSubstitutionsCheck3() {
-        this.lexer("$((1+(2)))").nextToken().text();
+    void nestedCommandAndArithmeticSubstitutionsThird() {
+        this.lexer("$((1+(2)))").nextToken();
         CoreMatchers.equalTo("$((1+(2)))");
-        this.lexer("$(echo (x))").nextToken().text();
+        this.lexer("$(echo (x))").nextToken();
         CoreMatchers.equalTo("$(echo (x))");
         MatcherAssert.assertThat(
             this.lexer("$(abc").nextToken().text(),
@@ -760,7 +681,7 @@ final class LexerTest {
     }
 
     @Test
-    void nestedAndUnbalancedBracesCheck1() {
+    void nestedAndUnbalancedBracesFirst() {
         MatcherAssert.assertThat(
             this.lexer("${a${b}}").nextToken().text(),
             CoreMatchers.equalTo("${a${b}}")
@@ -768,8 +689,8 @@ final class LexerTest {
     }
 
     @Test
-    void nestedAndUnbalancedBracesCheck2() {
-        this.lexer("${a${b}}").nextToken().text();
+    void nestedAndUnbalancedBracesSecond() {
+        this.lexer("${a${b}}").nextToken();
         CoreMatchers.equalTo("${a${b}}");
         MatcherAssert.assertThat(
             this.lexer("${a").nextToken().text(),
@@ -786,7 +707,7 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordNameValidationCheck1() {
+    void assignmentWordNameValidationFirst() {
         MatcherAssert.assertThat(
             this.lexer("A1=x").nextToken().type(),
             CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD)
@@ -794,8 +715,8 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordNameValidationCheck2() {
-        this.lexer("A1=x").nextToken().type();
+    void assignmentWordNameValidationSecond() {
+        this.lexer("A1=x").nextToken();
         CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         MatcherAssert.assertThat(
             this.lexer("_A=x").nextToken().type(),
@@ -804,10 +725,10 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordNameValidationCheck3() {
-        this.lexer("A1=x").nextToken().type();
+    void assignmentWordNameValidationThird() {
+        this.lexer("A1=x").nextToken();
         CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
-        this.lexer("_A=x").nextToken().type();
+        this.lexer("_A=x").nextToken();
         CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         MatcherAssert.assertThat(
             this.lexer("1A=x").nextToken().type(),
@@ -816,12 +737,12 @@ final class LexerTest {
     }
 
     @Test
-    void assignmentWordNameValidationCheck4() {
-        this.lexer("A1=x").nextToken().type();
+    void assignmentWordNameValidationFourth() {
+        this.lexer("A1=x").nextToken();
         CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
-        this.lexer("_A=x").nextToken().type();
+        this.lexer("_A=x").nextToken();
         CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
-        this.lexer("1A=x").nextToken().type();
+        this.lexer("1A=x").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             this.lexer("A-B=x").nextToken().type(),
@@ -830,42 +751,40 @@ final class LexerTest {
     }
 
     @Test
-    void descriptorDigitsAreRecognisedCheck1() {
-        final Lexer digits = this.lexer("2>file");
+    void descriptorDigitsAreRecognisedFirst() {
         MatcherAssert.assertThat(
-            digits.nextToken().type(),
+            this.lexer("2>file").nextToken().type(),
             CoreMatchers.equalTo(TokenType.IO_NUMBER)
         );
     }
 
     @Test
-    void descriptorDigitsAreRecognisedCheck2() {
+    void descriptorDigitsAreRecognisedSecond() {
         final Lexer digits = this.lexer("2>file");
-        digits.nextToken().type();
+        digits.nextToken();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
         MatcherAssert.assertThat(digits.nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
     }
 
     @Test
-    void descriptorDigitsAreRecognisedCheck3() {
+    void descriptorDigitsAreRecognisedThird() {
         final Lexer digits = this.lexer("2>file");
-        digits.nextToken().type();
+        digits.nextToken();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
-        digits.nextToken().type();
+        digits.nextToken();
         CoreMatchers.equalTo(TokenType.GREAT);
-        final Lexer mixed = this.lexer("2a>file");
-        MatcherAssert.assertThat(mixed.nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(this.lexer("2a>file").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
     }
 
     @Test
-    void descriptorDigitsAreRecognisedCheck4() {
+    void descriptorDigitsAreRecognisedFourth() {
         final Lexer digits = this.lexer("2>file");
-        digits.nextToken().type();
+        digits.nextToken();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
-        digits.nextToken().type();
+        digits.nextToken();
         CoreMatchers.equalTo(TokenType.GREAT);
         final Lexer mixed = this.lexer("2a>file");
-        mixed.nextToken().type();
+        mixed.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(mixed.nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
     }

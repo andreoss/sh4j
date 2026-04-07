@@ -22,176 +22,137 @@ final class ParserTest {
     private static final String ECHO_CMD = "echo";
 
     @Test
-    void parseSimpleCommandCheck1() {
-        final ListNode list = this.parse("echo hello");
-        Assertions.assertEquals(1, list.getPipelines().size());
+    void parseSimpleCommandFirst() {
+        Assertions.assertEquals(1, this.parse("echo hello").getPipelines().size());
     }
 
     @Test
-    void parseSimpleCommandCheck2() {
-        final ListNode list = this.parse("echo hello");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertEquals(1, pipeline.getCommands().size());
+    void parseSimpleCommandSecond() {
+        Assertions.assertEquals(1, this.parse("echo hello").getPipelines().get(0).getCommands().size());
     }
 
     @Test
-    void parseSimpleCommandCheck3() {
-        final ListNode list = this.parse("echo hello");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
-        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
+    void parseSimpleCommandThird() {
+        Assertions.assertEquals(ParserTest.ECHO_CMD, ((SimpleCommand) this.parse("echo hello").getPipelines().get(0).getCommands().get(0)).getName());
     }
 
     @Test
-    void parseSimpleCommandCheck4() {
-        final ListNode list = this.parse("echo hello");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
-        Assertions.assertEquals(1, cmd.getArguments().size());
+    void parseSimpleCommandFourth() {
+        Assertions.assertEquals(1, ((SimpleCommand) this.parse("echo hello").getPipelines().get(0).getCommands().get(0)).getArguments().size());
     }
 
     @Test
-    void parseSimpleCommandCheck5() {
-        final ListNode list = this.parse("echo hello");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final SimpleCommand cmd = (SimpleCommand) pipeline.getCommands().get(0);
-        Assertions.assertEquals("hello", cmd.getArguments().get(0));
+    void parseSimpleCommandFifth() {
+        Assertions.assertEquals("hello", ((SimpleCommand) this.parse("echo hello").getPipelines().get(0).getCommands().get(0)).getArguments().get(0));
     }
 
     @Test
-    void parsePipelineCheck1() {
-        final ListNode list = this.parse("echo a | grep b");
-        Assertions.assertEquals(1, list.getPipelines().size());
+    void parsePipelineFirst() {
+        Assertions.assertEquals(1, this.parse("echo a | grep b").getPipelines().size());
     }
 
     @Test
-    void parsePipelineCheck2() {
-        final ListNode list = this.parse("echo a | grep b");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parsePipelineSecond() {
+        Assertions.assertEquals(2, this.parse("echo a | grep b").getPipelines().get(0).getCommands().size());
     }
 
     @Test
-    void parsePipelineCheck3() {
-        final ListNode list = this.parse("echo a | grep b");
-        final Pipeline pipeline = list.getPipelines().get(0);
+    void parsePipelineThird() {
         Assertions.assertEquals(
             ParserTest.ECHO_CMD,
-            ((SimpleCommand) pipeline.getCommands().get(0)).getName()
+            ((SimpleCommand) this.parse("echo a | grep b").getPipelines().get(0).getCommands().get(0)).getName()
         );
     }
 
     @Test
-    void parsePipelineCheck4() {
-        final ListNode list = this.parse("echo a | grep b");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        ((SimpleCommand) pipeline.getCommands().get(0)).getName();
-        Assertions.assertEquals("grep", ((SimpleCommand) pipeline.getCommands().get(1)).getName());
+    void parsePipelineFourth() {
+        Assertions.assertEquals("grep", ((SimpleCommand) this.parse("echo a | grep b").getPipelines().get(0).getCommands().get(1)).getName());
     }
 
     @Test
-    void parseListWithSemicolonCheck1() {
-        final ListNode list = this.parse("cmd1 ; cmd2");
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithSemicolonFirst() {
+        Assertions.assertEquals(2, this.parse("cmd1 ; cmd2").getPipelines().size());
     }
 
     @Test
-    void parseListWithSemicolonCheck2() {
-        final ListNode list = this.parse("cmd1 ; cmd2");
-        Assertions.assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
+    void parseListWithSemicolonSecond() {
+        Assertions.assertEquals(ListNode.Separator.SEMI, this.parse("cmd1 ; cmd2").getSeparators().get(0));
     }
 
     @Test
-    void parseListWithAndCheck1() {
-        final ListNode list = this.parse("cmd1 && cmd2");
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithAndFirst() {
+        Assertions.assertEquals(2, this.parse("cmd1 && cmd2").getPipelines().size());
     }
 
     @Test
-    void parseListWithAndCheck2() {
-        final ListNode list = this.parse("cmd1 && cmd2");
-        Assertions.assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(0));
+    void parseListWithAndSecond() {
+        Assertions.assertEquals(ListNode.Separator.AND_IF, this.parse("cmd1 && cmd2").getSeparators().get(0));
     }
 
     @Test
-    void parseListWithOrCheck1() {
-        final ListNode list = this.parse("cmd1 || cmd2");
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithOrFirst() {
+        Assertions.assertEquals(2, this.parse("cmd1 || cmd2").getPipelines().size());
     }
 
     @Test
-    void parseListWithOrCheck2() {
-        final ListNode list = this.parse("cmd1 || cmd2");
-        Assertions.assertEquals(ListNode.Separator.OR_IF, list.getSeparators().get(0));
+    void parseListWithOrSecond() {
+        Assertions.assertEquals(ListNode.Separator.OR_IF, this.parse("cmd1 || cmd2").getSeparators().get(0));
     }
 
     @Test
-    void parseListWithAmpCheck1() {
-        final ListNode list = this.parse("cmd1 & cmd2");
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithAmpFirst() {
+        Assertions.assertEquals(2, this.parse("cmd1 & cmd2").getPipelines().size());
     }
 
     @Test
-    void parseListWithAmpCheck2() {
-        final ListNode list = this.parse("cmd1 & cmd2");
-        Assertions.assertEquals(ListNode.Separator.AMP, list.getSeparators().get(0));
+    void parseListWithAmpSecond() {
+        Assertions.assertEquals(ListNode.Separator.AMP, this.parse("cmd1 & cmd2").getSeparators().get(0));
     }
 
     @Test
-    void parseListWithNewlineSeparatorCheck1() {
-        final ListNode list = this.parse(String.format("cmd1%ncmd2"));
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithNewlineSeparatorFirst() {
+        Assertions.assertEquals(2, this.parse(String.format("cmd1%ncmd2")).getPipelines().size());
     }
 
     @Test
-    void parseListWithNewlineSeparatorCheck2() {
-        final ListNode list = this.parse(String.format("cmd1%ncmd2"));
-        Assertions.assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
+    void parseListWithNewlineSeparatorSecond() {
+        Assertions.assertEquals(ListNode.Separator.SEMI, this.parse(String.format("cmd1%ncmd2")).getSeparators().get(0));
     }
 
     @Test
-    void parseListWithNewlineSeparatorCheck3() {
-        final ListNode list = this.parse(String.format("cmd1%ncmd2"));
-        list.getSeparators().get(0);
+    void parseListWithNewlineSeparatorThird() {
         Assertions.assertEquals(
             "cmd1",
-            ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName()
+            ((SimpleCommand) this.parse(String.format("cmd1%ncmd2")).getPipelines().get(0).getCommands().get(0)).getName()
         );
     }
 
     @Test
-    void parseListWithNewlineSeparatorCheck4() {
-        final ListNode list = this.parse(String.format("cmd1%ncmd2"));
-        list.getSeparators().get(0);
-        ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName();
+    void parseListWithNewlineSeparatorFourth() {
         Assertions.assertEquals(
             "cmd2",
-            ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName()
+            ((SimpleCommand) this.parse(String.format("cmd1%ncmd2")).getPipelines().get(1).getCommands().get(0)).getName()
         );
     }
 
     @Test
-    void parseListWithBlankLinesAndLeadingTrailingNewlinesCheck1() {
-        final ListNode list = this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n"));
-        Assertions.assertEquals(2, list.getPipelines().size());
+    void parseListWithBlankLinesAndLeadingTrailingNewlinesFirst() {
+        Assertions.assertEquals(2, this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n")).getPipelines().size());
     }
 
     @Test
-    void parseListWithBlankLinesAndLeadingTrailingNewlinesCheck2() {
-        final ListNode list = this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n"));
+    void parseListWithBlankLinesAndLeadingTrailingNewlinesSecond() {
         Assertions.assertEquals(
             "cmd1",
-            ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName()
+            ((SimpleCommand) this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n")).getPipelines().get(0).getCommands().get(0)).getName()
         );
     }
 
     @Test
-    void parseListWithBlankLinesAndLeadingTrailingNewlinesCheck3() {
-        final ListNode list = this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n"));
-        ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0)).getName();
+    void parseListWithBlankLinesAndLeadingTrailingNewlinesThird() {
         Assertions.assertEquals(
             "cmd2",
-            ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0)).getName()
+            ((SimpleCommand) this.parse(String.format("%n%ncmd1%n%n%ncmd2%n%n")).getPipelines().get(1).getCommands().get(0)).getName()
         );
     }
 
@@ -201,150 +162,115 @@ final class ParserTest {
     }
 
     @Test
-    void parseCommandWithNoArgumentsCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("ls"));
-        Assertions.assertEquals("ls", cmd.getName());
+    void parseCommandWithNoArgumentsFirst() {
+        Assertions.assertEquals("ls", this.command(this.parse("ls")).getName());
     }
 
     @Test
-    void parseCommandWithNoArgumentsCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("ls"));
-        Assertions.assertTrue(cmd.getArguments().isEmpty());
+    void parseCommandWithNoArgumentsSecond() {
+        Assertions.assertTrue(this.command(this.parse("ls")).getArguments().isEmpty());
     }
 
     @Test
-    void parseInputRedirectionCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cat < file.txt"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseInputRedirectionFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("cat < file.txt")).getRedirections().size());
     }
 
     @Test
-    void parseInputRedirectionCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cat < file.txt"));
-        Assertions.assertEquals(0, cmd.getRedirections().get(0).getFd());
+    void parseInputRedirectionSecond() {
+        Assertions.assertEquals(0, this.command(this.parse("cat < file.txt")).getRedirections().get(0).getFd());
     }
 
     @Test
-    void parseInputRedirectionCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cat < file.txt"));
-        cmd.getRedirections().get(0).getFd();
-        Assertions.assertEquals(RedirectionType.INPUT, cmd.getRedirections().get(0).getType());
+    void parseInputRedirectionThird() {
+        Assertions.assertEquals(RedirectionType.INPUT, this.command(this.parse("cat < file.txt")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseInputRedirectionCheck4() {
-        final SimpleCommand cmd = this.command(this.parse("cat < file.txt"));
-        cmd.getRedirections().get(0).getFd();
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("file.txt", cmd.getRedirections().get(0).getTarget());
+    void parseInputRedirectionFourth() {
+        Assertions.assertEquals("file.txt", this.command(this.parse("cat < file.txt")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseOutputRedirectionCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello > out.txt"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseOutputRedirectionFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("echo hello > out.txt")).getRedirections().size());
     }
 
     @Test
-    void parseOutputRedirectionCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello > out.txt"));
-        Assertions.assertEquals(1, cmd.getRedirections().get(0).getFd());
+    void parseOutputRedirectionSecond() {
+        Assertions.assertEquals(1, this.command(this.parse("echo hello > out.txt")).getRedirections().get(0).getFd());
     }
 
     @Test
-    void parseOutputRedirectionCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello > out.txt"));
-        cmd.getRedirections().get(0).getFd();
-        Assertions.assertEquals(RedirectionType.OUTPUT, cmd.getRedirections().get(0).getType());
+    void parseOutputRedirectionThird() {
+        Assertions.assertEquals(RedirectionType.OUTPUT, this.command(this.parse("echo hello > out.txt")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseOutputRedirectionCheck4() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello > out.txt"));
-        cmd.getRedirections().get(0).getFd();
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("out.txt", cmd.getRedirections().get(0).getTarget());
+    void parseOutputRedirectionFourth() {
+        Assertions.assertEquals("out.txt", this.command(this.parse("echo hello > out.txt")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseAppendRedirectionCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello >> out.txt"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseAppendRedirectionFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("echo hello >> out.txt")).getRedirections().size());
     }
 
     @Test
-    void parseAppendRedirectionCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello >> out.txt"));
-        Assertions.assertEquals(RedirectionType.APPEND, cmd.getRedirections().get(0).getType());
+    void parseAppendRedirectionSecond() {
+        Assertions.assertEquals(RedirectionType.APPEND, this.command(this.parse("echo hello >> out.txt")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseAppendRedirectionCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("echo hello >> out.txt"));
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("out.txt", cmd.getRedirections().get(0).getTarget());
+    void parseAppendRedirectionThird() {
+        Assertions.assertEquals("out.txt", this.command(this.parse("echo hello >> out.txt")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseClobberRedirectionCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("echo test >| file.txt"));
-        Assertions.assertTrue(cmd.getRedirections().size() >= 1);
+    void parseClobberRedirectionFirst() {
+        Assertions.assertTrue(this.command(this.parse("echo test >| file.txt")).getRedirections().size() >= 1);
     }
 
     @Test
-    void parseClobberRedirectionCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("echo test >| file.txt"));
+    void parseClobberRedirectionSecond() {
         Assertions.assertTrue(
-            cmd.getRedirections().stream().anyMatch(r -> r.getType() == RedirectionType.CLOBBER)
+            this.command(this.parse("echo test >| file.txt")).getRedirections().stream().anyMatch(r -> r.getType() == RedirectionType.CLOBBER)
         );
     }
 
     @Test
-    void parseCommandWithDollarCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("echo $VAR"));
-        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
+    void parseCommandWithDollarFirst() {
+        Assertions.assertEquals(ParserTest.ECHO_CMD, this.command(this.parse("echo $VAR")).getName());
     }
 
     @Test
-    void parseCommandWithDollarCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("echo $VAR"));
-        Assertions.assertEquals("$VAR", cmd.getArguments().get(0));
+    void parseCommandWithDollarSecond() {
+        Assertions.assertEquals("$VAR", this.command(this.parse("echo $VAR")).getArguments().get(0));
     }
 
     @Test
-    void parseMultipleCommandsWithMultipleSeparatorsCheck1() {
-        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
-        Assertions.assertEquals(5, list.getPipelines().size());
+    void parseMultipleCommandsWithMultipleSeparatorsFirst() {
+        Assertions.assertEquals(5, this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5").getPipelines().size());
     }
 
     @Test
-    void parseMultipleCommandsWithMultipleSeparatorsCheck2() {
-        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
-        Assertions.assertEquals(ListNode.Separator.SEMI, list.getSeparators().get(0));
+    void parseMultipleCommandsWithMultipleSeparatorsSecond() {
+        Assertions.assertEquals(ListNode.Separator.SEMI, this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5").getSeparators().get(0));
     }
 
     @Test
-    void parseMultipleCommandsWithMultipleSeparatorsCheck3() {
-        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
-        list.getSeparators().get(0);
-        Assertions.assertEquals(ListNode.Separator.AMP, list.getSeparators().get(1));
+    void parseMultipleCommandsWithMultipleSeparatorsThird() {
+        Assertions.assertEquals(ListNode.Separator.AMP, this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5").getSeparators().get(1));
     }
 
     @Test
-    void parseMultipleCommandsWithMultipleSeparatorsCheck4() {
-        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
-        list.getSeparators().get(0);
-        list.getSeparators().get(1);
-        Assertions.assertEquals(ListNode.Separator.OR_IF, list.getSeparators().get(2));
+    void parseMultipleCommandsWithMultipleSeparatorsFourth() {
+        Assertions.assertEquals(ListNode.Separator.OR_IF, this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5").getSeparators().get(2));
     }
 
     @Test
-    void parseMultipleCommandsWithMultipleSeparatorsCheck5() {
-        final ListNode list = this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5");
-        list.getSeparators().get(0);
-        list.getSeparators().get(1);
-        list.getSeparators().get(2);
-        Assertions.assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(3));
+    void parseMultipleCommandsWithMultipleSeparatorsFifth() {
+        Assertions.assertEquals(ListNode.Separator.AND_IF, this.parse("cmd1; cmd2 & cmd3 || cmd4 && cmd5").getSeparators().get(3));
     }
 
     @Test
@@ -353,41 +279,30 @@ final class ParserTest {
     }
 
     @Test
-    void parseSubshellCheck1() {
-        final ListNode list = this.parse("(echo hello)");
-        Assertions.assertEquals(1, list.getPipelines().size());
+    void parseSubshellFirst() {
+        Assertions.assertEquals(1, this.parse("(echo hello)").getPipelines().size());
     }
 
     @Test
-    void parseSubshellCheck2() {
-        final ListNode list = this.parse("(echo hello)");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertEquals(1, pipeline.getCommands().size());
+    void parseSubshellSecond() {
+        Assertions.assertEquals(1, this.parse("(echo hello)").getPipelines().get(0).getCommands().size());
     }
 
     @Test
-    void parseSubshellCheck3() {
-        final ListNode list = this.parse("(echo hello)");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof Subshell);
+    void parseSubshellThird() {
+        Assertions.assertTrue(this.parse("(echo hello)").getPipelines().get(0).getCommands().get(0) instanceof Subshell);
     }
 
     @Test
-    void parseSubshellCheck4() {
-        final ListNode list = this.parse("(echo hello)");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final Subshell sub = (Subshell) pipeline.getCommands().get(0);
-        Assertions.assertEquals(1, sub.getList().getPipelines().size());
+    void parseSubshellFourth() {
+        Assertions.assertEquals(1, ((Subshell) this.parse("(echo hello)").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test
-    void parseSubshellCheck5() {
-        final ListNode list = this.parse("(echo hello)");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final Subshell sub = (Subshell) pipeline.getCommands().get(0);
+    void parseSubshellFifth() {
         Assertions.assertEquals(
             ParserTest.ECHO_CMD,
-            ((SimpleCommand) sub.getList().getPipelines().get(0).getCommands().get(0)).getName()
+            ((SimpleCommand) ((Subshell) this.parse("(echo hello)").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().get(0).getCommands().get(0)).getName()
         );
     }
 
@@ -402,90 +317,71 @@ final class ParserTest {
     }
 
     @Test
-    void parseSubshellInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | (cat) | wc");
-        Assertions.assertEquals(3, pipeline.getCommands().size());
+    void parseSubshellInPipelineFirst() {
+        Assertions.assertEquals(3, this.pipelineOf("echo foo | (cat) | wc").getCommands().size());
     }
 
     @Test
-    void parseSubshellInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | (cat) | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
+    void parseSubshellInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | (cat) | wc").getCommands().get(0) instanceof SimpleCommand);
     }
 
     @Test
-    void parseSubshellInPipelineCheck3() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | (cat) | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof Subshell);
+    void parseSubshellInPipelineThird() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | (cat) | wc").getCommands().get(1) instanceof Subshell);
     }
 
     @Test
-    void parseSubshellInPipelineCheck4() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | (cat) | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(2) instanceof SimpleCommand);
+    void parseSubshellInPipelineFourth() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | (cat) | wc").getCommands().get(2) instanceof SimpleCommand);
     }
 
     @Test
-    void parseGroupingCheck1() {
-        final ListNode list = this.parse("{ echo hello; }");
-        Assertions.assertEquals(1, list.getPipelines().size());
+    void parseGroupingFirst() {
+        Assertions.assertEquals(1, this.parse("{ echo hello; }").getPipelines().size());
     }
 
     @Test
-    void parseGroupingCheck2() {
-        final ListNode list = this.parse("{ echo hello; }");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertEquals(1, pipeline.getCommands().size());
+    void parseGroupingSecond() {
+        Assertions.assertEquals(1, this.parse("{ echo hello; }").getPipelines().get(0).getCommands().size());
     }
 
     @Test
-    void parseGroupingCheck3() {
-        final ListNode list = this.parse("{ echo hello; }");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof Grouping);
+    void parseGroupingThird() {
+        Assertions.assertTrue(this.parse("{ echo hello; }").getPipelines().get(0).getCommands().get(0) instanceof Grouping);
     }
 
     @Test
-    void parseGroupingCheck4() {
-        final ListNode list = this.parse("{ echo hello; }");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final Grouping glob = (Grouping) pipeline.getCommands().get(0);
-        Assertions.assertEquals(1, glob.getList().getPipelines().size());
+    void parseGroupingFourth() {
+        Assertions.assertEquals(1, ((Grouping) this.parse("{ echo hello; }").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().size());
     }
 
     @Test
-    void parseGroupingCheck5() {
-        final ListNode list = this.parse("{ echo hello; }");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        final Grouping glob = (Grouping) pipeline.getCommands().get(0);
+    void parseGroupingFifth() {
         Assertions.assertEquals(
             ParserTest.ECHO_CMD,
-            ((SimpleCommand) glob.getList().getPipelines().get(0).getCommands().get(0)).getName()
+            ((SimpleCommand) ((Grouping) this.parse("{ echo hello; }").getPipelines().get(0).getCommands().get(0)).getList().getPipelines().get(0).getCommands().get(0)).getName()
         );
     }
 
     @Test
-    void parseGroupingInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | { cat; } | wc");
-        Assertions.assertEquals(3, pipeline.getCommands().size());
+    void parseGroupingInPipelineFirst() {
+        Assertions.assertEquals(3, this.pipelineOf("echo foo | { cat; } | wc").getCommands().size());
     }
 
     @Test
-    void parseGroupingInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | { cat; } | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
+    void parseGroupingInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | { cat; } | wc").getCommands().get(0) instanceof SimpleCommand);
     }
 
     @Test
-    void parseGroupingInPipelineCheck3() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | { cat; } | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof Grouping);
+    void parseGroupingInPipelineThird() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | { cat; } | wc").getCommands().get(1) instanceof Grouping);
     }
 
     @Test
-    void parseGroupingInPipelineCheck4() {
-        final Pipeline pipeline = this.pipelineOf("echo foo | { cat; } | wc");
-        Assertions.assertTrue(pipeline.getCommands().get(2) instanceof SimpleCommand);
+    void parseGroupingInPipelineFourth() {
+        Assertions.assertTrue(this.pipelineOf("echo foo | { cat; } | wc").getCommands().get(2) instanceof SimpleCommand);
     }
 
     @Test
@@ -494,310 +390,243 @@ final class ParserTest {
     }
 
     @Test
-    void parseCommandStartingWithInputRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("< input.txt cat"));
-        Assertions.assertEquals("<", cmd.getName());
+    void parseCommandStartingWithInputRedirectFirst() {
+        Assertions.assertEquals("<", this.command(this.parse("< input.txt cat")).getName());
     }
 
     @Test
-    void parseCommandStartingWithInputRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("< input.txt cat"));
-        Assertions.assertEquals(2, cmd.getArguments().size());
+    void parseCommandStartingWithInputRedirectSecond() {
+        Assertions.assertEquals(2, this.command(this.parse("< input.txt cat")).getArguments().size());
     }
 
     @Test
-    void parseCommandStartingWithOutputRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("> out.txt echo"));
-        Assertions.assertEquals(">", cmd.getName());
+    void parseCommandStartingWithOutputRedirectFirst() {
+        Assertions.assertEquals(">", this.command(this.parse("> out.txt echo")).getName());
     }
 
     @Test
-    void parseCommandStartingWithOutputRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("> out.txt echo"));
-        Assertions.assertEquals(2, cmd.getArguments().size());
+    void parseCommandStartingWithOutputRedirectSecond() {
+        Assertions.assertEquals(2, this.command(this.parse("> out.txt echo")).getArguments().size());
     }
 
     @Test
-    void parseCommandStartingWithClobberRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse(">| file.txt echo"));
-        Assertions.assertEquals(">|", cmd.getName());
+    void parseCommandStartingWithClobberRedirectFirst() {
+        Assertions.assertEquals(">|", this.command(this.parse(">| file.txt echo")).getName());
     }
 
     @Test
-    void parseCommandStartingWithClobberRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse(">| file.txt echo"));
-        Assertions.assertEquals(2, cmd.getArguments().size());
+    void parseCommandStartingWithClobberRedirectSecond() {
+        Assertions.assertEquals(2, this.command(this.parse(">| file.txt echo")).getArguments().size());
     }
 
     @Test
-    void parseCommandStartingWithAppendRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse(">> file.txt echo"));
-        Assertions.assertEquals(">>", cmd.getName());
+    void parseCommandStartingWithAppendRedirectFirst() {
+        Assertions.assertEquals(">>", this.command(this.parse(">> file.txt echo")).getName());
     }
 
     @Test
-    void parseCommandStartingWithAppendRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse(">> file.txt echo"));
-        Assertions.assertEquals(2, cmd.getArguments().size());
+    void parseCommandStartingWithAppendRedirectSecond() {
+        Assertions.assertEquals(2, this.command(this.parse(">> file.txt echo")).getArguments().size());
     }
 
     @Test
-    void parseAssignmentWordAfterCommandNameCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("echo FOO=bar"));
-        Assertions.assertEquals(ParserTest.ECHO_CMD, cmd.getName());
+    void parseAssignmentWordAfterCommandNameFirst() {
+        Assertions.assertEquals(ParserTest.ECHO_CMD, this.command(this.parse("echo FOO=bar")).getName());
     }
 
     @Test
-    void parseAssignmentWordAfterCommandNameCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("echo FOO=bar"));
-        Assertions.assertTrue(cmd.getArguments().contains("FOO=bar"));
+    void parseAssignmentWordAfterCommandNameSecond() {
+        Assertions.assertTrue(this.command(this.parse("echo FOO=bar")).getArguments().contains("FOO=bar"));
     }
 
     @Test
-    void parseAssignmentWordAfterCommandNameCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("echo FOO=bar"));
-        Assertions.assertTrue(cmd.getAssignments().isEmpty());
+    void parseAssignmentWordAfterCommandNameThird() {
+        Assertions.assertTrue(this.command(this.parse("echo FOO=bar")).getAssignments().isEmpty());
     }
 
     @Test
-    void parseIoNumberRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("2>file"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseIoNumberRedirectFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("2>file")).getRedirections().size());
     }
 
     @Test
-    void parseIoNumberRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("2>file"));
-        Assertions.assertEquals("file", cmd.getRedirections().get(0).getTarget());
+    void parseIoNumberRedirectSecond() {
+        Assertions.assertEquals("file", this.command(this.parse("2>file")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseDupInputRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&3"));
-        Assertions.assertEquals("cmd", cmd.getName());
+    void parseDupInputRedirectFirst() {
+        Assertions.assertEquals("cmd", this.command(this.parse("cmd <&3")).getName());
     }
 
     @Test
-    void parseDupInputRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&3"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseDupInputRedirectSecond() {
+        Assertions.assertEquals(1, this.command(this.parse("cmd <&3")).getRedirections().size());
     }
 
     @Test
-    void parseDupInputRedirectCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&3"));
-        Assertions.assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
+    void parseDupInputRedirectThird() {
+        Assertions.assertEquals(RedirectionType.DUP_INPUT, this.command(this.parse("cmd <&3")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseDupInputRedirectCheck4() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&3"));
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("3", cmd.getRedirections().get(0).getTarget());
+    void parseDupInputRedirectFourth() {
+        Assertions.assertEquals("3", this.command(this.parse("cmd <&3")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseCloseInputRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&-"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseCloseInputRedirectFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("cmd <&-")).getRedirections().size());
     }
 
     @Test
-    void parseCloseInputRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&-"));
-        Assertions.assertEquals(RedirectionType.DUP_INPUT, cmd.getRedirections().get(0).getType());
+    void parseCloseInputRedirectSecond() {
+        Assertions.assertEquals(RedirectionType.DUP_INPUT, this.command(this.parse("cmd <&-")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseCloseInputRedirectCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <&-"));
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("-", cmd.getRedirections().get(0).getTarget());
+    void parseCloseInputRedirectThird() {
+        Assertions.assertEquals("-", this.command(this.parse("cmd <&-")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseDupOutputRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cmd >&2"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseDupOutputRedirectFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("cmd >&2")).getRedirections().size());
     }
 
     @Test
-    void parseDupOutputRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cmd >&2"));
-        Assertions.assertEquals(RedirectionType.DUP_OUTPUT, cmd.getRedirections().get(0).getType());
+    void parseDupOutputRedirectSecond() {
+        Assertions.assertEquals(RedirectionType.DUP_OUTPUT, this.command(this.parse("cmd >&2")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseDupOutputRedirectCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cmd >&2"));
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("2", cmd.getRedirections().get(0).getTarget());
+    void parseDupOutputRedirectThird() {
+        Assertions.assertEquals("2", this.command(this.parse("cmd >&2")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseReadWriteRedirectCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <>file"));
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+    void parseReadWriteRedirectFirst() {
+        Assertions.assertEquals(1, this.command(this.parse("cmd <>file")).getRedirections().size());
     }
 
     @Test
-    void parseReadWriteRedirectCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <>file"));
-        Assertions.assertEquals(RedirectionType.READWRITE, cmd.getRedirections().get(0).getType());
+    void parseReadWriteRedirectSecond() {
+        Assertions.assertEquals(RedirectionType.READWRITE, this.command(this.parse("cmd <>file")).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseReadWriteRedirectCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cmd <>file"));
-        cmd.getRedirections().get(0).getType();
-        Assertions.assertEquals("file", cmd.getRedirections().get(0).getTarget());
+    void parseReadWriteRedirectThird() {
+        Assertions.assertEquals("file", this.command(this.parse("cmd <>file")).getRedirections().get(0).getTarget());
     }
 
     @Test
-    void parseIfThenFiCheck1() {
-        final ListNode list = this.parse("if true; then echo hi; fi");
-        Assertions.assertEquals(1, list.getPipelines().size());
+    void parseIfThenFiFirst() {
+        Assertions.assertEquals(1, this.parse("if true; then echo hi; fi").getPipelines().size());
     }
 
     @Test
-    void parseIfThenFiCheck2() {
-        final ListNode list = this.parse("if true; then echo hi; fi");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertEquals(1, pipeline.getCommands().size());
+    void parseIfThenFiSecond() {
+        Assertions.assertEquals(1, this.parse("if true; then echo hi; fi").getPipelines().get(0).getCommands().size());
     }
 
     @Test
-    void parseIfThenFiCheck3() {
-        final ListNode list = this.parse("if true; then echo hi; fi");
-        final Pipeline pipeline = list.getPipelines().get(0);
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof IfNode);
+    void parseIfThenFiThird() {
+        Assertions.assertTrue(this.parse("if true; then echo hi; fi").getPipelines().get(0).getCommands().get(0) instanceof IfNode);
     }
 
     @Test
-    void parseIfThenElseFiCheck1() {
-        final Pipeline pipeline = this.pipelineOf("if false; then echo a; else echo b; fi");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof IfNode);
+    void parseIfThenElseFiFirst() {
+        Assertions.assertTrue(this.pipelineOf("if false; then echo a; else echo b; fi").getCommands().get(0) instanceof IfNode);
     }
 
     @Test
-    void parseIfThenElseFiCheck2() {
-        final Pipeline pipeline = this.pipelineOf("if false; then echo a; else echo b; fi");
-        Assertions.assertNotNull(((IfNode) pipeline.getCommands().get(0)).getElseBody());
+    void parseIfThenElseFiSecond() {
+        Assertions.assertNotNull(((IfNode) this.pipelineOf("if false; then echo a; else echo b; fi").getCommands().get(0)).getElseBody());
     }
 
     @Test
-    void parseForDoDoneCheck1() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        Assertions.assertEquals(1, pipeline.getCommands().size());
+    void parseForDoDoneFirst() {
+        Assertions.assertEquals(1, this.pipelineOf("for var in a b c; do echo $var; done").getCommands().size());
     }
 
     @Test
-    void parseForDoDoneCheck2() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof ForNode);
+    void parseForDoDoneSecond() {
+        Assertions.assertTrue(this.pipelineOf("for var in a b c; do echo $var; done").getCommands().get(0) instanceof ForNode);
     }
 
     @Test
-    void parseForDoDoneCheck3() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        final ForNode node = (ForNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("var", node.getVariable());
+    void parseForDoDoneThird() {
+        Assertions.assertEquals("var", ((ForNode) this.pipelineOf("for var in a b c; do echo $var; done").getCommands().get(0)).getVariable());
     }
 
     @Test
-    void parseForDoDoneCheck4() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        final ForNode node = (ForNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals(3, node.getWords().size());
+    void parseForDoDoneFourth() {
+        Assertions.assertEquals(3, ((ForNode) this.pipelineOf("for var in a b c; do echo $var; done").getCommands().get(0)).getWords().size());
     }
 
     @Test
-    void parseForDoDoneCheck5() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        final ForNode node = (ForNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("a", node.getWords().get(0));
+    void parseForDoDoneFifth() {
+        Assertions.assertEquals("a", ((ForNode) this.pipelineOf("for var in a b c; do echo $var; done").getCommands().get(0)).getWords().get(0));
     }
 
     @Test
-    void parseForDoDoneCheck6() {
-        final Pipeline pipeline = this.pipelineOf("for var in a b c; do echo $var; done");
-        final ForNode node = (ForNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("c", node.getWords().get(2));
+    void parseForDoDoneSixth() {
+        Assertions.assertEquals("c", ((ForNode) this.pipelineOf("for var in a b c; do echo $var; done").getCommands().get(0)).getWords().get(2));
     }
 
     @Test
-    void parseWhileDoDoneCheck1() {
-        final Pipeline pipeline = this.pipelineOf("while true; do echo hi; done");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof WhileNode);
+    void parseWhileDoDoneFirst() {
+        Assertions.assertTrue(this.pipelineOf("while true; do echo hi; done").getCommands().get(0) instanceof WhileNode);
     }
 
     @Test
-    void parseWhileDoDoneCheck2() {
-        final Pipeline pipeline = this.pipelineOf("while true; do echo hi; done");
-        Assertions.assertFalse(((WhileNode) pipeline.getCommands().get(0)).isUntil());
+    void parseWhileDoDoneSecond() {
+        Assertions.assertFalse(((WhileNode) this.pipelineOf("while true; do echo hi; done").getCommands().get(0)).isUntil());
     }
 
     @Test
-    void parseUntilDoDoneCheck1() {
-        final Pipeline pipeline = this.pipelineOf("until false; do echo hi; done");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof WhileNode);
+    void parseUntilDoDoneFirst() {
+        Assertions.assertTrue(this.pipelineOf("until false; do echo hi; done").getCommands().get(0) instanceof WhileNode);
     }
 
     @Test
-    void parseUntilDoDoneCheck2() {
-        final Pipeline pipeline = this.pipelineOf("until false; do echo hi; done");
-        Assertions.assertTrue(((WhileNode) pipeline.getCommands().get(0)).isUntil());
+    void parseUntilDoDoneSecond() {
+        Assertions.assertTrue(((WhileNode) this.pipelineOf("until false; do echo hi; done").getCommands().get(0)).isUntil());
     }
 
     @Test
-    void parseCaseSimpleCheck1() {
-        final Pipeline pipeline = this.pipelineOf("case foo in pat) echo match;; esac");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof CaseNode);
+    void parseCaseSimpleFirst() {
+        Assertions.assertTrue(this.pipelineOf("case foo in pat) echo match;; esac").getCommands().get(0) instanceof CaseNode);
     }
 
     @Test
-    void parseCaseSimpleCheck2() {
-        final Pipeline pipeline = this.pipelineOf("case foo in pat) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("foo", num.getWord());
+    void parseCaseSimpleSecond() {
+        Assertions.assertEquals("foo", ((CaseNode) this.pipelineOf("case foo in pat) echo match;; esac").getCommands().get(0)).getWord());
     }
 
     @Test
-    void parseCaseSimpleCheck3() {
-        final Pipeline pipeline = this.pipelineOf("case foo in pat) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals(1, num.getItems().size());
+    void parseCaseSimpleThird() {
+        Assertions.assertEquals(1, ((CaseNode) this.pipelineOf("case foo in pat) echo match;; esac").getCommands().get(0)).getItems().size());
     }
 
     @Test
-    void parseCaseSimpleCheck4() {
-        final Pipeline pipeline = this.pipelineOf("case foo in pat) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("pat", num.getItems().get(0).getPatterns().get(0));
+    void parseCaseSimpleFourth() {
+        Assertions.assertEquals("pat", ((CaseNode) this.pipelineOf("case foo in pat) echo match;; esac").getCommands().get(0)).getItems().get(0).getPatterns().get(0));
     }
 
     @Test
-    void parseCasePipePatternCheck1() {
-        final Pipeline pipeline = this.pipelineOf("case foo in a|b) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals(2, num.getItems().get(0).getPatterns().size());
+    void parseCasePipePatternFirst() {
+        Assertions.assertEquals(2, ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0)).getItems().get(0).getPatterns().size());
     }
 
     @Test
-    void parseCasePipePatternCheck2() {
-        final Pipeline pipeline = this.pipelineOf("case foo in a|b) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        num.getItems().get(0).getPatterns().size();
-        Assertions.assertEquals("a", num.getItems().get(0).getPatterns().get(0));
+    void parseCasePipePatternSecond() {
+        Assertions.assertEquals("a", ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0)).getItems().get(0).getPatterns().get(0));
     }
 
     @Test
-    void parseCasePipePatternCheck3() {
-        final Pipeline pipeline = this.pipelineOf("case foo in a|b) echo match;; esac");
-        final CaseNode num = (CaseNode) pipeline.getCommands().get(0);
-        num.getItems().get(0).getPatterns().size();
-        num.getItems().get(0).getPatterns().get(0);
-        Assertions.assertEquals("b", num.getItems().get(0).getPatterns().get(1));
+    void parseCasePipePatternThird() {
+        Assertions.assertEquals("b", ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0)).getItems().get(0).getPatterns().get(1));
     }
 
     @Test
@@ -829,95 +658,78 @@ final class ParserTest {
     }
 
     @Test
-    void parseFunctionDefinitionCheck1() {
-        final Pipeline pipeline = this.pipelineOf("foo() { echo bar; }");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof FunctionNode);
+    void parseFunctionDefinitionFirst() {
+        Assertions.assertTrue(this.pipelineOf("foo() { echo bar; }").getCommands().get(0) instanceof FunctionNode);
     }
 
     @Test
-    void parseFunctionDefinitionCheck2() {
-        final Pipeline pipeline = this.pipelineOf("foo() { echo bar; }");
-        Assertions.assertEquals("foo", ((FunctionNode) pipeline.getCommands().get(0)).getName());
+    void parseFunctionDefinitionSecond() {
+        Assertions.assertEquals("foo", ((FunctionNode) this.pipelineOf("foo() { echo bar; }").getCommands().get(0)).getName());
     }
 
     @Test
-    void parseFunctionSubshellBodyCheck1() {
-        final Pipeline pipeline = this.pipelineOf("foo() (echo bar)");
-        final FunctionNode num = (FunctionNode) pipeline.getCommands().get(0);
-        Assertions.assertEquals("foo", num.getName());
+    void parseFunctionSubshellBodyFirst() {
+        Assertions.assertEquals("foo", ((FunctionNode) this.pipelineOf("foo() (echo bar)").getCommands().get(0)).getName());
     }
 
     @Test
-    void parseFunctionSubshellBodyCheck2() {
-        final Pipeline pipeline = this.pipelineOf("foo() (echo bar)");
-        final FunctionNode num = (FunctionNode) pipeline.getCommands().get(0);
-        Assertions.assertTrue(num.getBody() instanceof Subshell);
+    void parseFunctionSubshellBodySecond() {
+        Assertions.assertTrue(((FunctionNode) this.pipelineOf("foo() (echo bar)").getCommands().get(0)).getBody() instanceof Subshell);
     }
 
     @Test
-    void parseIfInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("true | if true; then echo hi; fi");
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parseIfInPipelineFirst() {
+        Assertions.assertEquals(2, this.pipelineOf("true | if true; then echo hi; fi").getCommands().size());
     }
 
     @Test
-    void parseIfInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("true | if true; then echo hi; fi");
-        Assertions.assertTrue(pipeline.getCommands().get(0) instanceof SimpleCommand);
+    void parseIfInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("true | if true; then echo hi; fi").getCommands().get(0) instanceof SimpleCommand);
     }
 
     @Test
-    void parseIfInPipelineCheck3() {
-        final Pipeline pipeline = this.pipelineOf("true | if true; then echo hi; fi");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof IfNode);
+    void parseIfInPipelineThird() {
+        Assertions.assertTrue(this.pipelineOf("true | if true; then echo hi; fi").getCommands().get(1) instanceof IfNode);
     }
 
     @Test
-    void parseForInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("true | for var in a; do echo $var; done");
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parseForInPipelineFirst() {
+        Assertions.assertEquals(2, this.pipelineOf("true | for var in a; do echo $var; done").getCommands().size());
     }
 
     @Test
-    void parseForInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("true | for var in a; do echo $var; done");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof ForNode);
+    void parseForInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("true | for var in a; do echo $var; done").getCommands().get(1) instanceof ForNode);
     }
 
     @Test
-    void parseWhileInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("true | while false; do echo hi; done");
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parseWhileInPipelineFirst() {
+        Assertions.assertEquals(2, this.pipelineOf("true | while false; do echo hi; done").getCommands().size());
     }
 
     @Test
-    void parseWhileInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("true | while false; do echo hi; done");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof WhileNode);
+    void parseWhileInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("true | while false; do echo hi; done").getCommands().get(1) instanceof WhileNode);
     }
 
     @Test
-    void parseCaseInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("true | case foo in pat) echo hi;; esac");
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parseCaseInPipelineFirst() {
+        Assertions.assertEquals(2, this.pipelineOf("true | case foo in pat) echo hi;; esac").getCommands().size());
     }
 
     @Test
-    void parseCaseInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("true | case foo in pat) echo hi;; esac");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof CaseNode);
+    void parseCaseInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("true | case foo in pat) echo hi;; esac").getCommands().get(1) instanceof CaseNode);
     }
 
     @Test
-    void parseFunctionInPipelineCheck1() {
-        final Pipeline pipeline = this.pipelineOf("true | foo() { echo bar; }");
-        Assertions.assertEquals(2, pipeline.getCommands().size());
+    void parseFunctionInPipelineFirst() {
+        Assertions.assertEquals(2, this.pipelineOf("true | foo() { echo bar; }").getCommands().size());
     }
 
     @Test
-    void parseFunctionInPipelineCheck2() {
-        final Pipeline pipeline = this.pipelineOf("true | foo() { echo bar; }");
-        Assertions.assertTrue(pipeline.getCommands().get(1) instanceof FunctionNode);
+    void parseFunctionInPipelineSecond() {
+        Assertions.assertTrue(this.pipelineOf("true | foo() { echo bar; }").getCommands().get(1) instanceof FunctionNode);
     }
 
     @Test
@@ -974,86 +786,72 @@ final class ParserTest {
     }
 
     @Test
-    void parseAssignmentWithoutCommandCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=bar"));
-        Assertions.assertEquals("", cmd.getName());
+    void parseAssignmentWithoutCommandFirst() {
+        Assertions.assertEquals("", this.command(this.parse("FOO=bar")).getName());
     }
 
     @Test
-    void parseAssignmentWithoutCommandCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=bar"));
-        Assertions.assertEquals(1, cmd.getAssignments().size());
+    void parseAssignmentWithoutCommandSecond() {
+        Assertions.assertEquals(1, this.command(this.parse("FOO=bar")).getAssignments().size());
     }
 
     @Test
-    void parseAssignmentWithoutCommandCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=bar"));
-        Assertions.assertEquals("FOO=bar", cmd.getAssignments().get(0));
+    void parseAssignmentWithoutCommandThird() {
+        Assertions.assertEquals("FOO=bar", this.command(this.parse("FOO=bar")).getAssignments().get(0));
     }
 
     @Test
-    void parseMultipleAssignmentsThenCommandCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=1 BAR=2 cmd arg"));
-        Assertions.assertEquals("cmd", cmd.getName());
+    void parseMultipleAssignmentsThenCommandFirst() {
+        Assertions.assertEquals("cmd", this.command(this.parse("FOO=1 BAR=2 cmd arg")).getName());
     }
 
     @Test
-    void parseMultipleAssignmentsThenCommandCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=1 BAR=2 cmd arg"));
-        Assertions.assertEquals(2, cmd.getAssignments().size());
+    void parseMultipleAssignmentsThenCommandSecond() {
+        Assertions.assertEquals(2, this.command(this.parse("FOO=1 BAR=2 cmd arg")).getAssignments().size());
     }
 
     @Test
-    void parseMultipleAssignmentsThenCommandCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("FOO=1 BAR=2 cmd arg"));
-        Assertions.assertEquals("arg", cmd.getArguments().get(0));
+    void parseMultipleAssignmentsThenCommandThird() {
+        Assertions.assertEquals("arg", this.command(this.parse("FOO=1 BAR=2 cmd arg")).getArguments().get(0));
     }
 
     @Test
-    void parseInlineAssignmentMidCommandCheck1() {
-        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
-        Assertions.assertEquals("cmd", cmd.getName());
+    void parseInlineAssignmentMidCommandFirst() {
+        Assertions.assertEquals("cmd", this.command(this.parse("cmd FOO=1 arg")).getName());
     }
 
     @Test
-    void parseInlineAssignmentMidCommandCheck2() {
-        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
-        Assertions.assertEquals(0, cmd.getAssignments().size());
+    void parseInlineAssignmentMidCommandSecond() {
+        Assertions.assertEquals(0, this.command(this.parse("cmd FOO=1 arg")).getAssignments().size());
     }
 
     @Test
-    void parseInlineAssignmentMidCommandCheck3() {
-        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
-        Assertions.assertEquals(2, cmd.getArguments().size());
+    void parseInlineAssignmentMidCommandThird() {
+        Assertions.assertEquals(2, this.command(this.parse("cmd FOO=1 arg")).getArguments().size());
     }
 
     @Test
-    void parseInlineAssignmentMidCommandCheck4() {
-        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
-        Assertions.assertEquals("FOO=1", cmd.getArguments().get(0));
+    void parseInlineAssignmentMidCommandFourth() {
+        Assertions.assertEquals("FOO=1", this.command(this.parse("cmd FOO=1 arg")).getArguments().get(0));
     }
 
     @Test
-    void parseInlineAssignmentMidCommandCheck5() {
-        final SimpleCommand cmd = this.command(this.parse("cmd FOO=1 arg"));
-        cmd.getArguments().get(0);
-        Assertions.assertEquals("arg", cmd.getArguments().get(1));
+    void parseInlineAssignmentMidCommandFifth() {
+        Assertions.assertEquals("arg", this.command(this.parse("cmd FOO=1 arg")).getArguments().get(1));
     }
 
     @Test
-    void parseElifChainNestedElifCheck1() {
-        final ListNode list = this.parse(
+    void parseElifChainNestedElifFirst() {
+        Assertions.assertEquals(1, this.parse(
             "if false; then a; elif false; then b; elif true; then c; fi"
-        );
-        Assertions.assertEquals(1, list.getPipelines().size());
+        ).getPipelines().size());
     }
 
     @Test
-    void parseElifChainNestedElifCheck2() {
-        final ListNode list = this.parse(
+    void parseElifChainNestedElifSecond() {
+        Assertions.assertTrue(this.parse(
             "if false; then a; elif false; then b; elif true; then c; fi"
-        );
-        Assertions.assertTrue(list.getPipelines().get(0).getCommands().get(0) instanceof IfNode);
+        ).getPipelines().get(0).getCommands().get(0) instanceof IfNode);
     }
 
     @Test
@@ -1111,100 +909,85 @@ final class ParserTest {
     }
 
     @Test
-    void parseHereDocRedirectCheck1() {
-        final SimpleCommand cmd = this.command(
+    void parseHereDocRedirectFirst() {
+        Assertions.assertEquals(1, this.command(
             this.parse(String.format("cat <<EOF%nhello%nEOF%n"))
-        );
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+        ).getRedirections().size());
     }
 
     @Test
-    void parseHereDocRedirectCheck2() {
-        final SimpleCommand cmd = this.command(
+    void parseHereDocRedirectSecond() {
+        Assertions.assertEquals(RedirectionType.HERE_DOC, this.command(
             this.parse(String.format("cat <<EOF%nhello%nEOF%n"))
-        );
-        Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
+        ).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseCaseMultilineBodyCheck1() {
-        final ListNode list = this.parse(
+    void parseCaseMultilineBodyFirst() {
+        Assertions.assertEquals(1, this.parse(
             String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
-        );
-        Assertions.assertEquals(1, list.getPipelines().size());
+        ).getPipelines().size());
     }
 
     @Test
-    void parseCaseMultilineBodyCheck2() {
-        final ListNode list = this.parse(
-            String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
-        );
+    void parseCaseMultilineBodySecond() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size()
+            ((CaseNode) this.parse(
+                            String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
+                        ).getPipelines().get(0).getCommands().get(0)).getItems().size()
         );
     }
 
     @Test
-    void parseCaseMultilineWithBlankLinesBetweenArmsCheck1() {
-        final ListNode list = this.parse(
+    void parseCaseMultilineWithBlankLinesBetweenArmsFirst() {
+        Assertions.assertEquals(1, this.parse(
             String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
-        );
-        Assertions.assertEquals(1, list.getPipelines().size());
+        ).getPipelines().size());
     }
 
     @Test
-    void parseCaseMultilineWithBlankLinesBetweenArmsCheck2() {
-        final ListNode list = this.parse(
-            String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
-        );
+    void parseCaseMultilineWithBlankLinesBetweenArmsSecond() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) list.getPipelines().get(0).getCommands().get(0)).getItems().size()
+            ((CaseNode) this.parse(
+                            String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
+                        ).getPipelines().get(0).getCommands().get(0)).getItems().size()
         );
     }
 
     @Test
-    void parseHereDocStripTabsCheck1() {
-        final SimpleCommand cmd = this.command(
+    void parseHereDocStripTabsFirst() {
+        Assertions.assertEquals(1, this.command(
             this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"))
-        );
-        Assertions.assertEquals(1, cmd.getRedirections().size());
+        ).getRedirections().size());
     }
 
     @Test
-    void parseHereDocStripTabsCheck2() {
-        final SimpleCommand cmd = this.command(
+    void parseHereDocStripTabsSecond() {
+        Assertions.assertEquals(RedirectionType.HERE_DOC, this.command(
             this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"))
-        );
-        Assertions.assertEquals(RedirectionType.HERE_DOC, cmd.getRedirections().get(0).getType());
+        ).getRedirections().get(0).getType());
     }
 
     @Test
-    void parseSeparatorsInListCheck1() {
-        final ListNode list = this.parse("cmd1 & cmd2 && cmd3 || cmd4");
-        Assertions.assertEquals(4, list.getPipelines().size());
+    void parseSeparatorsInListFirst() {
+        Assertions.assertEquals(4, this.parse("cmd1 & cmd2 && cmd3 || cmd4").getPipelines().size());
     }
 
     @Test
-    void parseSeparatorsInListCheck2() {
-        final ListNode list = this.parse("cmd1 & cmd2 && cmd3 || cmd4");
-        Assertions.assertEquals(ListNode.Separator.AMP, list.getSeparators().get(0));
+    void parseSeparatorsInListSecond() {
+        Assertions.assertEquals(ListNode.Separator.AMP, this.parse("cmd1 & cmd2 && cmd3 || cmd4").getSeparators().get(0));
     }
 
     @Test
-    void parseSeparatorsInListCheck3() {
-        final ListNode list = this.parse("cmd1 & cmd2 && cmd3 || cmd4");
-        list.getSeparators().get(0);
-        Assertions.assertEquals(ListNode.Separator.AND_IF, list.getSeparators().get(1));
+    void parseSeparatorsInListThird() {
+        Assertions.assertEquals(ListNode.Separator.AND_IF, this.parse("cmd1 & cmd2 && cmd3 || cmd4").getSeparators().get(1));
     }
 
     @Test
-    void parseSeparatorsInListCheck4() {
-        final ListNode list = this.parse("cmd1 & cmd2 && cmd3 || cmd4");
-        list.getSeparators().get(0);
-        list.getSeparators().get(1);
-        Assertions.assertEquals(ListNode.Separator.OR_IF, list.getSeparators().get(2));
+    void parseSeparatorsInListFourth() {
+        Assertions.assertEquals(ListNode.Separator.OR_IF, this.parse("cmd1 & cmd2 && cmd3 || cmd4").getSeparators().get(2));
     }
 
     @Test
@@ -1232,57 +1015,48 @@ final class ParserTest {
     }
 
     @Test
-    void redirectionInputConstructorCheck1() {
-        final Redirection result = new Redirection(0, RedirectionType.INPUT, "/dev/null");
-        Assertions.assertEquals(0, result.getFd());
+    void redirectionInputConstructorFirst() {
+        Assertions.assertEquals(0, new Redirection(0, RedirectionType.INPUT, "/dev/null").getFd());
     }
 
     @Test
-    void redirectionInputConstructorCheck2() {
-        final Redirection result = new Redirection(0, RedirectionType.INPUT, "/dev/null");
-        Assertions.assertEquals(RedirectionType.INPUT, result.getType());
+    void redirectionInputConstructorSecond() {
+        Assertions.assertEquals(RedirectionType.INPUT, new Redirection(0, RedirectionType.INPUT, "/dev/null").getType());
     }
 
     @Test
-    void redirectionInputConstructorCheck3() {
-        final Redirection result = new Redirection(0, RedirectionType.INPUT, "/dev/null");
-        Assertions.assertEquals("/dev/null", result.getTarget());
+    void redirectionInputConstructorThird() {
+        Assertions.assertEquals("/dev/null", new Redirection(0, RedirectionType.INPUT, "/dev/null").getTarget());
     }
 
     @Test
-    void redirectionOutputConstructorCheck1() {
-        final Redirection result = new Redirection(1, RedirectionType.OUTPUT, "/tmp/out");
-        Assertions.assertEquals(1, result.getFd());
+    void redirectionOutputConstructorFirst() {
+        Assertions.assertEquals(1, new Redirection(1, RedirectionType.OUTPUT, "/tmp/out").getFd());
     }
 
     @Test
-    void redirectionOutputConstructorCheck2() {
-        final Redirection result = new Redirection(1, RedirectionType.OUTPUT, "/tmp/out");
-        Assertions.assertEquals(RedirectionType.OUTPUT, result.getType());
+    void redirectionOutputConstructorSecond() {
+        Assertions.assertEquals(RedirectionType.OUTPUT, new Redirection(1, RedirectionType.OUTPUT, "/tmp/out").getType());
     }
 
     @Test
-    void redirectionOutputConstructorCheck3() {
-        final Redirection result = new Redirection(1, RedirectionType.OUTPUT, "/tmp/out");
-        Assertions.assertEquals("/tmp/out", result.getTarget());
+    void redirectionOutputConstructorThird() {
+        Assertions.assertEquals("/tmp/out", new Redirection(1, RedirectionType.OUTPUT, "/tmp/out").getTarget());
     }
 
     @Test
-    void redirectionAppendConstructorCheck1() {
-        final Redirection result = new Redirection(2, RedirectionType.APPEND, "/tmp/log");
-        Assertions.assertEquals(2, result.getFd());
+    void redirectionAppendConstructorFirst() {
+        Assertions.assertEquals(2, new Redirection(2, RedirectionType.APPEND, "/tmp/log").getFd());
     }
 
     @Test
-    void redirectionAppendConstructorCheck2() {
-        final Redirection result = new Redirection(2, RedirectionType.APPEND, "/tmp/log");
-        Assertions.assertEquals(RedirectionType.APPEND, result.getType());
+    void redirectionAppendConstructorSecond() {
+        Assertions.assertEquals(RedirectionType.APPEND, new Redirection(2, RedirectionType.APPEND, "/tmp/log").getType());
     }
 
     @Test
-    void redirectionAppendConstructorCheck3() {
-        final Redirection result = new Redirection(2, RedirectionType.APPEND, "/tmp/log");
-        Assertions.assertEquals("/tmp/log", result.getTarget());
+    void redirectionAppendConstructorThird() {
+        Assertions.assertEquals("/tmp/log", new Redirection(2, RedirectionType.APPEND, "/tmp/log").getTarget());
     }
 
     @ParameterizedTest
@@ -1303,7 +1077,7 @@ final class ParserTest {
     }
 
     @Test
-    void redirectionDescriptorBoundariesCheck1() {
+    void redirectionDescriptorBoundariesFirst() {
         Assertions.assertEquals(
             2,
             this.commandOf("cmd 2>out").getRedirections().get(0).getFd()
@@ -1311,8 +1085,8 @@ final class ParserTest {
     }
 
     @Test
-    void redirectionDescriptorBoundariesCheck2() {
-        this.commandOf("cmd 2>out").getRedirections().get(0).getFd();
+    void redirectionDescriptorBoundariesSecond() {
+        this.commandOf("cmd 2>out");
         Assertions.assertEquals(
             0,
             this.commandOf("cmd <in").getRedirections().get(0).getFd()
@@ -1320,9 +1094,9 @@ final class ParserTest {
     }
 
     @Test
-    void redirectionDescriptorBoundariesCheck3() {
-        this.commandOf("cmd 2>out").getRedirections().get(0).getFd();
-        this.commandOf("cmd <in").getRedirections().get(0).getFd();
+    void redirectionDescriptorBoundariesThird() {
+        this.commandOf("cmd 2>out");
+        this.commandOf("cmd <in");
         Assertions.assertEquals(
             RedirectionType.DUP_OUTPUT,
             this.commandOf("cmd 2>&1").getRedirections().get(0).getType()
@@ -1330,10 +1104,10 @@ final class ParserTest {
     }
 
     @Test
-    void redirectionDescriptorBoundariesCheck4() {
-        this.commandOf("cmd 2>out").getRedirections().get(0).getFd();
-        this.commandOf("cmd <in").getRedirections().get(0).getFd();
-        this.commandOf("cmd 2>&1").getRedirections().get(0).getType();
+    void redirectionDescriptorBoundariesFourth() {
+        this.commandOf("cmd 2>out");
+        this.commandOf("cmd <in");
+        this.commandOf("cmd 2>&1");
         Assertions.assertEquals(
             RedirectionType.READWRITE,
             this.commandOf("cmd <>file").getRedirections().get(0).getType()
@@ -1349,7 +1123,7 @@ final class ParserTest {
     }
 
     @Test
-    void pipelineSeparatorsInCompoundConditionsCheck1() {
+    void pipelineSeparatorsInCompoundConditionsFirst() {
         Assertions.assertEquals(
             1,
             this.parse("if a & b; then c; fi").getPipelines().size()
@@ -1357,8 +1131,8 @@ final class ParserTest {
     }
 
     @Test
-    void pipelineSeparatorsInCompoundConditionsCheck2() {
-        this.parse("if a & b; then c; fi").getPipelines().size();
+    void pipelineSeparatorsInCompoundConditionsSecond() {
+        this.parse("if a & b; then c; fi");
         Assertions.assertEquals(
             1,
             this.parse("while a && b; do c; done").getPipelines().size()
@@ -1366,9 +1140,9 @@ final class ParserTest {
     }
 
     @Test
-    void pipelineSeparatorsInCompoundConditionsCheck3() {
-        this.parse("if a & b; then c; fi").getPipelines().size();
-        this.parse("while a && b; do c; done").getPipelines().size();
+    void pipelineSeparatorsInCompoundConditionsThird() {
+        this.parse("if a & b; then c; fi");
+        this.parse("while a && b; do c; done");
         Assertions.assertEquals(
             1,
             this.parse("until a || b; do c; done").getPipelines().size()
@@ -1376,23 +1150,19 @@ final class ParserTest {
     }
 
     @Test
-    void assignmentAndNamedCommandLineNumbersCheck1() {
-        final ListNode list = this.parse(String.format("X=1%necho hi%n"));
+    void assignmentAndNamedCommandLineNumbersFirst() {
         Assertions.assertEquals(
             1,
-            ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0))
+            ((SimpleCommand) this.parse(String.format("X=1%necho hi%n")).getPipelines().get(0).getCommands().get(0))
                 .getLineNumber()
         );
     }
 
     @Test
-    void assignmentAndNamedCommandLineNumbersCheck2() {
-        final ListNode list = this.parse(String.format("X=1%necho hi%n"));
-        ((SimpleCommand) list.getPipelines().get(0).getCommands().get(0))
-                .getLineNumber();
+    void assignmentAndNamedCommandLineNumbersSecond() {
         Assertions.assertEquals(
             2,
-            ((SimpleCommand) list.getPipelines().get(1).getCommands().get(0))
+            ((SimpleCommand) this.parse(String.format("X=1%necho hi%n")).getPipelines().get(1).getCommands().get(0))
                 .getLineNumber()
         );
     }

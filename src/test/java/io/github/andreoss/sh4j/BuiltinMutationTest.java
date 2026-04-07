@@ -29,33 +29,33 @@ final class BuiltinMutationTest {
     private static Path root;
 
     @Test
-    void unsetOptionFormsCheck1() {
+    void unsetOptionFormsFirst() {
         Assertions.assertNull(Sh4j.INSTANCE.getVar("X", "X=1; unset -v X"));
     }
 
     @Test
-    void unsetOptionFormsCheck2() {
+    void unsetOptionFormsSecond() {
         Assertions.assertNull(Sh4j.INSTANCE.getVar("X", "X=1; unset -- X"));
     }
 
     @Test
-    void unsetOptionFormsCheck3() {
+    void unsetOptionFormsThird() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("f() { :; }; unset -f f"));
     }
 
     @Test
-    void unsetOptionFormsCheck4() {
+    void unsetOptionFormsFourth() {
         Sh4j.INSTANCE.run("f() { :; }; unset -f f");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("X=1; unset -z X"));
     }
 
     @Test
-    void exportBareAndPrintFormsCheck1() {
+    void exportBareAndPrintFormsFirst() {
         Assertions.assertEquals("", Sh4j.INSTANCE.getVar("BARE", "export BARE"));
     }
 
     @Test
-    void exportBareAndPrintFormsCheck2() {
+    void exportBareAndPrintFormsSecond() {
         Assertions.assertEquals(
             String.format("%n"),
             Sh4j.INSTANCE.out("export BARE; sh -c 'echo ${BARE-unset}'")
@@ -63,13 +63,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void exportBareAndPrintFormsCheck3() {
+    void exportBareAndPrintFormsThird() {
         Sh4j.INSTANCE.out("export BARE; sh -c 'echo ${BARE-unset}'");
         Assertions.assertTrue(Sh4j.INSTANCE.out("export -p").contains("export PATH="));
     }
 
     @Test
-    void pwdLogicalAndPhysicalFormsCheck1() throws IOException {
+    void pwdLogicalAndPhysicalFormsFirst() throws IOException {
         final Path real = new TempDirs(BuiltinMutationTest.root)
             .folder("real").toPath().toRealPath();
         Assertions.assertEquals(
@@ -79,7 +79,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void pwdLogicalAndPhysicalFormsCheck2() throws IOException {
+    void pwdLogicalAndPhysicalFormsSecond() throws IOException {
         final Path real = new TempDirs(BuiltinMutationTest.root)
             .folder("real").toPath().toRealPath();
         Sh4j.INSTANCE.out(String.format("cd %s; pwd -L", real));
@@ -90,48 +90,48 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void echoNoNewlineAndEmptyFormsCheck1() {
+    void echoNoNewlineAndEmptyFormsFirst() {
         Assertions.assertEquals("", Sh4j.INSTANCE.out("echo -n"));
     }
 
     @Test
-    void echoNoNewlineAndEmptyFormsCheck2() {
+    void echoNoNewlineAndEmptyFormsSecond() {
         Sh4j.INSTANCE.out("echo -n");
         Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out("echo"));
     }
 
     @Test
-    void echoNoNewlineAndEmptyFormsCheck3() {
+    void echoNoNewlineAndEmptyFormsThird() {
         Sh4j.INSTANCE.out("echo -n");
         Sh4j.INSTANCE.out("echo");
         Assertions.assertEquals("a b", Sh4j.INSTANCE.out("echo -n a b"));
     }
 
     @Test
-    void evalEmptyAndNonEmptyFormsCheck1() {
+    void evalEmptyAndNonEmptyFormsFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("eval"));
     }
 
     @Test
-    void evalEmptyAndNonEmptyFormsCheck2() {
+    void evalEmptyAndNonEmptyFormsSecond() {
         Sh4j.INSTANCE.run("eval");
         Assertions.assertEquals(String.format("hi%n"), Sh4j.INSTANCE.out("eval echo hi"));
     }
 
     @Test
-    void evalEmptyAndNonEmptyFormsCheck3() {
+    void evalEmptyAndNonEmptyFormsThird() {
         Sh4j.INSTANCE.run("eval");
         Sh4j.INSTANCE.out("eval echo hi");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("eval ''"));
     }
 
     @Test
-    void umaskNumericAndSymbolicFormsCheck1() {
+    void umaskNumericAndSymbolicFormsFirst() {
         Assertions.assertEquals(String.format("0077%n"), Sh4j.INSTANCE.out("umask 077; umask"));
     }
 
     @Test
-    void umaskNumericAndSymbolicFormsCheck2() {
+    void umaskNumericAndSymbolicFormsSecond() {
         Sh4j.INSTANCE.out("umask 077; umask");
         Assertions.assertEquals(
             String.format("u=rwx,g=,o=%n"),
@@ -140,7 +140,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskNumericAndSymbolicFormsCheck3() {
+    void umaskNumericAndSymbolicFormsThird() {
         Sh4j.INSTANCE.out("umask 077; umask");
         Sh4j.INSTANCE.out("umask 077; umask -S");
         Assertions.assertEquals(
@@ -150,7 +150,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskNumericAndSymbolicFormsCheck4() {
+    void umaskNumericAndSymbolicFormsFourth() {
         Sh4j.INSTANCE.out("umask 077; umask");
         Sh4j.INSTANCE.out("umask 077; umask -S");
         Sh4j.INSTANCE.out("umask 022; umask -S");
@@ -158,7 +158,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void shiftBoundaryFormsCheck1() {
+    void shiftBoundaryFormsFirst() {
         Assertions.assertEquals(
             String.format("a%n"),
             Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1")
@@ -166,20 +166,20 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void shiftBoundaryFormsCheck2() {
+    void shiftBoundaryFormsSecond() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("shift -1"));
     }
 
     @Test
-    void shiftBoundaryFormsCheck3() {
+    void shiftBoundaryFormsThird() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Sh4j.INSTANCE.run("shift -1");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("shift nope"));
     }
 
     @Test
-    void shiftBoundaryFormsCheck4() {
+    void shiftBoundaryFormsFourth() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Sh4j.INSTANCE.run("shift -1");
         Sh4j.INSTANCE.run("shift nope");
@@ -190,7 +190,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void shiftBoundaryFormsCheck5() {
+    void shiftBoundaryFormsFifth() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Sh4j.INSTANCE.run("shift -1");
         Sh4j.INSTANCE.run("shift nope");
@@ -202,12 +202,12 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck1() {
+    void dispatcherUncoveredBranchesFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("f() { return abc; }; f"));
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck2() {
+    void dispatcherUncoveredBranchesSecond() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Assertions.assertEquals(
             String.format("1a%n2a%n"),
@@ -216,14 +216,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck3() {
+    void dispatcherUncoveredBranchesThird() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("unset HOME; cd"));
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck4() {
+    void dispatcherUncoveredBranchesFourth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
@@ -231,7 +231,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck5() {
+    void dispatcherUncoveredBranchesFifth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
@@ -240,7 +240,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck6() {
+    void dispatcherUncoveredBranchesSixth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
@@ -253,7 +253,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck7() {
+    void dispatcherUncoveredBranchesSeventh() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
@@ -264,14 +264,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck8() {
+    void dispatcherUncoveredBranchesEighth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
         Sh4j.INSTANCE.run("umask 999");
         Sh4j.INSTANCE.run("wait abc");
         Sh4j.INSTANCE.out("f() { :; }; type f");
-        Sh4j.INSTANCE.out("command -v ls").startsWith("/");
+        Sh4j.INSTANCE.out("command -v ls");
         Assertions.assertEquals(
             String.format("f%n"),
             Sh4j.INSTANCE.out("f() { :; }; command -v f")
@@ -279,14 +279,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck9() {
+    void dispatcherUncoveredBranchesNinth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
         Sh4j.INSTANCE.run("umask 999");
         Sh4j.INSTANCE.run("wait abc");
         Sh4j.INSTANCE.out("f() { :; }; type f");
-        Sh4j.INSTANCE.out("command -v ls").startsWith("/");
+        Sh4j.INSTANCE.out("command -v ls");
         Sh4j.INSTANCE.out("f() { :; }; command -v f");
         Assertions.assertEquals(
             String.format("a=x b=[]%n"),
@@ -300,21 +300,21 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherUncoveredBranchesCheck10() {
+    void dispatcherUncoveredBranchesTenth() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done");
         Sh4j.INSTANCE.run("unset HOME; cd");
         Sh4j.INSTANCE.run("umask 999");
         Sh4j.INSTANCE.run("wait abc");
         Sh4j.INSTANCE.out("f() { :; }; type f");
-        Sh4j.INSTANCE.out("command -v ls").startsWith("/");
+        Sh4j.INSTANCE.out("command -v ls");
         Sh4j.INSTANCE.out("f() { :; }; command -v f");
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(
-                    String.format("x%n").getBytes(StandardCharsets.UTF_8)
-                ),
-                "read a b; echo \"a=$a b=[$b]\""
-            ).stdout();
+            new ByteArrayInputStream(
+                String.format("x%n").getBytes(StandardCharsets.UTF_8)
+            ),
+            "read a b; echo \"a=$a b=[$b]\""
+        );
         Assertions.assertEquals(
             String.format("[][]%n"),
             Sh4j.INSTANCE.runFull(
@@ -327,7 +327,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck1() {
+    void getoptsMultiArgumentAndReadEscapeFirst() {
         Assertions.assertEquals(
             String.format("a%nb%ndone%n"),
             Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done")
@@ -335,7 +335,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck2() {
+    void getoptsMultiArgumentAndReadEscapeSecond() {
         Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done");
         Assertions.assertEquals(
             String.format("a 2%n? 2%n"),
@@ -346,11 +346,11 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck3() {
+    void getoptsMultiArgumentAndReadEscapeThird() {
         Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done");
         Sh4j.INSTANCE.out(
-                "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
-            );
+            "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
+        );
         Assertions.assertEquals(
             String.format("[abc\\]%n"),
             Sh4j.INSTANCE.runFull(
@@ -361,28 +361,28 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck4() {
+    void getoptsMultiArgumentAndReadEscapeFourth() {
         Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done");
         Sh4j.INSTANCE.out(
-                "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
-            );
+            "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
+        );
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
-                "read x; echo \"[$x]\""
-            ).stdout();
+            new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
+            "read x; echo \"[$x]\""
+        );
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fc -l abc"));
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck5() {
+    void getoptsMultiArgumentAndReadEscapeFifth() {
         Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done");
         Sh4j.INSTANCE.out(
-                "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
-            );
+            "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
+        );
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
-                "read x; echo \"[$x]\""
-            ).stdout();
+            new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
+            "read x; echo \"[$x]\""
+        );
         Sh4j.INSTANCE.run("fc -l abc");
         Assertions.assertEquals(
             String.format("? 2%n"),
@@ -393,19 +393,19 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMultiArgumentAndReadEscapeCheck6() {
+    void getoptsMultiArgumentAndReadEscapeSixth() {
         Sh4j.INSTANCE.out("set -- -ab x; while getopts ab o; do echo \"$o\"; done; echo done");
         Sh4j.INSTANCE.out(
-                "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
-            );
+            "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
+        );
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
-                "read x; echo \"[$x]\""
-            ).stdout();
+            new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
+            "read x; echo \"[$x]\""
+        );
         Sh4j.INSTANCE.run("fc -l abc");
         Sh4j.INSTANCE.out(
-                "set -- -ab; getopts a o; getopts a o; getopts a o; echo \"$o $OPTIND\""
-            );
+            "set -- -ab; getopts a o; getopts a o; getopts a o; echo \"$o $OPTIND\""
+        );
         Assertions.assertEquals(
             String.format("? 2%n"),
             Sh4j.INSTANCE.out(
@@ -426,13 +426,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void typeResolutionAndEmptyPathSegmentCheck1() {
+    void typeResolutionAndEmptyPathSegmentFirst() {
         Assertions.assertTrue(Sh4j.INSTANCE.out("type ls").startsWith("ls is /"));
     }
 
     @Test
-    void typeResolutionAndEmptyPathSegmentCheck2() {
-        Sh4j.INSTANCE.out("type ls").startsWith("ls is /");
+    void typeResolutionAndEmptyPathSegmentSecond() {
+        Sh4j.INSTANCE.out("type ls");
         Assertions.assertEquals(
             String.format("viapath%n"),
             Sh4j.INSTANCE.out("PATH=:/bin sh -c 'echo viapath'")
@@ -440,7 +440,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskSymbolicFallbackAndAliasWithAssignmentsCheck1() {
+    void umaskSymbolicFallbackAndAliasWithAssignmentsFirst() {
         Assertions.assertEquals(
             String.format("u=,g=,o=%n"),
             Sh4j.INSTANCE.out("SH4J_UMASK=zz; umask -S")
@@ -448,13 +448,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskSymbolicFallbackAndAliasWithAssignmentsCheck2() {
+    void umaskSymbolicFallbackAndAliasWithAssignmentsSecond() {
         Sh4j.INSTANCE.out("SH4J_UMASK=zz; umask -S");
         Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("set foo; echo $#"));
     }
 
     @Test
-    void umaskSymbolicFallbackAndAliasWithAssignmentsCheck3() {
+    void umaskSymbolicFallbackAndAliasWithAssignmentsThird() {
         Sh4j.INSTANCE.out("SH4J_UMASK=zz; umask -S");
         Sh4j.INSTANCE.out("set foo; echo $#");
         Assertions.assertEquals(
@@ -464,18 +464,18 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void literalBracesAndJobStateRefreshCheck1() {
+    void literalBracesAndJobStateRefreshFirst() {
         Assertions.assertEquals(String.format("${}%n"), Sh4j.INSTANCE.out("x=1; echo \"${}\""));
     }
 
     @Test
-    void literalBracesAndJobStateRefreshCheck2() {
+    void literalBracesAndJobStateRefreshSecond() {
         Sh4j.INSTANCE.out("x=1; echo \"${}\"");
         Assertions.assertEquals(String.format("${ x}%n"), Sh4j.INSTANCE.out("x=1; echo \"${ x}\""));
     }
 
     @Test
-    void literalBracesAndJobStateRefreshCheck3() {
+    void literalBracesAndJobStateRefreshThird() {
         Sh4j.INSTANCE.out("x=1; echo \"${}\"");
         Sh4j.INSTANCE.out("x=1; echo \"${ x}\"");
         Assertions.assertTrue(
@@ -484,12 +484,12 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void subshellExitAndWhileSignalsCheck1() {
+    void subshellExitAndWhileSignalsFirst() {
         Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out("(exit 3); echo $?"));
     }
 
     @Test
-    void subshellExitAndWhileSignalsCheck2() {
+    void subshellExitAndWhileSignalsSecond() {
         Sh4j.INSTANCE.out("(exit 3); echo $?");
         Assertions.assertEquals(
             String.format("1%n"),
@@ -498,7 +498,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void subshellExitAndWhileSignalsCheck3() {
+    void subshellExitAndWhileSignalsThird() {
         Sh4j.INSTANCE.out("(exit 3); echo $?");
         Sh4j.INSTANCE.out("i=0; while true; do i=$((i+1)); break; done; echo $i");
         Assertions.assertEquals(
@@ -510,12 +510,12 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void subshellExitAndWhileSignalsCheck4() {
+    void subshellExitAndWhileSignalsFourth() {
         Sh4j.INSTANCE.out("(exit 3); echo $?");
         Sh4j.INSTANCE.out("i=0; while true; do i=$((i+1)); break; done; echo $i");
         Sh4j.INSTANCE.out(
-                "i=0; while true; do j=0; while true; do i=$((i+1)); break 2; done; done; echo $i"
-            );
+            "i=0; while true; do j=0; while true; do i=$((i+1)); break 2; done; done; echo $i"
+        );
         Assertions.assertEquals(
             String.format("3 3%n"),
             Sh4j.INSTANCE.out(
@@ -528,7 +528,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readCustomIfsAndWhitespaceCheck1() {
+    void readCustomIfsAndWhitespaceFirst() {
         Assertions.assertEquals(
             String.format("a=x b=y:z%n"),
             Sh4j.INSTANCE.runFull(
@@ -541,13 +541,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readCustomIfsAndWhitespaceCheck2() {
+    void readCustomIfsAndWhitespaceSecond() {
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(
-                    String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)
-                ),
-                "IFS=:; read a b; echo \"a=$a b=$b\""
-            ).stdout();
+            new ByteArrayInputStream(
+                String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)
+            ),
+            "IFS=:; read a b; echo \"a=$a b=$b\""
+        );
         Assertions.assertEquals(
             String.format("a=x b=y%n"),
             Sh4j.INSTANCE.runFull(
@@ -560,19 +560,19 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readCustomIfsAndWhitespaceCheck3() {
+    void readCustomIfsAndWhitespaceThird() {
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(
-                    String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)
-                ),
-                "IFS=:; read a b; echo \"a=$a b=$b\""
-            ).stdout();
+            new ByteArrayInputStream(
+                String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)
+            ),
+            "IFS=:; read a b; echo \"a=$a b=$b\""
+        );
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(
-                    String.format("   x   y   %n").getBytes(StandardCharsets.UTF_8)
-                ),
-                "read a b; echo \"a=$a b=$b\""
-            ).stdout();
+            new ByteArrayInputStream(
+                String.format("   x   y   %n").getBytes(StandardCharsets.UTF_8)
+            ),
+            "read a b; echo \"a=$a b=$b\""
+        );
         Assertions.assertEquals(
             String.format("a=x b=:%n"),
             Sh4j.INSTANCE.runFull(
@@ -585,7 +585,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsClustersDefaultsAndStopCheck1() {
+    void getoptsClustersDefaultsAndStopFirst() {
         Assertions.assertEquals(
             String.format("a:%nb:val%n"),
             Sh4j.INSTANCE.out(
@@ -595,10 +595,10 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsClustersDefaultsAndStopCheck2() {
+    void getoptsClustersDefaultsAndStopSecond() {
         Sh4j.INSTANCE.out(
-                "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
-            );
+            "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
+        );
         Assertions.assertEquals(
             String.format("?:z%n"),
             Sh4j.INSTANCE.out("set -- -z; getopts a o; echo \"$o:$OPTARG\"")
@@ -606,10 +606,10 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsClustersDefaultsAndStopCheck3() {
+    void getoptsClustersDefaultsAndStopThird() {
         Sh4j.INSTANCE.out(
-                "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
-            );
+            "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
+        );
         Sh4j.INSTANCE.out("set -- -z; getopts a o; echo \"$o:$OPTARG\"");
         Assertions.assertEquals(
             String.format("1%n"),
@@ -618,10 +618,10 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsClustersDefaultsAndStopCheck4() {
+    void getoptsClustersDefaultsAndStopFourth() {
         Sh4j.INSTANCE.out(
-                "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
-            );
+            "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
+        );
         Sh4j.INSTANCE.out("set -- -z; getopts a o; echo \"$o:$OPTARG\"");
         Sh4j.INSTANCE.out("set -- --; getopts a o; echo $?");
         Assertions.assertEquals(
@@ -631,10 +631,10 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsClustersDefaultsAndStopCheck5() {
+    void getoptsClustersDefaultsAndStopFifth() {
         Sh4j.INSTANCE.out(
-                "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
-            );
+            "set -- -ab val; while getopts ab: o; do echo \"$o:$OPTARG\"; done"
+        );
         Sh4j.INSTANCE.out("set -- -z; getopts a o; echo \"$o:$OPTARG\"");
         Sh4j.INSTANCE.out("set -- --; getopts a o; echo $?");
         Sh4j.INSTANCE.out("set -- -a; getopts :a: o; echo \"$o:$OPTARG\"");
@@ -645,7 +645,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsInvalidOptindIsNormalisedCheck1() {
+    void getoptsInvalidOptindIsNormalisedFirst() {
         Assertions.assertEquals(
             String.format("0%n"),
             Sh4j.INSTANCE.out("OPTIND=bad; set -- -a; getopts a o; echo $?")
@@ -653,7 +653,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsInvalidOptindIsNormalisedCheck2() {
+    void getoptsInvalidOptindIsNormalisedSecond() {
         Sh4j.INSTANCE.out("OPTIND=bad; set -- -a; getopts a o; echo $?");
         Assertions.assertEquals(
             String.format("1%n"),
@@ -662,80 +662,80 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void jobsWithExplicitAndMissingIdsCheck1() {
+    void jobsWithExplicitAndMissingIdsFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait").stdout().contains("sleep")
         );
     }
 
     @Test
-    void jobsWithExplicitAndMissingIdsCheck2() {
-        Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait").stdout().contains("sleep");
+    void jobsWithExplicitAndMissingIdsSecond() {
+        Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs 999"));
     }
 
     @Test
-    void jobsWithExplicitAndMissingIdsCheck3() {
-        Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait").stdout().contains("sleep");
+    void jobsWithExplicitAndMissingIdsThird() {
+        Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait");
         Sh4j.INSTANCE.run("jobs 999");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs notanumber"));
     }
 
     @Test
-    void fgExplicitAndMissingIdsCheck1() {
+    void fgExplicitAndMissingIdsFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep")
         );
     }
 
     @Test
-    void fgExplicitAndMissingIdsCheck2() {
-        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep");
+    void fgExplicitAndMissingIdsSecond() {
+        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fg 999"));
     }
 
     @Test
-    void fgExplicitAndMissingIdsCheck3() {
-        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep");
+    void fgExplicitAndMissingIdsThird() {
+        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1");
         Sh4j.INSTANCE.run("fg 999");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fg notanumber"));
     }
 
     @Test
-    void fcListAndSubstituteCheck1() {
+    void fcListAndSubstituteFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -l").stdout().contains("echo one")
         );
     }
 
     @Test
-    void fcListAndSubstituteCheck2() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -l").stdout().contains("echo one");
+    void fcListAndSubstituteSecond() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -l");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo hello", "fc -s hello=bye").stdout().contains("bye")
         );
     }
 
     @Test
-    void fcErrorFormsCheck1() {
+    void fcErrorFormsFirst() {
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fc -e"));
     }
 
     @Test
-    void fcErrorFormsCheck2() {
+    void fcErrorFormsSecond() {
         Sh4j.INSTANCE.run("fc -e");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fc -z"));
     }
 
     @Test
-    void fcErrorFormsCheck3() {
+    void fcErrorFormsThird() {
         Sh4j.INSTANCE.run("fc -e");
         Sh4j.INSTANCE.run("fc -z");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fc -s"));
     }
 
     @Test
-    void fcErrorFormsCheck4() {
+    void fcErrorFormsFourth() {
         Sh4j.INSTANCE.run("fc -e");
         Sh4j.INSTANCE.run("fc -z");
         Sh4j.INSTANCE.run("fc -s");
@@ -743,7 +743,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void fcErrorFormsCheck5() {
+    void fcErrorFormsFifth() {
         Sh4j.INSTANCE.run("fc -e");
         Sh4j.INSTANCE.run("fc -z");
         Sh4j.INSTANCE.run("fc -s");
@@ -752,42 +752,42 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void setOptionRemovalAndPositionalFormsCheck1() {
+    void setOptionRemovalAndPositionalFormsFirst() {
         Assertions.assertFalse(
             Sh4j.INSTANCE.out("set -e; set +e; echo $-").contains("e")
         );
     }
 
     @Test
-    void setOptionRemovalAndPositionalFormsCheck2() {
-        Sh4j.INSTANCE.out("set -e; set +e; echo $-").contains("e");
+    void setOptionRemovalAndPositionalFormsSecond() {
+        Sh4j.INSTANCE.out("set -e; set +e; echo $-");
         Assertions.assertFalse(
             Sh4j.INSTANCE.out("set -o errexit; set +o errexit; echo $-").contains("e")
         );
     }
 
     @Test
-    void setOptionRemovalAndPositionalFormsCheck3() {
-        Sh4j.INSTANCE.out("set -e; set +e; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o errexit; set +o errexit; echo $-").contains("e");
+    void setOptionRemovalAndPositionalFormsThird() {
+        Sh4j.INSTANCE.out("set -e; set +e; echo $-");
+        Sh4j.INSTANCE.out("set -o errexit; set +o errexit; echo $-");
         Assertions.assertEquals(String.format("2%n"), Sh4j.INSTANCE.out("set -- a b; echo $#"));
     }
 
     @Test
-    void setOptionRemovalAndPositionalFormsCheck4() {
-        Sh4j.INSTANCE.out("set -e; set +e; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o errexit; set +o errexit; echo $-").contains("e");
+    void setOptionRemovalAndPositionalFormsFourth() {
+        Sh4j.INSTANCE.out("set -e; set +e; echo $-");
+        Sh4j.INSTANCE.out("set -o errexit; set +o errexit; echo $-");
         Sh4j.INSTANCE.out("set -- a b; echo $#");
         Assertions.assertEquals(String.format("0%n"), Sh4j.INSTANCE.out("set --; echo $#"));
     }
 
     @Test
-    void aliasFormsCheck1() {
+    void aliasFormsFirst() {
         Assertions.assertEquals(String.format("hi%n"), Sh4j.INSTANCE.out("alias a='echo hi'", "a"));
     }
 
     @Test
-    void aliasFormsCheck2() {
+    void aliasFormsSecond() {
         Sh4j.INSTANCE.out("alias a='echo hi'", "a");
         Assertions.assertEquals(
             String.format("a='echo hi'%n"),
@@ -796,14 +796,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void aliasFormsCheck3() {
+    void aliasFormsThird() {
         Sh4j.INSTANCE.out("alias a='echo hi'", "a");
         Sh4j.INSTANCE.out("alias a='echo hi'; alias a");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("alias missing"));
     }
 
     @Test
-    void aliasFormsCheck4() {
+    void aliasFormsFourth() {
         Sh4j.INSTANCE.out("alias a='echo hi'", "a");
         Sh4j.INSTANCE.out("alias a='echo hi'; alias a");
         Sh4j.INSTANCE.run("alias missing");
@@ -811,7 +811,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void aliasFormsCheck5() {
+    void aliasFormsFifth() {
         Sh4j.INSTANCE.out("alias a='echo hi'", "a");
         Sh4j.INSTANCE.out("alias a='echo hi'; alias a");
         Sh4j.INSTANCE.run("alias missing");
@@ -820,29 +820,24 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void trapListingAndRemovalFormsCheck1() {
-        final Sh4j.Result listed = Sh4j.INSTANCE.runFull(
+    void trapListingAndRemovalFormsFirst() {
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
             "trap 'echo t' EXIT INT; trap; trap - EXIT INT"
-        );
-        Assertions.assertTrue(listed.stdout().contains("EXIT"));
+        ).stdout().contains("EXIT"));
     }
 
     @Test
-    void trapListingAndRemovalFormsCheck2() {
-        final Sh4j.Result listed = Sh4j.INSTANCE.runFull(
+    void trapListingAndRemovalFormsSecond() {
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
             "trap 'echo t' EXIT INT; trap; trap - EXIT INT"
-        );
-        listed.stdout().contains("EXIT");
-        Assertions.assertTrue(listed.stdout().contains("INT"));
+        ).stdout().contains("INT"));
     }
 
     @Test
-    void trapListingAndRemovalFormsCheck3() {
+    void trapListingAndRemovalFormsThird() {
         final Sh4j.Result listed = Sh4j.INSTANCE.runFull(
             "trap 'echo t' EXIT INT; trap; trap - EXIT INT"
         );
-        listed.stdout().contains("EXIT");
-        listed.stdout().contains("INT");
         Assertions.assertEquals(
             String.format("body%n"),
             Sh4j.INSTANCE.out("trap '' EXIT; echo body")
@@ -850,12 +845,12 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dotEmptyAndPositionalFormsCheck1() throws IOException {
+    void dotEmptyAndPositionalFormsFirst() throws IOException {
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("."));
     }
 
     @Test
-    void dotEmptyAndPositionalFormsCheck2() throws IOException {
+    void dotEmptyAndPositionalFormsSecond() throws IOException {
         Sh4j.INSTANCE.run(".");
         final Path lib = new TempDirs(BuiltinMutationTest.root)
             .file("dot.sh").toPath();
@@ -867,7 +862,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readonlyBareAndAssignedFormsCheck1() {
+    void readonlyBareAndAssignedFormsFirst() {
         Assertions.assertEquals(
             String.format("unset%n"),
             Sh4j.INSTANCE.out("readonly R; echo ${R-unset}")
@@ -875,7 +870,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readonlyBareAndAssignedFormsCheck2() {
+    void readonlyBareAndAssignedFormsSecond() {
         Sh4j.INSTANCE.out("readonly R; echo ${R-unset}");
         Assertions.assertEquals(
             String.format("readonly R=1%n"),
@@ -884,25 +879,25 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void hashAndTypeFormsCheck1() {
+    void hashAndTypeFormsFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("hash echo"));
     }
 
     @Test
-    void hashAndTypeFormsCheck2() {
+    void hashAndTypeFormsSecond() {
         Sh4j.INSTANCE.run("hash echo");
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("hash missing_command"));
     }
 
     @Test
-    void hashAndTypeFormsCheck3() {
+    void hashAndTypeFormsThird() {
         Sh4j.INSTANCE.run("hash echo");
         Sh4j.INSTANCE.run("hash missing_command");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("type echo"));
     }
 
     @Test
-    void hashAndTypeFormsCheck4() {
+    void hashAndTypeFormsFourth() {
         Sh4j.INSTANCE.run("hash echo");
         Sh4j.INSTANCE.run("hash missing_command");
         Sh4j.INSTANCE.run("type echo");
@@ -910,18 +905,18 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void commandLocateAndExecuteFormsCheck1() {
+    void commandLocateAndExecuteFormsFirst() {
         Assertions.assertEquals(String.format("echo%n"), Sh4j.INSTANCE.out("command -v echo"));
     }
 
     @Test
-    void commandLocateAndExecuteFormsCheck2() {
+    void commandLocateAndExecuteFormsSecond() {
         Sh4j.INSTANCE.out("command -v echo");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("command -v missing_command"));
     }
 
     @Test
-    void commandLocateAndExecuteFormsCheck3() {
+    void commandLocateAndExecuteFormsThird() {
         Sh4j.INSTANCE.out("command -v echo");
         Sh4j.INSTANCE.run("command -v missing_command");
         Assertions.assertEquals(
@@ -931,7 +926,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void commandLocateAndExecuteFormsCheck4() {
+    void commandLocateAndExecuteFormsFourth() {
         Sh4j.INSTANCE.out("command -v echo");
         Sh4j.INSTANCE.run("command -v missing_command");
         Sh4j.INSTANCE.out("command -V echo");
@@ -939,25 +934,25 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void killOptionFormsCheck1() {
+    void killOptionFormsFirst() {
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill"));
     }
 
     @Test
-    void killOptionFormsCheck2() {
+    void killOptionFormsSecond() {
         Sh4j.INSTANCE.run("kill");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -s"));
     }
 
     @Test
-    void killOptionFormsCheck3() {
+    void killOptionFormsThird() {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill notapid"));
     }
 
     @Test
-    void killOptionFormsCheck4() {
+    void killOptionFormsFourth() {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
         Sh4j.INSTANCE.run("kill notapid");
@@ -965,7 +960,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void killOptionFormsCheck5() {
+    void killOptionFormsFifth() {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
         Sh4j.INSTANCE.run("kill notapid");
@@ -974,7 +969,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void killOptionFormsCheck6() {
+    void killOptionFormsSixth() {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
         Sh4j.INSTANCE.run("kill notapid");
@@ -1032,7 +1027,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsBoundaryFormsCheck1() {
+    void getoptsBoundaryFormsFirst() {
         Assertions.assertEquals(
             String.format("? 1%n"),
             Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o $?\"")
@@ -1040,7 +1035,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsBoundaryFormsCheck2() {
+    void getoptsBoundaryFormsSecond() {
         Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o $?\"");
         Assertions.assertEquals(
             String.format("0%n"),
@@ -1049,7 +1044,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsBoundaryFormsCheck3() {
+    void getoptsBoundaryFormsThird() {
         Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o $?\"");
         Sh4j.INSTANCE.out("OPTIND=0; set -- -a; getopts a o; echo $?");
         Assertions.assertEquals(
@@ -1059,7 +1054,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskAllBitCombinationsCheck1() {
+    void umaskAllBitCombinationsFirst() {
         Assertions.assertEquals(
             String.format("u=rwx,g=rwx,o=rwx%n"),
             Sh4j.INSTANCE.out("umask 000; umask -S")
@@ -1067,7 +1062,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskAllBitCombinationsCheck2() {
+    void umaskAllBitCombinationsSecond() {
         Sh4j.INSTANCE.out("umask 000; umask -S");
         Assertions.assertEquals(
             String.format("u=,g=,o=%n"),
@@ -1076,7 +1071,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskAllBitCombinationsCheck3() {
+    void umaskAllBitCombinationsThird() {
         Sh4j.INSTANCE.out("umask 000; umask -S");
         Sh4j.INSTANCE.out("umask 777; umask -S");
         Assertions.assertEquals(
@@ -1086,7 +1081,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void umaskAllBitCombinationsCheck4() {
+    void umaskAllBitCombinationsFourth() {
         Sh4j.INSTANCE.out("umask 000; umask -S");
         Sh4j.INSTANCE.out("umask 777; umask -S");
         Sh4j.INSTANCE.out("umask 077; umask -S");
@@ -1097,7 +1092,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readMoreSplittingFormsCheck1() {
+    void readMoreSplittingFormsFirst() {
         Assertions.assertEquals(
             String.format("a= b=x:y%n"),
             Sh4j.INSTANCE.runFull(
@@ -1110,13 +1105,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void readMoreSplittingFormsCheck2() {
+    void readMoreSplittingFormsSecond() {
         Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(
-                    String.format(":x:y%n").getBytes(StandardCharsets.UTF_8)
-                ),
-                "IFS=:; read a b; echo \"a=$a b=$b\""
-            ).stdout();
+            new ByteArrayInputStream(
+                String.format(":x:y%n").getBytes(StandardCharsets.UTF_8)
+            ),
+            "IFS=:; read a b; echo \"a=$a b=$b\""
+        );
         Assertions.assertEquals(
             String.format("a=x b=y%n"),
             Sh4j.INSTANCE.runFull(
@@ -1129,24 +1124,24 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void fcListModesAndRangesCheck1() {
+    void fcListModesAndRangesFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -n -l").stdout().contains("\techo one")
         );
     }
 
     @Test
-    void fcListModesAndRangesCheck2() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -n -l").stdout().contains("\techo one");
+    void fcListModesAndRangesSecond() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -n -l");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -l 1 1").stdout().contains("echo one")
         );
     }
 
     @Test
-    void fcListModesAndRangesCheck3() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -n -l").stdout().contains("\techo one");
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 1 1").stdout().contains("echo one");
+    void fcListModesAndRangesThird() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -n -l");
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 1 1");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -e true").stdout().contains("echo one")
         );
@@ -1214,42 +1209,42 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void jobsBgFgExplicitIdsCheck1() {
+    void jobsBgFgExplicitIdsFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1").stdout().contains("sleep")
         );
     }
 
     @Test
-    void jobsBgFgExplicitIdsCheck2() {
-        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1").stdout().contains("sleep");
+    void jobsBgFgExplicitIdsSecond() {
+        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep")
         );
     }
 
     @Test
-    void jobsBgFgExplicitIdsCheck3() {
-        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1").stdout().contains("sleep");
-        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep");
+    void jobsBgFgExplicitIdsThird() {
+        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1");
+        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("bg %999"));
     }
 
     @Test
-    void jobsBgFgExplicitIdsCheck4() {
-        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1").stdout().contains("sleep");
-        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1").stdout().contains("sleep");
+    void jobsBgFgExplicitIdsFourth() {
+        Sh4j.INSTANCE.runFull("sleep 0.2 & bg %1");
+        Sh4j.INSTANCE.runFull("sleep 0.05 & fg %1");
         Sh4j.INSTANCE.run("bg %999");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("fg %999"));
     }
 
     @Test
-    void aliasQuotedAndEmptyValuesCheck1() {
+    void aliasQuotedAndEmptyValuesFirst() {
         Assertions.assertEquals("", Sh4j.INSTANCE.out("alias e=''", "e"));
     }
 
     @Test
-    void aliasQuotedAndEmptyValuesCheck2() {
+    void aliasQuotedAndEmptyValuesSecond() {
         Sh4j.INSTANCE.out("alias e=''", "e");
         Assertions.assertEquals(
             String.format("a='x y'%n"),
@@ -1258,7 +1253,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMoreBoundariesCheck1() {
+    void getoptsMoreBoundariesFirst() {
         Assertions.assertEquals(
             String.format("? 1 2%n"),
             Sh4j.INSTANCE.out("OPTIND=2; set -- -a; getopts a o; echo \"$o $? $OPTIND\"")
@@ -1266,7 +1261,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMoreBoundariesCheck2() {
+    void getoptsMoreBoundariesSecond() {
         Sh4j.INSTANCE.out("OPTIND=2; set -- -a; getopts a o; echo \"$o $? $OPTIND\"");
         Assertions.assertEquals(
             String.format("a:val%n"),
@@ -1275,7 +1270,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMoreBoundariesCheck3() {
+    void getoptsMoreBoundariesThird() {
         Sh4j.INSTANCE.out("OPTIND=2; set -- -a; getopts a o; echo \"$o $? $OPTIND\"");
         Sh4j.INSTANCE.out("set -- -aval; getopts a: o; echo \"$o:$OPTARG\"");
         Assertions.assertEquals(
@@ -1285,7 +1280,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMoreBoundariesCheck4() {
+    void getoptsMoreBoundariesFourth() {
         Sh4j.INSTANCE.out("OPTIND=2; set -- -a; getopts a o; echo \"$o $? $OPTIND\"");
         Sh4j.INSTANCE.out("set -- -aval; getopts a: o; echo \"$o:$OPTARG\"");
         Sh4j.INSTANCE.out("set -- -z; getopts :a o; echo \"$o:$OPTARG\"");
@@ -1296,7 +1291,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsMoreBoundariesCheck5() {
+    void getoptsMoreBoundariesFifth() {
         Sh4j.INSTANCE.out("OPTIND=2; set -- -a; getopts a o; echo \"$o $? $OPTIND\"");
         Sh4j.INSTANCE.out("set -- -aval; getopts a: o; echo \"$o:$OPTARG\"");
         Sh4j.INSTANCE.out("set -- -z; getopts :a o; echo \"$o:$OPTARG\"");
@@ -1308,70 +1303,70 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck1() {
+    void setOptionsAreObservableInFlagsFirst() {
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck2() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
+    void setOptionsAreObservableInFlagsSecond() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck3() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
+    void setOptionsAreObservableInFlagsThird() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck4() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
-        Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f");
+    void setOptionsAreObservableInFlagsFourth() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
+        Sh4j.INSTANCE.out("set -o noglob; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o xtrace; echo $-").contains("x"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck5() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
-        Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f");
-        Sh4j.INSTANCE.out("set -o xtrace; echo $-").contains("x");
+    void setOptionsAreObservableInFlagsFifth() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
+        Sh4j.INSTANCE.out("set -o noglob; echo $-");
+        Sh4j.INSTANCE.out("set -o xtrace; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o noexec; echo $-").contains("n"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck6() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
-        Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f");
-        Sh4j.INSTANCE.out("set -o xtrace; echo $-").contains("x");
-        Sh4j.INSTANCE.out("set -o noexec; echo $-").contains("n");
+    void setOptionsAreObservableInFlagsSixth() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
+        Sh4j.INSTANCE.out("set -o noglob; echo $-");
+        Sh4j.INSTANCE.out("set -o xtrace; echo $-");
+        Sh4j.INSTANCE.out("set -o noexec; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o verbose; echo $-").contains("v"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck7() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
-        Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f");
-        Sh4j.INSTANCE.out("set -o xtrace; echo $-").contains("x");
-        Sh4j.INSTANCE.out("set -o noexec; echo $-").contains("n");
-        Sh4j.INSTANCE.out("set -o verbose; echo $-").contains("v");
+    void setOptionsAreObservableInFlagsSeventh() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
+        Sh4j.INSTANCE.out("set -o noglob; echo $-");
+        Sh4j.INSTANCE.out("set -o xtrace; echo $-");
+        Sh4j.INSTANCE.out("set -o noexec; echo $-");
+        Sh4j.INSTANCE.out("set -o verbose; echo $-");
         Assertions.assertTrue(Sh4j.INSTANCE.out("set -o allexport; echo $-").contains("a"));
     }
 
     @Test
-    void setOptionsAreObservableInFlagsCheck8() {
-        Sh4j.INSTANCE.out("set -o errexit; echo $-").contains("e");
-        Sh4j.INSTANCE.out("set -o nounset; echo $-").contains("u");
-        Sh4j.INSTANCE.out("set -o noglob; echo $-").contains("f");
-        Sh4j.INSTANCE.out("set -o xtrace; echo $-").contains("x");
-        Sh4j.INSTANCE.out("set -o noexec; echo $-").contains("n");
-        Sh4j.INSTANCE.out("set -o verbose; echo $-").contains("v");
-        Sh4j.INSTANCE.out("set -o allexport; echo $-").contains("a");
+    void setOptionsAreObservableInFlagsEighth() {
+        Sh4j.INSTANCE.out("set -o errexit; echo $-");
+        Sh4j.INSTANCE.out("set -o nounset; echo $-");
+        Sh4j.INSTANCE.out("set -o noglob; echo $-");
+        Sh4j.INSTANCE.out("set -o xtrace; echo $-");
+        Sh4j.INSTANCE.out("set -o noexec; echo $-");
+        Sh4j.INSTANCE.out("set -o verbose; echo $-");
+        Sh4j.INSTANCE.out("set -o allexport; echo $-");
         Assertions.assertEquals(
             String.format("%n"),
             Sh4j.INSTANCE.out("set -eu; set +eu; echo $-")
@@ -1379,51 +1374,48 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void fcEditorAndRangeBoundariesCheck1() {
+    void fcEditorAndRangeBoundariesFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -e true 1").stdout().contains("echo one")
         );
     }
 
     @Test
-    void fcEditorAndRangeBoundariesCheck2() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -e true 1").stdout().contains("echo one");
+    void fcEditorAndRangeBoundariesSecond() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -e true 1");
         Assertions.assertEquals(0, Sh4j.INSTANCE.runFull("echo one", "fc -l 3 2").exitCode());
     }
 
     @Test
-    void fcEditorAndRangeBoundariesCheck3() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -e true 1").stdout().contains("echo one");
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 3 2").exitCode();
+    void fcEditorAndRangeBoundariesThird() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -e true 1");
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 3 2");
         Assertions.assertEquals(0, Sh4j.INSTANCE.runFull("echo one", "fc -e true 1 1").exitCode());
     }
 
     @Test
-    void trapReturnCodesAndDotErrorsCheck1() {
+    void trapReturnCodesAndDotErrorsFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("trap"));
     }
 
     @Test
-    void trapReturnCodesAndDotErrorsCheck2() {
+    void trapReturnCodesAndDotErrorsSecond() {
         Sh4j.INSTANCE.run("trap");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("trap - EXIT"));
     }
 
     @Test
-    void trapReturnCodesAndDotErrorsCheck3() {
+    void trapReturnCodesAndDotErrorsThird() {
         Sh4j.INSTANCE.run("trap");
         Sh4j.INSTANCE.run("trap - EXIT");
-        final Sh4j.Result dot = Sh4j.INSTANCE.runFull(". /nonexistent/dotfile");
-        Assertions.assertEquals(1, dot.exitCode());
+        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(". /nonexistent/dotfile").exitCode());
     }
 
     @Test
-    void trapReturnCodesAndDotErrorsCheck4() {
+    void trapReturnCodesAndDotErrorsFourth() {
         Sh4j.INSTANCE.run("trap");
         Sh4j.INSTANCE.run("trap - EXIT");
-        final Sh4j.Result dot = Sh4j.INSTANCE.runFull(". /nonexistent/dotfile");
-        dot.exitCode();
-        Assertions.assertTrue(dot.stderr().contains("cannot open"));
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull(". /nonexistent/dotfile").stderr().contains("cannot open"));
     }
 
     @Test
@@ -1435,25 +1427,25 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void jobIdBoundaryFormsCheck1() {
+    void jobIdBoundaryFormsFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs %0"));
     }
 
     @Test
-    void jobIdBoundaryFormsCheck2() {
+    void jobIdBoundaryFormsSecond() {
         Sh4j.INSTANCE.run("jobs %0");
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs -1"));
     }
 
     @Test
-    void jobIdBoundaryFormsCheck3() {
+    void jobIdBoundaryFormsThird() {
         Sh4j.INSTANCE.run("jobs %0");
         Sh4j.INSTANCE.run("jobs -1");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("bg %0"));
     }
 
     @Test
-    void jobIdBoundaryFormsCheck4() {
+    void jobIdBoundaryFormsFourth() {
         Sh4j.INSTANCE.run("jobs %0");
         Sh4j.INSTANCE.run("jobs -1");
         Sh4j.INSTANCE.run("bg %0");
@@ -1520,7 +1512,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck1() {
+    void getoptsExactBoundaryBranchesFirst() {
         Assertions.assertEquals(
             String.format("?:1:1%n"),
             Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"")
@@ -1528,7 +1520,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck2() {
+    void getoptsExactBoundaryBranchesSecond() {
         Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"");
         Assertions.assertEquals(
             String.format("?::1%n"),
@@ -1537,7 +1529,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck3() {
+    void getoptsExactBoundaryBranchesThird() {
         Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -; getopts a o; echo \"$o:$OPTIND:$?\"");
         Assertions.assertEquals(
@@ -1547,7 +1539,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck4() {
+    void getoptsExactBoundaryBranchesFourth() {
         Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o:$OPTIND:$?\"");
@@ -1558,7 +1550,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck5() {
+    void getoptsExactBoundaryBranchesFifth() {
         Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o:$OPTIND:$?\"");
@@ -1569,12 +1561,12 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void getoptsExactBoundaryBranchesCheck6() {
+    void getoptsExactBoundaryBranchesSixth() {
         Sh4j.INSTANCE.out("set --; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -a; getopts a o; getopts a o; echo \"$o:$OPTIND:$?\"");
         Sh4j.INSTANCE.out("set -- -z; getopts :a o; echo \"$o:$OPTARG\"");
-        Sh4j.INSTANCE.runFull("set -- -z; getopts a o").stderr().contains("illegal option");
+        Sh4j.INSTANCE.runFull("set -- -z; getopts a o");
         Assertions.assertEquals(
             String.format("a:val%n"),
             Sh4j.INSTANCE.out("set -- -aval; getopts a: o; echo \"$o:$OPTARG\"")
@@ -1582,73 +1574,73 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void fcRangeEdgesAndSubstitutionCheck1() {
+    void fcRangeEdgesAndSubstitutionFirst() {
         Assertions.assertEquals(0, Sh4j.INSTANCE.runFull("echo one", "fc -l 0").exitCode());
     }
 
     @Test
-    void fcRangeEdgesAndSubstitutionCheck2() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 0").exitCode();
+    void fcRangeEdgesAndSubstitutionSecond() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 0");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -l -1").stdout().contains("echo one")
         );
     }
 
     @Test
-    void fcRangeEdgesAndSubstitutionCheck3() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 0").exitCode();
-        Sh4j.INSTANCE.runFull("echo one", "fc -l -1").stdout().contains("echo one");
+    void fcRangeEdgesAndSubstitutionThird() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 0");
+        Sh4j.INSTANCE.runFull("echo one", "fc -l -1");
         Assertions.assertEquals(0, Sh4j.INSTANCE.runFull("echo one", "fc -l 5").exitCode());
     }
 
     @Test
-    void fcRangeEdgesAndSubstitutionCheck4() {
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 0").exitCode();
-        Sh4j.INSTANCE.runFull("echo one", "fc -l -1").stdout().contains("echo one");
-        Sh4j.INSTANCE.runFull("echo one", "fc -l 5").exitCode();
+    void fcRangeEdgesAndSubstitutionFourth() {
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 0");
+        Sh4j.INSTANCE.runFull("echo one", "fc -l -1");
+        Sh4j.INSTANCE.runFull("echo one", "fc -l 5");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("echo one", "fc -s one=two").stdout().contains("two")
         );
     }
 
     @Test
-    void jobsWithoutIdsUseMostRecentJobCheck1() {
+    void jobsWithoutIdsUseMostRecentJobFirst() {
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.1 & jobs").stdout().contains("sleep")
         );
     }
 
     @Test
-    void jobsWithoutIdsUseMostRecentJobCheck2() {
-        Sh4j.INSTANCE.runFull("sleep 0.1 & jobs").stdout().contains("sleep");
+    void jobsWithoutIdsUseMostRecentJobSecond() {
+        Sh4j.INSTANCE.runFull("sleep 0.1 & jobs");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.1 & bg").stdout().contains("sleep")
         );
     }
 
     @Test
-    void jobsWithoutIdsUseMostRecentJobCheck3() {
-        Sh4j.INSTANCE.runFull("sleep 0.1 & jobs").stdout().contains("sleep");
-        Sh4j.INSTANCE.runFull("sleep 0.1 & bg").stdout().contains("sleep");
+    void jobsWithoutIdsUseMostRecentJobThird() {
+        Sh4j.INSTANCE.runFull("sleep 0.1 & jobs");
+        Sh4j.INSTANCE.runFull("sleep 0.1 & bg");
         Assertions.assertTrue(
             Sh4j.INSTANCE.runFull("sleep 0.1 & fg").stdout().contains("sleep")
         );
     }
 
     @Test
-    void dispatcherResidualBranchesCheck1() throws IOException {
+    void dispatcherResidualBranchesFirst() throws IOException {
         Assertions.assertTrue(Sh4j.INSTANCE.out("command -V ls").contains(" is /"));
     }
 
     @Test
-    void dispatcherResidualBranchesCheck2() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesSecond() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Assertions.assertEquals(1, Sh4j.INSTANCE.run("command -V __no_such_cmd__"));
     }
 
     @Test
-    void dispatcherResidualBranchesCheck3() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesThird() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Assertions.assertEquals(
             String.format("?%n"),
@@ -1657,32 +1649,27 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherResidualBranchesCheck4() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesFourth() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Sh4j.INSTANCE.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"");
-        final Sh4j.Result missing = Sh4j.INSTANCE.runFull("echo one; fc -s nope");
-        Assertions.assertEquals(1, missing.exitCode());
+        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull("echo one; fc -s nope").exitCode());
     }
 
     @Test
-    void dispatcherResidualBranchesCheck5() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesFifth() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Sh4j.INSTANCE.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"");
-        final Sh4j.Result missing = Sh4j.INSTANCE.runFull("echo one; fc -s nope");
-        missing.exitCode();
-        Assertions.assertTrue(missing.stderr().contains("-s requires pat=rep"));
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo one; fc -s nope").stderr().contains("-s requires pat=rep"));
     }
 
     @Test
-    void dispatcherResidualBranchesCheck6() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesSixth() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Sh4j.INSTANCE.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"");
         final Sh4j.Result missing = Sh4j.INSTANCE.runFull("echo one; fc -s nope");
-        missing.exitCode();
-        missing.stderr().contains("-s requires pat=rep");
         Assertions.assertEquals(
             String.format("hi%necho hey%nhey%n"),
             Sh4j.INSTANCE.out("echo hi; fc -s hi=hey")
@@ -1690,13 +1677,11 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherResidualBranchesCheck7() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesSeventh() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Sh4j.INSTANCE.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"");
         final Sh4j.Result missing = Sh4j.INSTANCE.runFull("echo one; fc -s nope");
-        missing.exitCode();
-        missing.stderr().contains("-s requires pat=rep");
         Sh4j.INSTANCE.out("echo hi; fc -s hi=hey");
         Assertions.assertEquals(
             String.format("one%n1\techo one%n"),
@@ -1705,13 +1690,11 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void dispatcherResidualBranchesCheck8() throws IOException {
-        Sh4j.INSTANCE.out("command -V ls").contains(" is /");
+    void dispatcherResidualBranchesEighth() throws IOException {
+        Sh4j.INSTANCE.out("command -V ls");
         Sh4j.INSTANCE.run("command -V __no_such_cmd__");
         Sh4j.INSTANCE.out("set -- -a b; getopts a v; getopts a v; echo \"$v\"");
         final Sh4j.Result missing = Sh4j.INSTANCE.runFull("echo one; fc -s nope");
-        missing.exitCode();
-        missing.stderr().contains("-s requires pat=rep");
         Sh4j.INSTANCE.out("echo hi; fc -s hi=hey");
         Sh4j.INSTANCE.out("echo one; fc -l abc");
         final Path fdesc = new TempDirs(BuiltinMutationTest.root)
@@ -1729,25 +1712,25 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void pipelineAndDotResidualBranchesCheck1() throws IOException {
+    void pipelineAndDotResidualBranchesFirst() throws IOException {
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("__no_such__ | cat"));
     }
 
     @Test
-    void pipelineAndDotResidualBranchesCheck2() throws IOException {
+    void pipelineAndDotResidualBranchesSecond() throws IOException {
         Sh4j.INSTANCE.run("__no_such__ | cat");
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("echo x | __no_such__"));
     }
 
     @Test
-    void pipelineAndDotResidualBranchesCheck3() throws IOException {
+    void pipelineAndDotResidualBranchesThird() throws IOException {
         Sh4j.INSTANCE.run("__no_such__ | cat");
         Sh4j.INSTANCE.run("echo x | __no_such__");
         Assertions.assertEquals(String.format("3%n"), Sh4j.INSTANCE.out("(exit 3); echo $?"));
     }
 
     @Test
-    void pipelineAndDotResidualBranchesCheck4() throws IOException {
+    void pipelineAndDotResidualBranchesFourth() throws IOException {
         Sh4j.INSTANCE.run("__no_such__ | cat");
         Sh4j.INSTANCE.run("echo x | __no_such__");
         Sh4j.INSTANCE.out("(exit 3); echo $?");
@@ -1766,7 +1749,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void arithmeticOperatorResidualBranchesCheck1() {
+    void arithmeticOperatorResidualBranchesFirst() {
         Assertions.assertEquals(
             String.format("1 6 24 31%n8 1 1 1 1%n2 7 12 3%n1 -1 2%n"),
             Sh4j.INSTANCE.out(
@@ -1779,13 +1762,13 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void arithmeticOperatorResidualBranchesCheck2() {
+    void arithmeticOperatorResidualBranchesSecond() {
         Sh4j.INSTANCE.out(
-                "echo $((2 ^ 3)) $((1+2+3)) $((2*3*4)) $((0x1f))",
-                "echo $((010)) $((3>2)) $((3>=3)) $((3!=2)) $((3==3))",
-                "echo $((6&3)) $((6|3)) $((6<<1)) $((6>>1))",
-                "echo $((!0)) $((~0)) $((0?1:2))"
-            );
+            "echo $((2 ^ 3)) $((1+2+3)) $((2*3*4)) $((0x1f))",
+            "echo $((010)) $((3>2)) $((3>=3)) $((3!=2)) $((3==3))",
+            "echo $((6&3)) $((6|3)) $((6<<1)) $((6>>1))",
+            "echo $((!0)) $((~0)) $((0?1:2))"
+        );
         Assertions.assertEquals(
             String.format("7 7 0 0%n"),
             Sh4j.INSTANCE.out("x=5; echo $((x+=2)) $((x)) $((x=0)) $((x))")
@@ -1793,7 +1776,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void heredocTabStripAndJobLookupBranchesCheck1() {
+    void heredocTabStripAndJobLookupBranchesFirst() {
         Assertions.assertEquals(
             String.format("tabbed%n"),
             Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"))
@@ -1801,20 +1784,20 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void heredocTabStripAndJobLookupBranchesCheck2() {
+    void heredocTabStripAndJobLookupBranchesSecond() {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs 99"));
     }
 
     @Test
-    void heredocTabStripAndJobLookupBranchesCheck3() {
+    void heredocTabStripAndJobLookupBranchesThird() {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Sh4j.INSTANCE.run("jobs 99");
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -9 999999"));
     }
 
     @Test
-    void heredocTabStripAndJobLookupBranchesCheck4() {
+    void heredocTabStripAndJobLookupBranchesFourth() {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Sh4j.INSTANCE.run("jobs 99");
         Sh4j.INSTANCE.run("kill -9 999999");
@@ -1822,7 +1805,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void heredocTabStripAndJobLookupBranchesCheck5() {
+    void heredocTabStripAndJobLookupBranchesFifth() {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Sh4j.INSTANCE.run("jobs 99");
         Sh4j.INSTANCE.run("kill -9 999999");
@@ -1831,7 +1814,7 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck1() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesFirst() throws IOException {
         Assertions.assertEquals(
             String.format("12 6 2 3 11 22 7 1 0%n"),
             Sh4j.INSTANCE.out(
@@ -1845,53 +1828,53 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck2() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesSecond() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("echo $((unknownvar+1))"));
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck3() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesThird() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("echo $((1+))"));
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck4() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesFourth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Assertions.assertEquals(String.format("0%n"), Sh4j.INSTANCE.out("echo $((x=))"));
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck5() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesFifth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1899,14 +1882,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck6() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesSixth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1915,14 +1898,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck7() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesSeventh() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1932,14 +1915,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck8() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesEighth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1950,14 +1933,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck9() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesNinth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1965,19 +1948,18 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -v");
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
-        final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        Assertions.assertEquals(1, unset.exitCode());
+        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull("echo ${missing_q?}").exitCode());
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck10() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesTenth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -1985,20 +1967,18 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -v");
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
-        final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        Assertions.assertTrue(unset.stderr().contains("parameter not set"));
+        Assertions.assertTrue(Sh4j.INSTANCE.runFull("echo ${missing_q?}").stderr().contains("parameter not set"));
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck11() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesEleventh() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -2007,8 +1987,6 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        unset.stderr().contains("parameter not set");
         final Path dir = new TempDirs(BuiltinMutationTest.root)
             .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
@@ -2023,14 +2001,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck12() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesTwelfth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -2039,16 +2017,14 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        unset.stderr().contains("parameter not set");
         final Path dir = new TempDirs(BuiltinMutationTest.root)
             .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
         Files.createDirectories(dir.resolve("sub"));
         Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo sub/*.txt", dir)
-            );
+            String.format("cd %s; echo sub/*.txt", dir)
+        );
         Assertions.assertEquals(
             dir.resolve("sub").resolve("a.txt") + String.format("%n"),
             Sh4j.INSTANCE.out(
@@ -2058,14 +2034,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck13() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesThirteenth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -2074,19 +2050,17 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        unset.stderr().contains("parameter not set");
         final Path dir = new TempDirs(BuiltinMutationTest.root)
             .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
         Files.createDirectories(dir.resolve("sub"));
         Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo sub/*.txt", dir)
-            );
+            String.format("cd %s; echo sub/*.txt", dir)
+        );
         Sh4j.INSTANCE.out(
-                String.format("echo %s/sub/*.txt", dir)
-            );
+            String.format("echo %s/sub/*.txt", dir)
+        );
         Assertions.assertEquals(
             String.format("nodir/*.txt%n"),
             Sh4j.INSTANCE.out(
@@ -2096,14 +2070,14 @@ final class BuiltinMutationTest {
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck14() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesFourteenth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -2112,34 +2086,32 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        unset.stderr().contains("parameter not set");
         final Path dir = new TempDirs(BuiltinMutationTest.root)
             .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
         Files.createDirectories(dir.resolve("sub"));
         Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo sub/*.txt", dir)
-            );
+            String.format("cd %s; echo sub/*.txt", dir)
+        );
         Sh4j.INSTANCE.out(
-                String.format("echo %s/sub/*.txt", dir)
-            );
+            String.format("echo %s/sub/*.txt", dir)
+        );
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo nodir/*.txt", dir)
-            );
+            String.format("cd %s; echo nodir/*.txt", dir)
+        );
         Assertions.assertEquals(String.format("[]%n"), Sh4j.INSTANCE.out("echo []"));
     }
 
     @Test
-    void compoundAssignmentAndGlobPrefixBranchesCheck15() throws IOException {
+    void compoundAssignmentAndGlobPrefixBranchesFifteenth() throws IOException {
         Sh4j.INSTANCE.out(
-                String.join(
-                    "",
-                    "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
-                    " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
-                )
-            );
+            String.join(
+                "",
+                "x=6; echo $((x<<=1)) $((x>>=1)) $((x&=3)) $((x^=1))",
+                " $((x|=8)) $((x*=2)) $((x/=3)) $((x%=2)) $((x-=1))"
+            )
+        );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
         Sh4j.INSTANCE.out("echo $((x=))");
@@ -2148,22 +2120,20 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("command -V");
         Sh4j.INSTANCE.run("echo x >&abc");
         final Sh4j.Result unset = Sh4j.INSTANCE.runFull("echo ${missing_q?}");
-        unset.exitCode();
-        unset.stderr().contains("parameter not set");
         final Path dir = new TempDirs(BuiltinMutationTest.root)
             .folder("glob").toPath();
         Files.write(dir.resolve("a.txt"), new byte[0]);
         Files.createDirectories(dir.resolve("sub"));
         Files.write(dir.resolve("sub").resolve("a.txt"), new byte[0]);
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo sub/*.txt", dir)
-            );
+            String.format("cd %s; echo sub/*.txt", dir)
+        );
         Sh4j.INSTANCE.out(
-                String.format("echo %s/sub/*.txt", dir)
-            );
+            String.format("echo %s/sub/*.txt", dir)
+        );
         Sh4j.INSTANCE.out(
-                String.format("cd %s; echo nodir/*.txt", dir)
-            );
+            String.format("cd %s; echo nodir/*.txt", dir)
+        );
         Sh4j.INSTANCE.out("echo []");
         Assertions.assertEquals(127, Sh4j.INSTANCE.run("sleep 0.1 & kill -9 $!"));
     }

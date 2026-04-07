@@ -110,14 +110,14 @@ final class BuiltinDispatcherTest {
     }
 
     @Test
-    void registerCustomBuiltinCheck1() {
+    void registerCustomBuiltinFirst() {
         final BuiltinDispatcher disp = new BuiltinDispatcher();
         disp.register("mybuiltin", (self, call) -> 42);
         MatcherAssert.assertThat(disp.isBuiltin("mybuiltin"), CoreMatchers.is(true));
     }
 
     @Test
-    void registerCustomBuiltinCheck2() {
+    void registerCustomBuiltinSecond() {
         final BuiltinDispatcher disp = new BuiltinDispatcher();
         disp.register("mybuiltin", (self, call) -> 42);
         CoreMatchers.is(true);

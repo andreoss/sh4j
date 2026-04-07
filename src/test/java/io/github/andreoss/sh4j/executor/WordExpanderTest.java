@@ -195,10 +195,10 @@ final class WordExpanderTest {
     @Test
     void expandVariablesParityColonQuestionUnsetSetsError() {
         Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandVariablesImpl(
-                "${UNSET_VAR_FOR_PARITY:?required}",
-                new HashMap<>(),
-                new Executor(new HashMap<>())
-            )));
+            "${UNSET_VAR_FOR_PARITY:?required}",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        )));
     }
 
     @Test
@@ -285,16 +285,15 @@ final class WordExpanderTest {
     }
 
     @Test
-    void expandBracedColonEqUnsetAssignsCheck1() {
-        final Map<String, String> env = new HashMap<>();
+    void expandBracedColonEqUnsetAssignsFirst() {
         Assertions.assertEquals(
             "42",
-            WordExpander.expandBracedImpl("x:=42", env, new Executor(new HashMap<>()))
+            WordExpander.expandBracedImpl("x:=42", new HashMap<>(), new Executor(new HashMap<>()))
         );
     }
 
     @Test
-    void expandBracedColonEqUnsetAssignsCheck2() {
+    void expandBracedColonEqUnsetAssignsSecond() {
         final Map<String, String> env = new HashMap<>();
         WordExpander.expandBracedImpl("x:=42", env, new Executor(new HashMap<>()));
         Assertions.assertEquals("42", env.get("x"));
@@ -303,10 +302,10 @@ final class WordExpanderTest {
     @Test
     void expandBracedColonQuestionUnsetSetsError() {
         Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandBracedImpl(
-                "x:?required",
-                new HashMap<>(),
-                new Executor(new HashMap<>())
-            )));
+            "x:?required",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        )));
     }
 
     @Test
@@ -365,23 +364,22 @@ final class WordExpanderTest {
     @Test
     void expandBracedQuestionWithoutColonUnsetSetsError() {
         Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandBracedImpl(
-                "x?required",
-                new HashMap<>(),
-                new Executor(new HashMap<>())
-            )));
+            "x?required",
+            new HashMap<>(),
+            new Executor(new HashMap<>())
+        )));
     }
 
     @Test
-    void expandBracedEqualsWithoutColonUnsetAssignsCheck1() {
-        final Map<String, String> env = new HashMap<>();
+    void expandBracedEqualsWithoutColonUnsetAssignsFirst() {
         Assertions.assertEquals(
             "42",
-            WordExpander.expandBracedImpl("x=42", env, new Executor(new HashMap<>()))
+            WordExpander.expandBracedImpl("x=42", new HashMap<>(), new Executor(new HashMap<>()))
         );
     }
 
     @Test
-    void expandBracedEqualsWithoutColonUnsetAssignsCheck2() {
+    void expandBracedEqualsWithoutColonUnsetAssignsSecond() {
         final Map<String, String> env = new HashMap<>();
         WordExpander.expandBracedImpl("x=42", env, new Executor(new HashMap<>()));
         Assertions.assertEquals("42", env.get("x"));
@@ -408,39 +406,32 @@ final class WordExpanderTest {
     }
 
     @Test
-    void splitFieldsConsecutiveIfsCreatesEmptyFieldCheck1() {
-        final List<String> result = WordExpander.splitFields("a::b", ":");
-        Assertions.assertEquals(3, result.size());
+    void splitFieldsConsecutiveIfsCreatesEmptyFieldFirst() {
+        Assertions.assertEquals(3, WordExpander.splitFields("a::b", ":").size());
     }
 
     @Test
-    void splitFieldsConsecutiveIfsCreatesEmptyFieldCheck2() {
-        final List<String> result = WordExpander.splitFields("a::b", ":");
-        Assertions.assertEquals("a", result.get(0));
+    void splitFieldsConsecutiveIfsCreatesEmptyFieldSecond() {
+        Assertions.assertEquals("a", WordExpander.splitFields("a::b", ":").get(0));
     }
 
     @Test
-    void splitFieldsConsecutiveIfsCreatesEmptyFieldCheck3() {
-        final List<String> result = WordExpander.splitFields("a::b", ":");
-        result.get(0);
-        Assertions.assertEquals("", result.get(1));
+    void splitFieldsConsecutiveIfsCreatesEmptyFieldThird() {
+        Assertions.assertEquals("", WordExpander.splitFields("a::b", ":").get(1));
     }
 
     @Test
-    void splitFieldsConsecutiveIfsCreatesEmptyFieldCheck4() {
-        final List<String> result = WordExpander.splitFields("a::b", ":");
-        result.get(0);
-        result.get(1);
-        Assertions.assertEquals("b", result.get(2));
+    void splitFieldsConsecutiveIfsCreatesEmptyFieldFourth() {
+        Assertions.assertEquals("b", WordExpander.splitFields("a::b", ":").get(2));
     }
 
     @Test
-    void globMatchesEmptyPatternCheck1() {
+    void globMatchesEmptyPatternFirst() {
         Assertions.assertTrue(WordExpander.globMatches("", ""));
     }
 
     @Test
-    void globMatchesEmptyPatternCheck2() {
+    void globMatchesEmptyPatternSecond() {
         WordExpander.globMatches("", "");
         Assertions.assertFalse(WordExpander.globMatches("", "anything"));
     }
@@ -529,7 +520,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void unclosedDollarParenAndNestedBraceStayLiteralCheck1() {
+    void unclosedDollarParenAndNestedBraceStayLiteralFirst() {
         Assertions.assertEquals(
             String.format("$(abc%n"),
             Sh4j.INSTANCE.out("echo $(abc")
@@ -537,7 +528,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void unclosedDollarParenAndNestedBraceStayLiteralCheck2() {
+    void unclosedDollarParenAndNestedBraceStayLiteralSecond() {
         Sh4j.INSTANCE.out("echo $(abc");
         Assertions.assertEquals(
             String.format("x%n"),
@@ -546,7 +537,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void unclosedDollarParenAndNestedBraceStayLiteralCheck3() {
+    void unclosedDollarParenAndNestedBraceStayLiteralThird() {
         Sh4j.INSTANCE.out("echo $(abc");
         Sh4j.INSTANCE.out("echo ${a${b}}x");
         Assertions.assertEquals(
@@ -585,7 +576,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void normaliseBacktickNestedAndUnclosedCheck1() {
+    void normaliseBacktickNestedAndUnclosedFirst() {
         Assertions.assertEquals(
             "$(echo ${x})",
             WordExpander.normaliseBackticks("`echo ${x}`")
@@ -593,7 +584,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void normaliseBacktickNestedAndUnclosedCheck2() {
+    void normaliseBacktickNestedAndUnclosedSecond() {
         WordExpander.normaliseBackticks("`echo ${x}`");
         Assertions.assertEquals(
             "`unclosed",
@@ -602,7 +593,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void normaliseBacktickNestedAndUnclosedCheck3() {
+    void normaliseBacktickNestedAndUnclosedThird() {
         WordExpander.normaliseBackticks("`echo ${x}`");
         WordExpander.normaliseBackticks("`unclosed");
         Assertions.assertEquals(
@@ -612,25 +603,25 @@ final class WordExpanderTest {
     }
 
     @Test
-    void removeQuotesBoundaryFormsCheck1() {
+    void removeQuotesBoundaryFormsFirst() {
         Assertions.assertEquals("", WordExpander.removeQuotes(""));
     }
 
     @Test
-    void removeQuotesBoundaryFormsCheck2() {
+    void removeQuotesBoundaryFormsSecond() {
         WordExpander.removeQuotes("");
         Assertions.assertEquals("a", WordExpander.removeQuotes("'a"));
     }
 
     @Test
-    void removeQuotesBoundaryFormsCheck3() {
+    void removeQuotesBoundaryFormsThird() {
         WordExpander.removeQuotes("");
         WordExpander.removeQuotes("'a");
         Assertions.assertEquals("a", WordExpander.removeQuotes("\"a"));
     }
 
     @Test
-    void removeQuotesBoundaryFormsCheck4() {
+    void removeQuotesBoundaryFormsFourth() {
         WordExpander.removeQuotes("");
         WordExpander.removeQuotes("'a");
         WordExpander.removeQuotes("\"a");
@@ -638,7 +629,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void removeQuotesBoundaryFormsCheck5() {
+    void removeQuotesBoundaryFormsFifth() {
         WordExpander.removeQuotes("");
         WordExpander.removeQuotes("'a");
         WordExpander.removeQuotes("\"a");
@@ -647,58 +638,58 @@ final class WordExpanderTest {
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck1() {
+    void quoteAndGlobBoundariesFirst() {
         Assertions.assertFalse(WordExpander.isQuoted(null));
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck2() {
+    void quoteAndGlobBoundariesSecond() {
         Assertions.assertFalse(WordExpander.isQuoted(""));
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck3() {
+    void quoteAndGlobBoundariesThird() {
         Assertions.assertFalse(WordExpander.isQuoted("\""));
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck4() {
+    void quoteAndGlobBoundariesFourth() {
         Assertions.assertFalse(WordExpander.containsGlobChars("abc"));
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck5() {
+    void quoteAndGlobBoundariesFifth() {
         WordExpander.containsGlobChars("abc");
         Assertions.assertTrue(WordExpander.containsGlobChars("a?c"));
     }
 
     @Test
-    void quoteAndGlobBoundariesCheck6() {
+    void quoteAndGlobBoundariesSixth() {
         WordExpander.containsGlobChars("abc");
         WordExpander.containsGlobChars("a?c");
         Assertions.assertTrue(WordExpander.containsGlobChars("a[c"));
     }
 
     @Test
-    void globMatchesBoundariesCheck1() {
+    void globMatchesBoundariesFirst() {
         Assertions.assertTrue(WordExpander.globMatches("", ""));
     }
 
     @Test
-    void globMatchesBoundariesCheck2() {
+    void globMatchesBoundariesSecond() {
         WordExpander.globMatches("", "");
         Assertions.assertFalse(WordExpander.globMatches("", "x"));
     }
 
     @Test
-    void globMatchesBoundariesCheck3() {
+    void globMatchesBoundariesThird() {
         WordExpander.globMatches("", "");
         WordExpander.globMatches("", "x");
         Assertions.assertTrue(WordExpander.globMatches("[abc", "[abc"));
     }
 
     @Test
-    void globMatchesBoundariesCheck4() {
+    void globMatchesBoundariesFourth() {
         WordExpander.globMatches("", "");
         WordExpander.globMatches("", "x");
         WordExpander.globMatches("[abc", "[abc");
@@ -706,7 +697,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globMatchesBoundariesCheck5() {
+    void globMatchesBoundariesFifth() {
         WordExpander.globMatches("", "");
         WordExpander.globMatches("", "x");
         WordExpander.globMatches("[abc", "[abc");
@@ -715,7 +706,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globMatchesBoundariesCheck6() {
+    void globMatchesBoundariesSixth() {
         WordExpander.globMatches("", "");
         WordExpander.globMatches("", "x");
         WordExpander.globMatches("[abc", "[abc");
@@ -725,7 +716,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globMatchesBoundariesCheck7() {
+    void globMatchesBoundariesSeventh() {
         WordExpander.globMatches("", "");
         WordExpander.globMatches("", "x");
         WordExpander.globMatches("[abc", "[abc");
@@ -744,7 +735,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void identifierBoundariesAndEmptyBraceCheck1() {
+    void identifierBoundariesAndEmptyBraceFirst() {
         Assertions.assertEquals(
             String.format("zu a1 a_%n"),
             Sh4j.INSTANCE.out("Z=z; _=u; A1=a1; A_=a_; echo $Z$_ $A1 $A_")
@@ -752,31 +743,31 @@ final class WordExpanderTest {
     }
 
     @Test
-    void identifierBoundariesAndEmptyBraceCheck2() {
+    void identifierBoundariesAndEmptyBraceSecond() {
         Sh4j.INSTANCE.out("Z=z; _=u; A1=a1; A_=a_; echo $Z$_ $A1 $A_");
         Assertions.assertEquals(String.format("${}x%n"), Sh4j.INSTANCE.out("echo ${}x"));
     }
 
     @Test
-    void substitutionBoundaryFormsCheck1() {
+    void substitutionBoundaryFormsFirst() {
         Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out("echo $( )"));
     }
 
     @Test
-    void substitutionBoundaryFormsCheck2() {
+    void substitutionBoundaryFormsSecond() {
         Sh4j.INSTANCE.out("echo $( )");
         Assertions.assertEquals(String.format("0%n"), Sh4j.INSTANCE.out("echo $(( ))"));
     }
 
     @Test
-    void substitutionBoundaryFormsCheck3() {
+    void substitutionBoundaryFormsThird() {
         Sh4j.INSTANCE.out("echo $( )");
         Sh4j.INSTANCE.out("echo $(( ))");
         Assertions.assertEquals(String.format("$((1%n"), Sh4j.INSTANCE.out("echo $((1"));
     }
 
     @Test
-    void substitutionBoundaryFormsCheck4() {
+    void substitutionBoundaryFormsFourth() {
         Sh4j.INSTANCE.out("echo $( )");
         Sh4j.INSTANCE.out("echo $(( ))");
         Sh4j.INSTANCE.out("echo $((1");
@@ -784,7 +775,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void nestedBraceMatchingCheck1() {
+    void nestedBraceMatchingFirst() {
         Assertions.assertEquals(
             String.format("x%n"),
             Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}")
@@ -792,7 +783,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void nestedBraceMatchingCheck2() {
+    void nestedBraceMatchingSecond() {
         Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}");
         Assertions.assertEquals(
             String.format("y%n"),
@@ -801,7 +792,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void nestedBraceMatchingCheck3() {
+    void nestedBraceMatchingThird() {
         Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}");
         Sh4j.INSTANCE.out("B=y; echo ${A:-${B:-d}}");
         Assertions.assertEquals(String.format("x%n"), Sh4j.INSTANCE.out("echo ${a{b}c}x"));
@@ -851,7 +842,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void tildeBoundariesCheck1() {
+    void tildeBoundariesFirst() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/u");
         env.put("PWD", "/cur");
@@ -859,7 +850,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void tildeBoundariesCheck2() {
+    void tildeBoundariesSecond() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/u");
         env.put("PWD", "/cur");
@@ -868,7 +859,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void tildeBoundariesCheck3() {
+    void tildeBoundariesThird() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/u");
         env.put("PWD", "/cur");
@@ -878,25 +869,25 @@ final class WordExpanderTest {
     }
 
     @Test
-    void normaliseDollarAndUnclosedFormsCheck1() {
+    void normaliseDollarAndUnclosedFormsFirst() {
         Assertions.assertEquals("$x", WordExpander.normaliseBackticks("$x"));
     }
 
     @Test
-    void normaliseDollarAndUnclosedFormsCheck2() {
+    void normaliseDollarAndUnclosedFormsSecond() {
         WordExpander.normaliseBackticks("$x");
         Assertions.assertEquals("$", WordExpander.normaliseBackticks("$"));
     }
 
     @Test
-    void normaliseDollarAndUnclosedFormsCheck3() {
+    void normaliseDollarAndUnclosedFormsThird() {
         WordExpander.normaliseBackticks("$x");
         WordExpander.normaliseBackticks("$");
         Assertions.assertEquals("$(x", WordExpander.normaliseBackticks("$(x"));
     }
 
     @Test
-    void normaliseDollarAndUnclosedFormsCheck4() {
+    void normaliseDollarAndUnclosedFormsFourth() {
         WordExpander.normaliseBackticks("$x");
         WordExpander.normaliseBackticks("$");
         WordExpander.normaliseBackticks("$(x");
@@ -904,51 +895,51 @@ final class WordExpanderTest {
     }
 
     @Test
-    void quoteBoundaryAndEmptyEscapeCheck1() {
+    void quoteBoundaryAndEmptyEscapeFirst() {
         Assertions.assertTrue(WordExpander.isQuoted("\"\""));
     }
 
     @Test
-    void quoteBoundaryAndEmptyEscapeCheck2() {
+    void quoteBoundaryAndEmptyEscapeSecond() {
         Assertions.assertTrue(WordExpander.isQuoted("''"));
     }
 
     @Test
-    void quoteBoundaryAndEmptyEscapeCheck3() {
+    void quoteBoundaryAndEmptyEscapeThird() {
         Assertions.assertFalse(WordExpander.isQuoted("\"x"));
     }
 
     @Test
-    void quoteBoundaryAndEmptyEscapeCheck4() {
+    void quoteBoundaryAndEmptyEscapeFourth() {
         Assertions.assertNull(WordExpander.escapeForQuoteRemoval(null));
     }
 
     @Test
-    void quoteBoundaryAndEmptyEscapeCheck5() {
+    void quoteBoundaryAndEmptyEscapeFifth() {
         WordExpander.escapeForQuoteRemoval(null);
         Assertions.assertEquals("", WordExpander.escapeForQuoteRemoval(""));
     }
 
     @Test
-    void removeQuotesEscapedDoubleAndEmptyCheck1() {
+    void removeQuotesEscapedDoubleAndEmptyFirst() {
         Assertions.assertEquals("", WordExpander.removeQuotes("\"\""));
     }
 
     @Test
-    void removeQuotesEscapedDoubleAndEmptyCheck2() {
+    void removeQuotesEscapedDoubleAndEmptySecond() {
         WordExpander.removeQuotes("\"\"");
         Assertions.assertEquals("a\"b", WordExpander.removeQuotes("\"a\\\"b\""));
     }
 
     @Test
-    void removeQuotesEscapedDoubleAndEmptyCheck3() {
+    void removeQuotesEscapedDoubleAndEmptyThird() {
         WordExpander.removeQuotes("\"\"");
         WordExpander.removeQuotes("\"a\\\"b\"");
         Assertions.assertEquals("a\\", WordExpander.removeQuotes("\"a\\\\\""));
     }
 
     @Test
-    void pathnameExpansionSkipsDotfilesAndSortsCheck1() throws IOException {
+    void pathnameExpansionSkipsDotfilesAndSortsFirst() throws IOException {
         final File dir = new TempDirs(WordExpanderTest.root).folder("we-glob");
         Files.write(new File(dir, "b.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
@@ -960,7 +951,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void pathnameExpansionSkipsDotfilesAndSortsCheck2() throws IOException {
+    void pathnameExpansionSkipsDotfilesAndSortsSecond() throws IOException {
         final File dir = new TempDirs(WordExpanderTest.root).folder("we-glob");
         Files.write(new File(dir, "b.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
@@ -973,7 +964,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void pathnameExpansionSkipsDotfilesAndSortsCheck3() throws IOException {
+    void pathnameExpansionSkipsDotfilesAndSortsThird() throws IOException {
         final File dir = new TempDirs(WordExpanderTest.root).folder("we-glob");
         Files.write(new File(dir, "b.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
@@ -987,25 +978,25 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globCharacterBoundariesCheck1() {
+    void globCharacterBoundariesFirst() {
         Assertions.assertFalse(WordExpander.containsGlobChars(""));
     }
 
     @Test
-    void globCharacterBoundariesCheck2() {
+    void globCharacterBoundariesSecond() {
         WordExpander.containsGlobChars("");
         Assertions.assertTrue(WordExpander.globMatches("[", "["));
     }
 
     @Test
-    void globCharacterBoundariesCheck3() {
+    void globCharacterBoundariesThird() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         Assertions.assertFalse(WordExpander.globMatches("[", "x"));
     }
 
     @Test
-    void globCharacterBoundariesCheck4() {
+    void globCharacterBoundariesFourth() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         WordExpander.globMatches("[", "x");
@@ -1013,7 +1004,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globCharacterBoundariesCheck5() {
+    void globCharacterBoundariesFifth() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         WordExpander.globMatches("[", "x");
@@ -1022,7 +1013,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globCharacterBoundariesCheck6() {
+    void globCharacterBoundariesSixth() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         WordExpander.globMatches("[", "x");
@@ -1032,7 +1023,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globCharacterBoundariesCheck7() {
+    void globCharacterBoundariesSeventh() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         WordExpander.globMatches("[", "x");
@@ -1043,7 +1034,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void globCharacterBoundariesCheck8() {
+    void globCharacterBoundariesEighth() {
         WordExpander.containsGlobChars("");
         WordExpander.globMatches("[", "[");
         WordExpander.globMatches("[", "x");
@@ -1055,25 +1046,25 @@ final class WordExpanderTest {
     }
 
     @Test
-    void trailingBackslashAndUnclosedExpansionsCheck1() {
+    void trailingBackslashAndUnclosedExpansionsFirst() {
         Assertions.assertEquals(String.format("a\\%n"), Sh4j.INSTANCE.out("echo a\\"));
     }
 
     @Test
-    void trailingBackslashAndUnclosedExpansionsCheck2() {
+    void trailingBackslashAndUnclosedExpansionsSecond() {
         Sh4j.INSTANCE.out("echo a\\");
         Assertions.assertEquals(String.format("${%n"), Sh4j.INSTANCE.out("echo ${"));
     }
 
     @Test
-    void trailingBackslashAndUnclosedExpansionsCheck3() {
+    void trailingBackslashAndUnclosedExpansionsThird() {
         Sh4j.INSTANCE.out("echo a\\");
         Sh4j.INSTANCE.out("echo ${");
         Assertions.assertEquals(String.format("$%n"), Sh4j.INSTANCE.out("echo $"));
     }
 
     @Test
-    void identifierAndSubstitutionBoundariesCheck1() {
+    void identifierAndSubstitutionBoundariesFirst() {
         Assertions.assertEquals(
             String.format("zu n%n"),
             Sh4j.INSTANCE.out("Z=z; _=u; Z9=n; echo $Z$_ $Z9")
@@ -1081,7 +1072,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void identifierAndSubstitutionBoundariesCheck2() {
+    void identifierAndSubstitutionBoundariesSecond() {
         Sh4j.INSTANCE.out("Z=z; _=u; Z9=n; echo $Z$_ $Z9");
         Assertions.assertEquals(
             String.format("1 true false%n"),
@@ -1090,7 +1081,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void identifierAndSubstitutionBoundariesCheck3() {
+    void identifierAndSubstitutionBoundariesThird() {
         Sh4j.INSTANCE.out("Z=z; _=u; Z9=n; echo $Z$_ $Z9");
         Sh4j.INSTANCE.out("echo $((1)) $(echo true) $(echo false)");
         Assertions.assertEquals(
@@ -1108,7 +1099,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void tildeUserAndRootBoundariesCheck1() {
+    void tildeUserAndRootBoundariesFirst() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/u");
         env.put("PWD", "/cur");
@@ -1116,7 +1107,7 @@ final class WordExpanderTest {
     }
 
     @Test
-    void tildeUserAndRootBoundariesCheck2() {
+    void tildeUserAndRootBoundariesSecond() {
         final Map<String, String> env = new HashMap<>();
         env.put("HOME", "/home/u");
         env.put("PWD", "/cur");
@@ -1125,25 +1116,25 @@ final class WordExpanderTest {
     }
 
     @Test
-    void removeQuotesUnclosedAndEscapedFormsCheck1() {
+    void removeQuotesUnclosedAndEscapedFormsFirst() {
         Assertions.assertEquals("a", WordExpander.removeQuotes("'a"));
     }
 
     @Test
-    void removeQuotesUnclosedAndEscapedFormsCheck2() {
+    void removeQuotesUnclosedAndEscapedFormsSecond() {
         WordExpander.removeQuotes("'a");
         Assertions.assertEquals("a", WordExpander.removeQuotes("\"a"));
     }
 
     @Test
-    void removeQuotesUnclosedAndEscapedFormsCheck3() {
+    void removeQuotesUnclosedAndEscapedFormsThird() {
         WordExpander.removeQuotes("'a");
         WordExpander.removeQuotes("\"a");
         Assertions.assertEquals("ab", WordExpander.removeQuotes("a\\b"));
     }
 
     @Test
-    void removeQuotesUnclosedAndEscapedFormsCheck4() {
+    void removeQuotesUnclosedAndEscapedFormsFourth() {
         WordExpander.removeQuotes("'a");
         WordExpander.removeQuotes("\"a");
         WordExpander.removeQuotes("a\\b");
