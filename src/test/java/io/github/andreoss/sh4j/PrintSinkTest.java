@@ -24,10 +24,7 @@ final class PrintSinkTest {
     void writesTextAsBytes() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         new PrintSink(out, StandardCharsets.UTF_8).print("abc");
-        MatcherAssert.assertThat(
-            out.toString(StandardCharsets.UTF_8),
-            CoreMatchers.equalTo("abc")
-        );
+        MatcherAssert.assertThat(out.toString(StandardCharsets.UTF_8), CoreMatchers.equalTo("abc"));
     }
 
     @Test

@@ -123,7 +123,10 @@ final class CharReaderTest {
 
     @Test
     void multipleLinesFirst() {
-        MatcherAssert.assertThat(new CharReader(String.format("a%nb")).getLine(), CoreMatchers.is(1));
+        MatcherAssert.assertThat(
+            new CharReader(String.format("a%nb")).getLine(),
+            CoreMatchers.is(1)
+        );
     }
 
     @Test
@@ -210,26 +213,30 @@ final class CharReaderTest {
 
     @Test
     void ioExceptionTreatedAsEofFirst() {
-        MatcherAssert.assertThat(new CharReader(
-            new Reader() {
+        MatcherAssert.assertThat(
+            new CharReader(
+                new Reader() {
 
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
+                    @Override
+                    public int read() throws IOException {
+                        throw new IOException();
+                    }
 
-                @Override
-                public int read(final char[] cbuf, final int off, final int len)
-                    throws IOException {
-                    throw new IOException();
-                }
+                    @Override
+                    public int read(final char[] cbuf, final int off, final int len)
+                        throws IOException {
+                        throw new IOException();
+                    }
 
-                @Override
-                public void close() {
-                    // intentional no-op
+                    @Override
+                    public void close() {
+                        // intentional no-op
+                    }
                 }
-            }
-        ).isEof(), CoreMatchers.is(true));
+            )
+                .isEof(),
+            CoreMatchers.is(true)
+        );
     }
 
     @Test

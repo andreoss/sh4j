@@ -40,10 +40,12 @@ final class BuiltinDispatcherTest {
     @Test
     void dispatchTrueReturnsZero() {
         MatcherAssert.assertThat(
-            new BuiltinDispatcher().dispatch(
-                "true", null,
-                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
-            ),
+            new BuiltinDispatcher()
+                .dispatch(
+                    "true",
+                    null,
+                    new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
+                ),
             CoreMatchers.equalTo(0)
         );
     }
@@ -51,10 +53,12 @@ final class BuiltinDispatcherTest {
     @Test
     void dispatchFalseReturnsOne() {
         MatcherAssert.assertThat(
-            new BuiltinDispatcher().dispatch(
-                "false", null,
-                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
-            ),
+            new BuiltinDispatcher()
+                .dispatch(
+                    "false",
+                    null,
+                    new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
+                ),
             CoreMatchers.equalTo(1)
         );
     }
@@ -62,10 +66,12 @@ final class BuiltinDispatcherTest {
     @Test
     void dispatchColonReturnsZero() {
         MatcherAssert.assertThat(
-            new BuiltinDispatcher().dispatch(
-                ":", null,
-                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
-            ),
+            new BuiltinDispatcher()
+                .dispatch(
+                    ":",
+                    null,
+                    new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
+                ),
             CoreMatchers.equalTo(0)
         );
     }
@@ -73,10 +79,12 @@ final class BuiltinDispatcherTest {
     @Test
     void dispatchUnknownReturnsNull() {
         MatcherAssert.assertThat(
-            new BuiltinDispatcher().dispatch(
-                "nope", null,
-                new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
-            ),
+            new BuiltinDispatcher()
+                .dispatch(
+                    "nope",
+                    null,
+                    new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
+                ),
             CoreMatchers.nullValue()
         );
     }
@@ -123,7 +131,8 @@ final class BuiltinDispatcherTest {
         CoreMatchers.is(true);
         MatcherAssert.assertThat(
             disp.dispatch(
-                "mybuiltin", null,
+                "mybuiltin",
+                null,
                 new Invocation(Arrays.asList(), new HashMap<>(), Arrays.asList())
             ),
             CoreMatchers.equalTo(42)

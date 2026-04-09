@@ -87,14 +87,14 @@ final class PosixRegressionTest {
      */
     @Test
     void appendRedirectAndAssignmentPrefixFirst() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("append.txt");
+        final File file = new TempDirs(PosixRegressionTest.root).file("append.txt");
         Assertions.assertEquals(
             String.format("a%nb%n"),
             Sh4j.INSTANCE.out(
                 String.format(
                     "echo a > %s; echo b >> %s; cat %s",
-                    file.getAbsolutePath(), file.getAbsolutePath(),
+                    file.getAbsolutePath(),
+                    file.getAbsolutePath(),
                     file.getAbsolutePath()
                 )
             )
@@ -103,12 +103,12 @@ final class PosixRegressionTest {
 
     @Test
     void appendRedirectAndAssignmentPrefixSecond() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("append.txt");
+        final File file = new TempDirs(PosixRegressionTest.root).file("append.txt");
         Sh4j.INSTANCE.out(
             String.format(
                 "echo a > %s; echo b >> %s; cat %s",
-                file.getAbsolutePath(), file.getAbsolutePath(),
+                file.getAbsolutePath(),
+                file.getAbsolutePath(),
                 file.getAbsolutePath()
             )
         );
@@ -180,18 +180,26 @@ final class PosixRegressionTest {
 
     @Test
     void readonlyAssignmentTerminatesShellFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "readonly R=1; R=2; echo after"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "readonly R=1; R=2; echo after"
+            )
+                .exitCode()
+        );
     }
 
     @Test
     void readonlyAssignmentTerminatesShellSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "readonly R=1; R=2; echo after"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "readonly R=1; R=2; echo after"
+            )
+                .stdout()
+        );
     }
 
     @Test
@@ -251,18 +259,26 @@ final class PosixRegressionTest {
      */
     @Test
     void posixSetEErrorHandlingFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "set -e; false; echo nope"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "set -e; false; echo nope"
+            )
+                .exitCode()
+        );
     }
 
     @Test
     void posixSetEErrorHandlingSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "set -e; false; echo nope"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "set -e; false; echo nope"
+            )
+                .stdout()
+        );
     }
 
     /**
@@ -327,8 +343,7 @@ final class PosixRegressionTest {
      */
     @Test
     void posixFilenameExpansion() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("pathexpand");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("pathexpand");
         Files.write(new File(dir, "one.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "two.txt").toPath(), new byte[0]);
         Files.write(new File(dir, "skip.log").toPath(), new byte[0]);
@@ -344,8 +359,8 @@ final class PosixRegressionTest {
             String.format("seed%n"),
             Sh4j.INSTANCE.out(
                 String.format(
-                    "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", new TempDirs(PosixRegressionTest.root)
-                                                                                                                .folder("cwdtest").getAbsolutePath()
+                    "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"",
+                    new TempDirs(PosixRegressionTest.root).folder("cwdtest").getAbsolutePath()
                 )
             )
         );
@@ -354,17 +369,17 @@ final class PosixRegressionTest {
     @Test
     void redirectionsResolveAgainstShellCwdSecond() throws IOException {
         final String base = new TempDirs(PosixRegressionTest.root)
-                                .folder("cwdtest").getAbsolutePath();
+            .folder("cwdtest")
+            .getAbsolutePath();
         Sh4j.INSTANCE.out(
-            String.format(
-                "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base
-            )
+            String.format("cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base)
         );
         Assertions.assertEquals(
             String.format("fd-ok%n"),
             Sh4j.INSTANCE.out(
                 String.format(
-                    "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt", base
+                    "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt",
+                    base
                 )
             )
         );
@@ -372,17 +387,15 @@ final class PosixRegressionTest {
 
     @Test
     void redirectionsResolveAgainstShellCwdThird() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("cwdtest");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("cwdtest");
         final String base = dir.getAbsolutePath();
         Sh4j.INSTANCE.out(
-            String.format(
-                "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base
-            )
+            String.format("cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base)
         );
         Sh4j.INSTANCE.out(
             String.format(
-                "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt", base
+                "cd %s; exec 3>fdout.txt; echo fd-ok >&3; exec 3>&-; cat fdout.txt",
+                base
             )
         );
         Assertions.assertEquals(
@@ -396,42 +409,58 @@ final class PosixRegressionTest {
 
     @Test
     void execRedirectionFailureTerminatesShellFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "exec 9</nonexistent-dir-xyz/f; echo after"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "exec 9</nonexistent-dir-xyz/f; echo after"
+            )
+                .exitCode()
+        );
     }
 
     @Test
     void execRedirectionFailureTerminatesShellSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "exec 9</nonexistent-dir-xyz/f; echo after"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "exec 9</nonexistent-dir-xyz/f; echo after"
+            )
+                .stdout()
+        );
     }
 
     @Test
     void execRedirectionFailureTerminatesShellThird() {
-        final Sh4j.Result input = Sh4j.INSTANCE.runFull(
+        Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "exec 9</nonexistent-dir-xyz/f; echo after"
         );
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "exec >/nonexistent-dir-xyz/f; echo after"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "exec >/nonexistent-dir-xyz/f; echo after"
+            )
+                .exitCode()
+        );
     }
 
     @Test
     void execRedirectionFailureTerminatesShellFourth() {
-        final Sh4j.Result input = Sh4j.INSTANCE.runFull(
+        Sh4j.INSTANCE.runFull(
             new ByteArrayInputStream(new byte[0]),
             "exec 9</nonexistent-dir-xyz/f; echo after"
         );
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            new ByteArrayInputStream(new byte[0]),
-            "exec >/nonexistent-dir-xyz/f; echo after"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull(
+                new ByteArrayInputStream(new byte[0]),
+                "exec >/nonexistent-dir-xyz/f; echo after"
+            )
+                .stdout()
+        );
     }
 
     @Test
@@ -451,14 +480,10 @@ final class PosixRegressionTest {
         final File file = new TempDirs(PosixRegressionTest.root).file("fd.txt");
         Files.write(file.toPath(), String.format("seed%n").getBytes(StandardCharsets.UTF_8));
         final String path = file.getAbsolutePath();
-        Sh4j.INSTANCE.out(
-            String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path)
-        );
+        Sh4j.INSTANCE.out(String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path));
         Assertions.assertEquals(
             String.format("w=seed%n"),
-            Sh4j.INSTANCE.out(
-                String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path)
-            )
+            Sh4j.INSTANCE.out(String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path))
         );
     }
 
@@ -467,18 +492,15 @@ final class PosixRegressionTest {
         final File file = new TempDirs(PosixRegressionTest.root).file("fd.txt");
         Files.write(file.toPath(), String.format("seed%n").getBytes(StandardCharsets.UTF_8));
         final String path = file.getAbsolutePath();
-        Sh4j.INSTANCE.out(
-            String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path)
-        );
-        Sh4j.INSTANCE.out(
-            String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path)
-        );
+        Sh4j.INSTANCE.out(String.format("exec 3<>%s; read v <&3; echo \"v=$v\"", path));
+        Sh4j.INSTANCE.out(String.format("exec 4<%s; read w <&4; echo \"w=$w\"", path));
         Assertions.assertEquals(
             String.format("y=[]%n"),
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 String.format("exec 5<%s; exec 5<&-; read y <&5; echo \"y=[$y]\"", path)
-            ).stdout()
+            )
+                .stdout()
         );
     }
 
@@ -498,27 +520,36 @@ final class PosixRegressionTest {
 
     @Test
     void execRedirectionPersistsFirst() throws IOException {
-        Assertions.assertEquals(0, Sh4j.INSTANCE.runFull(
-            String.format("exec > %s; echo redirected", new TempDirs(PosixRegressionTest.root)
-                                                            .file("exec.out").getAbsolutePath())
-        ).exitCode());
+        Assertions.assertEquals(
+            0,
+            Sh4j.INSTANCE.runFull(
+                String.format(
+                    "exec > %s; echo redirected",
+                    new TempDirs(PosixRegressionTest.root).file("exec.out").getAbsolutePath()
+                )
+            )
+                .exitCode()
+        );
     }
 
     @Test
     void execRedirectionPersistsSecond() throws IOException {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            String.format("exec > %s; echo redirected", new TempDirs(PosixRegressionTest.root)
-                                                            .file("exec.out").getAbsolutePath())
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull(
+                String.format(
+                    "exec > %s; echo redirected",
+                    new TempDirs(PosixRegressionTest.root).file("exec.out").getAbsolutePath()
+                )
+            )
+                .stdout()
+        );
     }
 
     @Test
     void execRedirectionPersistsThird() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("exec.out");
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format("exec > %s; echo redirected", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(PosixRegressionTest.root).file("exec.out");
+        Sh4j.INSTANCE.runFull(String.format("exec > %s; echo redirected", file.getAbsolutePath()));
         Assertions.assertEquals(
             String.format("redirected%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -532,26 +563,22 @@ final class PosixRegressionTest {
 
     @Test
     void execCommandDoesNotResumeShellSecond() {
-        Assertions.assertEquals(String.format("hi%n"), Sh4j.INSTANCE.runFull("exec echo hi; echo after").stdout());
+        Assertions.assertEquals(
+            String.format("hi%n"),
+            Sh4j.INSTANCE.runFull("exec echo hi; echo after").stdout()
+        );
     }
 
     @Test
     void subshellCdDoesNotChangeParentCwd() {
-        Assertions.assertEquals(
-            String.format("/tmp%n"),
-            Sh4j.INSTANCE.out(
-                "cd /tmp; (cd /); pwd"
-            )
-        );
+        Assertions.assertEquals(String.format("/tmp%n"), Sh4j.INSTANCE.out("cd /tmp; (cd /); pwd"));
     }
 
     @Test
     void shellVariablesAreNotExported() {
         Assertions.assertEquals(
             String.format("unset%n"),
-            Sh4j.INSTANCE.out(
-                "X=secret; sh -c 'echo ${X-unset}'"
-            )
+            Sh4j.INSTANCE.out("X=secret; sh -c 'echo ${X-unset}'")
         );
     }
 
@@ -559,31 +586,33 @@ final class PosixRegressionTest {
     void exportedValueLosesQuotes() {
         Assertions.assertEquals(
             String.format("x y%n"),
-            Sh4j.INSTANCE.out(
-                "export E='x y'; sh -c 'printf \"%s\\n\" \"$E\"'"
-            )
+            Sh4j.INSTANCE.out("export E='x y'; sh -c 'printf \"%s\\n\" \"$E\"'")
         );
     }
 
     @Test
     void readonlySurvivesUnsetFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            "readonly R='a b'; unset R; echo after"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull("readonly R='a b'; unset R; echo after").exitCode()
+        );
     }
 
     @Test
     void readonlySurvivesUnsetSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            "readonly R='a b'; unset R; echo after"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull("readonly R='a b'; unset R; echo after").stdout()
+        );
     }
 
     @Test
     void readonlySurvivesUnsetThird() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            "readonly R='a b'; unset R; echo after"
-        ).stderr().contains("readonly"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("readonly R='a b'; unset R; echo after")
+                .stderr()
+                .contains("readonly")
+        );
     }
 
     @Test
@@ -596,23 +625,27 @@ final class PosixRegressionTest {
 
     @Test
     void nounsetAbortsScriptFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            "set -u; echo \"$MISSING\"; echo after"
-        ).exitCode());
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull("set -u; echo \"$MISSING\"; echo after").exitCode()
+        );
     }
 
     @Test
     void nounsetAbortsScriptSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            "set -u; echo \"$MISSING\"; echo after"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull("set -u; echo \"$MISSING\"; echo after").stdout()
+        );
     }
 
     @Test
     void nounsetAbortsScriptThird() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            "set -u; echo \"$MISSING\"; echo after"
-        ).stderr().contains("MISSING"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("set -u; echo \"$MISSING\"; echo after")
+                .stderr()
+                .contains("MISSING")
+        );
     }
 
     @Test
@@ -665,22 +698,22 @@ final class PosixRegressionTest {
 
     @Test
     void globSkipsDotfilesAndSortsFirst() throws IOException {
-        Assertions.assertTrue(new File(new TempDirs(PosixRegressionTest.root)
-        .folder("globfix"), ".hidden").createNewFile());
+        Assertions.assertTrue(
+            new File(new TempDirs(PosixRegressionTest.root).folder("globfix"), ".hidden")
+                .createNewFile()
+        );
     }
 
     @Test
     void globSkipsDotfilesAndSortsSecond() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("globfix");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("globfix");
         new File(dir, ".hidden").createNewFile();
         Assertions.assertTrue(new File(dir, "b.txt").createNewFile());
     }
 
     @Test
     void globSkipsDotfilesAndSortsThird() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("globfix");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("globfix");
         new File(dir, ".hidden").createNewFile();
         new File(dir, "b.txt").createNewFile();
         Assertions.assertTrue(new File(dir, "a.txt").createNewFile());
@@ -688,8 +721,7 @@ final class PosixRegressionTest {
 
     @Test
     void globSkipsDotfilesAndSortsFourth() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("globfix");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("globfix");
         new File(dir, ".hidden").createNewFile();
         new File(dir, "b.txt").createNewFile();
         new File(dir, "a.txt").createNewFile();
@@ -701,14 +733,15 @@ final class PosixRegressionTest {
 
     @Test
     void noglobDisablesPathnameExpansionFirst() throws IOException {
-        Assertions.assertTrue(new File(new TempDirs(PosixRegressionTest.root)
-        .folder("noglob"), "a.txt").createNewFile());
+        Assertions.assertTrue(
+            new File(new TempDirs(PosixRegressionTest.root).folder("noglob"), "a.txt")
+                .createNewFile()
+        );
     }
 
     @Test
     void noglobDisablesPathnameExpansionSecond() throws IOException {
-        final File dir = new TempDirs(PosixRegressionTest.root)
-            .folder("noglob");
+        final File dir = new TempDirs(PosixRegressionTest.root).folder("noglob");
         new File(dir, "a.txt").createNewFile();
         Assertions.assertEquals(
             String.format("*.txt%n"),
@@ -726,16 +759,18 @@ final class PosixRegressionTest {
 
     @Test
     void commandBypassesFunctionLookupFirst() {
-        Assertions.assertEquals(127, Sh4j.INSTANCE.runFull(
-            "f() { echo function; }; command f"
-        ).exitCode());
+        Assertions.assertEquals(
+            127,
+            Sh4j.INSTANCE.runFull("f() { echo function; }; command f").exitCode()
+        );
     }
 
     @Test
     void commandBypassesFunctionLookupSecond() {
-        Assertions.assertEquals("", Sh4j.INSTANCE.runFull(
-            "f() { echo function; }; command f"
-        ).stdout());
+        Assertions.assertEquals(
+            "",
+            Sh4j.INSTANCE.runFull("f() { echo function; }; command f").stdout()
+        );
     }
 
     @Test
@@ -751,19 +786,18 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             "",
             Sh4j.INSTANCE.out(
-                String.format("echo hi > %s | cat", new TempDirs(PosixRegressionTest.root)
-                                                        .file("pipe.out").getAbsolutePath())
+                String.format(
+                    "echo hi > %s | cat",
+                    new TempDirs(PosixRegressionTest.root).file("pipe.out").getAbsolutePath()
+                )
             )
         );
     }
 
     @Test
     void pipelineStageRedirectionIsAppliedSecond() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("pipe.out");
-        Sh4j.INSTANCE.out(
-            String.format("echo hi > %s | cat", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(PosixRegressionTest.root).file("pipe.out");
+        Sh4j.INSTANCE.out(String.format("echo hi > %s | cat", file.getAbsolutePath()));
         Assertions.assertEquals(
             String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -795,36 +829,48 @@ final class PosixRegressionTest {
     void trapDotAndTimesWorkFirst() throws IOException {
         final File lib = new TempDirs(PosixRegressionTest.root).file("lib.sh");
         Files.write(lib.toPath(), String.format("LIB=ok%n").getBytes(StandardCharsets.UTF_8));
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            String.format(
-                "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
-                lib.getAbsolutePath()
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull(
+                String.format(
+                    "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
+                    lib.getAbsolutePath()
+                )
             )
-        ).stdout().contains("lib=ok"));
+                .stdout()
+                .contains("lib=ok")
+        );
     }
 
     @Test
     void trapDotAndTimesWorkSecond() throws IOException {
         final File lib = new TempDirs(PosixRegressionTest.root).file("lib.sh");
         Files.write(lib.toPath(), String.format("LIB=ok%n").getBytes(StandardCharsets.UTF_8));
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            String.format(
-                "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
-                lib.getAbsolutePath()
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull(
+                String.format(
+                    "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
+                    lib.getAbsolutePath()
+                )
             )
-        ).stdout().contains("0m0.000s"));
+                .stdout()
+                .contains("0m0.000s")
+        );
     }
 
     @Test
     void trapDotAndTimesWorkThird() throws IOException {
         final File lib = new TempDirs(PosixRegressionTest.root).file("lib.sh");
         Files.write(lib.toPath(), String.format("LIB=ok%n").getBytes(StandardCharsets.UTF_8));
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            String.format(
-                "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
-                lib.getAbsolutePath()
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull(
+                String.format(
+                    "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
+                    lib.getAbsolutePath()
+                )
             )
-        ).stdout().contains("caught"));
+                .stdout()
+                .contains("caught")
+        );
     }
 
     @Test
@@ -838,12 +884,17 @@ final class PosixRegressionTest {
 
     @Test
     void xtraceWritesCommandToStderrFirst() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull("set -x; echo hi").stderr().contains("+ echo hi"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("set -x; echo hi").stderr().contains("+ echo hi")
+        );
     }
 
     @Test
     void xtraceWritesCommandToStderrSecond() {
-        Assertions.assertEquals(String.format("hi%n"), Sh4j.INSTANCE.runFull("set -x; echo hi").stdout());
+        Assertions.assertEquals(
+            String.format("hi%n"),
+            Sh4j.INSTANCE.runFull("set -x; echo hi").stdout()
+        );
     }
 
     @Test
@@ -885,127 +936,127 @@ final class PosixRegressionTest {
 
     @Test
     void exitTrapSeesTheStatusTheShellExitsWithFirst() {
-        Assertions.assertEquals(7, Sh4j.INSTANCE.runFull(
-            "trap \"echo st=$?\" EXIT; exit 7"
-        ).exitCode());
+        Assertions.assertEquals(
+            7,
+            Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7").exitCode()
+        );
     }
 
     @Test
     void exitTrapSeesTheStatusTheShellExitsWithSecond() {
-        Assertions.assertEquals(String.format("st=7%n"), Sh4j.INSTANCE.runFull(
-            "trap \"echo st=$?\" EXIT; exit 7"
-        ).stdout());
+        Assertions.assertEquals(
+            String.format("st=7%n"),
+            Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7").stdout()
+        );
     }
 
     @Test
     void exitTrapSeesTheStatusTheShellExitsWithThird() {
-        final Sh4j.Result exited = Sh4j.INSTANCE.runFull(
-            "trap \"echo st=$?\" EXIT; exit 7"
+        Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7");
+        Assertions.assertEquals(
+            1,
+            Sh4j.INSTANCE.runFull("trap 'echo exit=$?' EXIT; false").exitCode()
         );
-        Assertions.assertEquals(1, Sh4j.INSTANCE.runFull(
-            "trap 'echo exit=$?' EXIT; false"
-        ).exitCode());
     }
 
     @Test
     void exitTrapSeesTheStatusTheShellExitsWithFourth() {
-        final Sh4j.Result exited = Sh4j.INSTANCE.runFull(
-            "trap \"echo st=$?\" EXIT; exit 7"
+        Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7");
+        Assertions.assertEquals(
+            String.format("exit=1%n"),
+            Sh4j.INSTANCE.runFull("trap 'echo exit=$?' EXIT; false").stdout()
         );
-        Assertions.assertEquals(String.format("exit=1%n"), Sh4j.INSTANCE.runFull(
-            "trap 'echo exit=$?' EXIT; false"
-        ).stdout());
     }
 
     @Test
     void trapListingAndRemovalFirst() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
-        ).stdout().contains("trap -- 'echo t' EXIT"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
+                .stdout()
+                .contains("trap -- 'echo t' EXIT")
+        );
     }
 
     @Test
     void trapListingAndRemovalSecond() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(
-            "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
-        ).stdout().contains("body"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
+                .stdout()
+                .contains("body")
+        );
     }
 
     @Test
     void trapListingAndRemovalThird() {
-        Assertions.assertFalse(Sh4j.INSTANCE.runFull(
-            "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
-        ).stdout().contains(String.format("t%n")));
+        Assertions.assertFalse(
+            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
+                .stdout()
+                .contains(String.format("t%n"))
+        );
     }
 
     @Test
     void dotReturnStopsOnlyTheSourcedFileFirst() throws IOException {
-        final Path returned = new TempDirs(PosixRegressionTest.root)
-            .file("ret.sh").toPath();
+        final Path returned = new TempDirs(PosixRegressionTest.root).file("ret.sh").toPath();
         Files.write(
             returned,
             String.format("echo before; return 5; echo after%n").getBytes(StandardCharsets.UTF_8)
         );
-        Assertions.assertEquals(0, Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo \"rc=$?\"", returned)
-        ).exitCode());
+        Assertions.assertEquals(
+            0,
+            Sh4j.INSTANCE.runFull(String.format(". %s; echo \"rc=$?\"", returned)).exitCode()
+        );
     }
 
     @Test
     void dotReturnStopsOnlyTheSourcedFileSecond() throws IOException {
-        final Path returned = new TempDirs(PosixRegressionTest.root)
-            .file("ret.sh").toPath();
+        final Path returned = new TempDirs(PosixRegressionTest.root).file("ret.sh").toPath();
         Files.write(
             returned,
             String.format("echo before; return 5; echo after%n").getBytes(StandardCharsets.UTF_8)
         );
-        Assertions.assertEquals(String.format("before%nrc=5%n"), Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo \"rc=$?\"", returned)
-        ).stdout());
+        Assertions.assertEquals(
+            String.format("before%nrc=5%n"),
+            Sh4j.INSTANCE.runFull(String.format(". %s; echo \"rc=$?\"", returned)).stdout()
+        );
     }
 
     @Test
     void dotReturnStopsOnlyTheSourcedFileThird() throws IOException {
-        final Path returned = new TempDirs(PosixRegressionTest.root)
-            .file("ret.sh").toPath();
+        final Path returned = new TempDirs(PosixRegressionTest.root).file("ret.sh").toPath();
         Files.write(
             returned,
             String.format("echo before; return 5; echo after%n").getBytes(StandardCharsets.UTF_8)
         );
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo \"rc=$?\"", returned)
-        );
-        final Path exited = new TempDirs(PosixRegressionTest.root)
-            .file("exit.sh").toPath();
+        Sh4j.INSTANCE.runFull(String.format(". %s; echo \"rc=$?\"", returned));
+        final Path exited = new TempDirs(PosixRegressionTest.root).file("exit.sh").toPath();
         Files.write(
             exited,
             String.format("echo x; exit 3; echo y%n").getBytes(StandardCharsets.UTF_8)
         );
-        Assertions.assertEquals(3, Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo after", exited)
-        ).exitCode());
+        Assertions.assertEquals(
+            3,
+            Sh4j.INSTANCE.runFull(String.format(". %s; echo after", exited)).exitCode()
+        );
     }
 
     @Test
     void dotReturnStopsOnlyTheSourcedFileFourth() throws IOException {
-        final Path returned = new TempDirs(PosixRegressionTest.root)
-            .file("ret.sh").toPath();
+        final Path returned = new TempDirs(PosixRegressionTest.root).file("ret.sh").toPath();
         Files.write(
             returned,
             String.format("echo before; return 5; echo after%n").getBytes(StandardCharsets.UTF_8)
         );
-        final Sh4j.Result result = Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo \"rc=$?\"", returned)
-        );
-        final Path exited = new TempDirs(PosixRegressionTest.root)
-            .file("exit.sh").toPath();
+        Sh4j.INSTANCE.runFull(String.format(". %s; echo \"rc=$?\"", returned));
+        final Path exited = new TempDirs(PosixRegressionTest.root).file("exit.sh").toPath();
         Files.write(
             exited,
             String.format("echo x; exit 3; echo y%n").getBytes(StandardCharsets.UTF_8)
         );
-        Assertions.assertEquals(String.format("x%n"), Sh4j.INSTANCE.runFull(
-            String.format(". %s; echo after", exited)
-        ).stdout());
+        Assertions.assertEquals(
+            String.format("x%n"),
+            Sh4j.INSTANCE.runFull(String.format(". %s; echo after", exited)).stdout()
+        );
     }
 
     @Test
@@ -1015,13 +1066,14 @@ final class PosixRegressionTest {
 
     @Test
     void dotMissingFileReturnsOneSecond() {
-        Assertions.assertTrue(Sh4j.INSTANCE.runFull(". /nonexistent/library.sh").stderr().contains("cannot open"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.runFull(". /nonexistent/library.sh").stderr().contains("cannot open")
+        );
     }
 
     @Test
     void dotSetsPositionalParameters() throws IOException {
-        final File lib = new TempDirs(PosixRegressionTest.root)
-            .file("args-lib.sh");
+        final File lib = new TempDirs(PosixRegressionTest.root).file("args-lib.sh");
         Files.write(lib.toPath(), String.format("echo \"$1\"%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             String.format("arg%n"),
@@ -1077,9 +1129,7 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             String.format("hello%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(
-                    String.format("hello%n").getBytes(StandardCharsets.UTF_8)
-                ),
+                new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
                 "read; echo \"$REPLY\""
             )
         );
@@ -1090,9 +1140,7 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             String.format("a\\tb%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(
-                    String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)
-                ),
+                new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)),
                 "read -r x; echo \"$x\""
             )
         );
@@ -1102,20 +1150,14 @@ final class PosixRegressionTest {
     void readAtEofReturnsOne() {
         Assertions.assertEquals(
             String.format("status=1%n"),
-            Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(new byte[0]),
-                "read x; echo status=$?"
-            )
+            Sh4j.INSTANCE.stdout(new ByteArrayInputStream(new byte[0]), "read x; echo status=$?")
         );
     }
 
     @Test
     void functionRedirectionAndPrefixAssignmentFirst() throws IOException {
         new TempDirs(PosixRegressionTest.root).file("fn.out");
-        Assertions.assertEquals(
-            String.format("1%n"),
-            Sh4j.INSTANCE.out("f() { echo $X; }; X=1 f")
-        );
+        Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("f() { echo $X; }; X=1 f"));
     }
 
     @Test
@@ -1147,10 +1189,7 @@ final class PosixRegressionTest {
 
     @Test
     void setDashOOptions() {
-        Assertions.assertEquals(
-            1,
-            Sh4j.INSTANCE.run("set -o nounset; echo $MISSING_OPTION_VAR")
-        );
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("set -o nounset; echo $MISSING_OPTION_VAR"));
     }
 
     @Test
@@ -1177,7 +1216,9 @@ final class PosixRegressionTest {
         Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break 2; done; done");
         Assertions.assertEquals(
             String.format("1a%n2a%n"),
-            Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; continue 2; done; done")
+            Sh4j.INSTANCE.out(
+                "for i in 1 2; do for j in a b; do echo $i$j; continue 2; done; done"
+            )
         );
     }
 
@@ -1234,19 +1275,19 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             0,
             Sh4j.INSTANCE.runFull(
-                String.format("exec echo hi > %s", new TempDirs(PosixRegressionTest.root)
-                                                       .file("exec-arg.out").getAbsolutePath())
-            ).exitCode()
+                String.format(
+                    "exec echo hi > %s",
+                    new TempDirs(PosixRegressionTest.root).file("exec-arg.out").getAbsolutePath()
+                )
+            )
+                .exitCode()
         );
     }
 
     @Test
     void execWithCommandAndRedirectionSecond() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("exec-arg.out");
-        Sh4j.INSTANCE.runFull(
-            String.format("exec echo hi > %s", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(PosixRegressionTest.root).file("exec-arg.out");
+        Sh4j.INSTANCE.runFull(String.format("exec echo hi > %s", file.getAbsolutePath()));
         Assertions.assertEquals(
             String.format("hi%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -1263,10 +1304,7 @@ final class PosixRegressionTest {
 
     @Test
     void externalCommandReceivesPrefixAssignment() {
-        Assertions.assertEquals(
-            String.format("1%n"),
-            Sh4j.INSTANCE.out("X=1 sh -c 'echo $X'")
-        );
+        Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("X=1 sh -c 'echo $X'"));
     }
 
     @Test
@@ -1300,9 +1338,7 @@ final class PosixRegressionTest {
 
     @Test
     void unsetFunctionAndCommandLookupFirst() {
-        Assertions.assertEquals(
-            1, Sh4j.INSTANCE.run("f() { :; }; unset -f f; type f")
-        );
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("f() { :; }; unset -f f; type f"));
     }
 
     @Test
@@ -1370,11 +1406,8 @@ final class PosixRegressionTest {
 
     @Test
     void execOutputDescriptorWritesFile() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("fd-out.txt");
-        Sh4j.INSTANCE.run(
-            String.format("exec 6>%s; echo toFd >&6", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(PosixRegressionTest.root).file("fd-out.txt");
+        Sh4j.INSTANCE.run(String.format("exec 6>%s; echo toFd >&6", file.getAbsolutePath()));
         Assertions.assertEquals(
             String.format("toFd%n"),
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
@@ -1386,19 +1419,18 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             0,
             Sh4j.INSTANCE.run(
-                String.format("exec 7>%s; exec 7>&-", new TempDirs(PosixRegressionTest.root)
-                                                          .file("fd-close.txt").getAbsolutePath())
+                String.format(
+                    "exec 7>%s; exec 7>&-",
+                    new TempDirs(PosixRegressionTest.root).file("fd-close.txt").getAbsolutePath()
+                )
             )
         );
     }
 
     @Test
     void execOutputDescriptorCloseSucceedsSecond() throws IOException {
-        final File file = new TempDirs(PosixRegressionTest.root)
-            .file("fd-close.txt");
-        Sh4j.INSTANCE.run(
-            String.format("exec 7>%s; exec 7>&-", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(PosixRegressionTest.root).file("fd-close.txt");
+        Sh4j.INSTANCE.run(String.format("exec 7>%s; exec 7>&-", file.getAbsolutePath()));
         Assertions.assertTrue(
             file.isFile() && file.length() == 0L,
             "closing the descriptor must leave an empty file"
@@ -1415,35 +1447,24 @@ final class PosixRegressionTest {
 
     @Test
     void pipelineAfterSequentialListKeepsOrder() {
-        Assertions.assertEquals(
-            String.format("b%n"),
-            Sh4j.INSTANCE.out("echo x | grep y; echo b")
-        );
+        Assertions.assertEquals(String.format("b%n"), Sh4j.INSTANCE.out("echo x | grep y; echo b"));
     }
 
     @Test
     void untilLoopRunsUntilConditionHolds() {
         Assertions.assertEquals(
             String.format("1%n2%n"),
-            Sh4j.INSTANCE.out(
-                "i=0; until [ $i -ge 2 ]; do i=$((i+1)); echo $i; done"
-            )
+            Sh4j.INSTANCE.out("i=0; until [ $i -ge 2 ]; do i=$((i+1)); echo $i; done")
         );
     }
 
     @Test
     void groupingBodyRunsInPlace() {
-        Assertions.assertEquals(
-            String.format("g%n"),
-            Sh4j.INSTANCE.out("{ echo g; }")
-        );
+        Assertions.assertEquals(String.format("g%n"), Sh4j.INSTANCE.out("{ echo g; }"));
     }
 
     @Test
     void subshellBodyRunsInChildScope() {
-        Assertions.assertEquals(
-            String.format("s%n"),
-            Sh4j.INSTANCE.out("(echo s)")
-        );
+        Assertions.assertEquals(String.format("s%n"), Sh4j.INSTANCE.out("(echo s)"));
     }
 }

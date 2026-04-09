@@ -33,7 +33,11 @@ final class JobManagerTest {
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
         CoreMatchers.equalTo(0);
-        MatcherAssert.assertThat("job should exist", manager.getJob(id), CoreMatchers.notNullValue());
+        MatcherAssert.assertThat(
+            "job should exist",
+            manager.getJob(id),
+            CoreMatchers.notNullValue()
+        );
         manager.shutdown();
     }
 
@@ -234,7 +238,7 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
-        final List<Job> listed = manager.listJobs();
+        manager.listJobs();
         CoreMatchers.equalTo(2);
         CoreMatchers.equalTo("first");
         CoreMatchers.equalTo("second");
@@ -252,12 +256,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         MatcherAssert.assertThat(
             "failed job should return 1",
-            manager.waitForJob(manager.submit(
-                                   () -> {
-                                       throw new IllegalStateException("boom");
-                                   },
-                                   "fail"
-                               )),
+            manager.waitForJob(
+                manager.submit(() -> { throw new IllegalStateException("boom"); }, "fail")
+            ),
             CoreMatchers.equalTo(1)
         );
         manager.shutdown();
@@ -266,12 +267,7 @@ final class JobManagerTest {
     @Test
     void failedSupplierBecomesStatusOneSecond() {
         final JobManager manager = new JobManager();
-        final int id = manager.submit(
-            () -> {
-                throw new IllegalStateException("boom");
-            },
-            "fail"
-        );
+        final int id = manager.submit(() -> { throw new IllegalStateException("boom"); }, "fail");
         manager.waitForJob(id);
         CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(
@@ -286,7 +282,8 @@ final class JobManagerTest {
     void jobPidBoundariesFirst() {
         MatcherAssert.assertThat(
             "base should be a job pid",
-            JobManager.isJobPid(JobManager.JOB_PID_BASE), CoreMatchers.equalTo(true)
+            JobManager.isJobPid(JobManager.JOB_PID_BASE),
+            CoreMatchers.equalTo(true)
         );
     }
 
@@ -295,7 +292,8 @@ final class JobManagerTest {
         CoreMatchers.equalTo(true);
         MatcherAssert.assertThat(
             "base minus one should not be a job pid",
-            JobManager.isJobPid(JobManager.JOB_PID_BASE - 1), CoreMatchers.equalTo(false)
+            JobManager.isJobPid(JobManager.JOB_PID_BASE - 1),
+            CoreMatchers.equalTo(false)
         );
     }
 }

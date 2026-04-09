@@ -231,10 +231,7 @@ final class Sh4jPosixTest {
 
     @Test
     void caseNoMatch() {
-        Assertions.assertEquals(
-            "",
-            Sh4j.INSTANCE.out("case bar in foo) echo matched;; esac")
-        );
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("case bar in foo) echo matched;; esac"));
     }
 
     // ============================================================
@@ -543,7 +540,10 @@ final class Sh4jPosixTest {
 
     @Test
     void exportWithValueSecond() {
-        Assertions.assertEquals(String.format("hello%n"), Sh4j.INSTANCE.runFull("export X=hello", "echo $X").stdout());
+        Assertions.assertEquals(
+            String.format("hello%n"),
+            Sh4j.INSTANCE.runFull("export X=hello", "echo $X").stdout()
+        );
     }
 
     // ============================================================
@@ -681,11 +681,7 @@ final class Sh4jPosixTest {
     void unaliasRemovesAlias() {
         Assertions.assertNotEquals(
             0,
-            Sh4j.INSTANCE.runFull(
-                "alias ll='echo hello'",
-                "unalias ll",
-                "ll"
-            ).exitCode()
+            Sh4j.INSTANCE.runFull("alias ll='echo hello'", "unalias ll", "ll").exitCode()
         );
     }
 
@@ -698,7 +694,8 @@ final class Sh4jPosixTest {
                 "alias la='echo world'",
                 "unalias -a",
                 "ll"
-            ).exitCode()
+            )
+                .exitCode()
         );
     }
 
@@ -760,7 +757,9 @@ final class Sh4jPosixTest {
 
     @Test
     void fcListsHistorySecond() {
-        Assertions.assertTrue(Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2").contains("echo one"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2").contains("echo one")
+        );
     }
 
     @Test
@@ -770,16 +769,15 @@ final class Sh4jPosixTest {
 
     @Test
     void fcListsHistoryFourth() {
-        Assertions.assertTrue(Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2").contains("echo two"));
+        Assertions.assertTrue(
+            Sh4j.INSTANCE.out("echo one", "echo two", "fc -l 1 2").contains("echo two")
+        );
     }
 
     @Test
     void fcSubstitute() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.out(
-                "echo hello",
-                "fc -s hello=world"
-            ).contains("echo world")
+            Sh4j.INSTANCE.out("echo hello", "fc -s hello=world").contains("echo world")
         );
     }
 
@@ -821,10 +819,7 @@ final class Sh4jPosixTest {
 
     @Test
     void lcMessagesCanBeSet() {
-        Assertions.assertEquals(
-            "C",
-            Sh4j.INSTANCE.getVar("LC_MESSAGES", "LC_MESSAGES=C")
-        );
+        Assertions.assertEquals("C", Sh4j.INSTANCE.getVar("LC_MESSAGES", "LC_MESSAGES=C"));
     }
 
     // ============================================================
@@ -835,10 +830,7 @@ final class Sh4jPosixTest {
     void outputRedirection() {
         Assertions.assertEquals(
             String.format("hello%n"),
-            Sh4j.INSTANCE.out(
-                "echo hello > /tmp/sh4j_test.txt",
-                "cat /tmp/sh4j_test.txt"
-            )
+            Sh4j.INSTANCE.out("echo hello > /tmp/sh4j_test.txt", "cat /tmp/sh4j_test.txt")
         );
     }
 
@@ -846,10 +838,7 @@ final class Sh4jPosixTest {
     void inputRedirection() {
         Assertions.assertEquals(
             String.format("hello%n"),
-            Sh4j.INSTANCE.out(
-                "echo hello > /tmp/sh4j_test_in.txt",
-                "cat < /tmp/sh4j_test_in.txt"
-            )
+            Sh4j.INSTANCE.out("echo hello > /tmp/sh4j_test_in.txt", "cat < /tmp/sh4j_test_in.txt")
         );
     }
 

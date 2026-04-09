@@ -76,7 +76,8 @@ final class WordExpanderTest {
     @Test
     void splitFieldsCustomIfs() {
         Assertions.assertEquals(
-            Arrays.asList("a", "b", "c"), WordExpander.splitFields("a:b:c", ":")
+            Arrays.asList("a", "b", "c"),
+            WordExpander.splitFields("a:b:c", ":")
         );
     }
 
@@ -172,11 +173,7 @@ final class WordExpanderTest {
         env.put("MSG", "world");
         Assertions.assertEquals(
             "hello world",
-            WordExpander.expandVariablesImpl(
-                "hello $MSG",
-                env,
-                new Executor(new HashMap<>())
-            )
+            WordExpander.expandVariablesImpl("hello $MSG", env, new Executor(new HashMap<>()))
         );
     }
 
@@ -194,11 +191,16 @@ final class WordExpanderTest {
 
     @Test
     void expandVariablesParityColonQuestionUnsetSetsError() {
-        Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandVariablesImpl(
-            "${UNSET_VAR_FOR_PARITY:?required}",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
-        )));
+        Assertions.assertEquals(
+            1,
+            WordExpanderTest.exitCode(
+                () -> WordExpander.expandVariablesImpl(
+                    "${UNSET_VAR_FOR_PARITY:?required}",
+                    new HashMap<>(),
+                    new Executor(new HashMap<>())
+                )
+            )
+        );
     }
 
     @Test
@@ -255,20 +257,14 @@ final class WordExpanderTest {
         env.put("X", "hi");
         Assertions.assertEquals(
             "hi-suffix",
-            WordExpander.expandVariablesImpl(
-                "$X-suffix", env, new Executor(new HashMap<>())
-            )
+            WordExpander.expandVariablesImpl("$X-suffix", env, new Executor(new HashMap<>()))
         );
     }
 
     @Test
     void expandBracedEmptyInnerReturnsNull() {
         Assertions.assertNull(
-            WordExpander.expandBracedImpl(
-                "",
-                new HashMap<>(),
-                new Executor(new HashMap<>())
-            )
+            WordExpander.expandBracedImpl("", new HashMap<>(), new Executor(new HashMap<>()))
         );
     }
 
@@ -301,11 +297,16 @@ final class WordExpanderTest {
 
     @Test
     void expandBracedColonQuestionUnsetSetsError() {
-        Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandBracedImpl(
-            "x:?required",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
-        )));
+        Assertions.assertEquals(
+            1,
+            WordExpanderTest.exitCode(
+                () -> WordExpander.expandBracedImpl(
+                    "x:?required",
+                    new HashMap<>(),
+                    new Executor(new HashMap<>())
+                )
+            )
+        );
     }
 
     @Test
@@ -363,11 +364,16 @@ final class WordExpanderTest {
 
     @Test
     void expandBracedQuestionWithoutColonUnsetSetsError() {
-        Assertions.assertEquals(1, WordExpanderTest.exitCode(() -> WordExpander.expandBracedImpl(
-            "x?required",
-            new HashMap<>(),
-            new Executor(new HashMap<>())
-        )));
+        Assertions.assertEquals(
+            1,
+            WordExpanderTest.exitCode(
+                () -> WordExpander.expandBracedImpl(
+                    "x?required",
+                    new HashMap<>(),
+                    new Executor(new HashMap<>())
+                )
+            )
+        );
     }
 
     @Test
@@ -478,34 +484,22 @@ final class WordExpanderTest {
 
     @Test
     void escapeForQuoteRemovalBackslash() {
-        Assertions.assertEquals(
-            "a\\\\b",
-            WordExpander.escapeForQuoteRemoval("a\\b")
-        );
+        Assertions.assertEquals("a\\\\b", WordExpander.escapeForQuoteRemoval("a\\b"));
     }
 
     @Test
     void escapeForQuoteRemovalSingleQuote() {
-        Assertions.assertEquals(
-            "a\\'b",
-            WordExpander.escapeForQuoteRemoval("a'b")
-        );
+        Assertions.assertEquals("a\\'b", WordExpander.escapeForQuoteRemoval("a'b"));
     }
 
     @Test
     void escapeForQuoteRemovalDoubleQuote() {
-        Assertions.assertEquals(
-            "a\\\"b",
-            WordExpander.escapeForQuoteRemoval("a\"b")
-        );
+        Assertions.assertEquals("a\\\"b", WordExpander.escapeForQuoteRemoval("a\"b"));
     }
 
     @Test
     void escapeForQuoteRemovalDollarNotEscaped() {
-        Assertions.assertEquals(
-            "$VAR",
-            WordExpander.escapeForQuoteRemoval("$VAR")
-        );
+        Assertions.assertEquals("$VAR", WordExpander.escapeForQuoteRemoval("$VAR"));
     }
 
     @Test
@@ -513,46 +507,33 @@ final class WordExpanderTest {
         final String original = "a\\b'c\"d";
         Assertions.assertEquals(
             original,
-            WordExpander.removeQuotes(
-                WordExpander.escapeForQuoteRemoval(original)
-            )
+            WordExpander.removeQuotes(WordExpander.escapeForQuoteRemoval(original))
         );
     }
 
     @Test
     void unclosedDollarParenAndNestedBraceStayLiteralFirst() {
-        Assertions.assertEquals(
-            String.format("$(abc%n"),
-            Sh4j.INSTANCE.out("echo $(abc")
-        );
+        Assertions.assertEquals(String.format("$(abc%n"), Sh4j.INSTANCE.out("echo $(abc"));
     }
 
     @Test
     void unclosedDollarParenAndNestedBraceStayLiteralSecond() {
         Sh4j.INSTANCE.out("echo $(abc");
-        Assertions.assertEquals(
-            String.format("x%n"),
-            Sh4j.INSTANCE.out("echo ${a${b}}x")
-        );
+        Assertions.assertEquals(String.format("x%n"), Sh4j.INSTANCE.out("echo ${a${b}}x"));
     }
 
     @Test
     void unclosedDollarParenAndNestedBraceStayLiteralThird() {
         Sh4j.INSTANCE.out("echo $(abc");
         Sh4j.INSTANCE.out("echo ${a${b}}x");
-        Assertions.assertEquals(
-            String.format("${a%n"),
-            Sh4j.INSTANCE.out("echo ${a")
-        );
+        Assertions.assertEquals(String.format("${a%n"), Sh4j.INSTANCE.out("echo ${a"));
     }
 
     @Test
     void defaultOperatorsDistinguishUnsetFromEmpty() {
         Assertions.assertEquals(
             String.format("default||||%n"),
-            Sh4j.INSTANCE.out(
-                "U=; echo \"${M-default}|${U-default}|${U:+alt}|${U:+}|${M:+alt}\""
-            )
+            Sh4j.INSTANCE.out("U=; echo \"${M-default}|${U-default}|${U:+alt}|${U:+}|${M:+alt}\"")
         );
     }
 
@@ -569,37 +550,26 @@ final class WordExpanderTest {
     @Test
     void errorOnNullWithoutWordUsesDefaultMessage() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("echo ${MISSING:?}")
-                .stderr()
-                .contains("$MISSING")
+            Sh4j.INSTANCE.runFull("echo ${MISSING:?}").stderr().contains("$MISSING")
         );
     }
 
     @Test
     void normaliseBacktickNestedAndUnclosedFirst() {
-        Assertions.assertEquals(
-            "$(echo ${x})",
-            WordExpander.normaliseBackticks("`echo ${x}`")
-        );
+        Assertions.assertEquals("$(echo ${x})", WordExpander.normaliseBackticks("`echo ${x}`"));
     }
 
     @Test
     void normaliseBacktickNestedAndUnclosedSecond() {
         WordExpander.normaliseBackticks("`echo ${x}`");
-        Assertions.assertEquals(
-            "`unclosed",
-            WordExpander.normaliseBackticks("`unclosed")
-        );
+        Assertions.assertEquals("`unclosed", WordExpander.normaliseBackticks("`unclosed"));
     }
 
     @Test
     void normaliseBacktickNestedAndUnclosedThird() {
         WordExpander.normaliseBackticks("`echo ${x}`");
         WordExpander.normaliseBackticks("`unclosed");
-        Assertions.assertEquals(
-            "${x}",
-            WordExpander.normaliseBackticks("${x}")
-        );
+        Assertions.assertEquals("${x}", WordExpander.normaliseBackticks("${x}"));
     }
 
     @Test
@@ -776,19 +746,13 @@ final class WordExpanderTest {
 
     @Test
     void nestedBraceMatchingFirst() {
-        Assertions.assertEquals(
-            String.format("x%n"),
-            Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}")
-        );
+        Assertions.assertEquals(String.format("x%n"), Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}"));
     }
 
     @Test
     void nestedBraceMatchingSecond() {
         Sh4j.INSTANCE.out("A=x; echo ${A:-${B:-d}}");
-        Assertions.assertEquals(
-            String.format("y%n"),
-            Sh4j.INSTANCE.out("B=y; echo ${A:-${B:-d}}")
-        );
+        Assertions.assertEquals(String.format("y%n"), Sh4j.INSTANCE.out("B=y; echo ${A:-${B:-d}}"));
     }
 
     @Test
@@ -801,44 +765,33 @@ final class WordExpanderTest {
     @Test
     void errorOnNullWithCustomWord() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("echo ${MISSING:?msg}")
-                .stderr()
-                .contains("msg")
+            Sh4j.INSTANCE.runFull("echo ${MISSING:?msg}").stderr().contains("msg")
         );
     }
 
     @Test
     void errorOnEmptyFiresForSetButEmptyVariable() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("v=; echo ${v:?boom}")
-                .stderr()
-                .contains("boom")
+            Sh4j.INSTANCE.runFull("v=; echo ${v:?boom}").stderr().contains("boom")
         );
     }
 
     @Test
     void errorOnNullIgnoresSetButEmptyVariable() {
-        Assertions.assertEquals(
-            String.format("%n"),
-            Sh4j.INSTANCE.out("v=; echo ${v?novalue}")
-        );
+        Assertions.assertEquals(String.format("%n"), Sh4j.INSTANCE.out("v=; echo ${v?novalue}"));
     }
 
     @Test
     void prefixAndSuffixFullMatchBoundaries() {
         Assertions.assertEquals(
             String.format("||||abc%n"),
-            Sh4j.INSTANCE.out(
-                "X=abc; echo \"${X#abc}|${X##abc}|${X%abc}|${X%%abc}|${X#z}\""
-            )
+            Sh4j.INSTANCE.out("X=abc; echo \"${X#abc}|${X##abc}|${X%abc}|${X%%abc}|${X#z}\"")
         );
     }
 
     @Test
     void assignmentOperatorRejectsInvalidNames() {
-        Assertions.assertNull(
-            Sh4j.INSTANCE.getVar("bad-name", "echo ${bad-name:=x}")
-        );
+        Assertions.assertNull(Sh4j.INSTANCE.getVar("bad-name", "echo ${bad-name:=x}"));
     }
 
     @Test

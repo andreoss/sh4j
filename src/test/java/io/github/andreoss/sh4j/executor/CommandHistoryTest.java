@@ -17,23 +17,17 @@ final class CommandHistoryTest {
 
     @Test
     void emptyHistoryHasSizeZero() {
-        MatcherAssert.assertThat(
-            new CommandHistory().size(), CoreMatchers.equalTo(0)
-        );
+        MatcherAssert.assertThat(new CommandHistory().size(), CoreMatchers.equalTo(0));
     }
 
     @Test
     void emptyHistoryHasZeroLastNumber() {
-        MatcherAssert.assertThat(
-            new CommandHistory().lastNumber(), CoreMatchers.equalTo(0)
-        );
+        MatcherAssert.assertThat(new CommandHistory().lastNumber(), CoreMatchers.equalTo(0));
     }
 
     @Test
     void emptyHistoryHasCounterOne() {
-        MatcherAssert.assertThat(
-            new CommandHistory().counter(), CoreMatchers.equalTo(1)
-        );
+        MatcherAssert.assertThat(new CommandHistory().counter(), CoreMatchers.equalTo(1));
     }
 
     @Test
@@ -169,9 +163,7 @@ final class CommandHistoryTest {
 
     @Test
     void listEmptyHistoryReturnsEmpty() {
-        MatcherAssert.assertThat(
-            new CommandHistory().list(1, 0).isEmpty(), CoreMatchers.is(true)
-        );
+        MatcherAssert.assertThat(new CommandHistory().list(1, 0).isEmpty(), CoreMatchers.is(true));
     }
 
     @Test
@@ -236,9 +228,7 @@ final class CommandHistoryTest {
         hist.add("one");
         hist.add("two");
         hist.add("three");
-        MatcherAssert.assertThat(
-            hist.list(-1, -1).get(0).number(), CoreMatchers.equalTo(3)
-        );
+        MatcherAssert.assertThat(hist.list(-1, -1).get(0).number(), CoreMatchers.equalTo(3));
     }
 
     @Test
@@ -247,9 +237,7 @@ final class CommandHistoryTest {
         hist.add("one");
         hist.add("two");
         hist.add("three");
-        MatcherAssert.assertThat(
-            hist.list(-1, -1).get(0).command(), CoreMatchers.equalTo("three")
-        );
+        MatcherAssert.assertThat(hist.list(-1, -1).get(0).command(), CoreMatchers.equalTo("three"));
     }
 
     @Test

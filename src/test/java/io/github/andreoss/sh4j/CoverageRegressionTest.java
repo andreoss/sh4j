@@ -39,9 +39,7 @@ final class CoverageRegressionTest {
     @Test
     void untilLoopTerminatesWhenConditionBecomesTrue() {
         MatcherAssert.assertThat(
-            Sh4j.INSTANCE.out(
-                "i=0; until [ $i -ge 2 ]; do i=$((i+1)); done; echo finished"
-            ),
+            Sh4j.INSTANCE.out("i=0; until [ $i -ge 2 ]; do i=$((i+1)); done; echo finished"),
             CoreMatchers.containsString("finished")
         );
     }

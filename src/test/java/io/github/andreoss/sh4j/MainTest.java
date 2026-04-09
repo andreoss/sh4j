@@ -122,10 +122,7 @@ final class MainTest {
     void exitCodeNoArgsInteractiveEmptyLine() {
         Assertions.assertEquals(
             0,
-            MainTest.withStdin(
-                MainTest.input("%n"),
-                () -> Main.exitCode(new String[0])
-            )
+            MainTest.withStdin(MainTest.input("%n"), () -> Main.exitCode(new String[0]))
         );
     }
 
@@ -191,18 +188,14 @@ final class MainTest {
     void exitCodeDashDashRunsScript() throws IOException {
         final File script = new TempDirs(MainTest.root).file("dashdash.sh");
         Files.write(script.toPath(), String.format("exit 4%n").getBytes(StandardCharsets.UTF_8));
-        Assertions.assertEquals(
-            4, Main.exitCode(new String[] {"--", script.getAbsolutePath()})
-        );
+        Assertions.assertEquals(4, Main.exitCode(new String[] {"--", script.getAbsolutePath()}));
     }
 
     @Test
     void exitCodeUnknownOptionSkipsToScript() throws IOException {
         final File script = new TempDirs(MainTest.root).file("unknown.sh");
         Files.write(script.toPath(), String.format("exit 5%n").getBytes(StandardCharsets.UTF_8));
-        Assertions.assertEquals(
-            5, Main.exitCode(new String[] {"-x", script.getAbsolutePath()})
-        );
+        Assertions.assertEquals(5, Main.exitCode(new String[] {"-x", script.getAbsolutePath()}));
     }
 
     @Test
@@ -212,9 +205,7 @@ final class MainTest {
 
     @Test
     void runSourceExitStatus() {
-        Assertions.assertEquals(
-            6, Main.runSource("exit 6", Collections.singletonList("sh"))
-        );
+        Assertions.assertEquals(6, Main.runSource("exit 6", Collections.singletonList("sh")));
     }
 
     @Test
@@ -311,10 +302,7 @@ final class MainTest {
     void runSourceRunsExitTrapSecond() throws IOException {
         final File marker = new TempDirs(MainTest.root).file("trap-marker.txt");
         Main.runSource(
-            String.format(
-                "trap 'echo trapped > %s' EXIT; echo body",
-                marker.getAbsolutePath()
-            ),
+            String.format("trap 'echo trapped > %s' EXIT; echo body", marker.getAbsolutePath()),
             Collections.singletonList("sh")
         );
         Assertions.assertEquals(
@@ -330,8 +318,7 @@ final class MainTest {
             Main.runSource(
                 String.format(
                     "trap 'echo trapped > %s' EXIT; exit 3",
-                    new TempDirs(MainTest.root)
-                        .file("exit-trap-marker.txt").getAbsolutePath()
+                    new TempDirs(MainTest.root).file("exit-trap-marker.txt").getAbsolutePath()
                 ),
                 Collections.singletonList("sh")
             )
@@ -340,13 +327,9 @@ final class MainTest {
 
     @Test
     void runSourcePropagatesExitAndRunsTrapSecond() throws IOException {
-        final File marker = new TempDirs(MainTest.root)
-            .file("exit-trap-marker.txt");
+        final File marker = new TempDirs(MainTest.root).file("exit-trap-marker.txt");
         Main.runSource(
-            String.format(
-                "trap 'echo trapped > %s' EXIT; exit 3",
-                marker.getAbsolutePath()
-            ),
+            String.format("trap 'echo trapped > %s' EXIT; exit 3", marker.getAbsolutePath()),
             Collections.singletonList("sh")
         );
         Assertions.assertTrue(marker.isFile());
@@ -367,10 +350,7 @@ final class MainTest {
     void interactiveBlankLinesAndParseError() {
         Assertions.assertEquals(
             0,
-            MainTest.withStdin(
-                MainTest.input("%n%nif%necho done%n"),
-                () -> Main.interactive(null)
-            )
+            MainTest.withStdin(MainTest.input("%n%nif%necho done%n"), () -> Main.interactive(null))
         );
     }
 
@@ -491,7 +471,6 @@ final class MainTest {
             err,
             () -> Main.interactive(startup.getAbsolutePath())
         );
-        final String text = out.toString(StandardCharsets.UTF_8);
         Assertions.assertTrue(err.toString(StandardCharsets.UTF_8).contains("syntax error"));
     }
 
@@ -526,9 +505,7 @@ final class MainTest {
 
     @Test
     void exitCodeDashCWithPositionalArguments() {
-        Assertions.assertEquals(
-            7, Main.exitCode(new String[] {"-c", "exit $1", "sh", "7"})
-        );
+        Assertions.assertEquals(7, Main.exitCode(new String[] {"-c", "exit $1", "sh", "7"}));
     }
 
     @Test
@@ -616,10 +593,7 @@ final class MainTest {
     void interactiveWithEmptyEnvFile() throws IOException {
         Assertions.assertEquals(
             0,
-            MainTest.withStdin(
-                new ByteArrayInputStream(new byte[0]),
-                () -> Main.interactive("")
-            )
+            MainTest.withStdin(new ByteArrayInputStream(new byte[0]), () -> Main.interactive(""))
         );
     }
 
@@ -634,10 +608,7 @@ final class MainTest {
     void interactiveWithContinuationPrompt() throws IOException {
         Assertions.assertEquals(
             0,
-            MainTest.withStdin(
-                MainTest.input("echo '%n'%n"),
-                () -> Main.interactive(null)
-            )
+            MainTest.withStdin(MainTest.input("echo '%n'%n"), () -> Main.interactive(null))
         );
     }
 

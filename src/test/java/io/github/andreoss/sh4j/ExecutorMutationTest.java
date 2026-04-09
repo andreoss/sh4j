@@ -36,15 +36,12 @@ final class ExecutorMutationTest {
 
     @Test
     void subshellInheritsFlagsAndCwd() throws IOException {
-        final File dir = new TempDirs(ExecutorMutationTest.root)
-            .folder("subcwd");
+        final File dir = new TempDirs(ExecutorMutationTest.root).folder("subcwd");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(
                 String.format("set -u; cd %s; (echo $-); (pwd)", dir.getAbsolutePath())
             ),
-            CoreMatchers.equalTo(
-                String.format("u%n%s%n", dir.getCanonicalPath())
-            )
+            CoreMatchers.equalTo(String.format("u%n%s%n", dir.getCanonicalPath()))
         );
     }
 
@@ -309,7 +306,8 @@ final class ExecutorMutationTest {
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format("Y=value; read x <<'EOF'%n$Y%nEOF%necho \"$x\"")
-            ).stdout(),
+            )
+                .stdout(),
             CoreMatchers.equalTo(String.format("$Y%n"))
         );
     }
@@ -322,7 +320,8 @@ final class ExecutorMutationTest {
                     String.format("fallback%n").getBytes(StandardCharsets.UTF_8)
                 ),
                 "read x < /nonexistent/input; echo \"$x\""
-            ).stdout(),
+            )
+                .stdout(),
             CoreMatchers.equalTo(String.format("fallback%n"))
         );
     }
@@ -333,7 +332,8 @@ final class ExecutorMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format("piped%n").getBytes(StandardCharsets.UTF_8)),
                 "cat"
-            ).stdout(),
+            )
+                .stdout(),
             CoreMatchers.equalTo(String.format("piped%n"))
         );
     }
@@ -347,9 +347,12 @@ final class ExecutorMutationTest {
         CoreMatchers.equalTo(String.format("piped%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
-                String.format("echo redirected > %s", new TempDirs(ExecutorMutationTest.root)
-                                                          .file("ext.out").getAbsolutePath())
-            ).stdout(),
+                String.format(
+                    "echo redirected > %s",
+                    new TempDirs(ExecutorMutationTest.root).file("ext.out").getAbsolutePath()
+                )
+            )
+                .stdout(),
             CoreMatchers.equalTo("")
         );
     }
@@ -361,11 +364,8 @@ final class ExecutorMutationTest {
             "cat"
         );
         CoreMatchers.equalTo(String.format("piped%n"));
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("ext.out");
-        Sh4j.INSTANCE.runFull(
-            String.format("echo redirected > %s", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(ExecutorMutationTest.root).file("ext.out");
+        Sh4j.INSTANCE.runFull(String.format("echo redirected > %s", file.getAbsolutePath()));
         CoreMatchers.equalTo("");
         MatcherAssert.assertThat(
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8),
@@ -380,11 +380,8 @@ final class ExecutorMutationTest {
             "cat"
         );
         CoreMatchers.equalTo(String.format("piped%n"));
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("ext.out");
-        Sh4j.INSTANCE.runFull(
-            String.format("echo redirected > %s", file.getAbsolutePath())
-        );
+        final File file = new TempDirs(ExecutorMutationTest.root).file("ext.out");
+        Sh4j.INSTANCE.runFull(String.format("echo redirected > %s", file.getAbsolutePath()));
         CoreMatchers.equalTo("");
         new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         CoreMatchers.equalTo(String.format("redirected%n"));
@@ -470,16 +467,14 @@ final class ExecutorMutationTest {
 
     @Test
     void nonExecutableFileReturnsErrorFirst() throws IOException {
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("not-executable.sh");
+        final File file = new TempDirs(ExecutorMutationTest.root).file("not-executable.sh");
         Files.write(file.toPath(), String.format("echo hi%n").getBytes(StandardCharsets.UTF_8));
         MatcherAssert.assertThat(file.setExecutable(false), CoreMatchers.is(true));
     }
 
     @Test
     void nonExecutableFileReturnsErrorSecond() throws IOException {
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("not-executable.sh");
+        final File file = new TempDirs(ExecutorMutationTest.root).file("not-executable.sh");
         Files.write(file.toPath(), String.format("echo hi%n").getBytes(StandardCharsets.UTF_8));
         file.setExecutable(false);
         CoreMatchers.is(true);
@@ -491,8 +486,7 @@ final class ExecutorMutationTest {
 
     @Test
     void quotedGlobIsNotExpandedForExternalCommandFirst() throws IOException {
-        final File dir = new TempDirs(ExecutorMutationTest.root)
-            .folder("quoted-glob");
+        final File dir = new TempDirs(ExecutorMutationTest.root).folder("quoted-glob");
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(
@@ -504,8 +498,7 @@ final class ExecutorMutationTest {
 
     @Test
     void quotedGlobIsNotExpandedForExternalCommandSecond() throws IOException {
-        final File dir = new TempDirs(ExecutorMutationTest.root)
-            .folder("quoted-glob");
+        final File dir = new TempDirs(ExecutorMutationTest.root).folder("quoted-glob");
         Files.write(new File(dir, "a.txt").toPath(), new byte[0]);
         Sh4j.INSTANCE.out(
             String.format("cd %s; printf '<%%s>\\n' \"*.txt\"", dir.getAbsolutePath())
@@ -521,8 +514,7 @@ final class ExecutorMutationTest {
 
     @Test
     void functionStderrRedirection() throws IOException {
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("fn-err.txt");
+        final File file = new TempDirs(ExecutorMutationTest.root).file("fn-err.txt");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format(
@@ -530,15 +522,15 @@ final class ExecutorMutationTest {
                     file.getAbsolutePath(),
                     file.getAbsolutePath()
                 )
-            ).stdout(),
+            )
+                .stdout(),
             CoreMatchers.equalTo(String.format("err%n"))
         );
     }
 
     @Test
     void execInputRedirectionPersists() throws IOException {
-        final File file = new TempDirs(ExecutorMutationTest.root)
-            .file("exec-in.txt");
+        final File file = new TempDirs(ExecutorMutationTest.root).file("exec-in.txt");
         Files.write(file.toPath(), String.format("input%n").getBytes(StandardCharsets.UTF_8));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(String.format("exec < %s; read x; echo $x", file.getAbsolutePath())),

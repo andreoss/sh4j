@@ -22,7 +22,10 @@ final class LexerTest {
 
     @Test
     void eofOnEmptyInputFirst() {
-        MatcherAssert.assertThat(this.lexer("").nextToken().type(), CoreMatchers.equalTo(TokenType.END_OF_FILE));
+        MatcherAssert.assertThat(
+            this.lexer("").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.END_OF_FILE)
+        );
     }
 
     @Test
@@ -34,7 +37,10 @@ final class LexerTest {
 
     @Test
     void newlineFirst() {
-        MatcherAssert.assertThat(this.lexer(String.format("%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("%n")).nextToken().type(),
+            CoreMatchers.equalTo(TokenType.NEWLINE)
+        );
     }
 
     @Test
@@ -131,7 +137,10 @@ final class LexerTest {
 
     @Test
     void simpleWordFirst() {
-        MatcherAssert.assertThat(this.lexer(LexerTest.ECHO_CMD).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer(LexerTest.ECHO_CMD).nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -143,7 +152,10 @@ final class LexerTest {
 
     @Test
     void wordWithWhitespacePrefixFirst() {
-        MatcherAssert.assertThat(this.lexer("  ls").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("  ls").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -155,7 +167,10 @@ final class LexerTest {
 
     @Test
     void multipleTokensFirst() {
-        MatcherAssert.assertThat(this.lexer(String.format("echo hello%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("echo hello%n")).nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -168,7 +183,7 @@ final class LexerTest {
     @Test
     void multipleTokensThird() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
@@ -177,7 +192,7 @@ final class LexerTest {
     @Test
     void multipleTokensFourth() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         final Token toksecond = list.nextToken();
@@ -188,10 +203,10 @@ final class LexerTest {
     @Test
     void multipleTokensFifth() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
-        final Token toksecond = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo("hello");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
@@ -199,7 +214,10 @@ final class LexerTest {
 
     @Test
     void operatorsSeparatedBySpacesFirst() {
-        MatcherAssert.assertThat(this.lexer("&& ||").nextToken().type(), CoreMatchers.equalTo(TokenType.AND_IF));
+        MatcherAssert.assertThat(
+            this.lexer("&& ||").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.AND_IF)
+        );
     }
 
     @Test
@@ -212,7 +230,10 @@ final class LexerTest {
 
     @Test
     void wordThenOperatorFirst() {
-        MatcherAssert.assertThat(this.lexer("cmd&").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("cmd&").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -225,7 +246,7 @@ final class LexerTest {
     @Test
     void wordThenOperatorThird() {
         final Lexer list = this.lexer("cmd&");
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo("cmd");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.AMP));
@@ -233,7 +254,10 @@ final class LexerTest {
 
     @Test
     void operatorThenWordFirst() {
-        MatcherAssert.assertThat(this.lexer(">out").nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
+        MatcherAssert.assertThat(
+            this.lexer(">out").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.GREAT)
+        );
     }
 
     @Test
@@ -256,7 +280,10 @@ final class LexerTest {
 
     @Test
     void consecutiveNewlinesFirst() {
-        MatcherAssert.assertThat(this.lexer(String.format("%n%n")).nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("%n%n")).nextToken().type(),
+            CoreMatchers.equalTo(TokenType.NEWLINE)
+        );
     }
 
     @Test
@@ -305,7 +332,10 @@ final class LexerTest {
 
     @Test
     void tabIsWhitespaceFirst() {
-        MatcherAssert.assertThat(this.lexer("\tword").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\tword").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -317,7 +347,10 @@ final class LexerTest {
 
     @Test
     void equalsAloneIsWordNotAssignmentFirst() {
-        MatcherAssert.assertThat(this.lexer("=").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("=").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -345,7 +378,10 @@ final class LexerTest {
 
     @Test
     void wordBreaksAtLeftParenFirst() {
-        MatcherAssert.assertThat(this.lexer("echo(").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("echo(").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -358,7 +394,7 @@ final class LexerTest {
     @Test
     void wordBreaksAtLeftParenThird() {
         final Lexer list = this.lexer("echo(");
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.LPAREN));
@@ -366,7 +402,10 @@ final class LexerTest {
 
     @Test
     void wordBreaksAtRightParenFirst() {
-        MatcherAssert.assertThat(this.lexer("echo)").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("echo)").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -379,7 +418,7 @@ final class LexerTest {
     @Test
     void wordBreaksAtRightParenThird() {
         final Lexer list = this.lexer("echo)");
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
         CoreMatchers.equalTo(LexerTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.RPAREN));
@@ -387,7 +426,10 @@ final class LexerTest {
 
     @Test
     void singleQuotedWordFirst() {
-        MatcherAssert.assertThat(this.lexer("'hello'").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("'hello'").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -399,7 +441,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedWordFirst() {
-        MatcherAssert.assertThat(this.lexer("\"hello\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"hello\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -411,7 +456,10 @@ final class LexerTest {
 
     @Test
     void backslashEscapesInsideWordFirst() {
-        MatcherAssert.assertThat(this.lexer("a\\ b").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("a\\ b").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -431,7 +479,10 @@ final class LexerTest {
 
     @Test
     void mixedQuotingFirst() {
-        MatcherAssert.assertThat(this.lexer("a'b'c").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("a'b'c").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -443,7 +494,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashDollarFirst() {
-        MatcherAssert.assertThat(this.lexer("\"\\$\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\$\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -455,7 +509,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashBacktickFirst() {
-        MatcherAssert.assertThat(this.lexer("\"\\`\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\`\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -467,7 +524,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashNewlineFirst() {
-        MatcherAssert.assertThat(this.lexer(String.format("\"a\\%nb\"")).nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("\"a\\%nb\"")).nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -479,7 +539,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashBackslashFirst() {
-        MatcherAssert.assertThat(this.lexer("\"a\\\\b\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"a\\\\b\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -491,7 +554,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashDoublequoteFirst() {
-        MatcherAssert.assertThat(this.lexer("\"a\\\"b\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"a\\\"b\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -551,7 +617,10 @@ final class LexerTest {
 
     @Test
     void doubleQuotedBackslashNonSpecialKeptLiteralFirst() {
-        MatcherAssert.assertThat(this.lexer("\"\\a\"").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\a\"").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -563,7 +632,10 @@ final class LexerTest {
 
     @Test
     void ioNumberBeforeInputRedirectFirst() {
-        MatcherAssert.assertThat(this.lexer("2<file").nextToken().type(), CoreMatchers.equalTo(TokenType.IO_NUMBER));
+        MatcherAssert.assertThat(
+            this.lexer("2<file").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.IO_NUMBER)
+        );
     }
 
     @Test
@@ -576,7 +648,7 @@ final class LexerTest {
     @Test
     void ioNumberBeforeInputRedirectThird() {
         final Lexer list = this.lexer("2<file");
-        final Token tokfirst = list.nextToken();
+        list.nextToken();
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
         CoreMatchers.equalTo("2");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.LESS));
@@ -584,7 +656,10 @@ final class LexerTest {
 
     @Test
     void digitsThenSpaceIsWordNotIoNumberFirst() {
-        MatcherAssert.assertThat(this.lexer("42 ").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("42 ").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -692,10 +767,7 @@ final class LexerTest {
     void nestedAndUnbalancedBracesSecond() {
         this.lexer("${a${b}}").nextToken();
         CoreMatchers.equalTo("${a${b}}");
-        MatcherAssert.assertThat(
-            this.lexer("${a").nextToken().text(),
-            CoreMatchers.equalTo("${a")
-        );
+        MatcherAssert.assertThat(this.lexer("${a").nextToken().text(), CoreMatchers.equalTo("${a"));
     }
 
     @Test
@@ -773,7 +845,10 @@ final class LexerTest {
         CoreMatchers.equalTo(TokenType.IO_NUMBER);
         digits.nextToken();
         CoreMatchers.equalTo(TokenType.GREAT);
-        MatcherAssert.assertThat(this.lexer("2a>file").nextToken().type(), CoreMatchers.equalTo(TokenType.WORD));
+        MatcherAssert.assertThat(
+            this.lexer("2a>file").nextToken().type(),
+            CoreMatchers.equalTo(TokenType.WORD)
+        );
     }
 
     @Test
@@ -792,9 +867,7 @@ final class LexerTest {
     @Test
     void heredocStripsOnlyLeadingTabs() {
         MatcherAssert.assertThat(
-            this.lexer(
-                String.format("%n\tfoo%n\t  bar%n\tEOF%n")
-            ).readHereDocContent("EOF", true),
+            this.lexer(String.format("%n\tfoo%n\t  bar%n\tEOF%n")).readHereDocContent("EOF", true),
             CoreMatchers.equalTo(String.format("foo%n  bar%n"))
         );
     }
@@ -802,9 +875,7 @@ final class LexerTest {
     @Test
     void heredocKeepsTabsWhenNotStripped() {
         MatcherAssert.assertThat(
-            this.lexer(
-                String.format("%n\tfoo%nEOF%n")
-            ).readHereDocContent("EOF", false),
+            this.lexer(String.format("%n\tfoo%nEOF%n")).readHereDocContent("EOF", false),
             CoreMatchers.equalTo(String.format("\tfoo%n"))
         );
     }

@@ -36,9 +36,7 @@ final class ParserCoverageTest {
     @Test
     void assignmentWordBeforeReservedWordSplitsIntoThreePipelines() {
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                this.parse("a=1 if true; then :; fi").getPipelines().size()
-            ),
+            Integer.valueOf(this.parse("a=1 if true; then :; fi").getPipelines().size()),
             CoreMatchers.equalTo(Integer.valueOf(3))
         );
     }
@@ -47,9 +45,7 @@ final class ParserCoverageTest {
     void compoundNodesReportZeroAsTheirLine() {
         MatcherAssert.assertThat(
             Integer.valueOf(
-                new IfNode(
-                    new ListNode(), new ListNode(), new ListNode()
-                ).getLineNumber()
+                new IfNode(new ListNode(), new ListNode(), new ListNode()).getLineNumber()
             ),
             CoreMatchers.equalTo(Integer.valueOf(0))
         );
@@ -58,10 +54,7 @@ final class ParserCoverageTest {
     @Test
     void pipeFollowedByReservedWordKeepsBothStages() {
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                this.parse("echo a | then").getPipelines().get(0)
-                    .getCommands().size()
-            ),
+            Integer.valueOf(this.parse("echo a | then").getPipelines().get(0).getCommands().size()),
             CoreMatchers.equalTo(Integer.valueOf(2))
         );
     }
@@ -69,9 +62,7 @@ final class ParserCoverageTest {
     @Test
     void semicolonBeforeDoIsAcceptedInWhileHead() {
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                this.parse("while false; do :; done").getPipelines().size()
-            ),
+            Integer.valueOf(this.parse("while false; do :; done").getPipelines().size()),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
     }
@@ -79,10 +70,7 @@ final class ParserCoverageTest {
     @Test
     void ioNumberBeforeRedirectionIsParsed() {
         MatcherAssert.assertThat(
-            Integer.valueOf(
-                this.command("cat <<EOF%nbody%nEOF%n")
-                    .getRedirections().size()
-            ),
+            Integer.valueOf(this.command("cat <<EOF%nbody%nEOF%n").getRedirections().size()),
             CoreMatchers.equalTo(Integer.valueOf(1))
         );
     }

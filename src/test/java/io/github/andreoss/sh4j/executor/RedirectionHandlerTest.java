@@ -27,30 +27,26 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStderrToStdoutFirst() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        Assertions.assertSame(out, RedirectionHandler.redirectOutputForBuiltin(
-            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
-            new RedirectionHandler.Streams(out, new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
-            UnaryOperator.identity()
-        ).err(), "2>&1 should make err point to out");
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        Assertions.assertSame(
+            out,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
+                new RedirectionHandler.Streams(
+                    out,
+                    new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+                ),
+                UnaryOperator.identity()
+            )
+                .err(),
+            "2>&1 should make err point to out"
+        );
     }
 
     @Test
     void redirectStderrToStdoutSecond() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
             new RedirectionHandler.Streams(out, err),
@@ -68,13 +64,10 @@ final class RedirectionHandlerTest {
     void redirectStderrToStdoutThird() {
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "1")),
-            new RedirectionHandler.Streams(new PrintSink(
-                                               new ByteArrayOutputStream(),
-                                               StandardCharsets.UTF_8
-                                               ), new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
+            new RedirectionHandler.Streams(
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8),
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+            ),
             UnaryOperator.identity()
         );
         result.err();
@@ -84,33 +77,29 @@ final class RedirectionHandlerTest {
 
     @Test
     void redirectStdoutToStderrFirst() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        Assertions.assertSame(err, RedirectionHandler.redirectOutputForBuiltin(
-            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
-            new RedirectionHandler.Streams(out, err),
-            UnaryOperator.identity()
-        ).out(), "1>&2 should make out point to err");
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        Assertions.assertSame(
+            err,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
+                new RedirectionHandler.Streams(out, err),
+                UnaryOperator.identity()
+            )
+                .out(),
+            "1>&2 should make out point to err"
+        );
     }
 
     @Test
     void redirectStdoutToStderrSecond() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
-            new RedirectionHandler.Streams(out, new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
+            new RedirectionHandler.Streams(
+                out,
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+            ),
             UnaryOperator.identity()
         );
         result.out();
@@ -123,30 +112,25 @@ final class RedirectionHandlerTest {
 
     @Test
     void noRedirsLeavesStreamsUnchangedFirst() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        Assertions.assertSame(out, RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.<Redirection>asList(),
-            new RedirectionHandler.Streams(out, new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
-            UnaryOperator.identity()
-        ).out());
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        Assertions.assertSame(
+            out,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Arrays.<Redirection>asList(),
+                new RedirectionHandler.Streams(
+                    out,
+                    new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+                ),
+                UnaryOperator.identity()
+            )
+                .out()
+        );
     }
 
     @Test
     void noRedirsLeavesStreamsUnchangedSecond() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(),
-            StandardCharsets.UTF_8
-            );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.<Redirection>asList(),
             new RedirectionHandler.Streams(out, err),
@@ -160,13 +144,10 @@ final class RedirectionHandlerTest {
     void noRedirsLeavesStreamsUnchangedThird() {
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.<Redirection>asList(),
-            new RedirectionHandler.Streams(new PrintSink(
-                                               new ByteArrayOutputStream(),
-                                               StandardCharsets.UTF_8
-                                               ), new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
+            new RedirectionHandler.Streams(
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8),
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+            ),
             UnaryOperator.identity()
         );
         result.out();
@@ -178,13 +159,10 @@ final class RedirectionHandlerTest {
     void noRedirsLeavesStreamsUnchangedFourth() {
         final RedirectionHandler.StreamSwap result = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.<Redirection>asList(),
-            new RedirectionHandler.Streams(new PrintSink(
-                                               new ByteArrayOutputStream(),
-                                               StandardCharsets.UTF_8
-                                               ), new PrintSink(
-                                                    new ByteArrayOutputStream(),
-                                                    StandardCharsets.UTF_8
-                                                    )),
+            new RedirectionHandler.Streams(
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8),
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+            ),
             UnaryOperator.identity()
         );
         result.out();
@@ -205,14 +183,21 @@ final class RedirectionHandlerTest {
 
     @Test
     void heredocFileRoundtripSecond() throws Exception {
-        Assertions.assertTrue(RedirectionHandler.heredocFile(String.format("alpha%nbeta%n")).isFile());
+        Assertions.assertTrue(
+            RedirectionHandler.heredocFile(String.format("alpha%nbeta%n")).isFile()
+        );
     }
 
     @Test
     void heredocFileRoundtripThird() throws Exception {
         Assertions.assertEquals(
             String.format("alpha%nbeta%n"),
-            new String(Files.readAllBytes(RedirectionHandler.heredocFile(String.format("alpha%nbeta%n")).toPath()), StandardCharsets.UTF_8)
+            new String(
+                Files.readAllBytes(
+                    RedirectionHandler.heredocFile(String.format("alpha%nbeta%n")).toPath()
+                ),
+                StandardCharsets.UTF_8
+            )
         );
     }
 
@@ -220,20 +205,20 @@ final class RedirectionHandlerTest {
     void builtinOutputFileAndLastRedirectWinsFirst() throws Exception {
         final File first = File.createTempFile("rh-first", ".txt");
         final File second = File.createTempFile("rh-second", ".txt");
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        Assertions.assertSame(
+            out,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Arrays.asList(
+                    new Redirection(1, RedirectionType.OUTPUT, first.getAbsolutePath()),
+                    new Redirection(1, RedirectionType.OUTPUT, second.getAbsolutePath())
+                ),
+                new RedirectionHandler.Streams(out, err),
+                UnaryOperator.identity()
+            )
+                .savedout()
         );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
-        Assertions.assertSame(out, RedirectionHandler.redirectOutputForBuiltin(
-            Arrays.asList(
-                new Redirection(1, RedirectionType.OUTPUT, first.getAbsolutePath()),
-                new Redirection(1, RedirectionType.OUTPUT, second.getAbsolutePath())
-            ),
-            new RedirectionHandler.Streams(out, err),
-            UnaryOperator.identity()
-        ).savedout());
         err.flush();
     }
 
@@ -241,12 +226,8 @@ final class RedirectionHandlerTest {
     void builtinOutputFileAndLastRedirectWinsSecond() throws Exception {
         final File first = File.createTempFile("rh-first", ".txt");
         final File second = File.createTempFile("rh-second", ".txt");
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
                 new Redirection(1, RedirectionType.OUTPUT, first.getAbsolutePath()),
@@ -269,12 +250,8 @@ final class RedirectionHandlerTest {
     void builtinAppendAndStderrForms() throws Exception {
         final File file = File.createTempFile("rh-append", ".txt");
         Files.write(file.toPath(), "x".getBytes(StandardCharsets.UTF_8));
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap swap = RedirectionHandler.redirectOutputForBuiltin(
             Arrays.asList(
                 new Redirection(1, RedirectionType.APPEND, file.getAbsolutePath()),
@@ -296,28 +273,30 @@ final class RedirectionHandlerTest {
 
     @Test
     void builtinCloseAndDuplicateOutputFormsFirst() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        Assertions.assertSame(
+            out,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
+                new RedirectionHandler.Streams(
+                    out,
+                    new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+                ),
+                UnaryOperator.identity()
+            )
+                .savedout()
         );
-        Assertions.assertSame(out, RedirectionHandler.redirectOutputForBuiltin(
-            Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
-            new RedirectionHandler.Streams(out, new PrintSink(
-                                                    new ByteArrayOutputStream(), StandardCharsets.UTF_8
-                                                )),
-            UnaryOperator.identity()
-        ).savedout());
     }
 
     @Test
     void builtinCloseAndDuplicateOutputFormsSecond() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap closed = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
-            new RedirectionHandler.Streams(out, new PrintSink(
-                                                    new ByteArrayOutputStream(), StandardCharsets.UTF_8
-                                                )),
+            new RedirectionHandler.Streams(
+                out,
+                new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
+            ),
             UnaryOperator.identity()
         );
         closed.savedout();
@@ -326,12 +305,8 @@ final class RedirectionHandlerTest {
 
     @Test
     void builtinCloseAndDuplicateOutputFormsThird() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap closed = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
             new RedirectionHandler.Streams(out, err),
@@ -339,21 +314,21 @@ final class RedirectionHandlerTest {
         );
         closed.savedout();
         closed.out();
-        Assertions.assertSame(err, RedirectionHandler.redirectOutputForBuiltin(
-            Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
-            new RedirectionHandler.Streams(out, err),
-            UnaryOperator.identity()
-        ).savederr());
+        Assertions.assertSame(
+            err,
+            RedirectionHandler.redirectOutputForBuiltin(
+                Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
+                new RedirectionHandler.Streams(out, err),
+                UnaryOperator.identity()
+            )
+                .savederr()
+        );
     }
 
     @Test
     void builtinCloseAndDuplicateOutputFormsFourth() {
-        final PrintSink out = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
-        final PrintSink err = new PrintSink(
-            new ByteArrayOutputStream(), StandardCharsets.UTF_8
-        );
+        final PrintSink out = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
+        final PrintSink err = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         final RedirectionHandler.StreamSwap closed = RedirectionHandler.redirectOutputForBuiltin(
             Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "-")),
             new RedirectionHandler.Streams(out, err),
@@ -535,7 +510,8 @@ final class RedirectionHandlerTest {
             UnaryOperator.identity()
         );
         Assertions.assertEquals(
-            ProcessBuilder.Redirect.Type.APPEND, append.redirectOutput().type()
+            ProcessBuilder.Redirect.Type.APPEND,
+            append.redirectOutput().type()
         );
     }
 
@@ -575,7 +551,8 @@ final class RedirectionHandlerTest {
             UnaryOperator.identity()
         );
         Assertions.assertEquals(
-            ProcessBuilder.Redirect.Type.WRITE, closeout.redirectOutput().type()
+            ProcessBuilder.Redirect.Type.WRITE,
+            closeout.redirectOutput().type()
         );
     }
 
@@ -595,7 +572,8 @@ final class RedirectionHandlerTest {
             UnaryOperator.identity()
         );
         Assertions.assertEquals(
-            ProcessBuilder.Redirect.Type.WRITE, closeerr.redirectError().type()
+            ProcessBuilder.Redirect.Type.WRITE,
+            closeerr.redirectError().type()
         );
     }
 
@@ -703,7 +681,8 @@ final class RedirectionHandlerTest {
             unquoted,
             Collections.singletonList(
                 new Redirection(
-                    0, RedirectionType.HERE_DOC,
+                    0,
+                    RedirectionType.HERE_DOC,
                     new Redirection.HereDoc("EOF", String.format("body%n"), false)
                 )
             ),
@@ -719,7 +698,8 @@ final class RedirectionHandlerTest {
             unquoted,
             Collections.singletonList(
                 new Redirection(
-                    0, RedirectionType.HERE_DOC,
+                    0,
+                    RedirectionType.HERE_DOC,
                     new Redirection.HereDoc("EOF", String.format("body%n"), false)
                 )
             ),
@@ -731,7 +711,8 @@ final class RedirectionHandlerTest {
             quoted,
             Collections.singletonList(
                 new Redirection(
-                    0, RedirectionType.HERE_DOC_DASH,
+                    0,
+                    RedirectionType.HERE_DOC_DASH,
                     new Redirection.HereDoc("EOF", String.format("body%n"), true)
                 )
             ),
