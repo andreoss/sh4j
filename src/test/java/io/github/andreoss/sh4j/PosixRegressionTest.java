@@ -185,8 +185,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "readonly R=1; R=2; echo after"
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -197,8 +196,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "readonly R=1; R=2; echo after"
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -264,8 +262,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "set -e; false; echo nope"
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -276,8 +273,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "set -e; false; echo nope"
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -368,11 +364,14 @@ final class PosixRegressionTest {
 
     @Test
     void redirectionsResolveAgainstShellCwdSecond() throws IOException {
-        final String base = new TempDirs(PosixRegressionTest.root)
-            .folder("cwdtest")
-            .getAbsolutePath();
+        final String base = new TempDirs(PosixRegressionTest.root).folder(
+            "cwdtest"
+        ).getAbsolutePath();
         Sh4j.INSTANCE.out(
-            String.format("cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base)
+            String.format(
+                "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"",
+                base
+            )
         );
         Assertions.assertEquals(
             String.format("fd-ok%n"),
@@ -390,7 +389,10 @@ final class PosixRegressionTest {
         final File dir = new TempDirs(PosixRegressionTest.root).folder("cwdtest");
         final String base = dir.getAbsolutePath();
         Sh4j.INSTANCE.out(
-            String.format("cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"", base)
+            String.format(
+                "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"",
+                base
+            )
         );
         Sh4j.INSTANCE.out(
             String.format(
@@ -414,8 +416,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "exec 9</nonexistent-dir-xyz/f; echo after"
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -426,8 +427,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "exec 9</nonexistent-dir-xyz/f; echo after"
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -442,8 +442,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "exec >/nonexistent-dir-xyz/f; echo after"
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -458,8 +457,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 "exec >/nonexistent-dir-xyz/f; echo after"
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -499,8 +497,7 @@ final class PosixRegressionTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(new byte[0]),
                 String.format("exec 5<%s; exec 5<&-; read y <&5; echo \"y=[$y]\"", path)
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -527,8 +524,7 @@ final class PosixRegressionTest {
                     "exec > %s; echo redirected",
                     new TempDirs(PosixRegressionTest.root).file("exec.out").getAbsolutePath()
                 )
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -541,8 +537,7 @@ final class PosixRegressionTest {
                     "exec > %s; echo redirected",
                     new TempDirs(PosixRegressionTest.root).file("exec.out").getAbsolutePath()
                 )
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -609,9 +604,9 @@ final class PosixRegressionTest {
     @Test
     void readonlySurvivesUnsetThird() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("readonly R='a b'; unset R; echo after")
-                .stderr()
-                .contains("readonly")
+            Sh4j.INSTANCE.runFull("readonly R='a b'; unset R; echo after").stderr().contains(
+                "readonly"
+            )
         );
     }
 
@@ -642,9 +637,9 @@ final class PosixRegressionTest {
     @Test
     void nounsetAbortsScriptThird() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("set -u; echo \"$MISSING\"; echo after")
-                .stderr()
-                .contains("MISSING")
+            Sh4j.INSTANCE.runFull("set -u; echo \"$MISSING\"; echo after").stderr().contains(
+                "MISSING"
+            )
         );
     }
 
@@ -699,8 +694,10 @@ final class PosixRegressionTest {
     @Test
     void globSkipsDotfilesAndSortsFirst() throws IOException {
         Assertions.assertTrue(
-            new File(new TempDirs(PosixRegressionTest.root).folder("globfix"), ".hidden")
-                .createNewFile()
+            new File(
+                new TempDirs(PosixRegressionTest.root).folder("globfix"),
+                ".hidden"
+            ).createNewFile()
         );
     }
 
@@ -734,8 +731,10 @@ final class PosixRegressionTest {
     @Test
     void noglobDisablesPathnameExpansionFirst() throws IOException {
         Assertions.assertTrue(
-            new File(new TempDirs(PosixRegressionTest.root).folder("noglob"), "a.txt")
-                .createNewFile()
+            new File(
+                new TempDirs(PosixRegressionTest.root).folder("noglob"),
+                "a.txt"
+            ).createNewFile()
         );
     }
 
@@ -835,9 +834,7 @@ final class PosixRegressionTest {
                     "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
                     lib.getAbsolutePath()
                 )
-            )
-                .stdout()
-                .contains("lib=ok")
+            ).stdout().contains("lib=ok")
         );
     }
 
@@ -851,9 +848,7 @@ final class PosixRegressionTest {
                     "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
                     lib.getAbsolutePath()
                 )
-            )
-                .stdout()
-                .contains("0m0.000s")
+            ).stdout().contains("0m0.000s")
         );
     }
 
@@ -867,9 +862,7 @@ final class PosixRegressionTest {
                     "trap 'echo caught' EXIT; . %s; echo \"lib=$LIB\"; times",
                     lib.getAbsolutePath()
                 )
-            )
-                .stdout()
-                .contains("caught")
+            ).stdout().contains("caught")
         );
     }
 
@@ -971,27 +964,27 @@ final class PosixRegressionTest {
     @Test
     void trapListingAndRemovalFirst() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
-                .stdout()
-                .contains("trap -- 'echo t' EXIT")
+            Sh4j.INSTANCE.runFull(
+                "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
+            ).stdout().contains("trap -- 'echo t' EXIT")
         );
     }
 
     @Test
     void trapListingAndRemovalSecond() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
-                .stdout()
-                .contains("body")
+            Sh4j.INSTANCE.runFull(
+                "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
+            ).stdout().contains("body")
         );
     }
 
     @Test
     void trapListingAndRemovalThird() {
         Assertions.assertFalse(
-            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT; trap; trap - EXIT; echo body")
-                .stdout()
-                .contains(String.format("t%n"))
+            Sh4j.INSTANCE.runFull(
+                "trap 'echo t' EXIT; trap; trap - EXIT; echo body"
+            ).stdout().contains(String.format("t%n"))
         );
     }
 
@@ -1129,7 +1122,9 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             String.format("hello%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("hello%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "read; echo \"$REPLY\""
             )
         );
@@ -1140,7 +1135,9 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             String.format("a\\tb%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("a\\tb%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "read -r x; echo \"$x\""
             )
         );
@@ -1279,8 +1276,7 @@ final class PosixRegressionTest {
                     "exec echo hi > %s",
                     new TempDirs(PosixRegressionTest.root).file("exec-arg.out").getAbsolutePath()
                 )
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 
@@ -1398,7 +1394,9 @@ final class PosixRegressionTest {
         Assertions.assertEquals(
             String.format("a=x b=y z%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(String.format("x y z%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("x y z%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "read a b; echo \"a=$a b=$b\""
             )
         );

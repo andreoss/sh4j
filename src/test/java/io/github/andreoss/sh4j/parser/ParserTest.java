@@ -287,10 +287,9 @@ final class ParserTest {
     @Test
     void parseClobberRedirectionSecond() {
         Assertions.assertTrue(
-            this.command(this.parse("echo test >| file.txt"))
-                .getRedirections()
-                .stream()
-                .anyMatch(r -> r.getType() == RedirectionType.CLOBBER)
+            this.command(this.parse("echo test >| file.txt")).getRedirections().stream().anyMatch(
+                r -> r.getType() == RedirectionType.CLOBBER
+            )
         );
     }
 
@@ -783,11 +782,9 @@ final class ParserTest {
     void parseCaseSimpleFourth() {
         Assertions.assertEquals(
             "pat",
-            ((CaseNode) this.node("case foo in pat) echo match;; esac", 0))
-                .getItems()
-                .get(0)
-                .getPatterns()
-                .get(0)
+            ((CaseNode) this.node("case foo in pat) echo match;; esac", 0)).getItems().get(
+                0
+            ).getPatterns().get(0)
         );
     }
 
@@ -795,11 +792,7 @@ final class ParserTest {
     void parseCasePipePatternFirst() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0))
-                .getItems()
-                .get(0)
-                .getPatterns()
-                .size()
+            this.caseOf("case foo in a|b) echo match;; esac").getItems().get(0).getPatterns().size()
         );
     }
 
@@ -807,11 +800,9 @@ final class ParserTest {
     void parseCasePipePatternSecond() {
         Assertions.assertEquals(
             "a",
-            ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0))
-                .getItems()
-                .get(0)
-                .getPatterns()
-                .get(0)
+            this.caseOf("case foo in a|b) echo match;; esac").getItems().get(0).getPatterns().get(
+                0
+            )
         );
     }
 
@@ -819,11 +810,9 @@ final class ParserTest {
     void parseCasePipePatternThird() {
         Assertions.assertEquals(
             "b",
-            ((CaseNode) this.pipelineOf("case foo in a|b) echo match;; esac").getCommands().get(0))
-                .getItems()
-                .get(0)
-                .getPatterns()
-                .get(1)
+            this.caseOf("case foo in a|b) echo match;; esac").getItems().get(0).getPatterns().get(
+                1
+            )
         );
     }
 
@@ -831,34 +820,22 @@ final class ParserTest {
     void parseCaseMultipleItems() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) this.parse("case foo in a) echo a;; b) echo b;; esac")
-            .getPipelines().get(0).getCommands().get(0))
-                .getItems()
-                .size()
+            this.caseOf("case foo in a) echo a;; b) echo b;; esac").getItems().size()
         );
     }
 
     @Test
     void parseCaseEmptyBody() {
-        Assertions.assertEquals(
-            1,
-            ((CaseNode) this.parse("case foo in a);; esac")
-            .getPipelines().get(0).getCommands().get(0))
-                .getItems()
-                .size()
-        );
+        Assertions.assertEquals(1, this.caseOf("case foo in a);; esac").getItems().size());
     }
 
     @Test
     void parseCaseParenPattern() {
         Assertions.assertEquals(
             "pat",
-            ((CaseNode) this.parse("case foo in (pat) echo match;; esac")
-            .getPipelines().get(0).getCommands().get(0))
-                .getItems()
-                .get(0)
-                .getPatterns()
-                .get(0)
+            this.caseOf("case foo in (pat) echo match;; esac").getItems().get(0).getPatterns().get(
+                0
+            )
         );
     }
 
@@ -997,10 +974,9 @@ final class ParserTest {
     @Test
     void parseFunctionBodyWithCase() {
         Assertions.assertTrue(
-            this.parse(
-                "foo() case foo in pat) echo hi;; esac"
-            ).getPipelines().get(0).getCommands().get(0)
-                instanceof FunctionNode
+            this.parse("foo() case foo in pat) echo hi;; esac").getPipelines().get(
+                0
+            ).getCommands().get(0) instanceof FunctionNode
         );
     }
 
@@ -1093,9 +1069,7 @@ final class ParserTest {
             1,
             this.parse(
                 "if false; then a; elif false; then b; elif true; then c; fi"
-            )
-                .getPipelines()
-                .size()
+            ).getPipelines().size()
         );
     }
 
@@ -1103,8 +1077,9 @@ final class ParserTest {
     void parseElifChainNestedElifSecond() {
         Assertions.assertTrue(
             this.node(
-                "if false; then a; elif false; then b; elif true; then c; fi"
-            , 0) instanceof IfNode
+                "if false; then a; elif false; then b; elif true; then c; fi",
+                0
+            ) instanceof IfNode
         );
     }
 
@@ -1166,9 +1141,9 @@ final class ParserTest {
     void parseHereDocRedirectFirst() {
         Assertions.assertEquals(
             1,
-            this.command(this.parse(String.format("cat <<EOF%nhello%nEOF%n")))
-                .getRedirections()
-                .size()
+            this.command(
+                this.parse(String.format("cat <<EOF%nhello%nEOF%n"))
+            ).getRedirections().size()
         );
     }
 
@@ -1176,10 +1151,9 @@ final class ParserTest {
     void parseHereDocRedirectSecond() {
         Assertions.assertEquals(
             RedirectionType.HERE_DOC,
-            this.command(this.parse(String.format("cat <<EOF%nhello%nEOF%n")))
-                .getRedirections()
-                .get(0)
-                .getType()
+            this.command(
+                this.parse(String.format("cat <<EOF%nhello%nEOF%n"))
+            ).getRedirections().get(0).getType()
         );
     }
 
@@ -1189,9 +1163,7 @@ final class ParserTest {
             1,
             this.parse(
                 String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
-            )
-                .getPipelines()
-                .size()
+            ).getPipelines().size()
         );
     }
 
@@ -1199,11 +1171,9 @@ final class ParserTest {
     void parseCaseMultilineBodySecond() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) this.parse(
+            this.caseOf(
                 String.format("case x in%n  a) echo aa;;%n  b) echo bb;;%nesac")
-            ).getPipelines().get(0).getCommands().get(0))
-                .getItems()
-                .size()
+            ).getItems().size()
         );
     }
 
@@ -1213,9 +1183,7 @@ final class ParserTest {
             1,
             this.parse(
                 String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
-            )
-                .getPipelines()
-                .size()
+            ).getPipelines().size()
         );
     }
 
@@ -1223,11 +1191,9 @@ final class ParserTest {
     void parseCaseMultilineWithBlankLinesBetweenArmsSecond() {
         Assertions.assertEquals(
             2,
-            ((CaseNode) this.parse(
+            this.caseOf(
                 String.format("case y in%n%n  a) echo aa;;%n%n  b) echo bb;;%n%nesac")
-            ).getPipelines().get(0).getCommands().get(0))
-                .getItems()
-                .size()
+            ).getItems().size()
         );
     }
 
@@ -1235,9 +1201,9 @@ final class ParserTest {
     void parseHereDocStripTabsFirst() {
         Assertions.assertEquals(
             1,
-            this.command(this.parse(String.format("cat <<-EOF%n\thello%nEOF%n")))
-                .getRedirections()
-                .size()
+            this.command(
+                this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"))
+            ).getRedirections().size()
         );
     }
 
@@ -1245,10 +1211,9 @@ final class ParserTest {
     void parseHereDocStripTabsSecond() {
         Assertions.assertEquals(
             RedirectionType.HERE_DOC,
-            this.command(this.parse(String.format("cat <<-EOF%n\thello%nEOF%n")))
-                .getRedirections()
-                .get(0)
-                .getType()
+            this.command(
+                this.parse(String.format("cat <<-EOF%n\thello%nEOF%n"))
+            ).getRedirections().get(0).getType()
         );
     }
 
@@ -1478,6 +1443,10 @@ final class ParserTest {
 
     private SimpleCommand simple(final String source, final int pipe, final int index) {
         return (SimpleCommand) this.parse(source).getPipelines().get(pipe).getCommands().get(index);
+    }
+
+    private CaseNode caseOf(final String source) {
+        return (CaseNode) this.node(source, 0);
     }
 
     private Node node(final String source, final int index) {

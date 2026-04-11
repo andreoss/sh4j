@@ -257,7 +257,12 @@ final class JobManagerTest {
         MatcherAssert.assertThat(
             "failed job should return 1",
             manager.waitForJob(
-                manager.submit(() -> { throw new IllegalStateException("boom"); }, "fail")
+                manager.submit(
+                    () -> {
+                        throw new IllegalStateException("boom");
+                    },
+                    "fail"
+                )
             ),
             CoreMatchers.equalTo(1)
         );
@@ -267,7 +272,12 @@ final class JobManagerTest {
     @Test
     void failedSupplierBecomesStatusOneSecond() {
         final JobManager manager = new JobManager();
-        final int id = manager.submit(() -> { throw new IllegalStateException("boom"); }, "fail");
+        final int id = manager.submit(
+            () -> {
+                throw new IllegalStateException("boom");
+            },
+            "fail"
+        );
         manager.waitForJob(id);
         CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(

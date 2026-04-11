@@ -70,10 +70,9 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdLogicalAndPhysicalFormsFirst() throws IOException {
-        final Path real = new TempDirs(BuiltinMutationTest.root)
-            .folder("real")
-            .toPath()
-            .toRealPath();
+        final Path real = new TempDirs(BuiltinMutationTest.root).folder(
+            "real"
+        ).toPath().toRealPath();
         Assertions.assertEquals(
             real + String.format("%n"),
             Sh4j.INSTANCE.out(String.format("cd %s; pwd -L", real))
@@ -82,10 +81,9 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdLogicalAndPhysicalFormsSecond() throws IOException {
-        final Path real = new TempDirs(BuiltinMutationTest.root)
-            .folder("real")
-            .toPath()
-            .toRealPath();
+        final Path real = new TempDirs(BuiltinMutationTest.root).folder(
+            "real"
+        ).toPath().toRealPath();
         Sh4j.INSTANCE.out(String.format("cd %s; pwd -L", real));
         Assertions.assertEquals(
             real + String.format("%n"),
@@ -215,7 +213,9 @@ final class BuiltinMutationTest {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Assertions.assertEquals(
             String.format("1a%n2a%n"),
-            Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done")
+            Sh4j.INSTANCE.out(
+                "for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done"
+            )
         );
     }
 
@@ -297,8 +297,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format("x%n").getBytes(StandardCharsets.UTF_8)),
                 "read a b; echo \"a=$a b=[$b]\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -321,8 +320,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format("x%n").getBytes(StandardCharsets.UTF_8)),
                 "read a b c; echo \"[$b][$c]\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -356,8 +354,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
                 "read x; echo \"[$x]\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -420,8 +417,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 BuiltinMutationTest.failingInput(),
                 "read x; echo \"rc=$? x=[$x]\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -530,10 +526,11 @@ final class BuiltinMutationTest {
         Assertions.assertEquals(
             String.format("a=x b=y:z%n"),
             Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("x:y:z%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "IFS=:; read a b; echo \"a=$a b=$b\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -550,8 +547,7 @@ final class BuiltinMutationTest {
                     String.format("   x   y   %n").getBytes(StandardCharsets.UTF_8)
                 ),
                 "read a b; echo \"a=$a b=$b\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -572,8 +568,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format("x::%n").getBytes(StandardCharsets.UTF_8)),
                 "IFS=:; read a b; echo \"a=$a b=$b\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -803,18 +798,18 @@ final class BuiltinMutationTest {
     @Test
     void trapListingAndRemovalFormsFirst() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT INT; trap; trap - EXIT INT")
-                .stdout()
-                .contains("EXIT")
+            Sh4j.INSTANCE.runFull(
+                "trap 'echo t' EXIT INT; trap; trap - EXIT INT"
+            ).stdout().contains("EXIT")
         );
     }
 
     @Test
     void trapListingAndRemovalFormsSecond() {
         Assertions.assertTrue(
-            Sh4j.INSTANCE.runFull("trap 'echo t' EXIT INT; trap; trap - EXIT INT")
-                .stdout()
-                .contains("INT")
+            Sh4j.INSTANCE.runFull(
+                "trap 'echo t' EXIT INT; trap; trap - EXIT INT"
+            ).stdout().contains("INT")
         );
     }
 
@@ -1080,8 +1075,7 @@ final class BuiltinMutationTest {
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format(":x:y%n").getBytes(StandardCharsets.UTF_8)),
                 "IFS=:; read a b; echo \"a=$a b=$b\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -1094,10 +1088,11 @@ final class BuiltinMutationTest {
         Assertions.assertEquals(
             String.format("a=x b=y%n"),
             Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(String.format("x : y%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("x : y%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "IFS=' :'; read a b; echo \"a=$a b=$b\""
-            )
-                .stdout()
+            ).stdout()
         );
     }
 
@@ -1168,10 +1163,9 @@ final class BuiltinMutationTest {
 
     @Test
     void pwdFlagOrder() throws IOException {
-        final Path dir = new TempDirs(BuiltinMutationTest.root)
-            .folder("pwdorder")
-            .toPath()
-            .toRealPath();
+        final Path dir = new TempDirs(BuiltinMutationTest.root).folder(
+            "pwdorder"
+        ).toPath().toRealPath();
         Assertions.assertEquals(
             dir + String.format("%n"),
             Sh4j.INSTANCE.out(String.format("cd %s; pwd -P -L", dir))
@@ -1676,8 +1670,9 @@ final class BuiltinMutationTest {
         final Path fdesc = new TempDirs(BuiltinMutationTest.root).file("fdesc.txt").toPath();
         Sh4j.INSTANCE.run(String.format("echo hi; exec 3>%s; fc -s nope 2>&3; exec 3>&-", fdesc));
         Assertions.assertTrue(
-            new String(Files.readAllBytes(fdesc), StandardCharsets.UTF_8)
-                .contains("fc: -s requires pat=rep")
+            new String(Files.readAllBytes(fdesc), StandardCharsets.UTF_8).contains(
+                "fc: -s requires pat=rep"
+            )
         );
     }
 

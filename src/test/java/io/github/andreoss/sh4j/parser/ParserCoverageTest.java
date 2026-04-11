@@ -54,7 +54,9 @@ final class ParserCoverageTest {
     @Test
     void pipeFollowedByReservedWordKeepsBothStages() {
         MatcherAssert.assertThat(
-            Integer.valueOf(this.parse("echo a | then").getPipelines().get(0).getCommands().size()),
+            Integer.valueOf(
+                this.parse("echo a | then").getPipelines().get(0).getCommands().size()
+            ),
             CoreMatchers.equalTo(Integer.valueOf(2))
         );
     }

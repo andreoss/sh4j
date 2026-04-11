@@ -198,7 +198,9 @@ final class TokenTest {
         MatcherAssert.assertThat(
             first.hashCode(),
             CoreMatchers.not(
-                CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode())
+                CoreMatchers.equalTo(
+                    new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode()
+                )
             )
         );
     }

@@ -31,10 +31,9 @@ final class TokenTypeTest {
     void valueOfAllTypes() {
         MatcherAssert.assertThat(
             "every enum constant should round-trip through valueOf",
-            Stream.of(TokenType.values())
-                .map(TokenType::name)
-                .map(TokenType::valueOf)
-                .collect(Collectors.toList()),
+            Stream.of(TokenType.values()).map(TokenType::name).map(TokenType::valueOf).collect(
+                Collectors.toList()
+            ),
             CoreMatchers.equalTo(Arrays.asList(TokenType.values()))
         );
     }

@@ -306,8 +306,7 @@ final class ExecutorMutationTest {
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format("Y=value; read x <<'EOF'%n$Y%nEOF%necho \"$x\"")
-            )
-                .stdout(),
+            ).stdout(),
             CoreMatchers.equalTo(String.format("$Y%n"))
         );
     }
@@ -320,8 +319,7 @@ final class ExecutorMutationTest {
                     String.format("fallback%n").getBytes(StandardCharsets.UTF_8)
                 ),
                 "read x < /nonexistent/input; echo \"$x\""
-            )
-                .stdout(),
+            ).stdout(),
             CoreMatchers.equalTo(String.format("fallback%n"))
         );
     }
@@ -330,10 +328,11 @@ final class ExecutorMutationTest {
     void externalInputOutputAndStderrPipesFirst() throws IOException {
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
-                new ByteArrayInputStream(String.format("piped%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("piped%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "cat"
-            )
-                .stdout(),
+            ).stdout(),
             CoreMatchers.equalTo(String.format("piped%n"))
         );
     }
@@ -351,8 +350,7 @@ final class ExecutorMutationTest {
                     "echo redirected > %s",
                     new TempDirs(ExecutorMutationTest.root).file("ext.out").getAbsolutePath()
                 )
-            )
-                .stdout(),
+            ).stdout(),
             CoreMatchers.equalTo("")
         );
     }
@@ -522,8 +520,7 @@ final class ExecutorMutationTest {
                     file.getAbsolutePath(),
                     file.getAbsolutePath()
                 )
-            )
-                .stdout(),
+            ).stdout(),
             CoreMatchers.equalTo(String.format("err%n"))
         );
     }

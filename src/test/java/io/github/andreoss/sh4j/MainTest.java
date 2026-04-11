@@ -350,7 +350,10 @@ final class MainTest {
     void interactiveBlankLinesAndParseError() {
         Assertions.assertEquals(
             0,
-            MainTest.withStdin(MainTest.input("%n%nif%necho done%n"), () -> Main.interactive(null))
+            MainTest.withStdin(
+                MainTest.input("%n%nif%necho done%n"),
+                () -> Main.interactive(null)
+            )
         );
     }
 

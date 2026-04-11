@@ -37,8 +37,7 @@ final class RedirectionHandlerTest {
                     new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
                 ),
                 UnaryOperator.identity()
-            )
-                .err(),
+            ).err(),
             "2>&1 should make err point to out"
         );
     }
@@ -85,8 +84,7 @@ final class RedirectionHandlerTest {
                 Collections.singletonList(new Redirection(1, RedirectionType.DUP_OUTPUT, "2")),
                 new RedirectionHandler.Streams(out, err),
                 UnaryOperator.identity()
-            )
-                .out(),
+            ).out(),
             "1>&2 should make out point to err"
         );
     }
@@ -122,8 +120,7 @@ final class RedirectionHandlerTest {
                     new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
                 ),
                 UnaryOperator.identity()
-            )
-                .out()
+            ).out()
         );
     }
 
@@ -216,8 +213,7 @@ final class RedirectionHandlerTest {
                 ),
                 new RedirectionHandler.Streams(out, err),
                 UnaryOperator.identity()
-            )
-                .savedout()
+            ).savedout()
         );
         err.flush();
     }
@@ -283,8 +279,7 @@ final class RedirectionHandlerTest {
                     new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8)
                 ),
                 UnaryOperator.identity()
-            )
-                .savedout()
+            ).savedout()
         );
     }
 
@@ -320,8 +315,7 @@ final class RedirectionHandlerTest {
                 Collections.singletonList(new Redirection(2, RedirectionType.DUP_OUTPUT, "-")),
                 new RedirectionHandler.Streams(out, err),
                 UnaryOperator.identity()
-            )
-                .savederr()
+            ).savederr()
         );
     }
 

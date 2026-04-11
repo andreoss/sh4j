@@ -233,8 +233,7 @@ final class CharReaderTest {
                         // intentional no-op
                     }
                 }
-            )
-                .isEof(),
+            ).isEof(),
             CoreMatchers.is(true)
         );
     }

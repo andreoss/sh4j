@@ -612,7 +612,9 @@ final class Sh4jPosixTest {
         Assertions.assertEquals(
             String.format("hello%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(String.format("hello%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("hello%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "read VAR",
                 "echo $VAR"
             )
@@ -624,7 +626,9 @@ final class Sh4jPosixTest {
         Assertions.assertEquals(
             String.format("a b c%n"),
             Sh4j.INSTANCE.stdout(
-                new ByteArrayInputStream(String.format("a b c%n").getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(
+                    String.format("a b c%n").getBytes(StandardCharsets.UTF_8)
+                ),
                 "read X Y Z",
                 "echo $X $Y $Z"
             )
@@ -694,8 +698,7 @@ final class Sh4jPosixTest {
                 "alias la='echo world'",
                 "unalias -a",
                 "ll"
-            )
-                .exitCode()
+            ).exitCode()
         );
     }
 

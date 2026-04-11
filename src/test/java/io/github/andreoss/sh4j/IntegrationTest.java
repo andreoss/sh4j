@@ -98,8 +98,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "catprobe.sh",
                 String.format("cat %s%n", probe.getAbsolutePath())
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -126,8 +125,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "catprobe.sh",
                 String.format("cat %s%n", probe.getAbsolutePath())
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -156,8 +154,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "ncatprobe.sh",
                 String.format("cat %s%n", probe.getAbsolutePath())
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -186,8 +183,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "ncatprobe.sh",
                 String.format("cat %s%n", probe.getAbsolutePath())
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -246,8 +242,10 @@ public final class IntegrationTest {
         );
         final ProcessBuilder builder = new ProcessBuilder(
             nativebin.getAbsolutePath(),
-            this.writeScript("npipe.sh", String.format("echo native-pipe | cat%n"))
-                .getAbsolutePath()
+            this.writeScript(
+                "npipe.sh",
+                String.format("echo native-pipe | cat%n")
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -269,8 +267,10 @@ public final class IntegrationTest {
         );
         final ProcessBuilder builder = new ProcessBuilder(
             nativebin.getAbsolutePath(),
-            this.writeScript("npipe.sh", String.format("echo native-pipe | cat%n"))
-                .getAbsolutePath()
+            this.writeScript(
+                "npipe.sh",
+                String.format("echo native-pipe | cat%n")
+            ).getAbsolutePath()
         );
         builder.redirectErrorStream(true);
         final Process proc = builder.start();
@@ -291,8 +291,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "pipe_multi.sh",
                     String.format("echo hello | cat | wc -c%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -315,8 +314,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "and_fail.sh",
                     String.format("false && echo not_reached%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -339,8 +337,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "or_succ.sh",
                     String.format("true || echo not_reached%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -390,8 +387,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             0,
             Main.runScript(
-                this.writeScript("assign.sh", String.format("FOO=hello echo $FOO%n"))
-                    .getAbsolutePath()
+                this.writeScript(
+                    "assign.sh",
+                    String.format("FOO=hello echo $FOO%n")
+                ).getAbsolutePath()
             )
         );
     }
@@ -428,8 +427,7 @@ public final class IntegrationTest {
                         new TempDirs(IntegrationTest.root).file("out.txt").getAbsolutePath()
                     )
                         + String.format("%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -441,8 +439,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "redir_out.sh",
                 String.format("echo test > %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertTrue(outfile.exists());
     }
@@ -454,8 +451,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "redir_out.sh",
                 String.format("echo test > %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertEquals(
             "test",
@@ -473,8 +469,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "redir_in.sh",
                     String.format("cat < %s", infile.getAbsolutePath()) + String.format("%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -491,8 +486,7 @@ public final class IntegrationTest {
                         new TempDirs(IntegrationTest.root).file("append.txt").getAbsolutePath()
                     )
                         + String.format("%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -504,8 +498,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "append.sh",
                 String.format("echo line2 >> %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertTrue(outfile.exists(), "append.txt should exist");
     }
@@ -517,8 +510,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "append.sh",
                 String.format("echo line2 >> %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertEquals(
             "line2",
@@ -538,8 +530,7 @@ public final class IntegrationTest {
                         new TempDirs(IntegrationTest.root).file("clobber.txt").getAbsolutePath()
                     )
                         + String.format("%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -551,8 +542,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "clobber.sh",
                 String.format("echo test >| %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertTrue(outfile.exists());
     }
@@ -568,8 +558,7 @@ public final class IntegrationTest {
                         "echo test 2>%s%n",
                         new TempDirs(IntegrationTest.root).file("stderr.txt").getAbsolutePath()
                     )
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -586,8 +575,7 @@ public final class IntegrationTest {
                         new TempDirs(IntegrationTest.root).file("out2.txt").getAbsolutePath()
                     )
                         + String.format("%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -599,8 +587,7 @@ public final class IntegrationTest {
             this.writeScript(
                 "varexp_redir.sh",
                 String.format("echo $HOME > %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertTrue(outfile.exists(), "out2.txt should exist");
     }
@@ -612,13 +599,13 @@ public final class IntegrationTest {
             this.writeScript(
                 "varexp_redir.sh",
                 String.format("echo $HOME > %s", outfile.getAbsolutePath()) + String.format("%n")
-            )
-                .getAbsolutePath()
+            ).getAbsolutePath()
         );
         Assertions.assertFalse(
-            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8)
-                .trim()
-                .isEmpty(),
+            new String(
+                Files.readAllBytes(outfile.toPath()),
+                StandardCharsets.UTF_8
+            ).trim().isEmpty(),
             "content should not be empty"
         );
     }
@@ -631,8 +618,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "complex.sh",
                     String.format("MSG=hello%necho $MSG%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -655,8 +641,7 @@ public final class IntegrationTest {
                 this.writeScript(
                     "notfound.sh",
                     String.format("nonexistent_cmd_xyz%n")
-                )
-                    .getAbsolutePath()
+                ).getAbsolutePath()
             )
         );
     }
@@ -834,8 +819,10 @@ public final class IntegrationTest {
     @Test
     void pathnameExpansionGlobFirst() throws Exception {
         Assertions.assertTrue(
-            new File(new TempDirs(IntegrationTest.root).folder("globdir"), "alpha.txt")
-                .createNewFile()
+            new File(
+                new TempDirs(IntegrationTest.root).folder("globdir"),
+                "alpha.txt"
+            ).createNewFile()
         );
     }
 
@@ -1016,7 +1003,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             String.format("to-out%nto-err%n"),
             this.runChildJvm(
-                this.writeScript("dupfd.sh", String.format("echo to-out%necho to-err 1>&2 2>&1%n"))
+                this.writeScript(
+                    "dupfd.sh",
+                    String.format("echo to-out%necho to-err 1>&2 2>&1%n")
+                )
             )
         );
     }
@@ -1043,7 +1033,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             String.format("inner%nouter%n"),
             this.runChildJvm(
-                this.writeScript("sub.sh", String.format("X=outer%n(X=inner; echo $X)%necho $X%n"))
+                this.writeScript(
+                    "sub.sh",
+                    String.format("X=outer%n(X=inner; echo $X)%necho $X%n")
+                )
             )
         );
     }
@@ -1106,7 +1099,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             String.format("hi there%n"),
             this.runChildJvm(
-                this.writeScript("alias.sh", String.format("alias greet='echo hi'%ngreet there%n"))
+                this.writeScript(
+                    "alias.sh",
+                    String.format("alias greet='echo hi'%ngreet there%n")
+                )
             )
         );
     }
@@ -1250,8 +1246,7 @@ public final class IntegrationTest {
                     new TempDirs(IntegrationTest.root).folder("wd").getAbsolutePath()
                 )
             )
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.endsWith("/wd"),
             String.format("expected pwd to end with /wd, got %s", out)
@@ -1264,9 +1259,7 @@ public final class IntegrationTest {
         Assertions.assertTrue(
             this.runChildJvm(
                 this.writeScript("pwd.sh", String.format("cd %s%npwd%n", dir.getAbsolutePath()))
-            )
-                .trim()
-                .contains(dir.getName()),
+            ).trim().contains(dir.getName()),
             String.format("expected pwd to mention %s", dir.getName())
         );
     }
@@ -1295,8 +1288,7 @@ public final class IntegrationTest {
                     new TempDirs(IntegrationTest.root).folder("cd-target").getAbsolutePath()
                 )
             )
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.endsWith("/cd-target"),
             String.format("expected to land in /cd-target, got %s", out)
@@ -1309,9 +1301,7 @@ public final class IntegrationTest {
         Assertions.assertTrue(
             this.runChildJvm(
                 this.writeScript("cd.sh", String.format("cd %s%npwd%n", target.getAbsolutePath()))
-            )
-                .trim()
-                .contains(target.getName()),
+            ).trim().contains(target.getName()),
             String.format("expected pwd to mention %s", target.getName())
         );
     }
@@ -1372,8 +1362,9 @@ public final class IntegrationTest {
      */
     @Test
     void umaskDefaultIsPrintable() throws Exception {
-        final String out = this.runChildJvm(this.writeScript("umask.sh", String.format("umask%n")))
-            .trim();
+        final String out = this.runChildJvm(
+            this.writeScript("umask.sh", String.format("umask%n"))
+        ).trim();
         Assertions.assertTrue(
             out.matches("\\d{4}"),
             String.format("expected 4-digit octal, got %s", out)
@@ -1385,8 +1376,9 @@ public final class IntegrationTest {
      */
     @Test
     void specialParameterDollarDollarIsPid() throws Exception {
-        final String out = this.runChildJvm(this.writeScript("pid.sh", String.format("echo $$%n")))
-            .trim();
+        final String out = this.runChildJvm(
+            this.writeScript("pid.sh", String.format("echo $$%n"))
+        ).trim();
         Assertions.assertTrue(
             out.matches("\\d+"),
             String.format("expected positive int, got %s", out)
@@ -1473,8 +1465,7 @@ public final class IntegrationTest {
                     new TempDirs(IntegrationTest.root).folder("second").getAbsolutePath()
                 )
             )
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.endsWith("/first"),
             String.format("expected to return to /first, got %s", out)
@@ -1496,8 +1487,7 @@ public final class IntegrationTest {
                         second.getAbsolutePath()
                     )
                 )
-            )
-                .trim(),
+            ).trim(),
             "cd - must not land on the directory just left"
         );
     }
@@ -1620,7 +1610,9 @@ public final class IntegrationTest {
     void tildeMidWordNotExpanded() throws Exception {
         Assertions.assertEquals(
             String.format("a~b%n"),
-            this.runChildJvm(this.writeScript("midtilde.sh", String.format("HOME=/h%necho a~b%n")))
+            this.runChildJvm(
+                this.writeScript("midtilde.sh", String.format("HOME=/h%necho a~b%n"))
+            )
         );
     }
 
@@ -1806,7 +1798,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             String.format("file.txt%n"),
             this.runChildJvm(
-                this.writeScript("lpref.sh", String.format("X=/path/to/file.txt%necho ${X##*/}%n"))
+                this.writeScript(
+                    "lpref.sh",
+                    String.format("X=/path/to/file.txt%necho ${X##*/}%n")
+                )
             )
         );
     }
@@ -1911,8 +1906,7 @@ public final class IntegrationTest {
     void specialParameterDashIsShellFlags() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("dash.sh", String.format("set -e%necho $-%n"))
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.contains("e"),
             String.format("expected $- to contain e, got: %s", out)
@@ -1948,9 +1942,7 @@ public final class IntegrationTest {
                         new TempDirs(IntegrationTest.root).folder("after").getAbsolutePath()
                     )
                 )
-            )
-                .trim()
-                .isEmpty(),
+            ).trim().isEmpty(),
             "OLDPWD should not be empty"
         );
     }
@@ -1965,8 +1957,7 @@ public final class IntegrationTest {
                     "oldpwd.sh",
                     String.format("ORIG=$PWD%ncd %s%necho $OLDPWD%n", target.getAbsolutePath())
                 )
-            )
-                .trim(),
+            ).trim(),
             "OLDPWD should name the directory left behind"
         );
     }
@@ -2047,8 +2038,7 @@ public final class IntegrationTest {
     void specialParameterBangIsLastBgPid() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("bgpid.sh", String.format("true &%necho ${!}%n"))
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.matches("\\d+"),
             String.format("expected positive int for $!, got: %s", out)
@@ -2262,7 +2252,10 @@ public final class IntegrationTest {
         Assertions.assertEquals(
             String.format("to-stderr%n"),
             this.runChildJvm(
-                this.writeScript("execredir.sh", String.format("exec 2>&1%necho to-stderr 1>&2%n"))
+                this.writeScript(
+                    "execredir.sh",
+                    String.format("exec 2>&1%necho to-stderr 1>&2%n")
+                )
             )
         );
     }
@@ -2459,8 +2452,7 @@ public final class IntegrationTest {
     void dollarZeroInsideFunction() throws Exception {
         final String out = this.runChildJvm(
             this.writeScript("fn0.sh", String.format("f() { echo $0; }%nf%n"))
-        )
-            .trim();
+        ).trim();
         Assertions.assertTrue(
             out.endsWith("/fn0.sh"),
             String.format("expected $0 to end with /fn0.sh, got: %s", out)
