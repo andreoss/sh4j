@@ -26,22 +26,11 @@ final class ExecutorArithmeticTernaryTest {
     /** TMP_DIR constant. */
     private static final String TMP_DIR = "/tmp";
 
-    /** HELLO constant. */
-    private static final String HELLO = "hello";
-
     /** HOME_KEY constant. */
     private static final String HOME_KEY = "HOME";
 
     /** PWD_KEY constant. */
     private static final String PWD_KEY = "PWD";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void arithmeticTernaryShortCircuitFourth() {
@@ -164,7 +153,7 @@ final class ExecutorArithmeticTernaryTest {
     @Test
     void backtickSubstitution() {
         Assertions.assertEquals(
-            ExecutorArithmeticTernaryTest.HELLO,
+            "hello",
             new Executor().expandVariables("`echo hello`", new HashMap<>())
         );
     }
@@ -371,7 +360,10 @@ final class ExecutorArithmeticTernaryTest {
     void cdToDirectorySecond() throws Exception {
         final Executor executor = new Executor();
         executor.execute(this.parse("cd /tmp"));
-        Assertions.assertEquals(ExecutorArithmeticTernaryTest.TMP_DIR, executor.getVariable(ExecutorArithmeticTernaryTest.PWD_KEY));
+        Assertions.assertEquals(
+            ExecutorArithmeticTernaryTest.TMP_DIR,
+            executor.getVariable(ExecutorArithmeticTernaryTest.PWD_KEY)
+        );
     }
 
     @Test
@@ -387,7 +379,10 @@ final class ExecutorArithmeticTernaryTest {
         env.put(ExecutorArithmeticTernaryTest.HOME_KEY, ExecutorArithmeticTernaryTest.TMP_DIR);
         final Executor executor = new Executor(env);
         executor.execute(this.parse("cd"));
-        Assertions.assertEquals(ExecutorArithmeticTernaryTest.TMP_DIR, executor.getVariable(ExecutorArithmeticTernaryTest.PWD_KEY));
+        Assertions.assertEquals(
+            ExecutorArithmeticTernaryTest.TMP_DIR,
+            executor.getVariable(ExecutorArithmeticTernaryTest.PWD_KEY)
+        );
     }
 
     @Test
@@ -427,7 +422,10 @@ final class ExecutorArithmeticTernaryTest {
         final Executor executor = new Executor(env);
         executor.setCaptureStream(new ByteArrayOutputStream());
         executor.execute(this.parse("cd -"));
-        Assertions.assertEquals(ExecutorArithmeticTernaryTest.TMP_DIR, executor.getVariable("OLDPWD"));
+        Assertions.assertEquals(
+            ExecutorArithmeticTernaryTest.TMP_DIR,
+            executor.getVariable("OLDPWD")
+        );
     }
 
     @Test
@@ -440,5 +438,13 @@ final class ExecutorArithmeticTernaryTest {
         executor.setCaptureStream(bos);
         executor.execute(this.parse("cd -"));
         Assertions.assertEquals("/", bos.toString(StandardCharsets.UTF_8).trim());
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

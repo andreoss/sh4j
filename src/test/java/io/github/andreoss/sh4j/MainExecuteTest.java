@@ -36,79 +36,6 @@ final class MainExecuteTest {
     @TempDir
     private static Path root;
 
-    private static ByteArrayInputStream input(final String format) {
-        return new ByteArrayInputStream(
-            String.format(format).getBytes(StandardCharsets.UTF_8)
-        );
-    }
-
-    private static int withStdin(
-        final InputStream input, final IntSupplier action
-    ) {
-        System.setIn(input);
-        try {
-            return action.getAsInt();
-        } finally {
-            MainExecuteTest.ORIGINAL.restore();
-        }
-    }
-
-    private static int withStreams(
-        final InputStream input, final ByteArrayOutputStream out,
-        final ByteArrayOutputStream err, final IntSupplier action
-    ) {
-        try (
-            PrintStream sout = new PrintStream(out, true, StandardCharsets.UTF_8);
-            PrintStream serr = new PrintStream(err, true, StandardCharsets.UTF_8)
-        ) {
-            System.setIn(input);
-            System.setOut(sout);
-            System.setErr(serr);
-            return action.getAsInt();
-        } finally {
-            MainExecuteTest.ORIGINAL.restore();
-        }
-    }
-
-    /**
-     * Standard streams to put back after a test swaps them.
-     *
-     * @param in Standard input
-     * @param out Standard output
-     * @param err Standard error
-     * @since 1.0
-     */
-    private record Console(InputStream in, PrintStream out, PrintStream err) {
-
-        /**
-         * Installs these streams as the standard streams.
-         */
-        void restore() {
-            System.setIn(this.in);
-            System.setOut(this.out);
-            System.setErr(this.err);
-        }
-    }
-
-    /**
-     * Input stream whose every read fails.
-     *
-     * @since 1.0
-     */
-    private static final class FailingInput extends InputStream {
-
-        @Override
-        public int read() throws IOException {
-            throw new IOException();
-        }
-
-        @Override
-        public int read(final byte[] buf, final int off, final int len)
-            throws IOException {
-            throw new IOException();
-        }
-    }
-
     @Test
     void executeLineWithIncompleteIf() {
         final Executor executor = new Executor();
@@ -190,7 +117,10 @@ final class MainExecuteTest {
     void exitCodeNoArgsInteractiveEmptyLine() {
         Assertions.assertEquals(
             0,
-            MainExecuteTest.withStdin(MainExecuteTest.input("%n"), () -> Main.exitCode(new String[0]))
+            MainExecuteTest.withStdin(
+                MainExecuteTest.input("%n"),
+                () -> Main.exitCode(new String[0])
+            )
         );
     }
 
@@ -515,7 +445,10 @@ final class MainExecuteTest {
     void interactiveWithEmptyEnvFile() throws IOException {
         Assertions.assertEquals(
             0,
-            MainExecuteTest.withStdin(new ByteArrayInputStream(new byte[0]), () -> Main.interactive(""))
+            MainExecuteTest.withStdin(
+                new ByteArrayInputStream(new byte[0]),
+                () -> Main.interactive("")
+            )
         );
     }
 
@@ -523,7 +456,10 @@ final class MainExecuteTest {
     void interactiveWithContinuationPrompt() throws IOException {
         Assertions.assertEquals(
             0,
-            MainExecuteTest.withStdin(MainExecuteTest.input("echo '%n'%n"), () -> Main.interactive(null))
+            MainExecuteTest.withStdin(
+                MainExecuteTest.input("echo '%n'%n"),
+                () -> Main.interactive(null)
+            )
         );
     }
 
@@ -545,5 +481,78 @@ final class MainExecuteTest {
     @Test
     void isIncompleteWithClosedDoubleQuote() {
         Assertions.assertFalse(Main.isIncomplete("echo \"hello\""));
+    }
+
+    private static ByteArrayInputStream input(final String format) {
+        return new ByteArrayInputStream(
+            String.format(format).getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private static int withStdin(
+        final InputStream input, final IntSupplier action
+    ) {
+        System.setIn(input);
+        try {
+            return action.getAsInt();
+        } finally {
+            MainExecuteTest.ORIGINAL.restore();
+        }
+    }
+
+    private static int withStreams(
+        final InputStream input, final ByteArrayOutputStream out,
+        final ByteArrayOutputStream err, final IntSupplier action
+    ) {
+        try (
+            PrintStream sout = new PrintStream(out, true, StandardCharsets.UTF_8);
+            PrintStream serr = new PrintStream(err, true, StandardCharsets.UTF_8)
+        ) {
+            System.setIn(input);
+            System.setOut(sout);
+            System.setErr(serr);
+            return action.getAsInt();
+        } finally {
+            MainExecuteTest.ORIGINAL.restore();
+        }
+    }
+
+    /**
+     * Standard streams to put back after a test swaps them.
+     *
+     * @param in Standard input
+     * @param out Standard output
+     * @param err Standard error
+     * @since 1.0
+     */
+    private record Console(InputStream in, PrintStream out, PrintStream err) {
+
+        /**
+         * Installs these streams as the standard streams.
+         */
+        void restore() {
+            System.setIn(this.in);
+            System.setOut(this.out);
+            System.setErr(this.err);
+        }
+    }
+
+    /**
+     * Input stream whose every read fails.
+     *
+     * @since 1.0
+     */
+    private static final class FailingInput extends InputStream {
+
+        @Override
+        public int read() throws IOException {
+            throw new IOException();
+        }
+
+        @Override
+        public int read(final byte[] buf, final int off, final int len)
+            throws IOException {
+            throw new IOException();
+        }
     }
 }

@@ -31,7 +31,9 @@ final class PosixRegressionRedirectionsTest {
             Sh4j.INSTANCE.out(
                 String.format(
                     "cd %s; printf 'seed\\n' > rel.txt; read v < rel.txt; echo \"$v\"",
-                    new TempDirs(PosixRegressionRedirectionsTest.root).folder("cwdtest").getAbsolutePath()
+                    new TempDirs(PosixRegressionRedirectionsTest.root).folder(
+                        "cwdtest"
+                    ).getAbsolutePath()
                 )
             )
         );

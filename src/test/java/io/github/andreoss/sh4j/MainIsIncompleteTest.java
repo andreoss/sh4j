@@ -114,7 +114,9 @@ final class MainIsIncompleteTest {
             Main.runSource(
                 String.format(
                     "trap 'echo trapped > %s' EXIT; echo body",
-                    new TempDirs(MainIsIncompleteTest.root).file("trap-marker.txt").getAbsolutePath()
+                    new TempDirs(MainIsIncompleteTest.root).file(
+                        "trap-marker.txt"
+                    ).getAbsolutePath()
                 ),
                 Collections.singletonList("sh")
             )
@@ -141,7 +143,9 @@ final class MainIsIncompleteTest {
             Main.runSource(
                 String.format(
                     "trap 'echo trapped > %s' EXIT; exit 3",
-                    new TempDirs(MainIsIncompleteTest.root).file("exit-trap-marker.txt").getAbsolutePath()
+                    new TempDirs(MainIsIncompleteTest.root).file(
+                        "exit-trap-marker.txt"
+                    ).getAbsolutePath()
                 ),
                 Collections.singletonList("sh")
             )

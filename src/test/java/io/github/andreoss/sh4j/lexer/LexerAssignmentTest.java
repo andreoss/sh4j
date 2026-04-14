@@ -15,10 +15,6 @@ import org.junit.jupiter.api.Test;
  */
 final class LexerAssignmentTest {
 
-    private Lexer lexer(final String input) {
-        return new Lexer(new CharReader(input));
-    }
-
     @Test
     void assignmentWordEdgeCasesFirst() {
         MatcherAssert.assertThat(
@@ -356,5 +352,9 @@ final class LexerAssignmentTest {
             this.lexer("=").nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
         );
+    }
+
+    private Lexer lexer(final String input) {
+        return new Lexer(new CharReader(input));
     }
 }

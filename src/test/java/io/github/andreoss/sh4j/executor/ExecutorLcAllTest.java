@@ -33,14 +33,6 @@ final class ExecutorLcAllTest {
     /** HELLO_WORLD constant. */
     private static final String HELLO_WORLD = "hello world";
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void lcAllVariableOverridesOthersSecond() {
         final Executor executor = new Executor();
@@ -333,5 +325,13 @@ final class ExecutorLcAllTest {
     void pipelineInterruptedException() {
         Thread.currentThread().interrupt();
         Assertions.assertEquals(1, new Executor().execute(this.parse("ls | cat")));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

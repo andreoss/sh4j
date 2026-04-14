@@ -18,44 +18,6 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 final class ParserParseGroupingTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
-    private SimpleCommand command(final ListNode list) {
-        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-    }
-
-    private CaseNode caseOf(final String source) {
-        return (CaseNode) this.node(source, 0);
-    }
-
-    private Node node(final String source, final int index) {
-        return this.pipelineOf(source).getCommands().get(index);
-    }
-
-    private Pipeline pipelineOf(final String source) {
-        return this.firstPipeline(this.parse(source));
-    }
-
-    private SimpleCommand commandOf(final String source) {
-        return this.command(this.parse(source));
-    }
-
-    private Pipeline firstPipeline(final ListNode list) {
-        return list.getPipelines().get(0);
-    }
-
-    private SimpleCommand heredocCommand(final String delim) {
-        return (SimpleCommand) this.node(
-            String.format("cat <<%s%nbody%nEOF%n", delim)
-        , 0);
-    }
-
     @Test
     void parseGroupingWithTrailingSemi() {
         Assertions.assertEquals(1, this.parse("{ echo a; }").getPipelines().size());
@@ -361,5 +323,43 @@ final class ParserParseGroupingTest {
         cmd.addArgument("a");
         cmd.addArgument("b");
         Assertions.assertEquals("a b", cmd.toString());
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
+    }
+
+    private SimpleCommand command(final ListNode list) {
+        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+    }
+
+    private CaseNode caseOf(final String source) {
+        return (CaseNode) this.node(source, 0);
+    }
+
+    private Node node(final String source, final int index) {
+        return this.pipelineOf(source).getCommands().get(index);
+    }
+
+    private Pipeline pipelineOf(final String source) {
+        return this.firstPipeline(this.parse(source));
+    }
+
+    private SimpleCommand commandOf(final String source) {
+        return this.command(this.parse(source));
+    }
+
+    private Pipeline firstPipeline(final ListNode list) {
+        return list.getPipelines().get(0);
+    }
+
+    private SimpleCommand heredocCommand(final String delim) {
+        return (SimpleCommand) this.node(
+            String.format("cat <<%s%nbody%nEOF%n", delim)
+        , 0);
     }
 }

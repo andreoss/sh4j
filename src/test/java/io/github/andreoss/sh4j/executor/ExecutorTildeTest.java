@@ -23,19 +23,8 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorTildeTest {
 
-    /** TRUE_CMD constant. */
-    private static final String TRUE_CMD = "true";
-
     /** VALUE constant. */
     private static final String VALUE = "value";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void tildeUserNameFallthrough() {
@@ -47,7 +36,7 @@ final class ExecutorTildeTest {
 
     @Test
     void trueBuiltinReturnsZero() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorTildeTest.TRUE_CMD)));
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
     }
 
     @Test
@@ -410,5 +399,13 @@ final class ExecutorTildeTest {
         final Executor executor = new Executor(env);
         executor.execute(this.parse("unset MYVAR"));
         Assertions.assertNull(executor.getVariable("MYVAR"));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

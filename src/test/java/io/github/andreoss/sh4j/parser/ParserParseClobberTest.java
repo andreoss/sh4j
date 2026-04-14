@@ -19,30 +19,6 @@ final class ParserParseClobberTest {
     /** ECHO_CMD constant. */
     private static final String ECHO_CMD = "echo";
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
-    private SimpleCommand command(final ListNode list) {
-        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-    }
-
-    private Node node(final String source, final int index) {
-        return this.pipelineOf(source).getCommands().get(index);
-    }
-
-    private Pipeline pipelineOf(final String source) {
-        return this.firstPipeline(this.parse(source));
-    }
-
-    private Pipeline firstPipeline(final ListNode list) {
-        return list.getPipelines().get(0);
-    }
-
     @Test
     void parseClobberRedirectionFirst() {
         Assertions.assertTrue(
@@ -309,5 +285,29 @@ final class ParserParseClobberTest {
         Assertions.assertTrue(
             this.command(this.parse("echo FOO=bar")).getArguments().contains("FOO=bar")
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
+    }
+
+    private SimpleCommand command(final ListNode list) {
+        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+    }
+
+    private Node node(final String source, final int index) {
+        return this.pipelineOf(source).getCommands().get(index);
+    }
+
+    private Pipeline pipelineOf(final String source) {
+        return this.firstPipeline(this.parse(source));
+    }
+
+    private Pipeline firstPipeline(final ListNode list) {
+        return list.getPipelines().get(0);
     }
 }

@@ -24,14 +24,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorFunctionDefinitionTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void functionDefinitionParsingSecond() {
         final Executor executor = new Executor();
@@ -431,5 +423,13 @@ final class ExecutorFunctionDefinitionTest {
                 this.parse("case '[abc' in '[abc') echo MATCHED;; *) echo NO;; esac")
             )
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

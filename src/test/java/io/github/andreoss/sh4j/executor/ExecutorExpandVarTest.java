@@ -34,37 +34,16 @@ final class ExecutorExpandVarTest {
     /** HELLO constant. */
     private static final String HELLO = "hello";
 
-    /** VAR_NAME constant. */
-    private static final String VAR_NAME = "var";
-
     /** VALUE constant. */
     private static final String VALUE = "value";
 
     /** HELLO_WORLD constant. */
     private static final String HELLO_WORLD = "hello world";
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
-    private static int exitCode(final Runnable action) {
-        int code = -1;
-        try {
-            action.run();
-        } catch (final ExitSignal ex) {
-            code = ex.getCode();
-        }
-        return code;
-    }
-
     @Test
     void expandVarPatternNoMatch() {
         final Map<String, String> env = new HashMap<>();
-        env.put(ExecutorExpandVarTest.VAR_NAME, ExecutorExpandVarTest.HELLO);
+        env.put("var", ExecutorExpandVarTest.HELLO);
         Assertions.assertEquals(
             ExecutorExpandVarTest.HELLO,
             new Executor().expandVariables("${var%x}", env)
@@ -206,7 +185,9 @@ final class ExecutorExpandVarTest {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setErrorStream(stream);
-        ExecutorExpandVarTest.exitCode(() -> executor.expandVariables("${x:?my error}", new HashMap<>()));
+        ExecutorExpandVarTest.exitCode(
+            () -> executor.expandVariables("${x:?my error}", new HashMap<>())
+        );
         Assertions.assertTrue(
             bos.toString(StandardCharsets.UTF_8).trim().contains("my error"),
             "error message should go to injected stream"
@@ -540,5 +521,23 @@ final class ExecutorExpandVarTest {
         );
         new File(inpath).delete();
         new File(outpath).delete();
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
+    }
+
+    private static int exitCode(final Runnable action) {
+        int code = -1;
+        try {
+            action.run();
+        } catch (final ExitSignal ex) {
+            code = ex.getCode();
+        }
+        return code;
     }
 }

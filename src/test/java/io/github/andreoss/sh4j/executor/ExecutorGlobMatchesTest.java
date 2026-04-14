@@ -26,14 +26,6 @@ final class ExecutorGlobMatchesTest {
     /** HELLO constant. */
     private static final String HELLO = "hello";
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void globMatchesUnclosedBracketInCaseSecond() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -107,7 +99,10 @@ final class ExecutorGlobMatchesTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(this.parse(String.format("cat <<- EOF%n\thello%nEOF%n")));
-        Assertions.assertEquals(ExecutorGlobMatchesTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(
+            ExecutorGlobMatchesTest.HELLO,
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
     }
 
     @Test
@@ -127,7 +122,10 @@ final class ExecutorGlobMatchesTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(this.parse(String.format("cat <<- EOF%n\t\thello%nEOF%n")));
-        Assertions.assertEquals(ExecutorGlobMatchesTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(
+            ExecutorGlobMatchesTest.HELLO,
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
     }
 
     @Test
@@ -147,7 +145,10 @@ final class ExecutorGlobMatchesTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(this.parse(String.format("cat <<- EOF%n\thello%n\tEOF%n")));
-        Assertions.assertEquals(ExecutorGlobMatchesTest.HELLO, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(
+            ExecutorGlobMatchesTest.HELLO,
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
     }
 
     @Test
@@ -404,5 +405,13 @@ final class ExecutorGlobMatchesTest {
     @Test
     void lcAllVariableOverridesOthersFirst() {
         Assertions.assertEquals(0, new Executor().execute(this.parse("LC_ALL=C")));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

@@ -25,19 +25,8 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorExternalClobberTest {
 
-    /** FALSE_CMD constant. */
-    private static final String FALSE_CMD = "false";
-
     /** HELLO constant. */
     private static final String HELLO = "hello";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void externalClobberRedirectFirst() throws Exception {
@@ -202,7 +191,7 @@ final class ExecutorExternalClobberTest {
 
     @Test
     void falseBuiltinReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorExternalClobberTest.FALSE_CMD)));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("false")));
     }
 
     @Test
@@ -534,5 +523,13 @@ final class ExecutorExternalClobberTest {
         executor.setOutputStream(stream);
         Assertions.assertEquals(0, executor.execute(this.parse("myfunc() { echo hi; }")));
         stream.flush();
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

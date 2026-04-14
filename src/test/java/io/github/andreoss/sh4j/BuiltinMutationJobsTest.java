@@ -26,27 +26,6 @@ final class BuiltinMutationJobsTest {
     @TempDir
     private static Path root;
 
-    private static InputStream failingInput() {
-        return new InputStream() {
-            @Override
-            public int read() throws IOException {
-                throw new IOException("boom");
-            }
-
-            @Override
-            public int read(final byte[] buf, final int off, final int len)
-                throws IOException {
-                throw new IOException("boom");
-            }
-        };
-    }
-
-    private static Process stubborn() throws IOException {
-        return new ProcessBuilder(
-            "sh", "-c", "trap '' TERM; while true; do sleep 1; done"
-        ).start();
-    }
-
     @Test
     void jobsWithExplicitAndMissingIdsFirst() {
         Assertions.assertTrue(
@@ -438,5 +417,26 @@ final class BuiltinMutationJobsTest {
                 "IFS=' :'; read a b; echo \"a=$a b=$b\""
             ).stdout()
         );
+    }
+
+    private static InputStream failingInput() {
+        return new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new IOException("boom");
+            }
+
+            @Override
+            public int read(final byte[] buf, final int off, final int len)
+                throws IOException {
+                throw new IOException("boom");
+            }
+        };
+    }
+
+    private static Process stubborn() throws IOException {
+        return new ProcessBuilder(
+            "sh", "-c", "trap '' TERM; while true; do sleep 1; done"
+        ).start();
     }
 }

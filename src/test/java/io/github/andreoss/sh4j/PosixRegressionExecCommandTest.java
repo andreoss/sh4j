@@ -44,7 +44,9 @@ final class PosixRegressionExecCommandTest {
             Sh4j.INSTANCE.runFull(
                 String.format(
                     "exec echo hi > %s",
-                    new TempDirs(PosixRegressionExecCommandTest.root).file("exec-arg.out").getAbsolutePath()
+                    new TempDirs(PosixRegressionExecCommandTest.root).file(
+                        "exec-arg.out"
+                    ).getAbsolutePath()
                 )
             ).exitCode()
         );
@@ -77,7 +79,9 @@ final class PosixRegressionExecCommandTest {
             Sh4j.INSTANCE.run(
                 String.format(
                     "exec 7>%s; exec 7>&-",
-                    new TempDirs(PosixRegressionExecCommandTest.root).file("fd-close.txt").getAbsolutePath()
+                    new TempDirs(PosixRegressionExecCommandTest.root).file(
+                        "fd-close.txt"
+                    ).getAbsolutePath()
                 )
             )
         );

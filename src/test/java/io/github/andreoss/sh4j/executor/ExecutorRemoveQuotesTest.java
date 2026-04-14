@@ -37,9 +37,6 @@ final class ExecutorRemoveQuotesTest {
     /** IFS_TAB_NL constant. */
     private static final String IFS_TAB_NL = " \t%n";
 
-    /** TRUE_CMD constant. */
-    private static final String TRUE_CMD = "true";
-
     /** HELLO constant. */
     private static final String HELLO = "hello";
 
@@ -48,14 +45,6 @@ final class ExecutorRemoveQuotesTest {
 
     /** HELLO_WORLD constant. */
     private static final String HELLO_WORLD = "hello world";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void removeQuotesPartialDouble() {
@@ -134,7 +123,7 @@ final class ExecutorRemoveQuotesTest {
     void resolveCommandWithEmptyDirInPath() {
         final Map<String, String> env = new HashMap<>();
         env.put(ExecutorRemoveQuotesTest.PATH_KEY, ":/usr/bin");
-        Assertions.assertEquals(0, new Executor(env).execute(this.parse(ExecutorRemoveQuotesTest.TRUE_CMD)));
+        Assertions.assertEquals(0, new Executor(env).execute(this.parse("true")));
     }
 
     @Test
@@ -233,7 +222,10 @@ final class ExecutorRemoveQuotesTest {
         );
         final Map<String, String> env = new HashMap<>();
         executor.expandVariables("$@", env);
-        Assertions.assertEquals(ExecutorRemoveQuotesTest.A_B_C, executor.expandVariables("$*", env));
+        Assertions.assertEquals(
+            ExecutorRemoveQuotesTest.A_B_C,
+            executor.expandVariables("$*", env)
+        );
     }
 
     @Test
@@ -251,7 +243,10 @@ final class ExecutorRemoveQuotesTest {
     void splitFieldsDefaultIfs() {
         Assertions.assertEquals(
             Arrays.asList("a", "b", "c"),
-            WordExpander.splitFields(ExecutorRemoveQuotesTest.A_B_C, String.format(ExecutorRemoveQuotesTest.IFS_TAB_NL))
+            WordExpander.splitFields(
+                ExecutorRemoveQuotesTest.A_B_C,
+                String.format(ExecutorRemoveQuotesTest.IFS_TAB_NL)
+            )
         );
     }
 
@@ -366,5 +361,13 @@ final class ExecutorRemoveQuotesTest {
             Arrays.asList("a", "b", "c"),
             WordExpander.splitFields("a:b c", ": ")
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

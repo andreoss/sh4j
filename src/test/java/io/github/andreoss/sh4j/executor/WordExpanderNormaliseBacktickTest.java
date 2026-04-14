@@ -67,7 +67,9 @@ final class WordExpanderNormaliseBacktickTest {
     void pathnameExpandNoGlob() {
         Assertions.assertEquals(
             Collections.singletonList(WordExpanderNormaliseBacktickTest.ABC),
-            WordExpander.pathnameExpand(Collections.singletonList(WordExpanderNormaliseBacktickTest.ABC))
+            WordExpander.pathnameExpand(
+                Collections.singletonList(WordExpanderNormaliseBacktickTest.ABC)
+            )
         );
     }
 

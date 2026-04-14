@@ -29,34 +29,20 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorPositionalTest {
 
-    /** SCRIPT_KEY constant. */
-    private static final String SCRIPT_KEY = "script";
-
     /** TMP_DIR constant. */
     private static final String TMP_DIR = "/tmp";
 
     /** HELLO constant. */
     private static final String HELLO = "hello";
 
-    /** HELLO_WORLD constant. */
-    private static final String HELLO_WORLD = "hello world";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void positionalParamIndexOutOfRangeIsEmpty() {
         Assertions.assertEquals(
             "",
-            new Executor(
-                new HashMap<>(),
-                Arrays.asList(ExecutorPositionalTest.SCRIPT_KEY, "a", "b")
-            ).expandVariables("$9", new HashMap<>())
+            new Executor(new HashMap<>(), Arrays.asList("script", "a", "b")).expandVariables(
+                "$9",
+                new HashMap<>()
+            )
         );
     }
 
@@ -121,7 +107,10 @@ final class ExecutorPositionalTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("pwd"));
-        Assertions.assertEquals(ExecutorPositionalTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(
+            ExecutorPositionalTest.TMP_DIR,
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
         stream.flush();
     }
 
@@ -146,7 +135,10 @@ final class ExecutorPositionalTest {
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
         executor.execute(this.parse("pwd -L"));
-        Assertions.assertEquals(ExecutorPositionalTest.TMP_DIR, bos.toString(StandardCharsets.UTF_8).trim());
+        Assertions.assertEquals(
+            ExecutorPositionalTest.TMP_DIR,
+            bos.toString(StandardCharsets.UTF_8).trim()
+        );
         stream.flush();
     }
 
@@ -459,19 +451,27 @@ final class ExecutorPositionalTest {
 
     @Test
     void removeQuotesNoop() {
-        Assertions.assertEquals(ExecutorPositionalTest.HELLO, WordExpander.removeQuotes(ExecutorPositionalTest.HELLO));
+        Assertions.assertEquals(
+            ExecutorPositionalTest.HELLO,
+            WordExpander.removeQuotes(ExecutorPositionalTest.HELLO)
+        );
     }
 
     @Test
     void removeQuotesDouble() {
-        Assertions.assertEquals(
-            ExecutorPositionalTest.HELLO_WORLD,
-            WordExpander.removeQuotes("\"hello world\"")
-        );
+        Assertions.assertEquals("hello world", WordExpander.removeQuotes("\"hello world\""));
     }
 
     @Test
     void removeQuotesSingle() {
         Assertions.assertEquals(ExecutorPositionalTest.HELLO, WordExpander.removeQuotes("'hello'"));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

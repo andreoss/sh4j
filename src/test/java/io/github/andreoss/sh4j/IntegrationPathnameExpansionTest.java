@@ -27,60 +27,6 @@ public final class IntegrationPathnameExpansionTest {
     @TempDir
     private static Path root;
 
-    private File writeScript(final String name, final String content) throws IOException {
-        final File script = new TempDirs(IntegrationPathnameExpansionTest.root).file(name);
-        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
-            w.write(content);
-        }
-        Assertions.assertTrue(script.setExecutable(true));
-        return script;
-    }
-
-    private String runChildJvmAllowingFailure(final File script) throws Exception {
-        final ProcessBuilder builder = new ProcessBuilder(
-            String.format("%s/bin/java", System.getProperty("java.home")),
-            "-cp",
-            System.getProperty("java.class.path"),
-            "io.github.andreoss.sh4j.Main",
-            script.getAbsolutePath()
-        );
-        builder.redirectErrorStream(true);
-        final Process proc = builder.start();
-        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        proc.waitFor();
-        return out;
-    }
-
-    private String runChildJvm(final File script) throws Exception {
-        final ProcessBuilder builder = new ProcessBuilder(
-            String.format("%s/bin/java", System.getProperty("java.home")),
-            "-cp",
-            System.getProperty("java.class.path"),
-            "io.github.andreoss.sh4j.Main",
-            script.getAbsolutePath()
-        );
-        builder.redirectErrorStream(true);
-        final Process proc = builder.start();
-        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
-        proc.waitFor();
-        Assertions.assertEquals(
-            0,
-            proc.exitValue(),
-            String.format("child sh4j exit code; output: %s", out)
-        );
-        return out;
-    }
-
-    private static byte[] readAllBytes(final InputStream input) throws IOException {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final byte[] buf = new byte[8192];
-        int num;
-        while ((num = input.read(buf)) != -1) {
-            bos.write(buf, 0, num);
-        }
-        return bos.toByteArray();
-    }
-
     @Test
     void pathnameExpansionGlobSecond() throws Exception {
         final File dir = new TempDirs(IntegrationPathnameExpansionTest.root).folder("globdir");
@@ -170,7 +116,9 @@ public final class IntegrationPathnameExpansionTest {
                 "pwd.sh",
                 String.format(
                     "cd %s%npwd%n",
-                    new TempDirs(IntegrationPathnameExpansionTest.root).folder("wd").getAbsolutePath()
+                    new TempDirs(IntegrationPathnameExpansionTest.root).folder(
+                        "wd"
+                    ).getAbsolutePath()
                 )
             )
         ).trim();
@@ -477,7 +425,9 @@ public final class IntegrationPathnameExpansionTest {
                     "stderr_redir.sh",
                     String.format(
                         "echo test 2>%s%n",
-                        new TempDirs(IntegrationPathnameExpansionTest.root).file("stderr.txt").getAbsolutePath()
+                        new TempDirs(IntegrationPathnameExpansionTest.root).file(
+                            "stderr.txt"
+                        ).getAbsolutePath()
                     )
                 ).getAbsolutePath()
             )
@@ -617,5 +567,59 @@ public final class IntegrationPathnameExpansionTest {
                 )
             )
         );
+    }
+
+    private File writeScript(final String name, final String content) throws IOException {
+        final File script = new TempDirs(IntegrationPathnameExpansionTest.root).file(name);
+        try (BufferedWriter w = Files.newBufferedWriter(script.toPath(), StandardCharsets.UTF_8)) {
+            w.write(content);
+        }
+        Assertions.assertTrue(script.setExecutable(true));
+        return script;
+    }
+
+    private String runChildJvmAllowingFailure(final File script) throws Exception {
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            script.getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        return out;
+    }
+
+    private String runChildJvm(final File script) throws Exception {
+        final ProcessBuilder builder = new ProcessBuilder(
+            String.format("%s/bin/java", System.getProperty("java.home")),
+            "-cp",
+            System.getProperty("java.class.path"),
+            "io.github.andreoss.sh4j.Main",
+            script.getAbsolutePath()
+        );
+        builder.redirectErrorStream(true);
+        final Process proc = builder.start();
+        final String out = new String(readAllBytes(proc.getInputStream()), StandardCharsets.UTF_8);
+        proc.waitFor();
+        Assertions.assertEquals(
+            0,
+            proc.exitValue(),
+            String.format("child sh4j exit code; output: %s", out)
+        );
+        return out;
+    }
+
+    private static byte[] readAllBytes(final InputStream input) throws IOException {
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final byte[] buf = new byte[8192];
+        int num;
+        while ((num = input.read(buf)) != -1) {
+            bos.write(buf, 0, num);
+        }
+        return bos.toByteArray();
     }
 }

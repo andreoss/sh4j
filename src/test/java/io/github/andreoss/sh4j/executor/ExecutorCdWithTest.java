@@ -36,25 +36,11 @@ final class ExecutorCdWithTest {
     /** TMP_DIR constant. */
     private static final String TMP_DIR = "/tmp";
 
-    /** TRUE_CMD constant. */
-    private static final String TRUE_CMD = "true";
-
     /** HELLO constant. */
     private static final String HELLO = "hello";
 
     /** HOME_KEY constant. */
     private static final String HOME_KEY = "HOME";
-
-    /** PWD_KEY constant. */
-    private static final String PWD_KEY = "PWD";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void cdWithExpandedVarFirst() throws Exception {
@@ -69,7 +55,7 @@ final class ExecutorCdWithTest {
         env.put("MYDIR", ExecutorCdWithTest.TMP_DIR);
         final Executor executor = new Executor(env);
         executor.execute(this.parse("cd $MYDIR"));
-        Assertions.assertEquals(ExecutorCdWithTest.TMP_DIR, executor.getVariable(ExecutorCdWithTest.PWD_KEY));
+        Assertions.assertEquals(ExecutorCdWithTest.TMP_DIR, executor.getVariable("PWD"));
     }
 
     @Test
@@ -109,7 +95,7 @@ final class ExecutorCdWithTest {
 
     @Test
     void commandFoundInPath() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorCdWithTest.TRUE_CMD)));
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
     }
 
     @Test
@@ -390,5 +376,13 @@ final class ExecutorCdWithTest {
                 this.parse("MSG=\"hello  world\"; echo \"$MSG\"")
             )
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

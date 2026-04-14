@@ -23,14 +23,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorAliasTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void aliasExpandsToBuiltinFirst() {
         final Executor executor = new Executor();
@@ -391,5 +383,13 @@ final class ExecutorAliasTest {
             "10",
             new Executor().expandVariables("$((12 ^ 6))", new HashMap<>())
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

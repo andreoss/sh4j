@@ -19,22 +19,6 @@ final class ParserAssignmentTest {
     /** ECHO_CMD constant. */
     private static final String ECHO_CMD = "echo";
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
-    private SimpleCommand command(final ListNode list) {
-        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-    }
-
-    private SimpleCommand simple(final String source, final int pipe, final int index) {
-        return (SimpleCommand) this.parse(source).getPipelines().get(pipe).getCommands().get(index);
-    }
-
     @Test
     void assignmentAndNamedCommandLineNumbersFirst() {
         Assertions.assertEquals(
@@ -66,7 +50,10 @@ final class ParserAssignmentTest {
 
     @Test
     void parseSimpleCommandThird() {
-        Assertions.assertEquals(ParserAssignmentTest.ECHO_CMD, this.simple("echo hello", 0, 0).getName());
+        Assertions.assertEquals(
+            ParserAssignmentTest.ECHO_CMD,
+            this.simple("echo hello", 0, 0).getName()
+        );
     }
 
     @Test
@@ -305,5 +292,21 @@ final class ParserAssignmentTest {
             "out.txt",
             this.command(this.parse("echo hello >> out.txt")).getRedirections().get(0).getTarget()
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
+    }
+
+    private SimpleCommand command(final ListNode list) {
+        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+    }
+
+    private SimpleCommand simple(final String source, final int pipe, final int index) {
+        return (SimpleCommand) this.parse(source).getPipelines().get(pipe).getCommands().get(index);
     }
 }

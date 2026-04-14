@@ -17,19 +17,6 @@ import org.junit.jupiter.api.Test;
  */
 final class WordExpanderAppendTest {
 
-    /** ABC constant. */
-    private static final String ABC = "abc";
-
-    private static int exitCode(final Runnable action) {
-        int code = -1;
-        try {
-            action.run();
-        } catch (final ExitSignal ex) {
-            code = ex.getCode();
-        }
-        return code;
-    }
-
     @Test
     void appendDoubleQuotedEscapesInRemoveQuotes() {
         Assertions.assertEquals(
@@ -60,7 +47,7 @@ final class WordExpanderAppendTest {
 
     @Test
     void containsGlobCharsNone() {
-        Assertions.assertFalse(WordExpander.containsGlobChars(WordExpanderAppendTest.ABC));
+        Assertions.assertFalse(WordExpander.containsGlobChars("abc"));
     }
 
     @Test
@@ -370,5 +357,15 @@ final class WordExpanderAppendTest {
         final Map<String, String> env = new HashMap<>();
         WordExpander.expandBracedImpl("x=42", env, new Executor(new HashMap<>()));
         Assertions.assertEquals("42", env.get("x"));
+    }
+
+    private static int exitCode(final Runnable action) {
+        int code = -1;
+        try {
+            action.run();
+        } catch (final ExitSignal ex) {
+            code = ex.getCode();
+        }
+        return code;
     }
 }

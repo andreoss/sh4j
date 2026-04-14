@@ -19,17 +19,11 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorExpandDollarTest {
 
-    /** HELLO constant. */
-    private static final String HELLO = "hello";
-
     /** A_B_C constant. */
     private static final String A_B_C = "a b c";
 
     /** HOME_KEY constant. */
     private static final String HOME_KEY = "HOME";
-
-    /** PWD_KEY constant. */
-    private static final String PWD_KEY = "PWD";
 
     /** VAR_DEFAULT_EXPR constant. */
     private static final String VAR_DEFAULT_EXPR = "${var:-default}";
@@ -177,7 +171,7 @@ final class ExecutorExpandDollarTest {
     @Test
     void expandTildePlus() {
         final Map<String, String> env = new HashMap<>();
-        env.put(ExecutorExpandDollarTest.PWD_KEY, "/current/dir");
+        env.put("PWD", "/current/dir");
         Assertions.assertEquals("/current/dir", WordExpander.expandTilde("~+", env));
     }
 
@@ -190,7 +184,10 @@ final class ExecutorExpandDollarTest {
     void expandVarDefault() {
         Assertions.assertEquals(
             "default",
-            new Executor().expandVariables(ExecutorExpandDollarTest.VAR_DEFAULT_EXPR, new HashMap<>())
+            new Executor().expandVariables(
+                ExecutorExpandDollarTest.VAR_DEFAULT_EXPR,
+                new HashMap<>()
+            )
         );
     }
 
@@ -311,7 +308,7 @@ final class ExecutorExpandDollarTest {
     @Test
     void expandVarLength() {
         final Map<String, String> env = new HashMap<>();
-        env.put(ExecutorExpandDollarTest.VAR_NAME, ExecutorExpandDollarTest.HELLO);
+        env.put(ExecutorExpandDollarTest.VAR_NAME, "hello");
         Assertions.assertEquals("5", new Executor().expandVariables("${#var}", env));
     }
 

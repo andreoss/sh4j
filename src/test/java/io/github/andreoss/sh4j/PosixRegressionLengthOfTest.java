@@ -115,7 +115,9 @@ final class PosixRegressionLengthOfTest {
             Sh4j.INSTANCE.out(
                 String.format(
                     "echo hi > %s | cat",
-                    new TempDirs(PosixRegressionLengthOfTest.root).file("pipe.out").getAbsolutePath()
+                    new TempDirs(PosixRegressionLengthOfTest.root).file(
+                        "pipe.out"
+                    ).getAbsolutePath()
                 )
             )
         );

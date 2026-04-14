@@ -23,14 +23,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorExecuteBuiltinTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void executeBuiltinStderrRedirect() throws Exception {
         Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello 2>/dev/null")));
@@ -284,5 +276,13 @@ final class ExecutorExecuteBuiltinTest {
     @Test
     void executeGroupingSharesEnvironment() {
         Assertions.assertEquals(0, new Executor().execute(this.parse("FOO=bar; { echo $FOO; }")));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

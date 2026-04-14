@@ -26,23 +26,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorEchoUnquotedTest {
 
-    /** TRUE_CMD constant. */
-    private static final String TRUE_CMD = "true";
-
-    /** FALSE_CMD constant. */
-    private static final String FALSE_CMD = "false";
-
-    /** HELLO_WORLD constant. */
-    private static final String HELLO_WORLD = "hello world";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void echoUnquotedVarSplit() {
         Assertions.assertEquals(
@@ -108,10 +91,7 @@ final class ExecutorEchoUnquotedTest {
         final Executor executor = new Executor();
         executor.setCaptureStream(bos);
         executor.execute(this.parse("eval echo hello world"));
-        Assertions.assertEquals(
-            ExecutorEchoUnquotedTest.HELLO_WORLD,
-            bos.toString(StandardCharsets.UTF_8).trim()
-        );
+        Assertions.assertEquals("hello world", bos.toString(StandardCharsets.UTF_8).trim());
     }
 
     @Test
@@ -181,12 +161,12 @@ final class ExecutorEchoUnquotedTest {
 
     @Test
     void executeTrue() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse(ExecutorEchoUnquotedTest.TRUE_CMD)));
+        Assertions.assertEquals(0, new Executor().execute(this.parse("true")));
     }
 
     @Test
     void executeFalse() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse(ExecutorEchoUnquotedTest.FALSE_CMD)));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("false")));
     }
 
     @Test
@@ -312,5 +292,13 @@ final class ExecutorEchoUnquotedTest {
             0,
             new Executor().execute(this.parse("echo test >| /tmp/sh4j_clobber_test"))
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

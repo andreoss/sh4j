@@ -18,24 +18,6 @@ final class LexerEqualsAloneTest {
     /** ECHO_CMD constant. */
     private static final String ECHO_CMD = "echo";
 
-    private Lexer lexer(final String input) {
-        return new Lexer(new CharReader(input));
-    }
-
-    private void assertOperator(final String oper, final TokenType expected) {
-        final Token tokn = this.lexer(oper).nextToken();
-        MatcherAssert.assertThat(
-            String.format("Operator %s", oper),
-            tokn.type(),
-            CoreMatchers.equalTo(expected)
-        );
-        MatcherAssert.assertThat(
-            String.format("Operator text %s", oper),
-            tokn.text(),
-            CoreMatchers.equalTo(oper)
-        );
-    }
-
     @Test
     void equalsAloneIsWordNotAssignmentSecond() {
         final Token tokn = this.lexer("=").nextToken();
@@ -184,7 +166,10 @@ final class LexerEqualsAloneTest {
     void multipleTokensSecond() {
         final Token tokfirst = this.lexer(String.format("echo hello%n")).nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
-        MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerEqualsAloneTest.ECHO_CMD));
+        MatcherAssert.assertThat(
+            tokfirst.text(),
+            CoreMatchers.equalTo(LexerEqualsAloneTest.ECHO_CMD)
+        );
     }
 
     @Test
@@ -334,6 +319,24 @@ final class LexerEqualsAloneTest {
         MatcherAssert.assertThat(
             this.lexer(LexerEqualsAloneTest.ECHO_CMD).nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
+        );
+    }
+
+    private Lexer lexer(final String input) {
+        return new Lexer(new CharReader(input));
+    }
+
+    private void assertOperator(final String oper, final TokenType expected) {
+        final Token tokn = this.lexer(oper).nextToken();
+        MatcherAssert.assertThat(
+            String.format("Operator %s", oper),
+            tokn.type(),
+            CoreMatchers.equalTo(expected)
+        );
+        MatcherAssert.assertThat(
+            String.format("Operator text %s", oper),
+            tokn.text(),
+            CoreMatchers.equalTo(oper)
         );
     }
 }

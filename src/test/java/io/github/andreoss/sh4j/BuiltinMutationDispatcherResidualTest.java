@@ -90,7 +90,9 @@ final class BuiltinMutationDispatcherResidualTest {
         Sh4j.INSTANCE.runFull("echo one; fc -s nope");
         Sh4j.INSTANCE.out("echo hi; fc -s hi=hey");
         Sh4j.INSTANCE.out("echo one; fc -l abc");
-        final Path fdesc = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file("fdesc.txt").toPath();
+        final Path fdesc = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file(
+            "fdesc.txt"
+        ).toPath();
         Sh4j.INSTANCE.run(String.format("echo hi; exec 3>%s; fc -s nope 2>&3; exec 3>&-", fdesc));
         Assertions.assertTrue(
             new String(Files.readAllBytes(fdesc), StandardCharsets.UTF_8).contains(
@@ -107,7 +109,9 @@ final class BuiltinMutationDispatcherResidualTest {
     @Test
     void dotEmptyAndPositionalFormsSecond() throws IOException {
         Sh4j.INSTANCE.run(".");
-        final Path lib = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file("dot.sh").toPath();
+        final Path lib = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file(
+            "dot.sh"
+        ).toPath();
         Files.write(lib, String.format("echo \"$1-$2\"%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             String.format("a-b%n"),
@@ -117,7 +121,9 @@ final class BuiltinMutationDispatcherResidualTest {
 
     @Test
     void dotRestoresPositionalParameters() throws IOException {
-        final Path lib = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file("restore.sh").toPath();
+        final Path lib = new TempDirs(BuiltinMutationDispatcherResidualTest.root).file(
+            "restore.sh"
+        ).toPath();
         Files.write(lib, String.format("echo \"in=$1\"%n").getBytes(StandardCharsets.UTF_8));
         Assertions.assertEquals(
             String.format("in=inner%nouter%n"),

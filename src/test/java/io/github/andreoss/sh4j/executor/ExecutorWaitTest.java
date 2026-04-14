@@ -20,14 +20,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorWaitTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
     @Test
     void waitForBackgroundJobsInterrupted() {
         Thread.currentThread().interrupt();
@@ -75,5 +67,13 @@ final class ExecutorWaitTest {
             bos.toString(StandardCharsets.UTF_8).isBlank(),
             String.format("continue should skip body, got: %s", bos)
         );
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

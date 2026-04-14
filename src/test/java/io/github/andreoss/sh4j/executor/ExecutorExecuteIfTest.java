@@ -24,19 +24,8 @@ import org.junit.jupiter.api.Test;
  */
 final class ExecutorExecuteIfTest {
 
-    /** TRUE_CMD constant. */
-    private static final String TRUE_CMD = "true";
-
     /** FALSE_CMD constant. */
     private static final String FALSE_CMD = "false";
-
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
 
     @Test
     void executeIfTrueThen() {
@@ -368,7 +357,7 @@ final class ExecutorExecuteIfTest {
     @Test
     void expandDollarQuestionAfterSuccess() {
         final Executor executor = new Executor();
-        executor.execute(this.parse(ExecutorExecuteIfTest.TRUE_CMD));
+        executor.execute(this.parse("true"));
         Assertions.assertEquals("0", executor.expandVariables("$?", new HashMap<>()));
     }
 
@@ -389,5 +378,13 @@ final class ExecutorExecuteIfTest {
         final Executor executor = new Executor();
         executor.execute(this.parse(ExecutorExecuteIfTest.FALSE_CMD));
         Assertions.assertEquals("exit:1", executor.expandVariables("exit:$?", new HashMap<>()));
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
     }
 }

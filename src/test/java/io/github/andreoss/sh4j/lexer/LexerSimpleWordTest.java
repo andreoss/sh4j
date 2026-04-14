@@ -20,24 +20,6 @@ final class LexerSimpleWordTest {
     /** ECHO_CMD constant. */
     private static final String ECHO_CMD = "echo";
 
-    private Lexer lexer(final String input) {
-        return new Lexer(new CharReader(input));
-    }
-
-    private void assertOperator(final String oper, final TokenType expected) {
-        final Token tokn = this.lexer(oper).nextToken();
-        MatcherAssert.assertThat(
-            String.format("Operator %s", oper),
-            tokn.type(),
-            CoreMatchers.equalTo(expected)
-        );
-        MatcherAssert.assertThat(
-            String.format("Operator text %s", oper),
-            tokn.text(),
-            CoreMatchers.equalTo(oper)
-        );
-    }
-
     @Test
     void simpleWordSecond() {
         final Token tokn = this.lexer(LexerSimpleWordTest.ECHO_CMD).nextToken();
@@ -205,7 +187,10 @@ final class LexerSimpleWordTest {
     void wordBreaksAtLeftParenSecond() {
         final Token tokfirst = this.lexer("echo(").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
-        MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD));
+        MatcherAssert.assertThat(
+            tokfirst.text(),
+            CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
+        );
     }
 
     @Test
@@ -229,7 +214,10 @@ final class LexerSimpleWordTest {
     void wordBreaksAtRightParenSecond() {
         final Token tokfirst = this.lexer("echo)").nextToken();
         CoreMatchers.equalTo(TokenType.WORD);
-        MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD));
+        MatcherAssert.assertThat(
+            tokfirst.text(),
+            CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
+        );
     }
 
     @Test
@@ -256,5 +244,23 @@ final class LexerSimpleWordTest {
         final Lexer list = this.lexer(String.format("a%s", oper));
         list.nextToken();
         MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo(oper));
+    }
+
+    private Lexer lexer(final String input) {
+        return new Lexer(new CharReader(input));
+    }
+
+    private void assertOperator(final String oper, final TokenType expected) {
+        final Token tokn = this.lexer(oper).nextToken();
+        MatcherAssert.assertThat(
+            String.format("Operator %s", oper),
+            tokn.type(),
+            CoreMatchers.equalTo(expected)
+        );
+        MatcherAssert.assertThat(
+            String.format("Operator text %s", oper),
+            tokn.text(),
+            CoreMatchers.equalTo(oper)
+        );
     }
 }

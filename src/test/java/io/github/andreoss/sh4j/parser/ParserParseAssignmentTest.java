@@ -16,34 +16,6 @@ import org.junit.jupiter.api.Test;
  */
 final class ParserParseAssignmentTest {
 
-    private Parser parser(final String input) {
-        return new Parser(new Lexer(new CharReader(input)));
-    }
-
-    private ListNode parse(final String input) {
-        return this.parser(input).parse();
-    }
-
-    private SimpleCommand command(final ListNode list) {
-        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
-    }
-
-    private CaseNode caseOf(final String source) {
-        return (CaseNode) this.node(source, 0);
-    }
-
-    private Node node(final String source, final int index) {
-        return this.pipelineOf(source).getCommands().get(index);
-    }
-
-    private Pipeline pipelineOf(final String source) {
-        return this.firstPipeline(this.parse(source));
-    }
-
-    private Pipeline firstPipeline(final ListNode list) {
-        return list.getPipelines().get(0);
-    }
-
     @Test
     void parseAssignmentWordAfterCommandNameThird() {
         Assertions.assertTrue(this.command(this.parse("echo FOO=bar")).getAssignments().isEmpty());
@@ -326,5 +298,33 @@ final class ParserParseAssignmentTest {
     @Test
     void parseCaseEmptyBody() {
         Assertions.assertEquals(1, this.caseOf("case foo in a);; esac").getItems().size());
+    }
+
+    private Parser parser(final String input) {
+        return new Parser(new Lexer(new CharReader(input)));
+    }
+
+    private ListNode parse(final String input) {
+        return this.parser(input).parse();
+    }
+
+    private SimpleCommand command(final ListNode list) {
+        return (SimpleCommand) list.getPipelines().get(0).getCommands().get(0);
+    }
+
+    private CaseNode caseOf(final String source) {
+        return (CaseNode) this.node(source, 0);
+    }
+
+    private Node node(final String source, final int index) {
+        return this.pipelineOf(source).getCommands().get(index);
+    }
+
+    private Pipeline pipelineOf(final String source) {
+        return this.firstPipeline(this.parse(source));
+    }
+
+    private Pipeline firstPipeline(final ListNode list) {
+        return list.getPipelines().get(0);
     }
 }
