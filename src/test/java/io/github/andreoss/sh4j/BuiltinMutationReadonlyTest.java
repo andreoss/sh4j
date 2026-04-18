@@ -64,7 +64,7 @@ final class BuiltinMutationReadonlyTest {
     @ParameterizedTest
     @ValueSource(
         strings = {
-            "errexit", "nounset", "noglob", "xtrace", "noexec", "verbose", "allexport",
+            "errexit", "nounset", "noglob", "xtrace", "noexec", "verbose", "allexport"
         }
     )
     void setOptionNameRoundTrips(final String option) {

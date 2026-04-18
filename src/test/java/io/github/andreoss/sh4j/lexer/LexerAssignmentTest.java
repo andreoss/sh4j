@@ -26,7 +26,6 @@ final class LexerAssignmentTest {
     @Test
     void assignmentWordEdgeCasesSecond() {
         this.lexer("=value").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             this.lexer("_=value").nextToken().type(),
             CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD)
@@ -44,7 +43,6 @@ final class LexerAssignmentTest {
     @Test
     void assignmentWordNameValidationSecond() {
         this.lexer("A1=x").nextToken();
-        CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         MatcherAssert.assertThat(
             this.lexer("_A=x").nextToken().type(),
             CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD)
@@ -54,9 +52,7 @@ final class LexerAssignmentTest {
     @Test
     void assignmentWordNameValidationThird() {
         this.lexer("A1=x").nextToken();
-        CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         this.lexer("_A=x").nextToken();
-        CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         MatcherAssert.assertThat(
             this.lexer("1A=x").nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
@@ -66,11 +62,8 @@ final class LexerAssignmentTest {
     @Test
     void assignmentWordNameValidationFourth() {
         this.lexer("A1=x").nextToken();
-        CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         this.lexer("_A=x").nextToken();
-        CoreMatchers.equalTo(TokenType.ASSIGNMENT_WORD);
         this.lexer("1A=x").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             this.lexer("A-B=x").nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
@@ -88,7 +81,6 @@ final class LexerAssignmentTest {
     @Test
     void backslashEscapesInsideWordSecond() {
         final Token tokn = this.lexer("a\\ b").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("a\\ b"));
     }
 
@@ -125,7 +117,6 @@ final class LexerAssignmentTest {
     void consecutiveNewlinesSecond() {
         final Lexer list = this.lexer(String.format("%n%n"));
         list.nextToken();
-        CoreMatchers.equalTo(TokenType.NEWLINE);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.NEWLINE));
     }
 
@@ -141,7 +132,6 @@ final class LexerAssignmentTest {
     void descriptorDigitsAreRecognisedSecond() {
         final Lexer digits = this.lexer("2>file");
         digits.nextToken();
-        CoreMatchers.equalTo(TokenType.IO_NUMBER);
         MatcherAssert.assertThat(digits.nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
     }
 
@@ -149,9 +139,7 @@ final class LexerAssignmentTest {
     void descriptorDigitsAreRecognisedThird() {
         final Lexer digits = this.lexer("2>file");
         digits.nextToken();
-        CoreMatchers.equalTo(TokenType.IO_NUMBER);
         digits.nextToken();
-        CoreMatchers.equalTo(TokenType.GREAT);
         MatcherAssert.assertThat(
             this.lexer("2a>file").nextToken().type(),
             CoreMatchers.equalTo(TokenType.WORD)
@@ -162,12 +150,9 @@ final class LexerAssignmentTest {
     void descriptorDigitsAreRecognisedFourth() {
         final Lexer digits = this.lexer("2>file");
         digits.nextToken();
-        CoreMatchers.equalTo(TokenType.IO_NUMBER);
         digits.nextToken();
-        CoreMatchers.equalTo(TokenType.GREAT);
         final Lexer mixed = this.lexer("2a>file");
         mixed.nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(mixed.nextToken().type(), CoreMatchers.equalTo(TokenType.GREAT));
     }
 
@@ -182,7 +167,6 @@ final class LexerAssignmentTest {
     @Test
     void digitsThenSpaceIsWordNotIoNumberSecond() {
         final Token tokn = this.lexer("42 ").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("42"));
     }
 
@@ -197,7 +181,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedWordSecond() {
         final Token tokn = this.lexer("\"hello\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"hello\""));
     }
 
@@ -212,7 +195,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashDollarSecond() {
         final Token tokn = this.lexer("\"\\$\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\$\""));
     }
 
@@ -227,7 +209,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashBacktickSecond() {
         final Token tokn = this.lexer("\"\\`\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\`\""));
     }
 
@@ -242,7 +223,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashNewlineSecond() {
         final Token tokn = this.lexer(String.format("\"a\\%nb\"")).nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"ab\""));
     }
 
@@ -257,7 +237,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashBackslashSecond() {
         final Token tokn = this.lexer("\"a\\\\b\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\\b\""));
     }
 
@@ -272,7 +251,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashDoublequoteSecond() {
         final Token tokn = this.lexer("\"a\\\"b\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\"b\""));
     }
 
@@ -287,7 +265,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedBackslashNonSpecialKeptLiteralSecond() {
         final Token tokn = this.lexer("\"\\a\"").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\a\""));
     }
 
@@ -302,7 +279,6 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedEscapesSecond() {
         this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken();
-        CoreMatchers.equalTo("\"a\\$b\\`c\\\"d\\\\e\"");
         MatcherAssert.assertThat(
             this.lexer("\"a\\qb\"").nextToken().text(),
             CoreMatchers.equalTo("\"a\\qb\"")
@@ -312,9 +288,7 @@ final class LexerAssignmentTest {
     @Test
     void doubleQuotedEscapesThird() {
         this.lexer("\"a\\$b\\`c\\\"d\\\\e\"").nextToken();
-        CoreMatchers.equalTo("\"a\\$b\\`c\\\"d\\\\e\"");
         this.lexer("\"a\\qb\"").nextToken();
-        CoreMatchers.equalTo("\"a\\qb\"");
         MatcherAssert.assertThat(
             this.lexer(String.format("\"a\\%nb\"")).nextToken().text(),
             CoreMatchers.equalTo("\"ab\"")
@@ -332,7 +306,6 @@ final class LexerAssignmentTest {
     @Test
     void eofOnEmptyInputSecond() {
         final Token tokn = this.lexer("").nextToken();
-        CoreMatchers.equalTo(TokenType.END_OF_FILE);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(""));
     }
 

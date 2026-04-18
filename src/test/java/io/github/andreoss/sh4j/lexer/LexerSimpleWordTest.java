@@ -23,7 +23,6 @@ final class LexerSimpleWordTest {
     @Test
     void simpleWordSecond() {
         final Token tokn = this.lexer(LexerSimpleWordTest.ECHO_CMD).nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD));
     }
 
@@ -73,7 +72,6 @@ final class LexerSimpleWordTest {
     @Test
     void singleQuotedWordSecond() {
         final Token tokn = this.lexer("'hello'").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("'hello'"));
     }
 
@@ -88,7 +86,6 @@ final class LexerSimpleWordTest {
     @Test
     void singleQuoteLiteralInsideDoubleQuoteSecond() {
         this.lexer("\"a'b\"").nextToken();
-        CoreMatchers.equalTo("\"a'b\"");
         MatcherAssert.assertThat(
             this.lexer("'a\"b'").nextToken().text(),
             CoreMatchers.equalTo("'a\"b'")
@@ -106,7 +103,6 @@ final class LexerSimpleWordTest {
     @Test
     void tabIsWhitespaceSecond() {
         final Token tokn = this.lexer("\tword").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("word"));
     }
 
@@ -119,7 +115,6 @@ final class LexerSimpleWordTest {
     void tokenPositionsSecond() {
         final Token tokn = this.lexer("  word").nextToken();
         tokn.line();
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(tokn.column(), CoreMatchers.equalTo(2));
     }
 
@@ -132,7 +127,6 @@ final class LexerSimpleWordTest {
     void whitespaceSkippedBetweenTokensSecond() {
         final Lexer list = this.lexer("a   b");
         list.nextToken();
-        CoreMatchers.equalTo("a");
         MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo("b"));
     }
 
@@ -147,7 +141,6 @@ final class LexerSimpleWordTest {
     @Test
     void wordWithWhitespacePrefixSecond() {
         final Token tokn = this.lexer("  ls").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("ls"));
     }
 
@@ -162,7 +155,6 @@ final class LexerSimpleWordTest {
     @Test
     void wordThenOperatorSecond() {
         final Token tokfirst = this.lexer("cmd&").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo("cmd"));
     }
 
@@ -170,8 +162,6 @@ final class LexerSimpleWordTest {
     void wordThenOperatorThird() {
         final Lexer list = this.lexer("cmd&");
         list.nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo("cmd");
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.AMP));
     }
 
@@ -186,7 +176,6 @@ final class LexerSimpleWordTest {
     @Test
     void wordBreaksAtLeftParenSecond() {
         final Token tokfirst = this.lexer("echo(").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             tokfirst.text(),
             CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
@@ -197,8 +186,6 @@ final class LexerSimpleWordTest {
     void wordBreaksAtLeftParenThird() {
         final Lexer list = this.lexer("echo(");
         list.nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.LPAREN));
     }
 
@@ -213,7 +200,6 @@ final class LexerSimpleWordTest {
     @Test
     void wordBreaksAtRightParenSecond() {
         final Token tokfirst = this.lexer("echo)").nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(
             tokfirst.text(),
             CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
@@ -224,8 +210,6 @@ final class LexerSimpleWordTest {
     void wordBreaksAtRightParenThird() {
         final Lexer list = this.lexer("echo)");
         list.nextToken();
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD);
         MatcherAssert.assertThat(list.nextToken().type(), CoreMatchers.equalTo(TokenType.RPAREN));
     }
 

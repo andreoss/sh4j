@@ -37,16 +37,13 @@ final class ExecutorMutationAliasTest {
     @Test
     void aliasAndExecStatusesSecond() {
         Sh4j.INSTANCE.run("alias a='false'", "a");
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(Sh4j.INSTANCE.run("alias a='true'", "a"), CoreMatchers.equalTo(0));
     }
 
     @Test
     void aliasAndExecStatusesThird() {
         Sh4j.INSTANCE.run("alias a='false'", "a");
-        CoreMatchers.equalTo(1);
         Sh4j.INSTANCE.run("alias a='true'", "a");
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(Sh4j.INSTANCE.run("exec sh -c 'exit 7'"), CoreMatchers.equalTo(7));
     }
 
@@ -61,7 +58,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void aliasExpansionUsesTheTableCapturedAtReadTimeSecond() {
         Sh4j.INSTANCE.run("alias q='echo Q'; q");
-        CoreMatchers.equalTo(127);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("alias q='echo Q'", "q"),
             CoreMatchers.equalTo(String.format("Q%n"))
@@ -71,9 +67,7 @@ final class ExecutorMutationAliasTest {
     @Test
     void aliasExpansionUsesTheTableCapturedAtReadTimeThird() {
         Sh4j.INSTANCE.run("alias q='echo Q'; q");
-        CoreMatchers.equalTo(127);
         Sh4j.INSTANCE.out("alias q='echo Q'", "q");
-        CoreMatchers.equalTo(String.format("Q%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("alias e='echo X'; f() { e; }; f"),
             CoreMatchers.equalTo(127)
@@ -110,7 +104,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void builtinHeredocInputFormsSecond() {
         Sh4j.INSTANCE.runFull(String.format("read x <<EOF%nhi%nEOF%necho \"$x\""));
-        CoreMatchers.equalTo(String.format("hi%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format("Y=value; read x <<'EOF'%n$Y%nEOF%necho \"$x\"")
@@ -143,7 +136,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void caseWithoutMatchReturnsZeroSecond() {
         Sh4j.INSTANCE.run("case x in y) false;; esac");
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("case x in y) echo no;; esac"),
             CoreMatchers.equalTo("")
@@ -171,7 +163,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void expandFieldsQuotedAtAndEmptyPositionalsSecond() {
         Sh4j.INSTANCE.out("for x in \"$@\"; do echo $x; done");
-        CoreMatchers.equalTo("");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("echo \"$@\""),
             CoreMatchers.equalTo(String.format("%n"))
@@ -181,9 +172,7 @@ final class ExecutorMutationAliasTest {
     @Test
     void expandFieldsQuotedAtAndEmptyPositionalsThird() {
         Sh4j.INSTANCE.out("for x in \"$@\"; do echo $x; done");
-        CoreMatchers.equalTo("");
         Sh4j.INSTANCE.out("echo \"$@\"");
-        CoreMatchers.equalTo(String.format("%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("IFS=; set -- a b; echo \"$*\""),
             CoreMatchers.equalTo(String.format("ab%n"))
@@ -209,7 +198,6 @@ final class ExecutorMutationAliasTest {
             new ByteArrayInputStream(String.format("piped%n").getBytes(StandardCharsets.UTF_8)),
             "cat"
         );
-        CoreMatchers.equalTo(String.format("piped%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 String.format(
@@ -227,10 +215,8 @@ final class ExecutorMutationAliasTest {
             new ByteArrayInputStream(String.format("piped%n").getBytes(StandardCharsets.UTF_8)),
             "cat"
         );
-        CoreMatchers.equalTo(String.format("piped%n"));
         final File file = new TempDirs(ExecutorMutationAliasTest.root).file("ext.out");
         Sh4j.INSTANCE.runFull(String.format("echo redirected > %s", file.getAbsolutePath()));
-        CoreMatchers.equalTo("");
         MatcherAssert.assertThat(
             new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8),
             CoreMatchers.equalTo(String.format("redirected%n"))
@@ -243,12 +229,9 @@ final class ExecutorMutationAliasTest {
             new ByteArrayInputStream(String.format("piped%n").getBytes(StandardCharsets.UTF_8)),
             "cat"
         );
-        CoreMatchers.equalTo(String.format("piped%n"));
         final File file = new TempDirs(ExecutorMutationAliasTest.root).file("ext.out");
         Sh4j.INSTANCE.runFull(String.format("echo redirected > %s", file.getAbsolutePath()));
-        CoreMatchers.equalTo("");
         new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        CoreMatchers.equalTo(String.format("redirected%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("sh -c 'echo stderr >&2'").stderr(),
             CoreMatchers.containsString("stderr")
@@ -266,7 +249,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void forWithoutWordsAndBodyStatusSecond() {
         Sh4j.INSTANCE.out("for i; do echo $i; done");
-        CoreMatchers.equalTo("");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("for i in a b; do false; done"),
             CoreMatchers.equalTo(1)
@@ -276,9 +258,7 @@ final class ExecutorMutationAliasTest {
     @Test
     void forWithoutWordsAndBodyStatusThird() {
         Sh4j.INSTANCE.out("for i; do echo $i; done");
-        CoreMatchers.equalTo("");
         Sh4j.INSTANCE.run("for i in a b; do false; done");
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("for i in a b; do break; done"),
             CoreMatchers.equalTo(0)
@@ -296,7 +276,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void functionRestoresPositionalsAndReturnStatusSecond() {
         Sh4j.INSTANCE.out("set -- outer; f() { echo $1; }; f inner; echo $1");
-        CoreMatchers.equalTo(String.format("inner%nouter%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("f() { return 6; }; f"),
             CoreMatchers.equalTo(6)
@@ -329,7 +308,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void ifBranchesPropagateBodyStatusSecond() {
         Sh4j.INSTANCE.run("if true; then false; fi");
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("if false; then :; fi"),
             CoreMatchers.equalTo(0)
@@ -339,9 +317,7 @@ final class ExecutorMutationAliasTest {
     @Test
     void ifBranchesPropagateBodyStatusThird() {
         Sh4j.INSTANCE.run("if true; then false; fi");
-        CoreMatchers.equalTo(1);
         Sh4j.INSTANCE.run("if false; then :; fi");
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run("if false; then :; else false; fi"),
             CoreMatchers.equalTo(1)
@@ -360,7 +336,6 @@ final class ExecutorMutationAliasTest {
         final File file = new TempDirs(ExecutorMutationAliasTest.root).file("not-executable.sh");
         Files.write(file.toPath(), String.format("echo hi%n").getBytes(StandardCharsets.UTF_8));
         file.setExecutable(false);
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.run(file.getAbsolutePath()),
             CoreMatchers.equalTo(126)
@@ -386,7 +361,6 @@ final class ExecutorMutationAliasTest {
         Sh4j.INSTANCE.out(
             String.format("cd %s; printf '<%%s>\\n' \"*.txt\"", dir.getAbsolutePath())
         );
-        CoreMatchers.equalTo(String.format("<*.txt>%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out(
                 String.format("cd %s; printf '<%%s>\\n' *.txt", dir.getAbsolutePath())
@@ -406,7 +380,6 @@ final class ExecutorMutationAliasTest {
     @Test
     void specialParameterBoundariesSecond() {
         Sh4j.INSTANCE.out("set -- a b; echo ${#}");
-        CoreMatchers.equalTo(String.format("2%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("set -- a; echo $9"),
             CoreMatchers.equalTo(String.format("%n"))
@@ -416,9 +389,7 @@ final class ExecutorMutationAliasTest {
     @Test
     void specialParameterBoundariesThird() {
         Sh4j.INSTANCE.out("set -- a b; echo ${#}");
-        CoreMatchers.equalTo(String.format("2%n"));
         Sh4j.INSTANCE.out("set -- a; echo $9");
-        CoreMatchers.equalTo(String.format("%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("echo \"$@\""),
             CoreMatchers.equalTo(String.format("%n"))
@@ -428,11 +399,8 @@ final class ExecutorMutationAliasTest {
     @Test
     void specialParameterBoundariesFourth() {
         Sh4j.INSTANCE.out("set -- a b; echo ${#}");
-        CoreMatchers.equalTo(String.format("2%n"));
         Sh4j.INSTANCE.out("set -- a; echo $9");
-        CoreMatchers.equalTo(String.format("%n"));
         Sh4j.INSTANCE.out("echo \"$@\"");
-        CoreMatchers.equalTo(String.format("%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.out("set --; echo $1"),
             CoreMatchers.equalTo(String.format("%n"))

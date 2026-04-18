@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
  *
  * @since 1.0
  */
-public final class IntegrationUnsetDashTest {
+final class IntegrationUnsetDashTest {
 
     /** Temporary root directory. */
     @TempDir
@@ -74,7 +73,7 @@ public final class IntegrationUnsetDashTest {
                             "out2.txt"
                         ).getAbsolutePath()
                     )
-                        + String.format("%n")
+                    + String.format("%n")
                 ).getAbsolutePath()
             )
         );
@@ -102,10 +101,7 @@ public final class IntegrationUnsetDashTest {
             ).getAbsolutePath()
         );
         Assertions.assertFalse(
-            new String(
-                Files.readAllBytes(outfile.toPath()),
-                StandardCharsets.UTF_8
-            ).trim().isEmpty(),
+            new String(Files.readAllBytes(outfile.toPath()), StandardCharsets.UTF_8).isBlank(),
             "content should not be empty"
         );
     }
@@ -194,12 +190,6 @@ public final class IntegrationUnsetDashTest {
     }
 
     private static byte[] readAllBytes(final InputStream input) throws IOException {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final byte[] buf = new byte[8192];
-        int num;
-        while ((num = input.read(buf)) != -1) {
-            bos.write(buf, 0, num);
-        }
-        return bos.toByteArray();
+        return input.readAllBytes();
     }
 }

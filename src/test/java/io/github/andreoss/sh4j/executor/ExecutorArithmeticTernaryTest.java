@@ -260,7 +260,7 @@ final class ExecutorArithmeticTernaryTest {
         final int id = mgr.submit(
             () -> {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(10_000);
                 } catch (final InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
@@ -282,7 +282,7 @@ final class ExecutorArithmeticTernaryTest {
         final int id = mgr.submit(
             () -> {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(10_000);
                 } catch (final InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }

@@ -26,25 +26,19 @@ final class TokenTest {
     @Test
     void createsTokenWithTypeTextAndPositionSecond() {
         final Token tokn = new Token(TokenType.WORD, "echo", new Position(1, 0));
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("echo"));
     }
 
     @Test
     void createsTokenWithTypeTextAndPositionThird() {
         final Token tokn = new Token(TokenType.WORD, "echo", new Position(1, 0));
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo("echo");
         MatcherAssert.assertThat(tokn.line(), CoreMatchers.equalTo(1));
     }
 
     @Test
     void createsTokenWithTypeTextAndPositionFourth() {
         final Token tokn = new Token(TokenType.WORD, "echo", new Position(1, 0));
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo("echo");
         tokn.line();
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(tokn.column(), CoreMatchers.equalTo(0));
     }
 
@@ -59,25 +53,19 @@ final class TokenTest {
     @Test
     void createsTokenFromCharReaderSecond() {
         final Token tokn = Token.ofReader(TokenType.WORD, "abc", new CharReader("abc"));
-        CoreMatchers.equalTo(TokenType.WORD);
         MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("abc"));
     }
 
     @Test
     void createsTokenFromCharReaderThird() {
         final Token tokn = Token.ofReader(TokenType.WORD, "abc", new CharReader("abc"));
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo("abc");
         MatcherAssert.assertThat(tokn.line(), CoreMatchers.equalTo(1));
     }
 
     @Test
     void createsTokenFromCharReaderFourth() {
         final Token tokn = Token.ofReader(TokenType.WORD, "abc", new CharReader("abc"));
-        CoreMatchers.equalTo(TokenType.WORD);
-        CoreMatchers.equalTo("abc");
         tokn.line();
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(tokn.column(), CoreMatchers.equalTo(0));
     }
 
@@ -100,15 +88,12 @@ final class TokenTest {
     @Test
     void tokenEqualityNegativeCasesSecond() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
         MatcherAssert.assertThat(base, CoreMatchers.not(CoreMatchers.equalTo("x")));
     }
 
     @Test
     void tokenEqualityNegativeCasesThird() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
-        CoreMatchers.not(CoreMatchers.equalTo("x"));
         MatcherAssert.assertThat(
             base,
             CoreMatchers.not(
@@ -120,9 +105,6 @@ final class TokenTest {
     @Test
     void tokenEqualityNegativeCasesFourth() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
-        CoreMatchers.not(CoreMatchers.equalTo("x"));
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0))));
         MatcherAssert.assertThat(
             base,
             CoreMatchers.not(
@@ -134,12 +116,6 @@ final class TokenTest {
     @Test
     void tokenEqualityNegativeCasesFifth() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
-        CoreMatchers.not(CoreMatchers.equalTo("x"));
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0))));
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.NEWLINE, "x", new Position(1, 0)))
-        );
         MatcherAssert.assertThat(
             base,
             CoreMatchers.not(
@@ -151,13 +127,6 @@ final class TokenTest {
     @Test
     void tokenEqualityNegativeCasesSixth() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
-        CoreMatchers.not(CoreMatchers.equalTo("x"));
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0))));
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.NEWLINE, "x", new Position(1, 0)))
-        );
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(2, 0))));
         MatcherAssert.assertThat(
             base,
             CoreMatchers.not(
@@ -169,14 +138,6 @@ final class TokenTest {
     @Test
     void tokenEqualityNegativeCasesSeventh() {
         final Token base = new Token(TokenType.WORD, "x", new Position(1, 0));
-        CoreMatchers.not(CoreMatchers.equalTo((Object) null));
-        CoreMatchers.not(CoreMatchers.equalTo("x"));
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0))));
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.NEWLINE, "x", new Position(1, 0)))
-        );
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(2, 0))));
-        CoreMatchers.not(CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 1))));
         MatcherAssert.assertThat(base, CoreMatchers.equalTo(base));
     }
 
@@ -194,7 +155,6 @@ final class TokenTest {
     void tokenHashCodeAndNullTextSecond() {
         final Token first = new Token(TokenType.WORD, "x", new Position(1, 0));
         new Token(null, null, new Position(0, 0));
-        CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 0)).hashCode());
         MatcherAssert.assertThat(
             first.hashCode(),
             CoreMatchers.not(
@@ -209,10 +169,6 @@ final class TokenTest {
     void tokenHashCodeAndNullTextThird() {
         new Token(TokenType.WORD, "x", new Position(1, 0));
         final Token empty = new Token(null, null, new Position(0, 0));
-        CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 0)).hashCode());
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode())
-        );
         MatcherAssert.assertThat(
             empty,
             CoreMatchers.equalTo(new Token(null, null, new Position(0, 0)))
@@ -223,24 +179,12 @@ final class TokenTest {
     void tokenHashCodeAndNullTextFourth() {
         final Token first = new Token(TokenType.WORD, "x", new Position(1, 0));
         final Token empty = new Token(null, null, new Position(0, 0));
-        CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 0)).hashCode());
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode())
-        );
-        CoreMatchers.equalTo(new Token(null, null, new Position(0, 0)));
         MatcherAssert.assertThat(empty, CoreMatchers.not(CoreMatchers.equalTo(first)));
     }
 
     @Test
     void tokenHashCodeAndNullTextFifth() {
-        final Token first = new Token(TokenType.WORD, "x", new Position(1, 0));
         final Token empty = new Token(null, null, new Position(0, 0));
-        CoreMatchers.equalTo(new Token(TokenType.WORD, "x", new Position(1, 0)).hashCode());
-        CoreMatchers.not(
-            CoreMatchers.equalTo(new Token(TokenType.WORD, "y", new Position(1, 0)).hashCode())
-        );
-        CoreMatchers.equalTo(new Token(null, null, new Position(0, 0)));
-        CoreMatchers.not(CoreMatchers.equalTo(first));
         MatcherAssert.assertThat(empty.hashCode(), CoreMatchers.equalTo(0));
     }
 

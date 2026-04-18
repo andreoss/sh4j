@@ -32,7 +32,6 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             "job should exist",
             manager.getJob(id),
@@ -46,9 +45,7 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        CoreMatchers.equalTo(0);
         final Job job = manager.getJob(id);
-        CoreMatchers.notNullValue();
         MatcherAssert.assertThat(
             "state should be DONE",
             job.getState(),
@@ -62,10 +59,7 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        CoreMatchers.equalTo(0);
         final Job job = manager.getJob(id);
-        CoreMatchers.notNullValue();
-        CoreMatchers.equalTo(JobManager.State.DONE);
         MatcherAssert.assertThat(
             "exit code should be zero",
             job.getExitCode(),
@@ -79,11 +73,7 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        CoreMatchers.equalTo(0);
         final Job job = manager.getJob(id);
-        CoreMatchers.notNullValue();
-        CoreMatchers.equalTo(JobManager.State.DONE);
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             "command should round-trip",
             job.getCommand(),
@@ -97,7 +87,7 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         MatcherAssert.assertThat(
             "pid should map to status",
-            manager.waitForPid((JobManager.JOB_PID_BASE + manager.submit(() -> 7, "status"))),
+            manager.waitForPid(JobManager.JOB_PID_BASE + manager.submit(() -> 7, "status")),
             CoreMatchers.equalTo(7)
         );
         manager.shutdown();
@@ -108,7 +98,6 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final long pid = JobManager.JOB_PID_BASE + manager.submit(() -> 7, "status");
         manager.waitForPid(pid);
-        CoreMatchers.equalTo(7);
         MatcherAssert.assertThat(
             "pid should be registered",
             manager.getJobByPid(pid),
@@ -121,9 +110,7 @@ final class JobManagerTest {
     void supplierJobReturnsStatusAndPidThird() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
-        manager.waitForPid((JobManager.JOB_PID_BASE + id));
-        CoreMatchers.equalTo(7);
-        CoreMatchers.notNullValue();
+        manager.waitForPid(JobManager.JOB_PID_BASE + id);
         MatcherAssert.assertThat(
             "job should return status",
             manager.waitForJob(id),
@@ -136,11 +123,8 @@ final class JobManagerTest {
     void supplierJobReturnsStatusAndPidFourth() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
-        manager.waitForPid((JobManager.JOB_PID_BASE + id));
-        CoreMatchers.equalTo(7);
-        CoreMatchers.notNullValue();
+        manager.waitForPid(JobManager.JOB_PID_BASE + id);
         manager.waitForJob(id);
-        CoreMatchers.equalTo(7);
         MatcherAssert.assertThat(
             "unknown job should return 127",
             manager.waitForJob(999),
@@ -153,13 +137,9 @@ final class JobManagerTest {
     void supplierJobReturnsStatusAndPidFifth() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
-        manager.waitForPid((JobManager.JOB_PID_BASE + id));
-        CoreMatchers.equalTo(7);
-        CoreMatchers.notNullValue();
+        manager.waitForPid(JobManager.JOB_PID_BASE + id);
         manager.waitForJob(id);
-        CoreMatchers.equalTo(7);
         manager.waitForJob(999);
-        CoreMatchers.equalTo(127);
         MatcherAssert.assertThat(
             "unknown pid should return 127",
             manager.waitForPid(999),
@@ -172,15 +152,10 @@ final class JobManagerTest {
     void supplierJobReturnsStatusAndPidSixth() {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> 7, "status");
-        manager.waitForPid((JobManager.JOB_PID_BASE + id));
-        CoreMatchers.equalTo(7);
-        CoreMatchers.notNullValue();
+        manager.waitForPid(JobManager.JOB_PID_BASE + id);
         manager.waitForJob(id);
-        CoreMatchers.equalTo(7);
         manager.waitForJob(999);
-        CoreMatchers.equalTo(127);
         manager.waitForPid(999);
-        CoreMatchers.equalTo(127);
         MatcherAssert.assertThat(
             "unknown job should be absent",
             manager.getJob(999),
@@ -208,7 +183,6 @@ final class JobManagerTest {
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
         final List<Job> listed = manager.listJobs();
-        CoreMatchers.equalTo(2);
         MatcherAssert.assertThat(
             "first job command",
             listed.get(0).getCommand(),
@@ -223,8 +197,6 @@ final class JobManagerTest {
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
         final List<Job> listed = manager.listJobs();
-        CoreMatchers.equalTo(2);
-        CoreMatchers.equalTo("first");
         MatcherAssert.assertThat(
             "second job command",
             listed.get(1).getCommand(),
@@ -239,9 +211,6 @@ final class JobManagerTest {
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
         manager.listJobs();
-        CoreMatchers.equalTo(2);
-        CoreMatchers.equalTo("first");
-        CoreMatchers.equalTo("second");
         manager.waitForAll();
         MatcherAssert.assertThat(
             "jobs should be cleared",
@@ -279,7 +248,6 @@ final class JobManagerTest {
             "fail"
         );
         manager.waitForJob(id);
-        CoreMatchers.equalTo(1);
         MatcherAssert.assertThat(
             "failed job should be DONE",
             manager.getJob(id).getState(),
@@ -299,7 +267,6 @@ final class JobManagerTest {
 
     @Test
     void jobPidBoundariesSecond() {
-        CoreMatchers.equalTo(true);
         MatcherAssert.assertThat(
             "base minus one should not be a job pid",
             JobManager.isJobPid(JobManager.JOB_PID_BASE - 1),

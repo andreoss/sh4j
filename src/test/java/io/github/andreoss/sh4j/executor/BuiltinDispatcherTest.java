@@ -124,7 +124,6 @@ final class BuiltinDispatcherTest {
     void registerCustomBuiltinSecond() {
         final BuiltinDispatcher disp = new BuiltinDispatcher();
         disp.register("mybuiltin", (self, call) -> 42);
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(
             disp.dispatch(
                 "mybuiltin",

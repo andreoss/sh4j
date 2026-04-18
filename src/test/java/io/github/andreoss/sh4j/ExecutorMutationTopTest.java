@@ -26,7 +26,6 @@ final class ExecutorMutationTopTest {
     @Test
     void topLevelLoopAndReturnSignalsAreReportedSecond() {
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("break").stderr(),
             CoreMatchers.containsString("break: not in a loop")
@@ -36,9 +35,7 @@ final class ExecutorMutationTopTest {
     @Test
     void topLevelLoopAndReturnSignalsAreReportedThird() {
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.containsString("break: not in a loop");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("continue").exitCode(),
             CoreMatchers.equalTo(0)
@@ -48,11 +45,8 @@ final class ExecutorMutationTopTest {
     @Test
     void topLevelLoopAndReturnSignalsAreReportedFourth() {
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.containsString("break: not in a loop");
         Sh4j.INSTANCE.runFull("continue");
-        CoreMatchers.equalTo(0);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("continue").stderr(),
             CoreMatchers.containsString("continue: not in a loop")
@@ -62,13 +56,9 @@ final class ExecutorMutationTopTest {
     @Test
     void topLevelLoopAndReturnSignalsAreReportedFifth() {
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.containsString("break: not in a loop");
         Sh4j.INSTANCE.runFull("continue");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("continue");
-        CoreMatchers.containsString("continue: not in a loop");
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("return 5").exitCode(),
             CoreMatchers.equalTo(5)
@@ -78,15 +68,10 @@ final class ExecutorMutationTopTest {
     @Test
     void topLevelLoopAndReturnSignalsAreReportedSixth() {
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("break");
-        CoreMatchers.containsString("break: not in a loop");
         Sh4j.INSTANCE.runFull("continue");
-        CoreMatchers.equalTo(0);
         Sh4j.INSTANCE.runFull("continue");
-        CoreMatchers.containsString("continue: not in a loop");
         Sh4j.INSTANCE.runFull("return 5");
-        CoreMatchers.equalTo(5);
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("return 5").stderr(),
             CoreMatchers.containsString("return: not in a function")
@@ -104,7 +89,6 @@ final class ExecutorMutationTopTest {
     @Test
     void trapRuntimeErrorIsReportedSecond() {
         Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body");
-        CoreMatchers.equalTo(String.format("body%n"));
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull("trap 'if' EXIT; echo body").stderr(),
             CoreMatchers.containsString("sh: trap:")

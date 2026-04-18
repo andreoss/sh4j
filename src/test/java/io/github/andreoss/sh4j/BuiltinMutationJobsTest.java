@@ -330,7 +330,7 @@ final class BuiltinMutationJobsTest {
     }
 
     @Test
-    void readInputLineSurvivesIOException() {
+    void readInputLineSurvivesIoException() {
         Assertions.assertEquals(
             String.format("rc=1 x=[]%n"),
             Sh4j.INSTANCE.runFull(

@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j.lexer;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,6 @@ final class CharReaderTest {
     void consumeReturnsCharsInOrderSecond() {
         final CharReader result = new CharReader("ab");
         result.consume();
-        CoreMatchers.is(97);
         MatcherAssert.assertThat(result.consume(), CoreMatchers.is(98));
     }
 
@@ -55,7 +55,6 @@ final class CharReaderTest {
     @Test
     void eofOnEmptyStringSecond() {
         final CharReader result = new CharReader("");
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 
@@ -70,7 +69,6 @@ final class CharReaderTest {
     void eofAfterFullConsumeSecond() {
         final CharReader result = new CharReader("a");
         result.consume();
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 
@@ -87,7 +85,6 @@ final class CharReaderTest {
     @Test
     void lineColumnInitialValuesSecond() {
         final CharReader result = new CharReader("a");
-        CoreMatchers.is(1);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
@@ -102,7 +99,6 @@ final class CharReaderTest {
     void lineColumnAfterConsumeSecond() {
         final CharReader result = new CharReader("a");
         result.consume();
-        CoreMatchers.is(1);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
     }
 
@@ -117,7 +113,6 @@ final class CharReaderTest {
     void newlineIncrementsLineAndResetsColumnSecond() {
         final CharReader result = new CharReader(String.format("%n"));
         result.consume();
-        CoreMatchers.is(2);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
@@ -132,15 +127,12 @@ final class CharReaderTest {
     @Test
     void multipleLinesSecond() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
     @Test
     void multipleLinesThird() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
         MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(1));
     }
@@ -148,21 +140,14 @@ final class CharReaderTest {
     @Test
     void multipleLinesFourth() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(1);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
     }
 
     @Test
     void multipleLinesFifth() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(1);
-        CoreMatchers.is(1);
         result.consume();
         MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(2));
     }
@@ -170,27 +155,16 @@ final class CharReaderTest {
     @Test
     void multipleLinesSixth() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(1);
-        CoreMatchers.is(1);
         result.consume();
-        CoreMatchers.is(2);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
     }
 
     @Test
     void multipleLinesSeventh() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(1);
-        CoreMatchers.is(1);
         result.consume();
-        CoreMatchers.is(2);
-        CoreMatchers.is(0);
         result.consume();
         MatcherAssert.assertThat(result.getLine(), CoreMatchers.is(2));
     }
@@ -198,98 +172,33 @@ final class CharReaderTest {
     @Test
     void multipleLinesEighth() {
         final CharReader result = new CharReader(String.format("a%nb"));
-        CoreMatchers.is(1);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(1);
-        CoreMatchers.is(1);
         result.consume();
-        CoreMatchers.is(2);
-        CoreMatchers.is(0);
         result.consume();
-        CoreMatchers.is(2);
         MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(1));
     }
 
     @Test
-    void ioExceptionTreatedAsEofFirst() {
-        MatcherAssert.assertThat(
-            new CharReader(
-                new Reader() {
-
-                    @Override
-                    public int read() throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public int read(final char[] cbuf, final int off, final int len)
-                        throws IOException {
-                        throw new IOException();
-                    }
-
-                    @Override
-                    public void close() {
-                        // intentional no-op
-                    }
-                }
-            ).isEof(),
-            CoreMatchers.is(true)
-        );
+    void ioExceptionTreatedAsEofFirst() throws IOException {
+        try (Reader failing = new CharReaderTest.Failing()) {
+            MatcherAssert.assertThat(new CharReader(failing).isEof(), CoreMatchers.is(true));
+        }
     }
 
     @Test
-    void ioExceptionTreatedAsEofSecond() {
-        final CharReader reader = new CharReader(
-            new Reader() {
-
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public int read(final char[] cbuf, final int off, final int len)
-                    throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public void close() {
-                    // intentional no-op
-                }
-            }
-        );
-        CoreMatchers.is(true);
-        MatcherAssert.assertThat(reader.peek(), CoreMatchers.is(-1));
+    void ioExceptionTreatedAsEofSecond() throws IOException {
+        try (Reader failing = new CharReaderTest.Failing()) {
+            MatcherAssert.assertThat(new CharReader(failing).peek(), CoreMatchers.is(-1));
+        }
     }
 
     @Test
-    void ioExceptionTreatedAsEofThird() {
-        final CharReader reader = new CharReader(
-            new Reader() {
-
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public int read(final char[] cbuf, final int off, final int len)
-                    throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public void close() {
-                    // intentional no-op
-                }
-            }
-        );
-        CoreMatchers.is(true);
-        reader.peek();
-        CoreMatchers.is(-1);
-        MatcherAssert.assertThat(reader.consume(), CoreMatchers.is(-1));
+    void ioExceptionTreatedAsEofThird() throws IOException {
+        try (Reader failing = new CharReaderTest.Failing()) {
+            final CharReader reader = new CharReader(failing);
+            reader.peek();
+            MatcherAssert.assertThat(reader.consume(), CoreMatchers.is(-1));
+        }
     }
 
     @Test
@@ -300,39 +209,55 @@ final class CharReaderTest {
     @Test
     void eofStaysEofOnMultipleCallsSecond() {
         final CharReader result = new CharReader("");
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
     }
 
     @Test
     void eofStaysEofOnMultipleCallsThird() {
         final CharReader result = new CharReader("");
-        CoreMatchers.is(true);
         result.peek();
-        CoreMatchers.is(-1);
         MatcherAssert.assertThat(result.consume(), CoreMatchers.is(-1));
     }
 
     @Test
     void eofStaysEofOnMultipleCallsFourth() {
         final CharReader result = new CharReader("");
-        CoreMatchers.is(true);
         result.peek();
-        CoreMatchers.is(-1);
         result.consume();
-        CoreMatchers.is(-1);
         MatcherAssert.assertThat(result.isEof(), CoreMatchers.is(true));
     }
 
     @Test
     void eofStaysEofOnMultipleCallsFifth() {
         final CharReader result = new CharReader("");
-        CoreMatchers.is(true);
         result.peek();
-        CoreMatchers.is(-1);
         result.consume();
-        CoreMatchers.is(-1);
-        CoreMatchers.is(true);
         MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
+    }
+
+    /**
+     * Reader whose every read fails.
+     *
+     * @since 1.0
+     */
+    private static final class Failing extends StringReader {
+
+        /**
+         * Ctor.
+         */
+        Failing() {
+            super("");
+        }
+
+        @Override
+        public int read() throws IOException {
+            throw new IOException();
+        }
+
+        @Override
+        public int read(final char[] cbuf, final int off, final int len)
+            throws IOException {
+            throw new IOException();
+        }
     }
 }

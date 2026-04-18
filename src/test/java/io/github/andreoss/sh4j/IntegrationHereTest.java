@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
  *
  * @since 1.0
  */
-public final class IntegrationHereTest {
+final class IntegrationHereTest {
 
     /** Temporary root directory. */
     @TempDir
@@ -432,7 +431,7 @@ public final class IntegrationHereTest {
                         new TempDirs(IntegrationHereTest.root).folder("after").getAbsolutePath()
                     )
                 )
-            ).trim().isEmpty(),
+            ).isBlank(),
             "OLDPWD should not be empty"
         );
     }
@@ -486,7 +485,7 @@ public final class IntegrationHereTest {
                         "echo test > %s",
                         new TempDirs(IntegrationHereTest.root).file("out.txt").getAbsolutePath()
                     )
-                        + String.format("%n")
+                    + String.format("%n")
                 ).getAbsolutePath()
             )
         );
@@ -729,12 +728,6 @@ public final class IntegrationHereTest {
     }
 
     private static byte[] readAllBytes(final InputStream input) throws IOException {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final byte[] buf = new byte[8192];
-        int num;
-        while ((num = input.read(buf)) != -1) {
-            bos.write(buf, 0, num);
-        }
-        return bos.toByteArray();
+        return input.readAllBytes();
     }
 }
