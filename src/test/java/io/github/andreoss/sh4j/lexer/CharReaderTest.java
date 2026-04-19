@@ -54,8 +54,7 @@ final class CharReaderTest {
 
     @Test
     void eofOnEmptyStringSecond() {
-        final CharReader result = new CharReader("");
-        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
+        MatcherAssert.assertThat(new CharReader("").peek(), CoreMatchers.is(-1));
     }
 
     @Test
@@ -84,8 +83,7 @@ final class CharReaderTest {
 
     @Test
     void lineColumnInitialValuesSecond() {
-        final CharReader result = new CharReader("a");
-        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
+        MatcherAssert.assertThat(new CharReader("a").getColumn(), CoreMatchers.is(0));
     }
 
     @Test
@@ -126,8 +124,10 @@ final class CharReaderTest {
 
     @Test
     void multipleLinesSecond() {
-        final CharReader result = new CharReader(String.format("a%nb"));
-        MatcherAssert.assertThat(result.getColumn(), CoreMatchers.is(0));
+        MatcherAssert.assertThat(
+            new CharReader(String.format("a%nb")).getColumn(),
+            CoreMatchers.is(0)
+        );
     }
 
     @Test
@@ -208,8 +208,7 @@ final class CharReaderTest {
 
     @Test
     void eofStaysEofOnMultipleCallsSecond() {
-        final CharReader result = new CharReader("");
-        MatcherAssert.assertThat(result.peek(), CoreMatchers.is(-1));
+        MatcherAssert.assertThat(new CharReader("").peek(), CoreMatchers.is(-1));
     }
 
     @Test

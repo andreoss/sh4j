@@ -45,10 +45,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        final Job job = manager.getJob(id);
         MatcherAssert.assertThat(
             "state should be DONE",
-            job.getState(),
+            manager.getJob(id).getState(),
             CoreMatchers.equalTo(JobManager.State.DONE)
         );
         manager.shutdown();
@@ -59,10 +58,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        final Job job = manager.getJob(id);
         MatcherAssert.assertThat(
             "exit code should be zero",
-            job.getExitCode(),
+            manager.getJob(id).getExitCode(),
             CoreMatchers.equalTo(0)
         );
         manager.shutdown();
@@ -73,10 +71,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         final int id = manager.submit(() -> { }, "work");
         manager.waitForJob(id);
-        final Job job = manager.getJob(id);
         MatcherAssert.assertThat(
             "command should round-trip",
-            job.getCommand(),
+            manager.getJob(id).getCommand(),
             CoreMatchers.equalTo("work")
         );
         manager.shutdown();
@@ -182,10 +179,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
-        final List<Job> listed = manager.listJobs();
         MatcherAssert.assertThat(
             "first job command",
-            listed.get(0).getCommand(),
+            manager.listJobs().get(0).getCommand(),
             CoreMatchers.equalTo("first")
         );
         manager.shutdown();
@@ -196,10 +192,9 @@ final class JobManagerTest {
         final JobManager manager = new JobManager();
         manager.submit(() -> 1, "first");
         manager.submit(() -> 2, "second");
-        final List<Job> listed = manager.listJobs();
         MatcherAssert.assertThat(
             "second job command",
-            listed.get(1).getCommand(),
+            manager.listJobs().get(1).getCommand(),
             CoreMatchers.equalTo("second")
         );
         manager.shutdown();

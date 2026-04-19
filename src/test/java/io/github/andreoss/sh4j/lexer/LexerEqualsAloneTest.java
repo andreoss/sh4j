@@ -20,8 +20,7 @@ final class LexerEqualsAloneTest {
 
     @Test
     void equalsAloneIsWordNotAssignmentSecond() {
-        final Token tokn = this.lexer("=").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("="));
+        MatcherAssert.assertThat(this.lexer("=").nextToken().text(), CoreMatchers.equalTo("="));
     }
 
     @Test
@@ -74,8 +73,10 @@ final class LexerEqualsAloneTest {
 
     @Test
     void ioNumberBeforeInputRedirectSecond() {
-        final Token tokfirst = this.lexer("2<file").nextToken();
-        MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo("2"));
+        MatcherAssert.assertThat(
+            this.lexer("2<file").nextToken().text(),
+            CoreMatchers.equalTo("2")
+        );
     }
 
     @Test
@@ -95,8 +96,10 @@ final class LexerEqualsAloneTest {
 
     @Test
     void mixedQuotingSecond() {
-        final Token tokn = this.lexer("a'b'c").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("a'b'c"));
+        MatcherAssert.assertThat(
+            this.lexer("a'b'c").nextToken().text(),
+            CoreMatchers.equalTo("a'b'c")
+        );
     }
 
     @Test
@@ -159,9 +162,8 @@ final class LexerEqualsAloneTest {
 
     @Test
     void multipleTokensSecond() {
-        final Token tokfirst = this.lexer(String.format("echo hello%n")).nextToken();
         MatcherAssert.assertThat(
-            tokfirst.text(),
+            this.lexer(String.format("echo hello%n")).nextToken().text(),
             CoreMatchers.equalTo(LexerEqualsAloneTest.ECHO_CMD)
         );
     }
@@ -177,8 +179,7 @@ final class LexerEqualsAloneTest {
     void multipleTokensFourth() {
         final Lexer list = this.lexer(String.format("echo hello%n"));
         list.nextToken();
-        final Token toksecond = list.nextToken();
-        MatcherAssert.assertThat(toksecond.text(), CoreMatchers.equalTo("hello"));
+        MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo("hello"));
     }
 
     @Test
@@ -240,8 +241,10 @@ final class LexerEqualsAloneTest {
 
     @Test
     void newlineSecond() {
-        final Token tokn = this.lexer(String.format("%n")).nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(String.format("%n")));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("%n")).nextToken().text(),
+            CoreMatchers.equalTo(String.format("%n"))
+        );
     }
 
     @Test
@@ -271,8 +274,7 @@ final class LexerEqualsAloneTest {
     void operatorThenWordThird() {
         final Lexer list = this.lexer(">out");
         list.nextToken();
-        final Token toksecond = list.nextToken();
-        MatcherAssert.assertThat(toksecond.text(), CoreMatchers.equalTo("out"));
+        MatcherAssert.assertThat(list.nextToken().text(), CoreMatchers.equalTo("out"));
     }
 
     @Test

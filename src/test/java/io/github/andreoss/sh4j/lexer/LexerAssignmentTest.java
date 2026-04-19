@@ -80,8 +80,10 @@ final class LexerAssignmentTest {
 
     @Test
     void backslashEscapesInsideWordSecond() {
-        final Token tokn = this.lexer("a\\ b").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("a\\ b"));
+        MatcherAssert.assertThat(
+            this.lexer("a\\ b").nextToken().text(),
+            CoreMatchers.equalTo("a\\ b")
+        );
     }
 
     @Test
@@ -166,8 +168,7 @@ final class LexerAssignmentTest {
 
     @Test
     void digitsThenSpaceIsWordNotIoNumberSecond() {
-        final Token tokn = this.lexer("42 ").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("42"));
+        MatcherAssert.assertThat(this.lexer("42 ").nextToken().text(), CoreMatchers.equalTo("42"));
     }
 
     @Test
@@ -180,8 +181,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedWordSecond() {
-        final Token tokn = this.lexer("\"hello\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"hello\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"hello\"").nextToken().text(),
+            CoreMatchers.equalTo("\"hello\"")
+        );
     }
 
     @Test
@@ -194,8 +197,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashDollarSecond() {
-        final Token tokn = this.lexer("\"\\$\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\$\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\$\"").nextToken().text(),
+            CoreMatchers.equalTo("\"\\$\"")
+        );
     }
 
     @Test
@@ -208,8 +213,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashBacktickSecond() {
-        final Token tokn = this.lexer("\"\\`\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\`\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\`\"").nextToken().text(),
+            CoreMatchers.equalTo("\"\\`\"")
+        );
     }
 
     @Test
@@ -222,8 +229,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashNewlineSecond() {
-        final Token tokn = this.lexer(String.format("\"a\\%nb\"")).nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"ab\""));
+        MatcherAssert.assertThat(
+            this.lexer(String.format("\"a\\%nb\"")).nextToken().text(),
+            CoreMatchers.equalTo("\"ab\"")
+        );
     }
 
     @Test
@@ -236,8 +245,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashBackslashSecond() {
-        final Token tokn = this.lexer("\"a\\\\b\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\\b\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"a\\\\b\"").nextToken().text(),
+            CoreMatchers.equalTo("\"a\\\\b\"")
+        );
     }
 
     @Test
@@ -250,8 +261,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashDoublequoteSecond() {
-        final Token tokn = this.lexer("\"a\\\"b\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"a\\\"b\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"a\\\"b\"").nextToken().text(),
+            CoreMatchers.equalTo("\"a\\\"b\"")
+        );
     }
 
     @Test
@@ -264,8 +277,10 @@ final class LexerAssignmentTest {
 
     @Test
     void doubleQuotedBackslashNonSpecialKeptLiteralSecond() {
-        final Token tokn = this.lexer("\"\\a\"").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("\"\\a\""));
+        MatcherAssert.assertThat(
+            this.lexer("\"\\a\"").nextToken().text(),
+            CoreMatchers.equalTo("\"\\a\"")
+        );
     }
 
     @Test
@@ -305,8 +320,7 @@ final class LexerAssignmentTest {
 
     @Test
     void eofOnEmptyInputSecond() {
-        final Token tokn = this.lexer("").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(""));
+        MatcherAssert.assertThat(this.lexer("").nextToken().text(), CoreMatchers.equalTo(""));
     }
 
     @Test

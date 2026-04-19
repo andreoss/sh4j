@@ -22,8 +22,10 @@ final class LexerSimpleWordTest {
 
     @Test
     void simpleWordSecond() {
-        final Token tokn = this.lexer(LexerSimpleWordTest.ECHO_CMD).nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD));
+        MatcherAssert.assertThat(
+            this.lexer(LexerSimpleWordTest.ECHO_CMD).nextToken().text(),
+            CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
+        );
     }
 
     @Test
@@ -71,8 +73,10 @@ final class LexerSimpleWordTest {
 
     @Test
     void singleQuotedWordSecond() {
-        final Token tokn = this.lexer("'hello'").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("'hello'"));
+        MatcherAssert.assertThat(
+            this.lexer("'hello'").nextToken().text(),
+            CoreMatchers.equalTo("'hello'")
+        );
     }
 
     @Test
@@ -102,8 +106,10 @@ final class LexerSimpleWordTest {
 
     @Test
     void tabIsWhitespaceSecond() {
-        final Token tokn = this.lexer("\tword").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("word"));
+        MatcherAssert.assertThat(
+            this.lexer("\tword").nextToken().text(),
+            CoreMatchers.equalTo("word")
+        );
     }
 
     @Test
@@ -140,8 +146,7 @@ final class LexerSimpleWordTest {
 
     @Test
     void wordWithWhitespacePrefixSecond() {
-        final Token tokn = this.lexer("  ls").nextToken();
-        MatcherAssert.assertThat(tokn.text(), CoreMatchers.equalTo("ls"));
+        MatcherAssert.assertThat(this.lexer("  ls").nextToken().text(), CoreMatchers.equalTo("ls"));
     }
 
     @Test
@@ -154,8 +159,10 @@ final class LexerSimpleWordTest {
 
     @Test
     void wordThenOperatorSecond() {
-        final Token tokfirst = this.lexer("cmd&").nextToken();
-        MatcherAssert.assertThat(tokfirst.text(), CoreMatchers.equalTo("cmd"));
+        MatcherAssert.assertThat(
+            this.lexer("cmd&").nextToken().text(),
+            CoreMatchers.equalTo("cmd")
+        );
     }
 
     @Test
@@ -175,9 +182,8 @@ final class LexerSimpleWordTest {
 
     @Test
     void wordBreaksAtLeftParenSecond() {
-        final Token tokfirst = this.lexer("echo(").nextToken();
         MatcherAssert.assertThat(
-            tokfirst.text(),
+            this.lexer("echo(").nextToken().text(),
             CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
         );
     }
@@ -199,9 +205,8 @@ final class LexerSimpleWordTest {
 
     @Test
     void wordBreaksAtRightParenSecond() {
-        final Token tokfirst = this.lexer("echo)").nextToken();
         MatcherAssert.assertThat(
-            tokfirst.text(),
+            this.lexer("echo)").nextToken().text(),
             CoreMatchers.equalTo(LexerSimpleWordTest.ECHO_CMD)
         );
     }
