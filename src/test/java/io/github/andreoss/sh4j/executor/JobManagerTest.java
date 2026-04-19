@@ -4,7 +4,6 @@
  */
 package io.github.andreoss.sh4j.executor;
 
-import java.util.List;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
