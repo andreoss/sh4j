@@ -12,7 +12,7 @@ package io.github.andreoss.sh4j.parser;
  *
  * @since 1.0
  */
-public final class IfNode extends Node {
+public final class IfNode implements Node {
 
     /** The list whose exit status decides the branch. */
     private final ListNode condition;
@@ -31,7 +31,6 @@ public final class IfNode extends Node {
      * @param otherwise Body for the failure branch (may be null)
      */
     public IfNode(final ListNode condition, final ListNode then, final ListNode otherwise) {
-        super();
         this.condition = condition;
         this.then = then;
         this.otherwise = otherwise;

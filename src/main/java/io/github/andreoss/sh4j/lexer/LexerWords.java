@@ -45,9 +45,9 @@ final class LexerWords {
         final CharReader reader, final StringBuilder buf, final QuoteState quotes
     ) {
         final boolean done;
-        if (quotes.isSquote()) {
+        if (quotes.single()) {
             done = LexerWords.readInSingle(reader, buf, quotes);
-        } else if (quotes.isDquote()) {
+        } else if (quotes.doubled()) {
             done = LexerWords.readInDouble(reader, buf, quotes);
         } else {
             done = LexerWords.readBare(reader, buf, quotes);
@@ -62,7 +62,7 @@ final class LexerWords {
         reader.consume();
         buf.append((char) chr);
         if (chr == '\'') {
-            quotes.setSquote(false);
+            quotes.leaveSingle();
         }
         return false;
     }
@@ -74,7 +74,7 @@ final class LexerWords {
         if (chr == '"') {
             reader.consume();
             buf.append('"');
-            quotes.setDquote(false);
+            quotes.leaveDouble();
         } else {
             LexerWordChars.consumeDoubleQuoted(reader, buf, chr);
         }
@@ -92,12 +92,12 @@ final class LexerWords {
         } else if (chr == '\'') {
             reader.consume();
             buf.append('\'');
-            quotes.setSquote(true);
+            quotes.enterSingle();
             done = false;
         } else if (chr == '"') {
             reader.consume();
             buf.append('"');
-            quotes.setDquote(true);
+            quotes.enterDouble();
             done = false;
         } else if (chr == '$') {
             LexerWordChars.consumeDollar(reader, buf);

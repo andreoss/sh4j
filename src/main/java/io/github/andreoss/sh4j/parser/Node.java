@@ -5,30 +5,23 @@
 package io.github.andreoss.sh4j.parser;
 
 /**
- * Marker base type for every AST node produced by {@link Parser}.
+ * Common type of every AST node produced by {@link Parser}.
  *
- * <p>The base intentionally exposes no behaviour: each subclass (e.g.
+ * <p>Each node type (e.g.
  * {@link SimpleCommand}, {@link Pipeline}, {@link IfNode}) defines its own
  * shape and is interpreted by the executor via a {@code switch} over
  * concrete types rather than via virtual dispatch.</p>
  *
  * @since 1.0
  */
-public class Node {
-
-    /**
-     * Creates a new AST node.
-     */
-    public Node() {
-        // nothing to initialise
-    }
+public interface Node {
 
     /**
      * Returns the line number where this node was parsed.
      *
-     * @return The 1-based line number where this node was parsed
+     * @return The 1-based line number, or zero when not tracked
      */
-    public int getLineNumber() {
+    default int getLineNumber() {
         return 0;
     }
 }

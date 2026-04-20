@@ -12,7 +12,7 @@ package io.github.andreoss.sh4j.parser;
  *
  * @since 1.0
  */
-public final class Subshell extends Node {
+public final class Subshell implements Node {
 
     /** The command list to run inside the subshell. */
     private final ListNode list;
@@ -23,7 +23,6 @@ public final class Subshell extends Node {
      * @param list The list to execute
      */
     public Subshell(final ListNode list) {
-        super();
         this.list = list;
     }
 

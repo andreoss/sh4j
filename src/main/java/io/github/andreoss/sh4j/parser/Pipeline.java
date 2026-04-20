@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class Pipeline extends Node {
+public final class Pipeline implements Node {
 
     /** Stages of the pipeline in source order. */
     private final List<Node> commands;
@@ -28,7 +28,6 @@ public final class Pipeline extends Node {
      * @param bang Whether to invert the final exit status
      */
     public Pipeline(final boolean bang) {
-        super();
         this.commands = new ArrayList<>(0);
         this.bang = bang;
     }

@@ -9,7 +9,7 @@ package io.github.andreoss.sh4j.parser;
  *
  * @since 1.0
  */
-public final class FunctionNode extends Node {
+public final class FunctionNode implements Node {
 
     /** Function name as written in source. */
     private final String name;
@@ -24,7 +24,6 @@ public final class FunctionNode extends Node {
      * @param body The function's compound body
      */
     public FunctionNode(final String name, final Node body) {
-        super();
         this.name = name;
         this.body = body;
     }

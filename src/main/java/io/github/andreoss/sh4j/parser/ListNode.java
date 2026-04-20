@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class ListNode extends Node {
+public final class ListNode implements Node {
 
     /**
      * How two pipelines are joined.
@@ -50,7 +50,6 @@ public final class ListNode extends Node {
      * {@link #addPipeline(Pipeline, Separator)}.
      */
     public ListNode() {
-        super();
         this.pipelines = new ArrayList<>(0);
         this.separators = new ArrayList<>(0);
     }

@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class CaseNode extends Node {
+public final class CaseNode implements Node {
 
     /** The word to match against each case-arm's patterns. */
     private final String word;
@@ -26,7 +26,6 @@ public final class CaseNode extends Node {
      * @param items The case-arms, in source order
      */
     public CaseNode(final String word, final List<CaseItem> items) {
-        super();
         this.word = word;
         this.items = items;
     }

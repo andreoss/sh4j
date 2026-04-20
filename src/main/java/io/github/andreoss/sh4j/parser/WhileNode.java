@@ -10,7 +10,7 @@ package io.github.andreoss.sh4j.parser;
  *
  * @since 1.0
  */
-public final class WhileNode extends Node {
+public final class WhileNode implements Node {
 
     /** Loop condition; re-evaluated each iteration. */
     private final ListNode condition;
@@ -29,7 +29,6 @@ public final class WhileNode extends Node {
      * @param until     True for {@code until} semantics, false for {@code while}
      */
     public WhileNode(final ListNode condition, final ListNode body, final boolean until) {
-        super();
         this.condition = condition;
         this.body = body;
         this.until = until;

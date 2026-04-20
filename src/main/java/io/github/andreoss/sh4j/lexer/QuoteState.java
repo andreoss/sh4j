@@ -21,42 +21,45 @@ public final class QuoteState {
      * Creates a new quote state with both quotes cleared.
      */
     public QuoteState() {
-        // both flags default to false
+        this.squote = false;
+        this.dquote = false;
     }
 
     /**
-     * Returns whether we're inside a single quote.
+     * Tells whether a single quote is open.
      *
      * @return True when inside a single quote
      */
-    public boolean isSquote() {
+    public boolean single() {
         return this.squote;
     }
 
     /**
-     * Sets whether we're inside a single quote.
-     *
-     * @param single True when inside a single quote
-     */
-    public void setSquote(final boolean single) {
-        this.squote = single;
-    }
-
-    /**
-     * Returns whether we're inside a double quote.
+     * Tells whether a double quote is open.
      *
      * @return True when inside a double quote
      */
-    public boolean isDquote() {
+    public boolean doubled() {
         return this.dquote;
     }
 
-    /**
-     * Sets whether we're inside a double quote.
-     *
-     * @param doubleq True when inside a double quote
-     */
-    public void setDquote(final boolean doubleq) {
-        this.dquote = doubleq;
+    /** Opens a single quote. */
+    public void enterSingle() {
+        this.squote = true;
+    }
+
+    /** Closes a single quote. */
+    public void leaveSingle() {
+        this.squote = false;
+    }
+
+    /** Opens a double quote. */
+    public void enterDouble() {
+        this.dquote = true;
+    }
+
+    /** Closes a double quote. */
+    public void leaveDouble() {
+        this.dquote = false;
     }
 }

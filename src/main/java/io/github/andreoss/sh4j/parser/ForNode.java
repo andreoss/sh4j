@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class ForNode extends Node {
+public final class ForNode implements Node {
 
     /** Loop variable name. */
     private final String variable;
@@ -30,7 +30,6 @@ public final class ForNode extends Node {
      * @param body     Body to execute per iteration
      */
     public ForNode(final String variable, final List<String> words, final ListNode body) {
-        super();
         this.variable = variable;
         this.words = words;
         this.body = body;

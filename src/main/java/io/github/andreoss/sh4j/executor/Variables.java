@@ -15,7 +15,7 @@ import java.util.Map;
 final class Variables {
 
     /** Default IFS value (space, tab, newline). */
-    static final String DEFAULT_IFS = " \t\n";
+    static final String DEFAULT_IFS = String.valueOf(new char[] {' ', '\t', '\n'});
 
     /** Fallback working directory when the property is unset. */
     static final String FALLBACK_DIR = "/";

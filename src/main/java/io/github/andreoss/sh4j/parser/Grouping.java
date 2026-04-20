@@ -11,7 +11,7 @@ package io.github.andreoss.sh4j.parser;
  *
  * @since 1.0
  */
-public final class Grouping extends Node {
+public final class Grouping implements Node {
 
     /** The command list to run inside the group. */
     private final ListNode list;
@@ -22,7 +22,6 @@ public final class Grouping extends Node {
      * @param list The list to execute
      */
     public Grouping(final ListNode list) {
-        super();
         this.list = list;
     }
 

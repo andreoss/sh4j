@@ -30,7 +30,7 @@ public final class ArithmeticEvaluator {
      * Default constructor.
      */
     public ArithmeticEvaluator() {
-        // Intentionally empty.
+        this.mute = false;
     }
 
     /**

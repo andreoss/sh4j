@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public final class SimpleCommand extends Node {
+public final class SimpleCommand implements Node {
 
     /** Command name as parsed; may be null for assignment-only commands. */
     private final String name;
@@ -36,7 +36,6 @@ public final class SimpleCommand extends Node {
      * @param name The command name (may be null for assignment-only commands)
      */
     public SimpleCommand(final String name) {
-        super();
         this.name = name;
         this.arguments = new ArrayList<>(0);
         this.redirections = new ArrayList<>(0);

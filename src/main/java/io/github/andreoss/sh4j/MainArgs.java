@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +50,7 @@ final class MainArgs {
     }
 
     private static int missingCommand() {
-        System.err.println("sh: -c: option requires an argument");
+        MainArgs.err().println("sh: -c: option requires an argument");
         return 1;
     }
 
@@ -128,5 +129,9 @@ final class MainArgs {
         boolean dashed, String command, boolean stdind,
         boolean inter, String script, List<String> params
     ) {
+    }
+
+    private static PrintStream err() {
+        return System.err;
     }
 }
