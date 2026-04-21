@@ -8,6 +8,7 @@ import io.github.andreoss.sh4j.executor.Executor;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -103,8 +104,14 @@ final class Loop {
     }
 
     private static BufferedReader console() {
-        return new BufferedReader(
-            new InputStreamReader(System.in, StandardCharsets.UTF_8)
-        );
+        return Loop.buffered(Loop.stdin());
+    }
+
+    private static Reader stdin() {
+        return new InputStreamReader(System.in, StandardCharsets.UTF_8);
+    }
+
+    private static BufferedReader buffered(final Reader input) {
+        return new BufferedReader(input);
     }
 }

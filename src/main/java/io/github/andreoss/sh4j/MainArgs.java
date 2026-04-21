@@ -49,6 +49,10 @@ final class MainArgs {
         return code;
     }
 
+    private static PrintStream err() {
+        return System.err;
+    }
+
     private static int missingCommand() {
         MainArgs.err().println("sh: -c: option requires an argument");
         return 1;
@@ -131,7 +135,4 @@ final class MainArgs {
     ) {
     }
 
-    private static PrintStream err() {
-        return System.err;
-    }
 }
