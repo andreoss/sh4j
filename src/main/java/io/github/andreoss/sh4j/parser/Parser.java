@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j.parser;
 
 import io.github.andreoss.sh4j.lexer.Lexer;
-import io.github.andreoss.sh4j.lexer.Token;
 import io.github.andreoss.sh4j.lexer.TokenType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,29 +21,8 @@ import java.util.Set;
  */
 public final class Parser {
 
-    /** Tokens that terminate a pipeline. */
-    private static final Set<TokenType> SEPARATORS = Set.of(
-        TokenType.SEMI, TokenType.AMP, TokenType.AND_IF,
-        TokenType.OR_IF, TokenType.NEWLINE
-    );
-
-    /** Source token stream. */
-    private final Lexer lexer;
-
-    /** Current token (the one the parser is about to consume). */
-    private Token current;
-
-    /** Cached one-token lookahead. */
-    private Token next;
-
-    /** True when {@link #next} holds a peeked token. */
-    private boolean hasnext;
-
-    /** Cached two-token lookahead (only valid when {@link #cached} is true). */
-    private Token second;
-
-    /** True when {@link #second} has been filled. */
-    private boolean cached;
+    /** Token cursor. */
+    private final Cursor cursor;
 
     /**
      * Creates a parser over the given lexer.
@@ -52,7 +30,7 @@ public final class Parser {
      * @param lexer The token source
      */
     public Parser(final Lexer lexer) {
-        this.lexer = lexer;
+        this.cursor = new Cursor(lexer);
     }
 
     /**
@@ -61,76 +39,9 @@ public final class Parser {
      * @return The AST root
      */
     public ListNode parse() {
-        this.init();
-        this.skipNewlines();
+        this.cursor.init();
+        this.cursor.skipNewlines();
         return this.parseList(TokenType.END_OF_FILE);
-    }
-
-    private void init() {
-        this.current = this.lexer.nextToken();
-        this.next = this.current;
-        this.cached = false;
-        this.hasnext = false;
-    }
-
-    private Token consume() {
-        final Token cur;
-        if (this.hasnext) {
-            cur = this.current;
-            this.current = this.next;
-            if (this.cached) {
-                this.next = this.second;
-                this.hasnext = true;
-            } else {
-                this.hasnext = false;
-            }
-            this.cached = false;
-        } else {
-            cur = this.current;
-            this.current = this.lexer.nextToken();
-        }
-        return cur;
-    }
-
-    private Token peekNext() {
-        if (!this.hasnext) {
-            this.next = this.lexer.nextToken();
-            this.hasnext = true;
-            this.cached = false;
-        }
-        return this.next;
-    }
-
-    private Token peekSecond() {
-        this.peekNext();
-        if (!this.cached) {
-            this.second = this.lexer.nextToken();
-            this.cached = true;
-        }
-        return this.second;
-    }
-
-    private Token expect(final TokenType type) {
-        if (this.current.type() != type) {
-            throw new ParseException(
-                String.format(
-                    "Expected %s but got %s at line %d column %d",
-                    type, this.current.type(),
-                    this.current.line(), this.current.column()
-                )
-            );
-        }
-        return this.consume();
-    }
-
-    private boolean check(final TokenType type) {
-        return this.current.type() == type;
-    }
-
-    private void skipNewlines() {
-        while (this.check(TokenType.NEWLINE)) {
-            this.consume();
-        }
     }
 
     private ListNode parseList(final TokenType... terminators) {
@@ -139,12 +50,12 @@ public final class Parser {
         list.addPipeline(pipeline, ListNode.Separator.NONE);
         boolean done = false;
         while (!done && this.isListSeparator()) {
-            final ListNode.Separator sep = this.currentSeparator();
-            this.consume();
-            this.skipNewlines();
+            final ListNode.Separator sep = this.cursor.separator();
+            this.cursor.consume();
+            this.cursor.skipNewlines();
             final int last = list.getPipelines().size() - 1;
             list.getSeparators().set(last, sep);
-            if (this.isTerminator(terminators) || this.check(TokenType.END_OF_FILE)) {
+            if (this.cursor.isTerminator(terminators) || this.cursor.check(TokenType.END_OF_FILE)) {
                 done = true;
             } else {
                 pipeline = this.parsePipeline();
@@ -155,58 +66,7 @@ public final class Parser {
     }
 
     private boolean isListSeparator() {
-        return this.isPipelineSeparator() || this.check(TokenType.NEWLINE);
-    }
-
-    private ListNode.Separator currentSeparator() {
-        final ListNode.Separator sep;
-        if (this.check(TokenType.SEMI) || this.check(TokenType.NEWLINE)) {
-            sep = ListNode.Separator.SEMI;
-        } else if (this.check(TokenType.AMP)) {
-            sep = ListNode.Separator.AMP;
-        } else if (this.check(TokenType.AND_IF)) {
-            sep = ListNode.Separator.AND_IF;
-        } else {
-            sep = ListNode.Separator.OR_IF;
-        }
-        return sep;
-    }
-
-    private boolean isTerminator(final TokenType... terminators) {
-        boolean result = false;
-        for (final TokenType type : terminators) {
-            if (this.check(type)) {
-                result = true;
-                break;
-            }
-        }
-        return result;
-    }
-
-    private boolean isReservedWord(final String... words) {
-        boolean result = false;
-        if (this.check(TokenType.WORD)) {
-            for (final String word : words) {
-                if (this.current.text().equals(word)) {
-                    result = true;
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    private Token expectWord(final String text) {
-        if (!this.check(TokenType.WORD) || !this.current.text().equals(text)) {
-            throw new ParseException(
-                String.format(
-                    "Expected '%s' but got %s at line %d column %d",
-                    text, this.current.text(),
-                    this.current.line(), this.current.column()
-                )
-            );
-        }
-        return this.consume();
+        return this.cursor.isPipelineSeparator() || this.cursor.check(TokenType.NEWLINE);
     }
 
     private Pipeline parsePipeline() {
@@ -215,17 +75,17 @@ public final class Parser {
 
     private Pipeline parsePipeline(final Set<String> reserved) {
         boolean bang = false;
-        if (this.check(TokenType.WORD) && "!".equals(this.current.text())) {
+        if (this.cursor.check(TokenType.WORD) && "!".equals(this.cursor.token().text())) {
             bang = true;
-            this.consume();
+            this.cursor.consume();
         }
         final Pipeline pipeline = new Pipeline(bang);
         final Node first = this.parsePipelineStage(reserved);
         if (first != null) {
             pipeline.addCommand(first);
             final boolean done = false;
-            while (!done && this.check(TokenType.PIPE)) {
-                this.consume();
+            while (!done && this.cursor.check(TokenType.PIPE)) {
+                this.cursor.consume();
                 final Node stage = this.parsePipelineStage(reserved);
                 pipeline.addCommand(stage);
             }
@@ -235,11 +95,11 @@ public final class Parser {
 
     private Node parsePipelineStage(final Set<String> reserved) {
         final Node result;
-        if (this.check(TokenType.LPAREN)) {
+        if (this.cursor.check(TokenType.LPAREN)) {
             result = this.parseSubshell();
-        } else if (this.check(TokenType.LBRACE)) {
+        } else if (this.cursor.check(TokenType.LBRACE)) {
             result = this.parseGrouping();
-        } else if (this.check(TokenType.WORD)) {
+        } else if (this.cursor.check(TokenType.WORD)) {
             result = this.parseWordStage(reserved);
         } else {
             result = this.parseSimpleCommand();
@@ -248,32 +108,32 @@ public final class Parser {
     }
 
     private Node parseSubshell() {
-        this.consume();
+        this.cursor.consume();
         final ListNode inner;
         inner = this.parseList(TokenType.RPAREN);
-        this.expect(TokenType.RPAREN);
+        this.cursor.expect(TokenType.RPAREN);
         return new Subshell(inner);
     }
 
     private Node parseGrouping() {
-        this.consume();
+        this.cursor.consume();
         final ListNode inner;
         inner = this.parseList(TokenType.RBRACE);
-        this.expect(TokenType.RBRACE);
+        this.cursor.expect(TokenType.RBRACE);
         return new Grouping(inner);
     }
 
     private Node parseWordStage(final Set<String> reserved) {
         final Node result;
-        if ("if".equals(this.current.text())) {
+        if ("if".equals(this.cursor.token().text())) {
             result = this.parseIfCommand();
-        } else if ("for".equals(this.current.text())) {
+        } else if ("for".equals(this.cursor.token().text())) {
             result = this.parseForCommand();
         } else if (this.isWhileWord()) {
             result = this.parseWhileCommand();
-        } else if ("case".equals(this.current.text())) {
+        } else if ("case".equals(this.cursor.token().text())) {
             result = this.parseCaseCommand();
-        } else if (reserved.contains(this.current.text())) {
+        } else if (reserved.contains(this.cursor.token().text())) {
             result = null;
         } else if (this.isFunctionStart()) {
             result = this.parseFunctionDefinition();
@@ -284,60 +144,61 @@ public final class Parser {
     }
 
     private boolean isWhileWord() {
-        return "while".equals(this.current.text()) || "until".equals(this.current.text());
+        return "while".equals(this.cursor.token().text())
+            || "until".equals(this.cursor.token().text());
     }
 
     private boolean isFunctionStart() {
-        return this.peekNext().type() == TokenType.LPAREN
-            && this.peekSecond().type() == TokenType.RPAREN;
+        return this.cursor.peekNext().type() == TokenType.LPAREN
+            && this.cursor.peekSecond().type() == TokenType.RPAREN;
     }
 
     private WhileNode parseWhileCommand() {
         final boolean until;
-        until = "until".equals(this.current.text());
-        this.consume();
+        until = "until".equals(this.cursor.token().text());
+        this.cursor.consume();
         final ListNode condition;
         condition = this.parseListUntilReserved("do");
-        if (this.check(TokenType.SEMI)) {
-            this.consume();
+        if (this.cursor.check(TokenType.SEMI)) {
+            this.cursor.consume();
         }
-        this.expectWord("do");
+        this.cursor.expectWord("do");
         final ListNode body;
         body = this.parseListUntilReserved("done");
-        this.expectWord("done");
+        this.cursor.expectWord("done");
         return new WhileNode(condition, body, until);
     }
 
     private ForNode parseForCommand() {
-        this.consume();
+        this.cursor.consume();
         final String name;
-        name = this.expect(TokenType.WORD).text();
+        name = this.cursor.expect(TokenType.WORD).text();
         final List<String> words;
-        if (this.check(TokenType.WORD) && "in".equals(this.current.text())) {
-            this.consume();
+        if (this.cursor.check(TokenType.WORD) && "in".equals(this.cursor.token().text())) {
+            this.cursor.consume();
             words = new ArrayList<>(0);
-            while (this.check(TokenType.WORD) && !this.isReservedWord("do")) {
-                words.add(this.current.text());
-                this.consume();
+            while (this.cursor.check(TokenType.WORD) && !this.cursor.isReservedWord("do")) {
+                words.add(this.cursor.token().text());
+                this.cursor.consume();
             }
         } else {
             words = null;
         }
-        if (this.check(TokenType.SEMI)) {
-            this.consume();
+        if (this.cursor.check(TokenType.SEMI)) {
+            this.cursor.consume();
         }
-        this.expectWord("do");
+        this.cursor.expectWord("do");
         final ListNode body;
         body = this.parseListUntilReserved("done");
-        this.expectWord("done");
+        this.cursor.expectWord("done");
         return new ForNode(name, words, body);
     }
 
     private FunctionNode parseFunctionDefinition() {
         final String name;
-        name = this.consume().text();
-        this.consume();
-        this.consume();
+        name = this.cursor.consume().text();
+        this.cursor.consume();
+        this.cursor.consume();
         final Node body;
         body = this.parseCompoundCommandBody();
         return new FunctionNode(name, body);
@@ -345,31 +206,31 @@ public final class Parser {
 
     private Node parseCompoundCommandBody() {
         final Node body;
-        if (this.check(TokenType.LPAREN)) {
-            this.consume();
+        if (this.cursor.check(TokenType.LPAREN)) {
+            this.cursor.consume();
             final ListNode inner;
             inner = this.parseList(TokenType.RPAREN);
-            this.expect(TokenType.RPAREN);
+            this.cursor.expect(TokenType.RPAREN);
             body = new Subshell(inner);
-        } else if (this.check(TokenType.LBRACE)) {
-            this.consume();
+        } else if (this.cursor.check(TokenType.LBRACE)) {
+            this.cursor.consume();
             final ListNode inner;
             inner = this.parseList(TokenType.RBRACE);
-            this.expect(TokenType.RBRACE);
+            this.cursor.expect(TokenType.RBRACE);
             body = new Grouping(inner);
-        } else if (this.isReservedWord("if")) {
+        } else if (this.cursor.isReservedWord("if")) {
             body = this.parseIfCommand();
-        } else if (this.isReservedWord("for")) {
+        } else if (this.cursor.isReservedWord("for")) {
             body = this.parseForCommand();
-        } else if (this.isReservedWord("while", "until")) {
+        } else if (this.cursor.isReservedWord("while", "until")) {
             body = this.parseWhileCommand();
-        } else if (this.isReservedWord("case")) {
+        } else if (this.cursor.isReservedWord("case")) {
             body = this.parseCaseCommand();
         } else {
             throw new ParseException(
                 String.format(
                     "Expected compound command after function definition at line %d column %d",
-                    this.current.line(), this.current.column()
+                    this.cursor.token().line(), this.cursor.token().column()
                 )
             );
         }
@@ -377,67 +238,67 @@ public final class Parser {
     }
 
     private CaseNode parseCaseCommand() {
-        this.consume();
+        this.cursor.consume();
         final String word;
-        word = this.expect(TokenType.WORD).text();
-        this.expectWord("in");
-        this.skipNewlines();
+        word = this.cursor.expect(TokenType.WORD).text();
+        this.cursor.expectWord("in");
+        this.cursor.skipNewlines();
         final List<CaseItem> items = new ArrayList<>(0);
-        while (!this.isReservedWord("esac")) {
-            if (this.check(TokenType.LPAREN)) {
-                this.consume();
+        while (!this.cursor.isReservedWord("esac")) {
+            if (this.cursor.check(TokenType.LPAREN)) {
+                this.cursor.consume();
             }
             final List<String> patterns = new ArrayList<>(0);
-            patterns.add(this.expect(TokenType.WORD).text());
-            while (this.check(TokenType.PIPE)) {
-                this.consume();
-                patterns.add(this.expect(TokenType.WORD).text());
+            patterns.add(this.cursor.expect(TokenType.WORD).text());
+            while (this.cursor.check(TokenType.PIPE)) {
+                this.cursor.consume();
+                patterns.add(this.cursor.expect(TokenType.WORD).text());
             }
-            this.expect(TokenType.RPAREN);
+            this.cursor.expect(TokenType.RPAREN);
             final ListNode body;
-            if (this.check(TokenType.DSEMI)) {
+            if (this.cursor.check(TokenType.DSEMI)) {
                 body = new ListNode();
             } else {
                 body = this.parseList(TokenType.DSEMI);
             }
-            this.expect(TokenType.DSEMI);
-            this.skipNewlines();
+            this.cursor.expect(TokenType.DSEMI);
+            this.cursor.skipNewlines();
             items.add(new CaseItem(patterns, body));
         }
-        this.expectWord("esac");
+        this.cursor.expectWord("esac");
         return new CaseNode(word, items);
     }
 
     private IfNode parseIfCommand() {
-        this.consume();
+        this.cursor.consume();
         final ListNode condition;
         condition = this.parseListUntilReserved("then");
-        this.expectWord("then");
+        this.cursor.expectWord("then");
         final ListNode consequent;
         consequent = this.parseListUntilReserved("else", "elif", "fi");
         ListNode alternate = null;
-        if (this.isReservedWord("else")) {
-            this.consume();
+        if (this.cursor.isReservedWord("else")) {
+            this.cursor.consume();
             alternate = this.parseListUntilReserved("fi");
-        } else if (this.isReservedWord("elif")) {
+        } else if (this.cursor.isReservedWord("elif")) {
             alternate = this.parseElifChain();
         }
-        this.expectWord("fi");
+        this.cursor.expectWord("fi");
         return new IfNode(condition, consequent, alternate);
     }
 
     private ListNode parseElifChain() {
-        this.consume();
+        this.cursor.consume();
         final ListNode cond;
         cond = this.parseListUntilReserved("then");
-        this.expectWord("then");
+        this.cursor.expectWord("then");
         final ListNode body;
         body = this.parseListUntilReserved("else", "elif", "fi");
         ListNode trailing = null;
-        if (this.isReservedWord("elif")) {
+        if (this.cursor.isReservedWord("elif")) {
             trailing = this.parseElifChain();
-        } else if (this.isReservedWord("else")) {
-            this.consume();
+        } else if (this.cursor.isReservedWord("else")) {
+            this.cursor.consume();
             trailing = this.parseListUntilReserved("fi");
         }
         final IfNode chain;
@@ -452,8 +313,8 @@ public final class Parser {
     private ListNode parseListUntilReserved(final String... reserved) {
         final ListNode list = new ListNode();
         final Set<String> words = new HashSet<>(Arrays.asList(reserved));
-        this.skipNewlines();
-        if (!this.isReservedWord(reserved)) {
+        this.cursor.skipNewlines();
+        if (!this.cursor.isReservedWord(reserved)) {
             boolean done = false;
             while (!done) {
                 done = this.parseReservedEntry(list, words, reserved);
@@ -469,35 +330,17 @@ public final class Parser {
         pipe = this.parsePipeline(words);
         list.addPipeline(pipe, ListNode.Separator.NONE);
         final boolean done;
-        if (this.isPipelineSeparator()) {
+        if (this.cursor.isPipelineSeparator()) {
             final ListNode.Separator sep;
-            sep = this.pipelineSeparator();
-            this.consume();
-            this.skipNewlines();
+            sep = this.cursor.separator();
+            this.cursor.consume();
+            this.cursor.skipNewlines();
             list.getSeparators().set(list.getPipelines().size() - 1, sep);
-            done = this.isReservedWord(reserved);
+            done = this.cursor.isReservedWord(reserved);
         } else {
             done = true;
         }
         return done;
-    }
-
-    private boolean isPipelineSeparator() {
-        return Parser.SEPARATORS.contains(this.current.type());
-    }
-
-    private ListNode.Separator pipelineSeparator() {
-        final ListNode.Separator sep;
-        if (this.check(TokenType.SEMI) || this.check(TokenType.NEWLINE)) {
-            sep = ListNode.Separator.SEMI;
-        } else if (this.check(TokenType.AMP)) {
-            sep = ListNode.Separator.AMP;
-        } else if (this.check(TokenType.AND_IF)) {
-            sep = ListNode.Separator.AND_IF;
-        } else {
-            sep = ListNode.Separator.OR_IF;
-        }
-        return sep;
     }
 
     private SimpleCommand parseSimpleCommand() {
@@ -512,8 +355,8 @@ public final class Parser {
     }
 
     private boolean startsSimpleCommand() {
-        return this.check(TokenType.WORD) || this.check(TokenType.ASSIGNMENT_WORD)
-            || this.isRedirectionStart() || this.check(TokenType.IO_NUMBER);
+        return this.cursor.check(TokenType.WORD) || this.cursor.check(TokenType.ASSIGNMENT_WORD)
+            || this.isRedirectionStart() || this.cursor.check(TokenType.IO_NUMBER);
     }
 
     private boolean isRedirectionStart() {
@@ -521,38 +364,38 @@ public final class Parser {
     }
 
     private boolean isInputRedirect() {
-        return this.check(TokenType.LESS) || this.check(TokenType.DLESS)
+        return this.cursor.check(TokenType.LESS) || this.cursor.check(TokenType.DLESS)
             || this.isInputExtended();
     }
 
     private boolean isInputExtended() {
-        return this.check(TokenType.DLESSDASH) || this.check(TokenType.LESSAND)
-            || this.check(TokenType.LESSGREATER);
+        return this.cursor.check(TokenType.DLESSDASH) || this.cursor.check(TokenType.LESSAND)
+            || this.cursor.check(TokenType.LESSGREATER);
     }
 
     private boolean isOutputRedirect() {
-        return this.check(TokenType.GREAT) || this.check(TokenType.CLOBBER)
+        return this.cursor.check(TokenType.GREAT) || this.cursor.check(TokenType.CLOBBER)
             || this.isOutputExtended();
     }
 
     private boolean isOutputExtended() {
-        return this.check(TokenType.DGREATER) || this.check(TokenType.GREATAND)
-            || this.check(TokenType.LESSGREATER);
+        return this.cursor.check(TokenType.DGREATER) || this.cursor.check(TokenType.GREATAND)
+            || this.cursor.check(TokenType.LESSGREATER);
     }
 
     private SimpleCommand startSimpleCommand() {
         final SimpleCommand cmd;
-        if (this.check(TokenType.ASSIGNMENT_WORD)) {
+        if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
             cmd = this.startWithAssignments();
-        } else if (this.check(TokenType.IO_NUMBER)) {
-            this.consume();
+        } else if (this.cursor.check(TokenType.IO_NUMBER)) {
+            this.cursor.consume();
             cmd = new SimpleCommand("");
         } else {
             final String name;
-            name = this.current.text();
+            name = this.cursor.token().text();
             final int line;
-            line = this.current.line();
-            this.consume();
+            line = this.cursor.token().line();
+            this.cursor.consume();
             cmd = new SimpleCommand(name);
             cmd.setLineNumber(line);
         }
@@ -561,16 +404,16 @@ public final class Parser {
 
     private SimpleCommand startWithAssignments() {
         SimpleCommand cmd = new SimpleCommand("");
-        while (this.check(TokenType.ASSIGNMENT_WORD)) {
-            cmd.addAssignment(this.current.text());
-            this.consume();
+        while (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
+            cmd.addAssignment(this.cursor.token().text());
+            this.cursor.consume();
         }
-        if (this.check(TokenType.WORD)) {
+        if (this.cursor.check(TokenType.WORD)) {
             final String name;
-            name = this.current.text();
+            name = this.cursor.token().text();
             final int line;
-            line = this.current.line();
-            this.consume();
+            line = this.cursor.token().line();
+            this.cursor.consume();
             final SimpleCommand named = new SimpleCommand(name);
             named.setLineNumber(line);
             named.getAssignments().addAll(cmd.getAssignments());
@@ -581,38 +424,38 @@ public final class Parser {
 
     private void continueSimpleCommand(final SimpleCommand cmd) {
         int fdnum = -1;
-        if (this.check(TokenType.IO_NUMBER)) {
-            fdnum = Integer.parseInt(this.current.text());
-            this.consume();
+        if (this.cursor.check(TokenType.IO_NUMBER)) {
+            fdnum = Integer.parseInt(this.cursor.token().text());
+            this.cursor.consume();
         }
         final boolean named = !cmd.getName().isEmpty();
         while (this.startsSimpleCommand()) {
-            if (this.check(TokenType.ASSIGNMENT_WORD)) {
+            if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
                 if (named) {
-                    cmd.addArgument(this.current.text());
+                    cmd.addArgument(this.cursor.token().text());
                 } else {
-                    cmd.addAssignment(this.current.text());
+                    cmd.addAssignment(this.cursor.token().text());
                 }
-                this.consume();
-            } else if (this.check(TokenType.IO_NUMBER)) {
-                fdnum = Integer.parseInt(this.current.text());
-                this.consume();
+                this.cursor.consume();
+            } else if (this.cursor.check(TokenType.IO_NUMBER)) {
+                fdnum = Integer.parseInt(this.cursor.token().text());
+                this.cursor.consume();
             } else if (this.isRedirectionStart()) {
                 this.consumeRedirection(cmd, fdnum);
                 fdnum = -1;
-            } else if (this.check(TokenType.WORD)) {
-                cmd.addArgument(this.current.text());
-                this.consume();
+            } else if (this.cursor.check(TokenType.WORD)) {
+                cmd.addArgument(this.cursor.token().text());
+                this.cursor.consume();
             }
         }
     }
 
     private void consumeRedirection(final SimpleCommand cmd, final int fdnum) {
-        if (this.check(TokenType.DLESS) || this.check(TokenType.DLESSDASH)) {
+        if (this.cursor.check(TokenType.DLESS) || this.cursor.check(TokenType.DLESSDASH)) {
             final boolean strip;
-            strip = this.current.type() == TokenType.DLESSDASH;
-            this.consume();
-            final String raw = this.expect(TokenType.WORD).text();
+            strip = this.cursor.token().type() == TokenType.DLESSDASH;
+            this.cursor.consume();
+            final String raw = this.cursor.expect(TokenType.WORD).text();
             final boolean quoted = isQuotedHereDocDelim(raw);
             final String delimiter;
             if (quoted) {
@@ -621,7 +464,7 @@ public final class Parser {
                 delimiter = raw;
             }
             final String content;
-            content = this.lexer.readHereDocContent(delimiter, strip);
+            content = this.cursor.hereDoc(delimiter, strip);
             final int desc;
             if (fdnum >= 0) {
                 desc = fdnum;
@@ -637,9 +480,9 @@ public final class Parser {
         } else {
             final RedirectionType type = this.redirectionTypeForCurrent();
             final int fallback = defaultFdFor(type);
-            this.consume();
+            this.cursor.consume();
             final String target;
-            target = this.expect(TokenType.WORD).text();
+            target = this.cursor.expect(TokenType.WORD).text();
             final int desc;
             if (fdnum >= 0) {
                 desc = fdnum;
@@ -652,17 +495,17 @@ public final class Parser {
 
     private RedirectionType redirectionTypeForCurrent() {
         final RedirectionType type;
-        if (this.check(TokenType.LESSAND)) {
+        if (this.cursor.check(TokenType.LESSAND)) {
             type = RedirectionType.DUP_INPUT;
-        } else if (this.check(TokenType.LESSGREATER)) {
+        } else if (this.cursor.check(TokenType.LESSGREATER)) {
             type = RedirectionType.READWRITE;
-        } else if (this.check(TokenType.LESS)) {
+        } else if (this.cursor.check(TokenType.LESS)) {
             type = RedirectionType.INPUT;
-        } else if (this.check(TokenType.GREATAND)) {
+        } else if (this.cursor.check(TokenType.GREATAND)) {
             type = RedirectionType.DUP_OUTPUT;
-        } else if (this.check(TokenType.GREAT)) {
+        } else if (this.cursor.check(TokenType.GREAT)) {
             type = RedirectionType.OUTPUT;
-        } else if (this.check(TokenType.CLOBBER)) {
+        } else if (this.cursor.check(TokenType.CLOBBER)) {
             type = RedirectionType.CLOBBER;
         } else {
             type = RedirectionType.APPEND;
