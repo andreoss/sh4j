@@ -24,13 +24,21 @@ public final class Parser {
     /** Token cursor. */
     private final Cursor cursor;
 
+    /** Redirection parser. */
+    private final Redirects redirects;
+
     /**
      * Creates a parser over the given lexer.
      *
      * @param lexer The token source
      */
     public Parser(final Lexer lexer) {
-        this.cursor = new Cursor(lexer);
+        this(new Cursor(lexer));
+    }
+
+    private Parser(final Cursor cursor) {
+        this.cursor = cursor;
+        this.redirects = new Redirects(cursor);
     }
 
     /**
@@ -356,31 +364,7 @@ public final class Parser {
 
     private boolean startsSimpleCommand() {
         return this.cursor.check(TokenType.WORD) || this.cursor.check(TokenType.ASSIGNMENT_WORD)
-            || this.isRedirectionStart() || this.cursor.check(TokenType.IO_NUMBER);
-    }
-
-    private boolean isRedirectionStart() {
-        return this.isInputRedirect() || this.isOutputRedirect();
-    }
-
-    private boolean isInputRedirect() {
-        return this.cursor.check(TokenType.LESS) || this.cursor.check(TokenType.DLESS)
-            || this.isInputExtended();
-    }
-
-    private boolean isInputExtended() {
-        return this.cursor.check(TokenType.DLESSDASH) || this.cursor.check(TokenType.LESSAND)
-            || this.cursor.check(TokenType.LESSGREATER);
-    }
-
-    private boolean isOutputRedirect() {
-        return this.cursor.check(TokenType.GREAT) || this.cursor.check(TokenType.CLOBBER)
-            || this.isOutputExtended();
-    }
-
-    private boolean isOutputExtended() {
-        return this.cursor.check(TokenType.DGREATER) || this.cursor.check(TokenType.GREATAND)
-            || this.cursor.check(TokenType.LESSGREATER);
+            || this.redirects.isRedirectionStart() || this.cursor.check(TokenType.IO_NUMBER);
     }
 
     private SimpleCommand startSimpleCommand() {
@@ -440,115 +424,13 @@ public final class Parser {
             } else if (this.cursor.check(TokenType.IO_NUMBER)) {
                 fdnum = Integer.parseInt(this.cursor.token().text());
                 this.cursor.consume();
-            } else if (this.isRedirectionStart()) {
-                this.consumeRedirection(cmd, fdnum);
+            } else if (this.redirects.isRedirectionStart()) {
+                this.redirects.consumeRedirection(cmd, fdnum);
                 fdnum = -1;
             } else if (this.cursor.check(TokenType.WORD)) {
                 cmd.addArgument(this.cursor.token().text());
                 this.cursor.consume();
             }
         }
-    }
-
-    private void consumeRedirection(final SimpleCommand cmd, final int fdnum) {
-        if (this.cursor.check(TokenType.DLESS) || this.cursor.check(TokenType.DLESSDASH)) {
-            final boolean strip;
-            strip = this.cursor.token().type() == TokenType.DLESSDASH;
-            this.cursor.consume();
-            final String raw = this.cursor.expect(TokenType.WORD).text();
-            final boolean quoted = isQuotedHereDocDelim(raw);
-            final String delimiter;
-            if (quoted) {
-                delimiter = stripDelimQuotes(raw);
-            } else {
-                delimiter = raw;
-            }
-            final String content;
-            content = this.cursor.hereDoc(delimiter, strip);
-            final int desc;
-            if (fdnum >= 0) {
-                desc = fdnum;
-            } else {
-                desc = 0;
-            }
-            cmd.addRedirection(
-                new Redirection(
-                    desc, RedirectionType.HERE_DOC,
-                    new Redirection.HereDoc(delimiter, content, quoted)
-                )
-            );
-        } else {
-            final RedirectionType type = this.redirectionTypeForCurrent();
-            final int fallback = defaultFdFor(type);
-            this.cursor.consume();
-            final String target;
-            target = this.cursor.expect(TokenType.WORD).text();
-            final int desc;
-            if (fdnum >= 0) {
-                desc = fdnum;
-            } else {
-                desc = fallback;
-            }
-            cmd.addRedirection(new Redirection(desc, type, target));
-        }
-    }
-
-    private RedirectionType redirectionTypeForCurrent() {
-        final RedirectionType type;
-        if (this.cursor.check(TokenType.LESSAND)) {
-            type = RedirectionType.DUP_INPUT;
-        } else if (this.cursor.check(TokenType.LESSGREATER)) {
-            type = RedirectionType.READWRITE;
-        } else if (this.cursor.check(TokenType.LESS)) {
-            type = RedirectionType.INPUT;
-        } else if (this.cursor.check(TokenType.GREATAND)) {
-            type = RedirectionType.DUP_OUTPUT;
-        } else if (this.cursor.check(TokenType.GREAT)) {
-            type = RedirectionType.OUTPUT;
-        } else if (this.cursor.check(TokenType.CLOBBER)) {
-            type = RedirectionType.CLOBBER;
-        } else {
-            type = RedirectionType.APPEND;
-        }
-        return type;
-    }
-
-    private static boolean isQuotedHereDocDelim(final String word) {
-        return word.length() >= 2
-            && (Parser.isQuoted(word, '\'') || Parser.isQuoted(word, '"')
-                || word.indexOf('\\') >= 0);
-    }
-
-    private static boolean isQuoted(final String word, final char quote) {
-        return word.charAt(0) == quote && word.charAt(word.length() - 1) == quote;
-    }
-
-    private static String stripDelimQuotes(final String word) {
-        final StringBuilder out = new StringBuilder(word.length());
-        boolean escaped = false;
-        for (int idx = 0; idx < word.length(); idx = idx + 1) {
-            final char chr = word.charAt(idx);
-            if (escaped) {
-                out.append(chr);
-                escaped = false;
-            } else if (chr == '\\') {
-                escaped = true;
-            } else if (chr != '\'' && chr != '"') {
-                out.append(chr);
-            }
-        }
-        return out.toString();
-    }
-
-    private static int defaultFdFor(final RedirectionType type) {
-        final int desc;
-        if (type == RedirectionType.DUP_INPUT
-            || type == RedirectionType.READWRITE
-            || type == RedirectionType.INPUT) {
-            desc = 0;
-        } else {
-            desc = 1;
-        }
-        return desc;
     }
 }
