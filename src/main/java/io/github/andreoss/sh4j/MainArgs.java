@@ -134,5 +134,4 @@ final class MainArgs {
         boolean inter, String script, List<String> params
     ) {
     }
-
 }
