@@ -190,7 +190,7 @@
                         <param>io.github.andreoss.sh4j.*</param>
                     </targetTests>
                     <excludedTestClasses>
-                        <param>io.github.andreoss.sh4j.IntegrationTest</param>
+                        <param>io.github.andreoss.sh4j.Integration*Test</param>
                         <param>io.github.andreoss.sh4j.PosixConformanceTest</param>
                     </excludedTestClasses>
                     <threads>4</threads>
