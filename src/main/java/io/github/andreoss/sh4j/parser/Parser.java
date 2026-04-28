@@ -6,10 +6,8 @@ package io.github.andreoss.sh4j.parser;
 
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.lexer.TokenType;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,6 +21,9 @@ public final class Parser {
 
     /** Token cursor. */
     private final Cursor cursor;
+
+    /** Compound command parser. */
+    private final Compounds compounds;
 
     /** Simple command parser. */
     private final Commands commands;
@@ -38,6 +39,7 @@ public final class Parser {
 
     private Parser(final Cursor cursor) {
         this.cursor = cursor;
+        this.compounds = new Compounds(this, cursor);
         this.commands = new Commands(cursor);
     }
 
@@ -52,7 +54,13 @@ public final class Parser {
         return this.parseList(TokenType.END_OF_FILE);
     }
 
-    private ListNode parseList(final TokenType... terminators) {
+    /**
+     * Parses a command list up to one of the given terminator tokens.
+     *
+     * @param terminators Token types that end the list
+     * @return The list
+     */
+    ListNode parseList(final TokenType... terminators) {
         final ListNode list = new ListNode();
         Pipeline pipeline = this.parsePipeline();
         list.addPipeline(pipeline, ListNode.Separator.NONE);
@@ -68,6 +76,25 @@ public final class Parser {
             } else {
                 pipeline = this.parsePipeline();
                 list.addPipeline(pipeline, ListNode.Separator.NONE);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Parses a command list up to one of the given reserved words.
+     *
+     * @param reserved Reserved words that end the list
+     * @return The list
+     */
+    ListNode parseListUntilReserved(final String... reserved) {
+        final ListNode list = new ListNode();
+        final Set<String> words = new HashSet<>(Arrays.asList(reserved));
+        this.cursor.skipNewlines();
+        if (!this.cursor.isReservedWord(reserved)) {
+            boolean done = false;
+            while (!done) {
+                done = this.parseReservedEntry(list, words, reserved);
             }
         }
         return list;
@@ -104,9 +131,9 @@ public final class Parser {
     private Node parsePipelineStage(final Set<String> reserved) {
         final Node result;
         if (this.cursor.check(TokenType.LPAREN)) {
-            result = this.parseSubshell();
+            result = this.compounds.parseSubshell();
         } else if (this.cursor.check(TokenType.LBRACE)) {
-            result = this.parseGrouping();
+            result = this.compounds.parseGrouping();
         } else if (this.cursor.check(TokenType.WORD)) {
             result = this.parseWordStage(reserved);
         } else {
@@ -115,36 +142,20 @@ public final class Parser {
         return result;
     }
 
-    private Node parseSubshell() {
-        this.cursor.consume();
-        final ListNode inner;
-        inner = this.parseList(TokenType.RPAREN);
-        this.cursor.expect(TokenType.RPAREN);
-        return new Subshell(inner);
-    }
-
-    private Node parseGrouping() {
-        this.cursor.consume();
-        final ListNode inner;
-        inner = this.parseList(TokenType.RBRACE);
-        this.cursor.expect(TokenType.RBRACE);
-        return new Grouping(inner);
-    }
-
     private Node parseWordStage(final Set<String> reserved) {
         final Node result;
         if ("if".equals(this.cursor.token().text())) {
-            result = this.parseIfCommand();
+            result = this.compounds.parseIfCommand();
         } else if ("for".equals(this.cursor.token().text())) {
-            result = this.parseForCommand();
+            result = this.compounds.parseForCommand();
         } else if (this.isWhileWord()) {
-            result = this.parseWhileCommand();
+            result = this.compounds.parseWhileCommand();
         } else if ("case".equals(this.cursor.token().text())) {
-            result = this.parseCaseCommand();
+            result = this.compounds.parseCaseCommand();
         } else if (reserved.contains(this.cursor.token().text())) {
             result = null;
         } else if (this.isFunctionStart()) {
-            result = this.parseFunctionDefinition();
+            result = this.compounds.parseFunctionDefinition();
         } else {
             result = this.commands.parseSimpleCommand();
         }
@@ -159,176 +170,6 @@ public final class Parser {
     private boolean isFunctionStart() {
         return this.cursor.peekNext().type() == TokenType.LPAREN
             && this.cursor.peekSecond().type() == TokenType.RPAREN;
-    }
-
-    private WhileNode parseWhileCommand() {
-        final boolean until;
-        until = "until".equals(this.cursor.token().text());
-        this.cursor.consume();
-        final ListNode condition;
-        condition = this.parseListUntilReserved("do");
-        if (this.cursor.check(TokenType.SEMI)) {
-            this.cursor.consume();
-        }
-        this.cursor.expectWord("do");
-        final ListNode body;
-        body = this.parseListUntilReserved("done");
-        this.cursor.expectWord("done");
-        return new WhileNode(condition, body, until);
-    }
-
-    private ForNode parseForCommand() {
-        this.cursor.consume();
-        final String name;
-        name = this.cursor.expect(TokenType.WORD).text();
-        final List<String> words;
-        if (this.cursor.check(TokenType.WORD) && "in".equals(this.cursor.token().text())) {
-            this.cursor.consume();
-            words = new ArrayList<>(0);
-            while (this.cursor.check(TokenType.WORD) && !this.cursor.isReservedWord("do")) {
-                words.add(this.cursor.token().text());
-                this.cursor.consume();
-            }
-        } else {
-            words = null;
-        }
-        if (this.cursor.check(TokenType.SEMI)) {
-            this.cursor.consume();
-        }
-        this.cursor.expectWord("do");
-        final ListNode body;
-        body = this.parseListUntilReserved("done");
-        this.cursor.expectWord("done");
-        return new ForNode(name, words, body);
-    }
-
-    private FunctionNode parseFunctionDefinition() {
-        final String name;
-        name = this.cursor.consume().text();
-        this.cursor.consume();
-        this.cursor.consume();
-        final Node body;
-        body = this.parseCompoundCommandBody();
-        return new FunctionNode(name, body);
-    }
-
-    private Node parseCompoundCommandBody() {
-        final Node body;
-        if (this.cursor.check(TokenType.LPAREN)) {
-            this.cursor.consume();
-            final ListNode inner;
-            inner = this.parseList(TokenType.RPAREN);
-            this.cursor.expect(TokenType.RPAREN);
-            body = new Subshell(inner);
-        } else if (this.cursor.check(TokenType.LBRACE)) {
-            this.cursor.consume();
-            final ListNode inner;
-            inner = this.parseList(TokenType.RBRACE);
-            this.cursor.expect(TokenType.RBRACE);
-            body = new Grouping(inner);
-        } else if (this.cursor.isReservedWord("if")) {
-            body = this.parseIfCommand();
-        } else if (this.cursor.isReservedWord("for")) {
-            body = this.parseForCommand();
-        } else if (this.cursor.isReservedWord("while", "until")) {
-            body = this.parseWhileCommand();
-        } else if (this.cursor.isReservedWord("case")) {
-            body = this.parseCaseCommand();
-        } else {
-            throw new ParseException(
-                String.format(
-                    "Expected compound command after function definition at line %d column %d",
-                    this.cursor.token().line(), this.cursor.token().column()
-                )
-            );
-        }
-        return body;
-    }
-
-    private CaseNode parseCaseCommand() {
-        this.cursor.consume();
-        final String word;
-        word = this.cursor.expect(TokenType.WORD).text();
-        this.cursor.expectWord("in");
-        this.cursor.skipNewlines();
-        final List<CaseItem> items = new ArrayList<>(0);
-        while (!this.cursor.isReservedWord("esac")) {
-            if (this.cursor.check(TokenType.LPAREN)) {
-                this.cursor.consume();
-            }
-            final List<String> patterns = new ArrayList<>(0);
-            patterns.add(this.cursor.expect(TokenType.WORD).text());
-            while (this.cursor.check(TokenType.PIPE)) {
-                this.cursor.consume();
-                patterns.add(this.cursor.expect(TokenType.WORD).text());
-            }
-            this.cursor.expect(TokenType.RPAREN);
-            final ListNode body;
-            if (this.cursor.check(TokenType.DSEMI)) {
-                body = new ListNode();
-            } else {
-                body = this.parseList(TokenType.DSEMI);
-            }
-            this.cursor.expect(TokenType.DSEMI);
-            this.cursor.skipNewlines();
-            items.add(new CaseItem(patterns, body));
-        }
-        this.cursor.expectWord("esac");
-        return new CaseNode(word, items);
-    }
-
-    private IfNode parseIfCommand() {
-        this.cursor.consume();
-        final ListNode condition;
-        condition = this.parseListUntilReserved("then");
-        this.cursor.expectWord("then");
-        final ListNode consequent;
-        consequent = this.parseListUntilReserved("else", "elif", "fi");
-        ListNode alternate = null;
-        if (this.cursor.isReservedWord("else")) {
-            this.cursor.consume();
-            alternate = this.parseListUntilReserved("fi");
-        } else if (this.cursor.isReservedWord("elif")) {
-            alternate = this.parseElifChain();
-        }
-        this.cursor.expectWord("fi");
-        return new IfNode(condition, consequent, alternate);
-    }
-
-    private ListNode parseElifChain() {
-        this.cursor.consume();
-        final ListNode cond;
-        cond = this.parseListUntilReserved("then");
-        this.cursor.expectWord("then");
-        final ListNode body;
-        body = this.parseListUntilReserved("else", "elif", "fi");
-        ListNode trailing = null;
-        if (this.cursor.isReservedWord("elif")) {
-            trailing = this.parseElifChain();
-        } else if (this.cursor.isReservedWord("else")) {
-            this.cursor.consume();
-            trailing = this.parseListUntilReserved("fi");
-        }
-        final IfNode chain;
-        chain = new IfNode(cond, body, trailing);
-        final Pipeline pipe = new Pipeline(false);
-        pipe.addCommand(chain);
-        final ListNode wrapper = new ListNode();
-        wrapper.addPipeline(pipe, ListNode.Separator.NONE);
-        return wrapper;
-    }
-
-    private ListNode parseListUntilReserved(final String... reserved) {
-        final ListNode list = new ListNode();
-        final Set<String> words = new HashSet<>(Arrays.asList(reserved));
-        this.cursor.skipNewlines();
-        if (!this.cursor.isReservedWord(reserved)) {
-            boolean done = false;
-            while (!done) {
-                done = this.parseReservedEntry(list, words, reserved);
-            }
-        }
-        return list;
     }
 
     private boolean parseReservedEntry(
