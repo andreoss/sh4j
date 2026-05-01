@@ -55,7 +55,7 @@ final class CoverageRegressionTest {
     @Test
     void getoptsIllegalOptionYieldsQuestionMark() {
         MatcherAssert.assertThat(
-            Sh4j.INSTANCE.out("set -- -z; getopts ab o; echo $o"),
+            Sh4j.INSTANCE.out("set -- -z; getopts ab o; echo \"$o\""),
             CoreMatchers.containsString("?")
         );
     }
