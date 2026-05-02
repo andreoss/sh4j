@@ -5,6 +5,7 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
+import io.github.andreoss.sh4j.lexer.QuoteState;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -41,21 +42,18 @@ public final class WordExpander {
         current = normaliseBackticks(current);
         final StringBuilder expanded = new StringBuilder();
         final ExpansionContext context = new ExpansionContext(env, ctx, expanded);
-        boolean insingle = false;
+        final QuoteState quotes = new QuoteState();
         int idx = 0;
         while (idx < current.length()) {
             final char chr = current.charAt(idx);
-            if (chr == '\'') {
-                insingle = !insingle;
-                expanded.append(chr);
-                idx = idx + 1;
-            } else if (insingle) {
+            if (Quotes.literal(quotes, chr)) {
                 expanded.append(chr);
                 idx = idx + 1;
             } else if (chr == '\\' && idx + 1 < current.length()) {
                 expanded.append(chr).append(current.charAt(idx + 1));
                 idx = idx + 2;
             } else {
+                context.quote(quotes.doubled());
                 idx = idx + VariableExpander.appendOneExpansion(current, idx, context);
             }
         }
@@ -82,24 +80,7 @@ public final class WordExpander {
      * @return The rewritten word
      */
     static String normaliseBackticks(final String arg) {
-        final StringBuilder result = new StringBuilder();
-        int idx = 0;
-        boolean single = false;
-        while (idx < arg.length()) {
-            final char chr = arg.charAt(idx);
-            if (chr == '\'') {
-                single = !single;
-                result.append(chr);
-                idx = idx + 1;
-            } else if (single) {
-                result.append(chr);
-                idx = idx + 1;
-            } else {
-                final int consumed = normaliseOne(arg, idx, result);
-                idx = idx + consumed;
-            }
-        }
-        return result.toString();
+        return new Backquotes(arg).normalised();
     }
 
     /**
@@ -230,109 +211,5 @@ public final class WordExpander {
         final BuiltinContext ctx
     ) {
         return BraceExpander.expandBracedImpl(inner, env, ctx);
-    }
-
-    private static int normaliseOne(
-        final String arg,
-        final int idx,
-        final StringBuilder result
-    ) {
-        final char chr = arg.charAt(idx);
-        int consumed = 1;
-        if (chr == '$' && idx + 1 < arg.length()) {
-            final char next = arg.charAt(idx + 1);
-            if (next == '(') {
-                consumed = copyBalanced(arg, idx + 2, '(', ')', result, arg, idx);
-            } else if (next == '{') {
-                consumed = copyBalanced(arg, idx + 2, '{', '}', result, arg, idx);
-            } else {
-                result.append(chr);
-            }
-        } else if (chr == '`') {
-            consumed = rewriteBacktick(arg, idx, result);
-        } else {
-            result.append(chr);
-        }
-        return consumed;
-    }
-
-    private static int copyBalanced(
-        final String arg,
-        final int innerstart,
-        final char open,
-        final char close,
-        final StringBuilder result,
-        final String full,
-        final int chunkstart
-    ) {
-        final int end = findBalancedClose(arg, innerstart, open, close, 1);
-        final int consumed;
-        if (end > 0) {
-            result.append(full, chunkstart, end);
-            consumed = end - chunkstart;
-        } else {
-            result.append(full.charAt(chunkstart));
-            consumed = 1;
-        }
-        return consumed;
-    }
-
-    private static int rewriteBacktick(
-        final String arg, final int idx, final StringBuilder result
-    ) {
-        int cur = idx + 1;
-        final StringBuilder content = new StringBuilder();
-        boolean found = false;
-        while (cur < arg.length()) {
-            final char chr = arg.charAt(cur);
-            if (chr == '\\' && cur + 1 < arg.length()) {
-                final char nextc = arg.charAt(cur + 1);
-                if (nextc == '`' || nextc == '$' || nextc == '\\') {
-                    content.append(nextc);
-                } else {
-                    content.append(chr).append(nextc);
-                }
-                cur = cur + 2;
-            } else if (chr == '`') {
-                result.append("$(").append(content).append(')');
-                cur = cur + 1;
-                found = true;
-                break;
-            } else {
-                content.append(chr);
-                cur = cur + 1;
-            }
-        }
-        if (!found) {
-            result.append('`').append(content);
-        }
-        return cur - idx;
-    }
-
-    private static int findBalancedClose(
-        final String arg,
-        final int start,
-        final char open,
-        final char close,
-        final int initial
-    ) {
-        int depth = initial;
-        int idx = start;
-        while (idx < arg.length() && depth > 0) {
-            final char chr = arg.charAt(idx);
-            if (chr == open) {
-                depth = depth + 1;
-            } else if (chr == close) {
-                depth = depth - 1;
-            }
-            idx = idx + 1;
-        }
-        final int result;
-        if (depth == 0) {
-            result = idx;
-        } else {
-            result = -1;
-        }
-        return result;
     }
 }

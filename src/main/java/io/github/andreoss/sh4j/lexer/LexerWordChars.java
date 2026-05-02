@@ -64,69 +64,41 @@ final class LexerWordChars {
      *
      * @param reader Input cursor
      * @param buf Accumulator
+     * @param quoted Whether the expansion sits inside double quotes
      */
     static void consumeDollar(
-        final CharReader reader, final StringBuilder buf
+        final CharReader reader, final StringBuilder buf, final boolean quoted
     ) {
         reader.consume();
         buf.append('$');
         if (!reader.isEof() && reader.peek() == '(') {
-            LexerWordChars.consumeBalancedParens(reader, buf);
+            LexerWordChars.consumeBalanced(reader, buf, new Closer(')', quoted));
         } else if (!reader.isEof() && reader.peek() == '{') {
-            LexerWordChars.consumeBalancedBraces(reader, buf);
+            LexerWordChars.consumeBalanced(reader, buf, new Closer('}', quoted));
         }
     }
 
     /**
-     * Handles a {@code $(...)} or {@code $((...))} expansion.
+     * Handles a {@code $(...)}, {@code $((...))} or {@code ${...}}
+     * expansion: reads up to the closing character that is not quoted
+     * or nested.
      *
-     * @param reader Input cursor
+     * @param reader Input cursor, at the opening character
      * @param buf Accumulator
+     * @param closer The closing character and quoting context
      */
-    static void consumeBalancedParens(
-        final CharReader reader, final StringBuilder buf
+    static void consumeBalanced(
+        final CharReader reader, final StringBuilder buf, final Closer closer
     ) {
-        reader.consume();
-        buf.append('(');
-        final boolean arith = !reader.isEof() && reader.peek() == '(';
-        int depth = 1;
-        if (arith) {
-            reader.consume();
-            buf.append('(');
-            depth = 2;
-        }
-        while (!reader.isEof() && depth > 0) {
+        buf.append((char) reader.consume());
+        final StringBuilder body = new StringBuilder();
+        boolean done = false;
+        while (!done && !reader.isEof()) {
             final int next = reader.consume();
-            buf.append((char) next);
-            if (next == '(') {
-                depth = depth + 1;
-            } else if (next == ')') {
-                depth = depth - 1;
-            }
+            body.append((char) next);
+            done = closer.closes(body, next);
         }
-    }
-
-    /**
-     * Handles a {@code ${...}} expansion.
-     *
-     * @param reader Input cursor
-     * @param buf Accumulator
-     */
-    static void consumeBalancedBraces(
-        final CharReader reader, final StringBuilder buf
-    ) {
-        reader.consume();
-        buf.append('{');
-        int depth = 1;
-        while (!reader.isEof() && depth > 0) {
-            final int next = reader.consume();
-            buf.append((char) next);
-            if (next == '{') {
-                depth = depth + 1;
-            } else if (next == '}') {
-                depth = depth - 1;
-            }
-        }
+        buf.append(body);
     }
 
     /**

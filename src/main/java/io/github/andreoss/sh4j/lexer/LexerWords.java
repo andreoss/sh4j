@@ -75,6 +75,10 @@ final class LexerWords {
             reader.consume();
             buf.append('"');
             quotes.leaveDouble();
+        } else if (chr == '$') {
+            LexerWordChars.consumeDollar(reader, buf, true);
+        } else if (chr == '`') {
+            LexerWordChars.consumeBackticks(reader, buf);
         } else {
             LexerWordChars.consumeDoubleQuoted(reader, buf, chr);
         }
@@ -100,7 +104,7 @@ final class LexerWords {
             quotes.enterDouble();
             done = false;
         } else if (chr == '$') {
-            LexerWordChars.consumeDollar(reader, buf);
+            LexerWordChars.consumeDollar(reader, buf, false);
             done = false;
         } else if (chr == '`') {
             LexerWordChars.consumeBackticks(reader, buf);

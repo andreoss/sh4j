@@ -22,31 +22,39 @@ final class BraceExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
+        return BraceExpander.expandBracedImpl(
+            inner, new ExpansionContext(env, ctx, new StringBuilder())
+        );
+    }
+
+    static String expandBracedImpl(
+        final String inner,
+        final ExpansionContext context
+    ) {
         final String result;
         if (inner.isEmpty()) {
             result = null;
         } else if (inner.charAt(0) == '#') {
-            result = BraceExpander.expandLengthOp(inner, env, ctx);
+            result = BraceExpander.expandLengthOp(inner, context);
         } else {
-            result = BraceExpander.expandNamed(inner, env, ctx);
+            result = BraceExpander.expandNamed(inner, context);
         }
         return result;
     }
 
     static String expandLengthOp(
         final String inner,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (inner.length() == 1) {
-            result = ctx.getSpecialParam('#');
+            result = context.ctx().getSpecialParam('#');
         } else {
             final String name = inner.substring(1);
             if ("*".equals(name) || "@".equals(name)) {
-                result = String.valueOf(ctx.positionalParamsList().size() - 1);
+                result = String.valueOf(context.ctx().positionalParamsList().size() - 1);
             } else {
-                result = BraceExpander.lengthOfVariable(name, env, ctx);
+                result = BraceExpander.lengthOfVariable(name, context);
             }
         }
         return result;
@@ -54,10 +62,9 @@ final class BraceExpander {
 
     private static String lengthOfVariable(
         final String name,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
-        final String val = ctx.lookupVariable(name, env);
+        final String val = context.ctx().lookupVariable(name, context.env());
         final String result;
         if (val == null) {
             result = "0";
@@ -69,8 +76,7 @@ final class BraceExpander {
 
     private static String expandNamed(
         final String inner,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final int nameend = BraceExpander.findNameEnd(inner);
         final String result;
@@ -80,7 +86,7 @@ final class BraceExpander {
             final String varname = inner.substring(0, nameend);
             result = BraceExpander.applyOps(
                 inner.substring(nameend),
-                ctx.lookupVariable(varname, env), varname, env, ctx
+                context.ctx().lookupVariable(varname, context.env()), varname, context
             );
         }
         return result;
@@ -90,15 +96,14 @@ final class BraceExpander {
         final String rest,
         final String varvalue,
         final String varname,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (rest.isEmpty()) {
             result = BraceExpander.orEmpty(varvalue);
         } else {
             result = BraceExpander.applyNonEmptyOps(
-                rest, varvalue, varname, env, ctx
+                rest, varvalue, varname, context
             );
         }
         return result;
@@ -108,15 +113,14 @@ final class BraceExpander {
         final String rest,
         final String varvalue,
         final String varname,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         final String defaulted = BraceExpander.applyDefaultOps(
-            rest, varvalue, varname, env, ctx
+            rest, varvalue, varname, context
         );
         final String erred = BraceExpander.applyErrorOps(
-            rest, varvalue, varname, ctx
+            rest, varvalue, varname, context.ctx()
         );
         if (defaulted != null) {
             result = defaulted;
@@ -191,33 +195,32 @@ final class BraceExpander {
         final String rest,
         final String varvalue,
         final String varname,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (rest.startsWith(":-")) {
             result = BraceExpander.defaultOnEmpty(
-                varvalue, rest.substring(2), env, ctx
+                varvalue, rest.substring(2), context
             );
         } else if (rest.startsWith("-")) {
             result = BraceExpander.defaultOnNull(
-                varvalue, rest.substring(1), env, ctx
+                varvalue, rest.substring(1), context
             );
         } else if (rest.startsWith(":=")) {
             result = BraceExpander.assignOnEmpty(
-                varvalue, varname, rest.substring(2), env, ctx
+                varvalue, varname, rest.substring(2), context
             );
         } else if (rest.startsWith("=")) {
             result = BraceExpander.assignOnNull(
-                varvalue, varname, rest.substring(1), env, ctx
+                varvalue, varname, rest.substring(1), context
             );
         } else if (rest.startsWith(":+")) {
             result = BraceExpander.altOnNonEmpty(
-                varvalue, rest.substring(2), env, ctx
+                varvalue, rest.substring(2), context
             );
         } else if (rest.startsWith("+")) {
             result = BraceExpander.altOnNonNull(
-                varvalue, rest.substring(1), env, ctx
+                varvalue, rest.substring(1), context
             );
         } else {
             result = null;
@@ -275,12 +278,11 @@ final class BraceExpander {
     private static String defaultOnEmpty(
         final String varvalue,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null || varvalue.isEmpty()) {
-            result = ctx.expandVariables(word, env);
+            result = BraceExpander.word(word, context);
         } else {
             result = varvalue;
         }
@@ -290,12 +292,11 @@ final class BraceExpander {
     private static String defaultOnNull(
         final String varvalue,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null) {
-            result = ctx.expandVariables(word, env);
+            result = BraceExpander.word(word, context);
         } else {
             result = varvalue;
         }
@@ -306,12 +307,11 @@ final class BraceExpander {
         final String varvalue,
         final String varname,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null || varvalue.isEmpty()) {
-            result = BraceExpander.assign(varname, word, env, ctx);
+            result = BraceExpander.assign(varname, word, context);
         } else {
             result = varvalue;
         }
@@ -322,12 +322,11 @@ final class BraceExpander {
         final String varvalue,
         final String varname,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null) {
-            result = BraceExpander.assign(varname, word, env, ctx);
+            result = BraceExpander.assign(varname, word, context);
         } else {
             result = varvalue;
         }
@@ -337,13 +336,12 @@ final class BraceExpander {
     private static String assign(
         final String varname,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
-        final String expanded = ctx.expandVariables(word, env);
+        final String expanded = BraceExpander.word(word, context);
         if (BraceExpander.isAssignableName(varname)) {
-            env.put(varname, expanded);
-            ctx.environmentMap().put(varname, expanded);
+            context.env().put(varname, expanded);
+            context.ctx().environmentMap().put(varname, expanded);
         }
         return expanded;
     }
@@ -351,14 +349,13 @@ final class BraceExpander {
     private static String altOnNonEmpty(
         final String varvalue,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null || varvalue.isEmpty()) {
             result = "";
         } else {
-            result = ctx.expandVariables(word, env);
+            result = BraceExpander.word(word, context);
         }
         return result;
     }
@@ -366,14 +363,13 @@ final class BraceExpander {
     private static String altOnNonNull(
         final String varvalue,
         final String word,
-        final Map<String, String> env,
-        final BuiltinContext ctx
+        final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null) {
             result = "";
         } else {
-            result = ctx.expandVariables(word, env);
+            result = BraceExpander.word(word, context);
         }
         return result;
     }
@@ -493,6 +489,18 @@ final class BraceExpander {
             result = varvalue.substring(0, varvalue.length() - match);
         }
         return result;
+    }
+
+    private static String word(final String word, final ExpansionContext context) {
+        final String text;
+        if (context.quoted()) {
+            text = String.join("", "\"", word, "\"");
+        } else {
+            text = word;
+        }
+        return QuoteRemover.removeQuotes(
+            context.ctx().expandVariables(text, context.env())
+        );
     }
 
     private static boolean isAssignableName(final String varname) {

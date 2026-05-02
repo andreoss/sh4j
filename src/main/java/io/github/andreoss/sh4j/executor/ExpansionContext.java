@@ -24,6 +24,9 @@ final class ExpansionContext {
     /** Accumulator for expanded output. */
     private final StringBuilder expanded;
 
+    /** Whether the current expansion sits inside double quotes. */
+    private boolean dquote;
+
     /**
      * Creates an expansion context.
      *
@@ -39,6 +42,7 @@ final class ExpansionContext {
         this.env = env;
         this.ctx = ctx;
         this.expanded = expanded;
+        this.dquote = false;
     }
 
     /**
@@ -66,5 +70,23 @@ final class ExpansionContext {
      */
     StringBuilder expanded() {
         return this.expanded;
+    }
+
+    /**
+     * Tells whether the current expansion sits inside double quotes.
+     *
+     * @return True inside double quotes
+     */
+    boolean quoted() {
+        return this.dquote;
+    }
+
+    /**
+     * Records whether the current expansion sits inside double quotes.
+     *
+     * @param inside True inside double quotes
+     */
+    void quote(final boolean inside) {
+        this.dquote = inside;
     }
 }

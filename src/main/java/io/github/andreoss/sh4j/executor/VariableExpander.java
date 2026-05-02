@@ -4,6 +4,8 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.lexer.Nesting;
+
 /**
  * Handles variable and command substitution expansion.
  *
@@ -29,7 +31,7 @@ final class VariableExpander {
             final String special = context.ctx().getSpecialParam(next);
             if (special != null) {
                 context.expanded().append(
-                    WordExpander.escapeForQuoteRemoval(special)
+                    VariableExpander.escape(context, special)
                 );
                 consumed = 2;
             } else if (next == '(') {
@@ -66,7 +68,7 @@ final class VariableExpander {
         } else {
             safe = value;
         }
-        context.expanded().append(WordExpander.escapeForQuoteRemoval(safe));
+        context.expanded().append(VariableExpander.escape(context, safe));
         return end - idx;
     }
 
@@ -77,10 +79,11 @@ final class VariableExpander {
     ) {
         final int consumed;
         if (idx + 2 < arg.length() && arg.charAt(idx + 2) == '(') {
-            final int end = VariableExpander.findBalancedClose(arg, idx + 3, '(', ')', 2);
+            final int end = new Nesting(arg).paren(idx + 2);
             if (end > 0) {
                 context.expanded().append(
-                    WordExpander.escapeForQuoteRemoval(
+                    VariableExpander.escape(
+                        context,
                         context.ctx().evalArithmetic(
                             QuoteRemover.removeQuotes(
                                 WordExpander.expandVariablesImpl(
@@ -98,10 +101,11 @@ final class VariableExpander {
                 consumed = 1;
             }
         } else {
-            final int end = VariableExpander.findBalancedClose(arg, idx + 2, '(', ')', 1);
+            final int end = new Nesting(arg).paren(idx + 2);
             if (end > 0) {
                 context.expanded().append(
-                    WordExpander.escapeForQuoteRemoval(
+                    VariableExpander.escape(
+                        context,
                         context.ctx().executeCommandSubstitution(
                             arg.substring(idx + 2, end - 1)
                         )
@@ -122,17 +126,17 @@ final class VariableExpander {
         final ExpansionContext context
     ) {
         final int consumed;
-        final int close = VariableExpander.findMatchingBrace(arg, idx + 2);
+        final int close = new Nesting(arg).brace(idx + 2, context.quoted()) - 1;
         if (close > idx + 2) {
             final String replacement = BraceExpander.expandBracedImpl(
-                arg.substring(idx + 2, close), context.env(), context.ctx()
+                arg.substring(idx + 2, close), context
             );
             if (replacement == null) {
                 context.expanded().append(arg.charAt(idx));
                 consumed = 1;
             } else {
                 context.expanded().append(
-                    WordExpander.escapeForQuoteRemoval(replacement)
+                    VariableExpander.escape(context, replacement)
                 );
                 consumed = close - idx + 1;
             }
@@ -143,49 +147,12 @@ final class VariableExpander {
         return consumed;
     }
 
-    private static int findMatchingBrace(final String arg, final int start) {
-        int depth = 1;
-        int pos = start;
-        int found = -1;
-        while (pos < arg.length()) {
-            final char chr = arg.charAt(pos);
-            if (chr == '{') {
-                depth = depth + 1;
-            } else if (chr == '}') {
-                depth = depth - 1;
-                if (depth == 0) {
-                    found = pos;
-                    pos = arg.length();
-                }
-            }
-            pos = pos + 1;
-        }
-        return found;
-    }
-
-    private static int findBalancedClose(
-        final String arg,
-        final int start,
-        final char open,
-        final char close,
-        final int initial
-    ) {
-        int depth = initial;
-        int idx = start;
-        while (idx < arg.length() && depth > 0) {
-            final char chr = arg.charAt(idx);
-            if (chr == open) {
-                depth = depth + 1;
-            } else if (chr == close) {
-                depth = depth - 1;
-            }
-            idx = idx + 1;
-        }
-        final int result;
-        if (depth == 0) {
-            result = idx;
+    private static String escape(final ExpansionContext context, final String value) {
+        final String result;
+        if (context.quoted()) {
+            result = value.replace("\\", "\\\\").replace("\"", "\\\"");
         } else {
-            result = -1;
+            result = WordExpander.escapeForQuoteRemoval(value);
         }
         return result;
     }
