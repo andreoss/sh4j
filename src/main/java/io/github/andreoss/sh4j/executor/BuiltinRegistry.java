@@ -38,9 +38,9 @@ final class BuiltinRegistry {
     }
 
     private static void addControl(final Map<String, Builtin> registry) {
-        registry.put("true", (self, call) -> 0);
-        registry.put("false", (self, call) -> 1);
-        registry.put(":", (self, call) -> 0);
+        registry.put("true", (self, call) -> BuiltinRegistry.expanded(self, call, 0));
+        registry.put("false", (self, call) -> BuiltinRegistry.expanded(self, call, 1));
+        registry.put(":", (self, call) -> BuiltinRegistry.expanded(self, call, 0));
         registry.put(
             "break",
             (self, call) -> {
@@ -285,6 +285,15 @@ final class BuiltinRegistry {
             "fc",
             HistoryBuiltins::doFc
         );
+    }
+
+    private static int expanded(
+        final BuiltinContext self, final Invocation call, final int code
+    ) {
+        for (final String arg : call.arguments()) {
+            self.expandArguments(arg, call.env());
+        }
+        return code;
     }
 
     private static int parseLoopLevels(final List<String> args) {

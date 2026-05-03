@@ -217,7 +217,9 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String evalArithmetic(final String expr, final Map<String, String> env) {
-        return this.arith.evalArithmetic(expr, env);
+        return this.arith.evaluate(
+            expr, new ArithmeticScope(env, this.environmentMap())
+        );
     }
 
     @Override

@@ -20,8 +20,11 @@ import java.util.Map;
  */
 public final class ArithmeticEvaluator {
 
-    /** Environment view used by identifier lookup; nullable. */
-    private Map<String, String> arenv;
+    /** Variables used by identifier lookup and assignment. */
+    private ArithmeticScope scope;
+
+    /** Current nesting of variable value evaluation. */
+    private int depth;
 
     /** When true, assignments and variable mutations are suppressed. */
     private boolean mute;
@@ -41,15 +44,26 @@ public final class ArithmeticEvaluator {
      * @return The integer result formatted as a decimal string
      */
     public String evalArithmetic(final String expr, final Map<String, String> env) {
-        final Map<String, String> prev = this.arenv;
-        this.arenv = env;
+        return this.evaluate(expr, new ArithmeticScope(env));
+    }
+
+    /**
+     * Evaluates an arithmetic expression against a variable scope.
+     *
+     * @param expr The expression body (already stripped of {@code $((...))})
+     * @param vars Variables for identifier lookup and assignment
+     * @return The integer result formatted as a decimal string
+     */
+    String evaluate(final String expr, final ArithmeticScope vars) {
+        final ArithmeticScope prev = this.scope;
+        this.scope = vars;
         final String result;
         try {
             result = String.valueOf(
                 this.parseArithmetic(new ArithmeticCursor(expr.trim()))
             );
         } finally {
-            this.arenv = prev;
+            this.scope = prev;
         }
         return result;
     }
@@ -73,8 +87,8 @@ public final class ArithmeticEvaluator {
                 match.oper(), this.readEnvInt(match.name()),
                 this.parseAssignment(cursor)
             );
-            if (!this.mute && this.arenv != null) {
-                this.arenv.put(match.name(), String.valueOf(value));
+            if (!this.mute) {
+                this.scope.assign(match.name(), value);
             }
             result = value;
         }
@@ -254,15 +268,27 @@ public final class ArithmeticEvaluator {
     }
 
     private int readEnvInt(final String name) {
-        int cur = 0;
-        if (this.arenv != null) {
+        final String value = this.scope.value(name).trim();
+        int result;
+        try {
+            result = Integer.parseInt(value);
+        } catch (final NumberFormatException ignored) {
+            result = this.nested(value);
+        }
+        return result;
+    }
+
+    private int nested(final String value) {
+        int result = 0;
+        if (!value.isEmpty() && this.depth < 64) {
+            this.depth = this.depth + 1;
             try {
-                cur = Integer.parseInt(this.arenv.getOrDefault(name, "0").trim());
-            } catch (final NumberFormatException ignored) {
-                cur = 0;
+                result = this.parseArithmetic(new ArithmeticCursor(value));
+            } finally {
+                this.depth = this.depth - 1;
             }
         }
-        return cur;
+        return result;
     }
 
     private int parseTernary(final ArithmeticCursor cursor) {
@@ -552,19 +578,7 @@ public final class ArithmeticEvaluator {
         final int end = ArithmeticEvaluator.identifierEnd(cursor);
         final String name = cursor.text().substring(cursor.pos(), end);
         cursor.pos(end);
-        final String value;
-        if (this.arenv == null) {
-            value = "0";
-        } else {
-            value = this.arenv.getOrDefault(name, "0");
-        }
-        int result;
-        try {
-            result = Integer.parseInt(value.trim());
-        } catch (final NumberFormatException ignored) {
-            result = 0;
-        }
-        return result;
+        return this.readEnvInt(name);
     }
 
     private static int readNumber(final ArithmeticCursor cursor) {
