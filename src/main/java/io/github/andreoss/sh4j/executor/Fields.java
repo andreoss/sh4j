@@ -54,13 +54,11 @@ final class Fields {
      */
     List<String> split(final String arg, final Map<String, String> env) {
         final List<String> fields = new ArrayList<>(0);
-        if ("\"$@\"".equals(arg) || "\"${@}\"".equals(arg)) {
+        if (arg != null) {
             final List<String> params = this.shell.positionalParamsList();
-            if (params.size() > 1) {
-                fields.addAll(params.subList(1, params.size()));
+            for (final String word : new AtSign(arg).words(params.subList(1, params.size()))) {
+                fields.addAll(this.expanded(word, env));
             }
-        } else if (arg != null) {
-            fields.addAll(this.expanded(arg, env));
         }
         return fields;
     }

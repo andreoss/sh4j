@@ -289,12 +289,12 @@ final class ExecutorRemoveQuotesTest {
 
     @Test
     void splitFieldsOnlyColons() {
-        Assertions.assertEquals(Arrays.asList("", ""), WordExpander.splitFields(":", ":"));
+        Assertions.assertEquals(Collections.singletonList(""), WordExpander.splitFields(":", ":"));
     }
 
     @Test
     void splitFieldsDoubleColon() {
-        Assertions.assertEquals(Arrays.asList("", "", ""), WordExpander.splitFields("::", ":"));
+        Assertions.assertEquals(Arrays.asList("", ""), WordExpander.splitFields("::", ":"));
     }
 
     @Test
@@ -332,14 +332,17 @@ final class ExecutorRemoveQuotesTest {
     @Test
     void splitFieldsMixedWsNws() {
         Assertions.assertEquals(
-            Arrays.asList("a", "", "b"),
+            Arrays.asList("a", "b"),
             WordExpander.splitFields("a :b", " :")
         );
     }
 
     @Test
     void splitFieldsTrailingColon() {
-        Assertions.assertEquals(Arrays.asList("a", ""), WordExpander.splitFields("a:", ":"));
+        Assertions.assertEquals(
+            Collections.singletonList("a"),
+            WordExpander.splitFields("a:", ":")
+        );
     }
 
     @Test
