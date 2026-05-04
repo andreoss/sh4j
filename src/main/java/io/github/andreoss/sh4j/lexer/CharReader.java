@@ -32,6 +32,9 @@ public final class CharReader {
     /** Zero-based column number of the cached character. */
     private int column;
 
+    /** Number of characters consumed. */
+    private int offset;
+
     /**
      * Reads from the given string.
      *
@@ -78,6 +81,9 @@ public final class CharReader {
         } else if (cur != -1) {
             this.column = this.column + 1;
         }
+        if (cur != -1) {
+            this.offset = this.offset + 1;
+        }
         this.read();
         return cur;
     }
@@ -107,6 +113,15 @@ public final class CharReader {
      */
     public int getColumn() {
         return this.column;
+    }
+
+    /**
+     * Returns the number of characters consumed so far.
+     *
+     * @return Characters consumed
+     */
+    int offset() {
+        return this.offset;
     }
 
     private void read() {

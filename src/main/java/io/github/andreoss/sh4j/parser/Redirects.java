@@ -4,6 +4,8 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import io.github.andreoss.sh4j.lexer.Delimiter;
+import io.github.andreoss.sh4j.lexer.HereBody;
 import io.github.andreoss.sh4j.lexer.TokenType;
 
 /**
@@ -42,14 +44,11 @@ final class Redirects {
      */
     void consumeRedirection(final SimpleCommand cmd, final int fdnum) {
         if (this.cursor.check(TokenType.DLESS) || this.cursor.check(TokenType.DLESSDASH)) {
-            final boolean strip;
-            strip = this.cursor.token().type() == TokenType.DLESSDASH;
             this.cursor.consume();
             final Delimiter raw = new Delimiter(this.cursor.expect(TokenType.WORD).text());
             final boolean quoted = raw.quoted();
             final String delimiter = raw.text();
-            final String content;
-            content = this.cursor.hereDoc(delimiter, strip);
+            final HereBody content = this.cursor.hereDoc();
             final int desc;
             if (fdnum >= 0) {
                 desc = fdnum;
@@ -59,7 +58,7 @@ final class Redirects {
             cmd.addRedirection(
                 new Redirection(
                     desc, RedirectionType.HERE_DOC,
-                    new Redirection.HereDoc(delimiter, content, quoted)
+                    new Redirection.HereDoc(delimiter, content::text, quoted)
                 )
             );
         } else {

@@ -17,13 +17,31 @@ public final class Lexer {
     /** Lookahead cursor over the input. */
     private final CharReader reader;
 
+    /** Here-documents of the current line. */
+    private final HereDocs docs;
+
+    /** Type of the token emitted last. */
+    private TokenType previous;
+
     /**
      * Creates a lexer over the given character source.
      *
      * @param reader The input cursor
      */
     public Lexer(final CharReader reader) {
+        this(reader, new HereDocs());
+    }
+
+    /**
+     * Creates a lexer that records here-documents in the given registry.
+     *
+     * @param reader The input cursor
+     * @param docs Here-documents of the current line
+     */
+    Lexer(final CharReader reader, final HereDocs docs) {
         this.reader = reader;
+        this.docs = docs;
+        this.previous = TokenType.NEWLINE;
     }
 
     /**
@@ -40,6 +58,7 @@ public final class Lexer {
         } else if (this.reader.peek() == '\n') {
             this.reader.consume();
             result = Token.ofReader(TokenType.NEWLINE, String.format("%n"), this.reader);
+            this.docs.flush(this.reader);
         } else {
             final Token operator = LexerOperators.tryOperator(this.reader);
             if (operator == null) {
@@ -48,54 +67,19 @@ public final class Lexer {
                 result = operator;
             }
         }
+        this.docs.watch(this.previous, result);
+        this.previous = result.type();
         return result;
     }
 
     /**
-     * Reads the body of a here-document up to (but not including) the
-     * closing delimiter line. POSIX 2.7.4: each line ends with a newline,
-     * including the last line before the delimiter.
+     * Hands out the body of the next here-document, in the order of
+     * the operators; it is filled once the line holding them ends.
      *
-     * @param delimiter The heredoc delimiter
-     * @param strip True for {@code <<-} (strip leading tabs on each line)
-     * @return The heredoc content with trailing newline per POSIX
+     * @return The body
      */
-    public String readHereDocContent(final String delimiter, final boolean strip) {
-        final StringBuilder content = new StringBuilder();
-        if (this.reader.peek() == '\n') {
-            this.reader.consume();
-        }
-        boolean done = false;
-        while (!done && !this.reader.isEof()) {
-            final String text = this.readHereDocLine(strip);
-            if (!this.reader.isEof()) {
-                this.reader.consume();
-            }
-            if (text.equals(delimiter)) {
-                done = true;
-            } else {
-                content.append(text).append('\n');
-            }
-        }
-        return content.toString();
-    }
-
-    private String readHereDocLine(final boolean strip) {
-        final StringBuilder line = new StringBuilder();
-        boolean stripping = strip;
-        boolean exit = false;
-        while (!exit && !this.reader.isEof()) {
-            final int chr = this.reader.peek();
-            if (chr == '\n') {
-                exit = true;
-            } else if (stripping && chr == '\t') {
-                this.reader.consume();
-            } else {
-                stripping = false;
-                line.append((char) this.reader.consume());
-            }
-        }
-        return line.toString();
+    public HereBody hereDoc() {
+        return this.docs.next();
     }
 
     private void skipComment() {

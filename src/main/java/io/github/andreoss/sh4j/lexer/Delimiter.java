@@ -2,14 +2,14 @@
  * SPDX-FileCopyrightText: Copyright (c) 2024-2026
  * SPDX-License-Identifier: LGPL-3.0-or-later
  */
-package io.github.andreoss.sh4j.parser;
+package io.github.andreoss.sh4j.lexer;
 
 /**
  * Here-document delimiter word as written after {@code <<}.
  *
  * @since 1.0
  */
-final class Delimiter {
+public final class Delimiter {
 
     /** The raw delimiter word. */
     private final String word;
@@ -19,7 +19,7 @@ final class Delimiter {
      *
      * @param word The raw delimiter word
      */
-    Delimiter(final String word) {
+    public Delimiter(final String word) {
         this.word = word;
     }
 
@@ -28,7 +28,7 @@ final class Delimiter {
      *
      * @return True when quoted
      */
-    boolean quoted() {
+    public boolean quoted() {
         return this.word.length() >= 2
             && (Delimiter.isQuoted(this.word, '\'') || Delimiter.isQuoted(this.word, '"')
                 || this.word.indexOf('\\') >= 0);
@@ -39,7 +39,7 @@ final class Delimiter {
      *
      * @return The delimiter text
      */
-    String text() {
+    public String text() {
         final String text;
         if (this.quoted()) {
             text = this.unquoted();

@@ -4,6 +4,7 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import io.github.andreoss.sh4j.lexer.HereBody;
 import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.lexer.Token;
 import io.github.andreoss.sh4j.lexer.TokenType;
@@ -242,13 +243,11 @@ final class Cursor {
     }
 
     /**
-     * Reads a here-document body from the underlying lexer.
+     * Returns the body of the next here-document from the lexer.
      *
-     * @param delimiter The delimiter line
-     * @param strip True to strip leading tabs
-     * @return The body
+     * @return The body, filled once its line ends
      */
-    String hereDoc(final String delimiter, final boolean strip) {
-        return this.lexer.readHereDocContent(delimiter, strip);
+    HereBody hereDoc() {
+        return this.lexer.hereDoc();
     }
 }

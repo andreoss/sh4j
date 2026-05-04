@@ -40,6 +40,9 @@ final class CommandScan {
     /** Open constructs: parenthesis, case word, case pattern, case body. */
     private final Deque<Character> stack;
 
+    /** Here-documents of the current line. */
+    private final HereDocs docs;
+
     /** Current index. */
     private int pos;
 
@@ -58,6 +61,7 @@ final class CommandScan {
         this.text = text;
         this.first = start;
         this.stack = new ArrayDeque<>(4);
+        this.docs = new HereDocs();
         this.pos = start;
         this.head = true;
     }
@@ -84,6 +88,8 @@ final class CommandScan {
             this.opening();
         } else if (chr == ';') {
             this.semicolon();
+        } else if (chr == '\n') {
+            this.newline();
         } else {
             this.other(chr);
         }
@@ -93,9 +99,11 @@ final class CommandScan {
     private void other(final char chr) {
         if (chr == ' ' || chr == '\t') {
             this.pos = this.pos + 1;
-        } else if (chr == '\n' || chr == '&' || chr == '|') {
+        } else if (chr == '&' || chr == '|') {
             this.pos = this.pos + 1;
             this.head = true;
+        } else if (this.text.startsWith("<<", this.pos)) {
+            this.redirect();
         } else if (CommandScan.ENDS.indexOf(chr) >= 0) {
             this.pos = this.nesting.skip(this.pos, false);
             this.head = false;
@@ -137,6 +145,25 @@ final class CommandScan {
             this.pos = this.pos + 1;
         }
         this.head = true;
+    }
+
+    private void newline() {
+        this.pos = this.pos + 1;
+        this.head = true;
+        if (this.docs.waiting()) {
+            final CharReader reader = new CharReader(this.text.substring(this.pos));
+            this.docs.flush(reader);
+            this.pos = this.pos + reader.offset();
+        }
+    }
+
+    private void redirect() {
+        final CharReader reader = new CharReader(this.text.substring(this.pos));
+        final Lexer lexer = new Lexer(reader, this.docs);
+        lexer.nextToken();
+        lexer.nextToken();
+        this.pos = this.pos + reader.offset();
+        this.head = false;
     }
 
     private boolean boundary() {

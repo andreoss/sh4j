@@ -4,6 +4,8 @@
  */
 package io.github.andreoss.sh4j.parser;
 
+import java.util.function.Supplier;
+
 /**
  * AST element describing one I/O redirection attached to a
  * {@link SimpleCommand}: file descriptor, kind of operation, target word,
@@ -30,7 +32,7 @@ public final class Redirection {
      * @param target Target word (file path, fd, ...)
      */
     public Redirection(final int desc, final RedirectionType type, final String target) {
-        this(desc, type, new HereDoc(target, null, false));
+        this(desc, type, new HereDoc(target, (String) null, false));
     }
 
     /**
@@ -79,7 +81,7 @@ public final class Redirection {
      * @return Inline here-document body, or null
      */
     public String getHereDocContent() {
-        return this.doc.body();
+        return this.doc.body().get();
     }
 
     /**
@@ -95,10 +97,21 @@ public final class Redirection {
      * Target word plus the optional here-document payload.
      *
      * @param target Target word (file path, fd number, or null)
-     * @param body Here-document body, or null
+     * @param body Here-document body, read when needed, or null
      * @param quoted True when the here-document delimiter was quoted
      * @since 1.0
      */
-    public record HereDoc(String target, String body, boolean quoted) {
+    public record HereDoc(String target, Supplier<String> body, boolean quoted) {
+
+        /**
+         * Ctor with a body known in advance.
+         *
+         * @param target Target word
+         * @param text Here-document body
+         * @param quoted True when the here-document delimiter was quoted
+         */
+        public HereDoc(final String target, final String text, final boolean quoted) {
+            this(target, () -> text, quoted);
+        }
     }
 }

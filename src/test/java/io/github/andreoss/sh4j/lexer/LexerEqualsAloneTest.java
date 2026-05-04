@@ -42,7 +42,7 @@ final class LexerEqualsAloneTest {
     @Test
     void heredocStripsOnlyLeadingTabs() {
         MatcherAssert.assertThat(
-            this.lexer(String.format("%n\tfoo%n\t  bar%n\tEOF%n")).readHereDocContent("EOF", true),
+            this.body(String.format("cat <<-EOF%n\tfoo%n\t  bar%n\tEOF%n")),
             CoreMatchers.equalTo(String.format("foo%n  bar%n"))
         );
     }
@@ -50,7 +50,7 @@ final class LexerEqualsAloneTest {
     @Test
     void heredocKeepsTabsWhenNotStripped() {
         MatcherAssert.assertThat(
-            this.lexer(String.format("%n\tfoo%nEOF%n")).readHereDocContent("EOF", false),
+            this.body(String.format("cat <<EOF%n\tfoo%nEOF%n")),
             CoreMatchers.equalTo(String.format("\tfoo%n"))
         );
     }
@@ -302,6 +302,15 @@ final class LexerEqualsAloneTest {
 
     private Lexer lexer(final String input) {
         return new Lexer(new CharReader(input));
+    }
+
+    private String body(final String input) {
+        final Lexer lexer = this.lexer(input);
+        Token tokn = lexer.nextToken();
+        while (tokn.type() != TokenType.NEWLINE) {
+            tokn = lexer.nextToken();
+        }
+        return lexer.hereDoc().text();
     }
 
     private void assertOperator(final String oper, final TokenType expected) {
