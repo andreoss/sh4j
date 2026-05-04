@@ -7,6 +7,7 @@ package io.github.andreoss.sh4j.executor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * Expands a word into fields, with optional pathname expansion.
@@ -35,12 +36,14 @@ final class Fields {
      * @return The resulting fields
      */
     List<String> arguments(final String arg, final Map<String, String> env) {
-        List<String> fields = this.split(arg, env);
-        if (arg != null && !WordExpander.isQuoted(arg)
-            && this.shell.shellFlags().indexOf('f') < 0) {
+        final List<String> fields;
+        if (this.shell.shellFlags().indexOf('f') < 0) {
             fields = WordExpander.pathnameExpand(
-                fields, this.shell.currentDirectory()
+                this.fields(arg, env, QuoteRemover::pattern),
+                this.shell.currentDirectory()
             );
+        } else {
+            fields = this.split(arg, env);
         }
         return fields;
     }
@@ -53,25 +56,33 @@ final class Fields {
      * @return The resulting fields
      */
     List<String> split(final String arg, final Map<String, String> env) {
+        return this.fields(arg, env, QuoteRemover::removeQuotes);
+    }
+
+    private List<String> fields(
+        final String arg, final Map<String, String> env, final UnaryOperator<String> removal
+    ) {
         final List<String> fields = new ArrayList<>(0);
         if (arg != null) {
             final List<String> params = this.shell.positionalParamsList();
             for (final String word : new AtSign(arg).words(params.subList(1, params.size()))) {
-                fields.addAll(this.expanded(word, env));
+                fields.addAll(this.expanded(word, env, removal));
             }
         }
         return fields;
     }
 
-    private List<String> expanded(final String arg, final Map<String, String> env) {
+    private List<String> expanded(
+        final String arg, final Map<String, String> env, final UnaryOperator<String> removal
+    ) {
         final List<String> fields = new ArrayList<>(0);
         final String expanded = this.shell.expandVariables(arg, env);
         if (WordExpander.isQuoted(arg)) {
-            fields.add(WordExpander.removeQuotes(expanded));
+            fields.add(removal.apply(expanded));
         } else {
             final String ifsvalue = env.getOrDefault("IFS", Variables.DEFAULT_IFS);
             for (final String field : WordExpander.splitFields(expanded, ifsvalue)) {
-                fields.add(WordExpander.removeQuotes(field));
+                fields.add(removal.apply(field));
             }
         }
         return fields;

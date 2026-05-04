@@ -102,7 +102,7 @@ final class Compound {
             words = new ArrayList<>(0);
             for (final String raw : node.getWords()) {
                 words.addAll(
-                    this.shell.expandFields(raw, this.shell.environmentMap())
+                    this.shell.expandArguments(raw, this.shell.environmentMap())
                 );
             }
         }
@@ -143,17 +143,12 @@ final class Compound {
     }
 
     private boolean hits(final String pattern, final String word) {
-        final String cleaned = WordExpander.removeQuotes(
-            this.shell.expandVariables(pattern, this.shell.environmentMap())
+        return GlobExpander.escapedMatches(
+            QuoteRemover.pattern(
+                this.shell.expandVariables(pattern, this.shell.environmentMap())
+            ),
+            word
         );
-        final boolean quoted = pattern.indexOf('\'') >= 0 || pattern.indexOf('"') >= 0;
-        final boolean hits;
-        if (quoted) {
-            hits = cleaned.equals(word);
-        } else {
-            hits = WordExpander.globMatches(cleaned, word);
-        }
-        return hits;
     }
 
     private static List<String> positional(final List<String> params) {

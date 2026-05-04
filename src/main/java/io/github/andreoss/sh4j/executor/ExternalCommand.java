@@ -96,13 +96,8 @@ final class ExternalCommand {
     ) {
         final List<String> command = new ArrayList<>(0);
         command.add(resolved);
-        final boolean globbing = this.shell.shellFlags().indexOf('f') < 0;
         for (final String arg : cmd.getArguments()) {
-            List<String> fields = this.shell.expandFields(arg, env);
-            if (!WordExpander.isQuoted(arg) && globbing) {
-                fields = WordExpander.pathnameExpand(fields, this.shell.currentDirectory());
-            }
-            command.addAll(fields);
+            command.addAll(this.shell.expandArguments(arg, env));
         }
         final ProcessBuilder builder = new ProcessBuilder(command);
         builder.environment().putAll(this.childEnvironment(cmd, env));
