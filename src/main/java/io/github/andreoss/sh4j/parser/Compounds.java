@@ -22,6 +22,9 @@ final class Compounds {
     /** Token cursor. */
     private final Cursor cursor;
 
+    /** Redirection parser. */
+    private final Redirects redirects;
+
     /**
      * Ctor.
      *
@@ -31,6 +34,7 @@ final class Compounds {
     Compounds(final Parser parser, final Cursor cursor) {
         this.parser = parser;
         this.cursor = cursor;
+        this.redirects = new Redirects(cursor);
     }
 
     /**
@@ -122,7 +126,7 @@ final class Compounds {
         this.cursor.consume();
         final Node body;
         body = this.parseCompoundCommandBody();
-        return new FunctionNode(name, body);
+        return new FunctionNode(name, body, this.redirects.trailing());
     }
 
     /**

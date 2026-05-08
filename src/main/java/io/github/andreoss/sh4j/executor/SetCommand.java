@@ -103,6 +103,8 @@ final class SetCommand {
             flag = 'v';
         } else if ("allexport".equals(option)) {
             flag = 'a';
+        } else if ("noclobber".equals(option)) {
+            flag = 'C';
         } else {
             flag = 0;
         }

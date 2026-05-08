@@ -63,6 +63,9 @@ final class ExecCommand {
      * @return Zero after binding descriptors
      */
     int run(final SimpleCommand cmd, final Map<String, String> cenv) {
+        if (new Noclobber(this.shell).refuses(cmd.getRedirections())) {
+            throw new ExitSignal(1);
+        }
         if (cmd.getArguments().isEmpty()) {
             this.bind(cmd.getRedirections());
         } else {

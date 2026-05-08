@@ -7,6 +7,7 @@ package io.github.andreoss.sh4j.parser;
 import io.github.andreoss.sh4j.lexer.Delimiter;
 import io.github.andreoss.sh4j.lexer.HereBody;
 import io.github.andreoss.sh4j.lexer.TokenType;
+import java.util.List;
 
 /**
  * Parses redirections and here-documents of a simple command.
@@ -75,6 +76,26 @@ final class Redirects {
             }
             cmd.addRedirection(new Redirection(desc, type, target));
         }
+    }
+
+    /**
+     * Parses the redirections that follow a compound command.
+     *
+     * @return The redirections in source order
+     */
+    List<Redirection> trailing() {
+        final SimpleCommand holder = new SimpleCommand("");
+        int fdnum = -1;
+        while (this.cursor.check(TokenType.IO_NUMBER) || this.isRedirectionStart()) {
+            if (this.cursor.check(TokenType.IO_NUMBER)) {
+                fdnum = Integer.parseInt(this.cursor.token().text());
+                this.cursor.consume();
+            } else {
+                this.consumeRedirection(holder, fdnum);
+                fdnum = -1;
+            }
+        }
+        return holder.getRedirections();
     }
 
     private boolean isInputRedirect() {

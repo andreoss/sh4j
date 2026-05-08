@@ -222,53 +222,53 @@ final class ParserParseClobberTest {
 
     @Test
     void parseCommandStartingWithInputRedirectFirst() {
-        Assertions.assertEquals("<", this.command(this.parse("< input.txt cat")).getName());
+        Assertions.assertEquals("cat", this.command(this.parse("< input.txt cat")).getName());
     }
 
     @Test
     void parseCommandStartingWithInputRedirectSecond() {
         Assertions.assertEquals(
-            2,
-            this.command(this.parse("< input.txt cat")).getArguments().size()
+            1,
+            this.command(this.parse("< input.txt cat")).getRedirections().size()
         );
     }
 
     @Test
     void parseCommandStartingWithOutputRedirectFirst() {
-        Assertions.assertEquals(">", this.command(this.parse("> out.txt echo")).getName());
+        Assertions.assertEquals("echo", this.command(this.parse("> out.txt echo")).getName());
     }
 
     @Test
     void parseCommandStartingWithOutputRedirectSecond() {
         Assertions.assertEquals(
-            2,
-            this.command(this.parse("> out.txt echo")).getArguments().size()
+            1,
+            this.command(this.parse("> out.txt echo")).getRedirections().size()
         );
     }
 
     @Test
     void parseCommandStartingWithClobberRedirectFirst() {
-        Assertions.assertEquals(">|", this.command(this.parse(">| file.txt echo")).getName());
+        Assertions.assertEquals("echo", this.command(this.parse(">| file.txt echo")).getName());
     }
 
     @Test
     void parseCommandStartingWithClobberRedirectSecond() {
         Assertions.assertEquals(
-            2,
-            this.command(this.parse(">| file.txt echo")).getArguments().size()
+            1,
+            this.command(this.parse(">| file.txt echo")).getRedirections().size()
         );
     }
 
     @Test
     void parseCommandStartingWithAppendRedirectFirst() {
-        Assertions.assertEquals(">>", this.command(this.parse(">> file.txt echo")).getName());
+        Assertions.assertEquals("echo", this.command(this.parse(">> file.txt echo")).getName());
     }
 
     @Test
     void parseCommandStartingWithAppendRedirectSecond() {
         Assertions.assertEquals(
-            2,
-            this.command(this.parse(">> file.txt echo")).getArguments().size()
+            1,
+            this.command(this.parse(">> file.txt echo")).getRedirections().size()
         );
     }
 

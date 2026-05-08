@@ -5,6 +5,7 @@
 package io.github.andreoss.sh4j.parser;
 
 import io.github.andreoss.sh4j.lexer.TokenType;
+import java.util.List;
 
 /**
  * Parses simple commands: assignments, words and redirections.
@@ -35,14 +36,23 @@ final class Commands {
      * @return The command
      */
     SimpleCommand parseSimpleCommand() {
-        final SimpleCommand cmd;
-        if (this.startsSimpleCommand()) {
-            cmd = this.startSimpleCommand();
-            this.continueSimpleCommand(cmd);
-        } else {
-            cmd = new SimpleCommand("");
+        final SimpleCommand parts = new SimpleCommand("");
+        int fdnum = -1;
+        while (this.startsSimpleCommand()) {
+            if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
+                Commands.assignment(parts, this.cursor.token().text());
+                this.cursor.consume();
+            } else if (this.cursor.check(TokenType.IO_NUMBER)) {
+                fdnum = Integer.parseInt(this.cursor.token().text());
+                this.cursor.consume();
+            } else if (this.redirects.isRedirectionStart()) {
+                this.redirects.consumeRedirection(parts, fdnum);
+                fdnum = -1;
+            } else {
+                this.word(parts);
+            }
         }
-        return cmd;
+        return Commands.named(parts);
     }
 
     private boolean startsSimpleCommand() {
@@ -50,70 +60,34 @@ final class Commands {
             || this.redirects.isRedirectionStart() || this.cursor.check(TokenType.IO_NUMBER);
     }
 
-    private SimpleCommand startSimpleCommand() {
-        final SimpleCommand cmd;
-        if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
-            cmd = this.startWithAssignments();
-        } else if (this.cursor.check(TokenType.IO_NUMBER)) {
-            this.cursor.consume();
-            cmd = new SimpleCommand("");
+    private void word(final SimpleCommand parts) {
+        if (parts.getArguments().isEmpty()) {
+            parts.setLineNumber(this.cursor.token().line());
+        }
+        parts.addArgument(this.cursor.token().text());
+        this.cursor.consume();
+    }
+
+    private static void assignment(final SimpleCommand parts, final String text) {
+        if (parts.getArguments().isEmpty()) {
+            parts.addAssignment(text);
         } else {
-            final String name;
-            name = this.cursor.token().text();
-            final int line;
-            line = this.cursor.token().line();
-            this.cursor.consume();
-            cmd = new SimpleCommand(name);
-            cmd.setLineNumber(line);
+            parts.addArgument(text);
         }
-        return cmd;
     }
 
-    private SimpleCommand startWithAssignments() {
-        SimpleCommand cmd = new SimpleCommand("");
-        while (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
-            cmd.addAssignment(this.cursor.token().text());
-            this.cursor.consume();
-        }
-        if (this.cursor.check(TokenType.WORD)) {
-            final String name;
-            name = this.cursor.token().text();
-            final int line;
-            line = this.cursor.token().line();
-            this.cursor.consume();
-            final SimpleCommand named = new SimpleCommand(name);
-            named.setLineNumber(line);
-            named.getAssignments().addAll(cmd.getAssignments());
-            cmd = named;
+    private static SimpleCommand named(final SimpleCommand parts) {
+        final List<String> words = parts.getArguments();
+        final SimpleCommand cmd;
+        if (words.isEmpty()) {
+            cmd = parts;
+        } else {
+            cmd = new SimpleCommand(words.get(0));
+            cmd.setLineNumber(parts.getLineNumber());
+            cmd.getArguments().addAll(words.subList(1, words.size()));
+            cmd.getAssignments().addAll(parts.getAssignments());
+            cmd.getRedirections().addAll(parts.getRedirections());
         }
         return cmd;
-    }
-
-    private void continueSimpleCommand(final SimpleCommand cmd) {
-        int fdnum = -1;
-        if (this.cursor.check(TokenType.IO_NUMBER)) {
-            fdnum = Integer.parseInt(this.cursor.token().text());
-            this.cursor.consume();
-        }
-        final boolean named = !cmd.getName().isEmpty();
-        while (this.startsSimpleCommand()) {
-            if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
-                if (named) {
-                    cmd.addArgument(this.cursor.token().text());
-                } else {
-                    cmd.addAssignment(this.cursor.token().text());
-                }
-                this.cursor.consume();
-            } else if (this.cursor.check(TokenType.IO_NUMBER)) {
-                fdnum = Integer.parseInt(this.cursor.token().text());
-                this.cursor.consume();
-            } else if (this.redirects.isRedirectionStart()) {
-                this.redirects.consumeRedirection(cmd, fdnum);
-                fdnum = -1;
-            } else if (this.cursor.check(TokenType.WORD)) {
-                cmd.addArgument(this.cursor.token().text());
-                this.cursor.consume();
-            }
-        }
     }
 }

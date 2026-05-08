@@ -9,7 +9,6 @@ import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,26 +102,15 @@ final class NamedCommand {
     }
 
     private int redirected(final CommandCall call) {
-        final RedirectionHandler.StreamSwap swap =
-            OutputSwap.apply(this.shell, call.cmd().getRedirections());
-        final InputSwap input = new InputSwap(this.shell);
-        final Optional<InputStream> kept = input.install(call.cmd().getRedirections());
-        final int code;
-        try {
-            code = this.dispatch(call, swap.failed());
-        } finally {
-            input.restore(kept);
-            OutputSwap.restore(this.shell, swap);
-        }
-        return code;
+        return new Redirected(this.shell).run(
+            call.cmd().getRedirections(), () -> this.dispatch(call)
+        );
     }
 
-    private int dispatch(final CommandCall call, final boolean failed) {
+    private int dispatch(final CommandCall call) {
         final Map<String, FunctionNode> functions = this.shell.functionsMap();
         final int code;
-        if (failed) {
-            code = 1;
-        } else if (!call.bypass() && functions.containsKey(call.name())
+        if (!call.bypass() && functions.containsKey(call.name())
             && !NamedCommand.SPECIAL.contains(call.name())) {
             this.shell.environmentMap().putAll(call.env());
             code = this.invoke(functions.get(call.name()), call);
@@ -160,7 +148,9 @@ final class NamedCommand {
         this.shell.setPositionalParams(fargs);
         int code;
         try {
-            code = this.shell.executeNode(func.getBody());
+            code = new Redirected(this.shell).run(
+                func.getRedirections(), () -> this.shell.executeNode(func.getBody())
+            );
         } catch (final ReturnSignal ex) {
             code = ex.getCode();
         } finally {
