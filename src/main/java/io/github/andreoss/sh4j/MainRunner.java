@@ -38,8 +38,23 @@ final class MainRunner {
      * @return Exit status
      */
     static int runSource(final String source, final List<String> params) {
+        return MainRunner.runSource(source, params, "");
+    }
+
+    /**
+     * Parses and executes shell source text with shell options set.
+     *
+     * @param source The shell source
+     * @param params Positional parameters ({@code $0} first)
+     * @param flags The shell option letters, as for {@code set}
+     * @return Exit status
+     */
+    static int runSource(
+        final String source, final List<String> params, final String flags
+    ) {
         int code = 0;
         final Executor executor = new Executor(System.getenv(), params);
+        executor.setShellFlags(flags);
         try {
             code = executor.execute(
                 new Parser(new Lexer(new CharReader(source))).parse()
@@ -93,6 +108,18 @@ final class MainRunner {
      * @return The script's exit status
      */
     static int runScript(final String filename, final List<String> args) {
+        return MainRunner.runScript(filename, args, "");
+    }
+
+    /**
+     * Runs a script with the given positional parameters and shell options.
+     *
+     * @param filename The script path
+     * @param args The positional parameters (including {@code $0})
+     * @param flags The shell option letters, as for {@code set}
+     * @return The script's exit status
+     */
+    static int runScript(final String filename, final List<String> args, final String flags) {
         final StringBuilder content = new StringBuilder();
         int code;
         try (
@@ -105,7 +132,7 @@ final class MainRunner {
                 content.append(line).append('\n');
                 line = reader.readLine();
             }
-            code = MainRunner.runSource(content.toString(), args);
+            code = MainRunner.runSource(content.toString(), args, flags);
         } catch (final IOException ex) {
             MainRunner.err().println(String.format("sh: %s: cannot open", filename));
             code = 1;

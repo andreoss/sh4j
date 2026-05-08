@@ -92,6 +92,9 @@ public final class Executor implements BuiltinContext {
     /** Runner of compound commands, tracking the loop depth. */
     private final Compound compound;
 
+    /** State of the errexit option. */
+    private final Errexit errexit;
+
     /**
      * Builds an executor seeded with the current process environment.
      */
@@ -134,7 +137,8 @@ public final class Executor implements BuiltinContext {
         this.cwd = dir;
         this.substat = -1;
         this.snapshot = new AliasSnapshot();
-        this.compound = new Compound(this);
+        this.errexit = new Errexit();
+        this.compound = new Compound(this, this.errexit);
         this.traps = new HashMap<>();
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(incoming);
@@ -342,6 +346,7 @@ public final class Executor implements BuiltinContext {
     @Override
     public void setShellFlags(final String value) {
         this.flags = value;
+        this.vars.automatic(value.indexOf('a') >= 0);
     }
 
     @Override
@@ -478,7 +483,8 @@ public final class Executor implements BuiltinContext {
         child.aliases.putAll(this.aliases);
         child.params.clear();
         child.params.addAll(this.params);
-        child.flags = this.flags;
+        child.setShellFlags(this.flags);
+        child.errexit.inherit(this.errexit);
         child.cwd = this.cwd;
         child.out = this.out;
         child.err = this.err;
@@ -495,6 +501,15 @@ public final class Executor implements BuiltinContext {
      */
     int executeNode(final Node node) {
         return new NodeRunner(this, this.compound).run(node);
+    }
+
+    /**
+     * Returns the state of the errexit option.
+     *
+     * @return The errexit state
+     */
+    Errexit errexit() {
+        return this.errexit;
     }
 
     /**

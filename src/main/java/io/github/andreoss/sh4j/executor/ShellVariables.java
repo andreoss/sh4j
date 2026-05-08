@@ -17,7 +17,7 @@ import java.util.Set;
 final class ShellVariables {
 
     /** Live shell-variable table. */
-    private final Map<String, String> table;
+    private final VariableTable table;
 
     /** Names of variables visible to child processes. */
     private final Set<String> exported;
@@ -32,11 +32,11 @@ final class ShellVariables {
      * @param exported Names of variables visible to child processes
      */
     ShellVariables(final Map<String, String> table, final Set<String> exported) {
-        this(table, exported, new HashSet<>());
+        this(new VariableTable(table, exported), exported, new HashSet<>());
     }
 
     private ShellVariables(
-        final Map<String, String> table, final Set<String> exported,
+        final VariableTable table, final Set<String> exported,
         final Set<String> readonly
     ) {
         this.table = table;
@@ -113,6 +113,15 @@ final class ShellVariables {
             removed = true;
         }
         return removed;
+    }
+
+    /**
+     * Turns the allexport option on or off.
+     *
+     * @param enabled True to export every assigned variable
+     */
+    void automatic(final boolean enabled) {
+        this.table.automatic(enabled);
     }
 
     /**

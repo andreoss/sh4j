@@ -7,6 +7,8 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Pipeline;
+import io.github.andreoss.sh4j.parser.SimpleCommand;
+import io.github.andreoss.sh4j.parser.Subshell;
 import java.util.List;
 
 /**
@@ -60,43 +62,52 @@ final class Pipelines {
     private int sequence(final ListNode list) {
         final List<Pipeline> pipelines = list.getPipelines();
         final List<ListNode.Separator> separators = list.getSeparators();
-        boolean stopped = false;
-        for (int idx = 0; !stopped && idx < pipelines.size(); idx = idx + 1) {
+        for (int idx = 0; idx < pipelines.size(); idx = idx + 1) {
             if (idx == 0 || Pipelines.shouldRunNext(
                 separators.get(idx - 1), this.shell.status()
             )) {
-                stopped = this.step(pipelines.get(idx), separators.get(idx));
+                this.step(pipelines.get(idx), separators.get(idx));
             }
         }
         return this.shell.status();
     }
 
-    private boolean step(final Pipeline pipeline, final ListNode.Separator sep) {
-        boolean stopped = false;
-        if (sep == ListNode.Separator.AMP) {
+    private void step(final Pipeline pipeline, final ListNode.Separator sep) {
+        final boolean noexec = this.shell.shellFlags().indexOf('n') >= 0;
+        if (!noexec && sep == ListNode.Separator.AMP) {
             this.async(pipeline);
             this.shell.status(0);
-        } else {
-            stopped = this.foreground(pipeline, sep);
+        } else if (!noexec) {
+            this.foreground(pipeline, sep);
         }
-        return stopped;
     }
 
-    private boolean foreground(final Pipeline pipeline, final ListNode.Separator sep) {
-        boolean stopped = false;
+    private void foreground(final Pipeline pipeline, final ListNode.Separator sep) {
+        final boolean ignored = pipeline.isBang()
+            || sep == ListNode.Separator.AND_IF
+            || sep == ListNode.Separator.OR_IF;
         try {
-            final int status = this.pipeline(pipeline);
+            final int status = this.outcome(pipeline, ignored);
             this.shell.status(status);
             this.shell.history().add(Pipelines.text(pipeline));
-            stopped = this.shell.shellFlags().indexOf('e') >= 0 && status != 0
-                && sep != ListNode.Separator.AND_IF
-                && sep != ListNode.Separator.OR_IF;
+            if (!ignored && Pipelines.simple(pipeline)) {
+                this.shell.errexit().check(this.shell.shellFlags(), status);
+            }
         } catch (final BreakSignal ex) {
             this.shell.requireLoop(ex, "break");
         } catch (final ContinueSignal ex) {
             this.shell.requireLoop(ex, "continue");
         }
-        return stopped;
+    }
+
+    private int outcome(final Pipeline pipeline, final boolean ignored) {
+        final int status;
+        if (ignored) {
+            status = this.shell.errexit().ignoring(() -> this.pipeline(pipeline));
+        } else {
+            status = this.pipeline(pipeline);
+        }
+        return status;
     }
 
     private void async(final Pipeline pipeline) {
@@ -135,6 +146,12 @@ final class Pipelines {
             code = 0;
         }
         return code;
+    }
+
+    private static boolean simple(final Pipeline pipeline) {
+        final List<Node> commands = pipeline.getCommands();
+        return commands.size() != 1 || commands.get(0) instanceof SimpleCommand
+            || commands.get(0) instanceof Subshell;
     }
 
     private static boolean shouldRunNext(

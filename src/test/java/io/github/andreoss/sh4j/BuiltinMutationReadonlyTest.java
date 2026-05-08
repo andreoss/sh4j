@@ -119,7 +119,7 @@ final class BuiltinMutationReadonlyTest {
         Sh4j.INSTANCE.out("set -o nounset; echo $-");
         Sh4j.INSTANCE.out("set -o noglob; echo $-");
         Sh4j.INSTANCE.out("set -o xtrace; echo $-");
-        Assertions.assertTrue(Sh4j.INSTANCE.out("set -o noexec; echo $-").contains("n"));
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("set -o noexec; echo $-"));
     }
 
     @Test

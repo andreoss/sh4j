@@ -41,7 +41,7 @@ final class Command {
         final String name = cmd.getName();
         final int code;
         if (name == null || name.isEmpty()) {
-            this.shell.environmentMap().putAll(cenv);
+            this.persist(cmd.getAssignments(), cenv);
             code = this.bare(assign);
         } else {
             code = new NamedCommand(this.shell).run(
@@ -49,6 +49,18 @@ final class Command {
             );
         }
         return code;
+    }
+
+    private void persist(final List<String> assignments, final Map<String, String> tenv) {
+        final Map<String, String> table = this.shell.environmentMap();
+        table.putAll(tenv);
+        for (final String assignment : assignments) {
+            final int eqpos = assignment.indexOf('=');
+            if (eqpos > 0) {
+                final String vname = assignment.substring(0, eqpos);
+                table.put(vname, tenv.get(vname));
+            }
+        }
     }
 
     private int bare(final int assign) {

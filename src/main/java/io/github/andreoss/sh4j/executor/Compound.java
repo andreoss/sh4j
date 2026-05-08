@@ -9,6 +9,7 @@ import io.github.andreoss.sh4j.parser.CaseNode;
 import io.github.andreoss.sh4j.parser.ForNode;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.IfNode;
+import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.WhileNode;
 import java.util.ArrayList;
@@ -26,6 +27,9 @@ final class Compound {
     /** The shell that runs the bodies. */
     private final BuiltinContext shell;
 
+    /** State of the errexit option. */
+    private final Errexit errexit;
+
     /** Nesting depth of active loop bodies. */
     private int loops;
 
@@ -33,9 +37,11 @@ final class Compound {
      * Ctor.
      *
      * @param shell The shell that runs the bodies
+     * @param errexit State of the errexit option
      */
-    Compound(final BuiltinContext shell) {
+    Compound(final BuiltinContext shell, final Errexit errexit) {
         this.shell = shell;
+        this.errexit = errexit;
     }
 
     /**
@@ -70,7 +76,7 @@ final class Compound {
     }
 
     private int branch(final IfNode node) {
-        final int condexit = this.shell.execute(node.getCondition());
+        final int condexit = this.condition(node.getCondition());
         final int code;
         if (condexit == 0) {
             code = this.shell.execute(node.getThenBody());
@@ -120,7 +126,7 @@ final class Compound {
     }
 
     private boolean proceeds(final WhileNode node) {
-        return node.isUntil() == (this.shell.execute(node.getCondition()) != 0);
+        return node.isUntil() == (this.condition(node.getCondition()) != 0);
     }
 
     private int choose(final CaseNode node) {
@@ -149,6 +155,10 @@ final class Compound {
             ),
             word
         );
+    }
+
+    private int condition(final ListNode list) {
+        return this.errexit.ignoring(() -> this.shell.execute(list));
     }
 
     private static List<String> positional(final List<String> params) {
