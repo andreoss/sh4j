@@ -77,7 +77,8 @@ interface BuiltinVariables {
      * Reads one line from the executor's stdin without buffering past the
      * newline.
      *
-     * @return The line without its terminator, or null on EOF
+     * @return The line with its newline, without one when EOF came first,
+     *  or null when nothing was read
      */
     String readInputLine();
 }

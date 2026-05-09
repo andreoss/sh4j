@@ -124,7 +124,8 @@ final class ScriptBuiltins {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @return The sourced script's exit status, or 1 on IO/parse failure
+     * @return The sourced script's exit status, or 1 without a file operand;
+     *  an unreadable file raises a special built-in error
      */
     static int doDot(
         final BuiltinContext self,
@@ -139,12 +140,11 @@ final class ScriptBuiltins {
                 self.expandVariables(args.get(0), env)
             );
             final Optional<String> source = ScriptBuiltins.readSource(self, path);
-            if (source.isPresent()) {
-                code = ScriptBuiltins.runSourced(self, source.get(), args);
-            } else {
+            if (!source.isPresent()) {
                 self.errStream().println(String.format("sh: %s: cannot open", path));
-                code = 1;
+                throw new SpecialError(1);
             }
+            code = ScriptBuiltins.runSourced(self, source.get(), args);
         }
         return code;
     }

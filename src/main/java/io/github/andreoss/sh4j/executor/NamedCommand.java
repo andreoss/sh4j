@@ -125,10 +125,7 @@ final class NamedCommand {
         if (NamedCommand.SPECIAL.contains(call.name())) {
             this.apply(cmd.getAssignments(), call.env());
         }
-        final Integer result = this.shell.builtin(
-            call.name(),
-            new Invocation(cmd.getArguments(), call.env(), cmd.getAssignments())
-        );
+        final Integer result = this.special(call);
         final int code;
         if (result == null) {
             code = new ExternalCommand(this.shell).run(cmd, call.name(), call.env());
@@ -136,6 +133,25 @@ final class NamedCommand {
             code = result;
         }
         return code;
+    }
+
+    private Integer special(final CommandCall call) {
+        final SimpleCommand cmd = call.cmd();
+        Integer result;
+        boolean fatal = false;
+        try {
+            result = this.shell.builtin(
+                call.name(),
+                new Invocation(cmd.getArguments(), call.env(), cmd.getAssignments())
+            );
+        } catch (final SpecialError ex) {
+            result = ex.getCode();
+            fatal = !call.bypass();
+        }
+        if (fatal) {
+            throw new ExitSignal(result);
+        }
+        return result;
     }
 
     private int invoke(final FunctionNode func, final CommandCall call) {

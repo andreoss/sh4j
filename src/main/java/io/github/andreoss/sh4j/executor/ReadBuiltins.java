@@ -29,7 +29,7 @@ final class ReadBuiltins {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
-     * @return The exit code: 0 on success, 1 on EOF
+     * @return The exit code: 0 on success, 1 when EOF came before a newline
      */
     static int doRead(
         final BuiltinContext self,
@@ -43,23 +43,27 @@ final class ReadBuiltins {
         } else {
             names = args;
         }
-        final String line = self.readInputLine();
+        final String input = self.readInputLine();
         final int code;
-        if (line == null) {
+        if (input == null) {
             code = 1;
         } else if (names.isEmpty()) {
-            self.environmentMap().put("REPLY", ReadBuiltins.unescape(line, raw));
-            code = 0;
+            self.environmentMap().put(
+                "REPLY", ReadBuiltins.unescape(ReadBuiltins.chomp(input), raw)
+            );
+            code = ReadBuiltins.status(input);
         } else {
             final String ifs = env.getOrDefault("IFS", String.format(" \t%n"));
             final List<String> values = ReadBuiltins.values(
-                new ReadSplitter(ReadBuiltins.unescape(line, raw), ifs).split(),
+                new ReadSplitter(
+                    ReadBuiltins.unescape(ReadBuiltins.chomp(input), raw), ifs
+                ).split(),
                 names.size(), ifs.charAt(0)
             );
             for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
                 self.environmentMap().put(names.get(vdx), values.get(vdx));
             }
-            code = 0;
+            code = ReadBuiltins.status(input);
         }
         return code;
     }
@@ -86,6 +90,26 @@ final class ReadBuiltins {
             code = new Getopts(self, args).next();
         }
         return code;
+    }
+
+    private static String chomp(final String input) {
+        String line = input;
+        if (ReadBuiltins.ended(input)) {
+            line = input.substring(0, input.length() - 1);
+        }
+        return line;
+    }
+
+    private static int status(final String input) {
+        int code = 1;
+        if (ReadBuiltins.ended(input)) {
+            code = 0;
+        }
+        return code;
+    }
+
+    private static boolean ended(final String input) {
+        return input.charAt(input.length() - 1) == '\n';
     }
 
     private static String unescape(final String line, final boolean raw) {
