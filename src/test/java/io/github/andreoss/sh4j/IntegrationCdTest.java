@@ -107,6 +107,7 @@ final class IntegrationCdTest {
         }
         final ProcessBuilder builder = new ProcessBuilder(
             String.format("%s/bin/java", System.getProperty("java.home")),
+            "-XX:-UsePerfData",
             "-cp",
             System.getProperty("java.class.path"),
             "io.github.andreoss.sh4j.Main",
@@ -134,6 +135,7 @@ final class IntegrationCdTest {
         }
         final ProcessBuilder builder = new ProcessBuilder(
             String.format("%s/bin/java", System.getProperty("java.home")),
+            "-XX:-UsePerfData",
             "-cp",
             System.getProperty("java.class.path"),
             "io.github.andreoss.sh4j.Main",
@@ -634,6 +636,7 @@ final class IntegrationCdTest {
     private String runChildJvm(final File script) throws Exception {
         final ProcessBuilder builder = new ProcessBuilder(
             String.format("%s/bin/java", System.getProperty("java.home")),
+            "-XX:-UsePerfData",
             "-cp",
             System.getProperty("java.class.path"),
             "io.github.andreoss.sh4j.Main",
