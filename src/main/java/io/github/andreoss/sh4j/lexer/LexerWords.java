@@ -35,6 +35,10 @@ final class LexerWords {
             type = TokenType.IO_NUMBER;
         } else if (LexerSupport.isAssignmentWord(text)) {
             type = TokenType.ASSIGNMENT_WORD;
+        } else if ("{".equals(text)) {
+            type = TokenType.LBRACE;
+        } else if ("}".equals(text)) {
+            type = TokenType.RBRACE;
         } else {
             type = TokenType.WORD;
         }

@@ -79,6 +79,23 @@ final class Redirects {
     }
 
     /**
+     * Wraps a command with the redirections that follow it, when any.
+     *
+     * @param node The command
+     * @return The command, redirected when redirections follow it
+     */
+    Node around(final Node node) {
+        final List<Redirection> redirs = this.trailing();
+        final Node result;
+        if (redirs.isEmpty()) {
+            result = node;
+        } else {
+            result = new RedirectedNode(node, redirs);
+        }
+        return result;
+    }
+
+    /**
      * Parses the redirections that follow a compound command.
      *
      * @return The redirections in source order

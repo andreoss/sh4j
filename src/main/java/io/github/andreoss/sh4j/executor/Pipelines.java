@@ -7,6 +7,7 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
 import io.github.andreoss.sh4j.parser.Pipeline;
+import io.github.andreoss.sh4j.parser.RedirectedNode;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 import java.util.List;
@@ -150,8 +151,15 @@ final class Pipelines {
 
     private static boolean simple(final Pipeline pipeline) {
         final List<Node> commands = pipeline.getCommands();
-        return commands.size() != 1 || commands.get(0) instanceof SimpleCommand
-            || commands.get(0) instanceof Subshell;
+        return commands.size() != 1 || Pipelines.plain(commands.get(0));
+    }
+
+    private static boolean plain(final Node command) {
+        Node first = command;
+        if (first instanceof RedirectedNode red) {
+            first = red.getBody();
+        }
+        return first instanceof SimpleCommand || first instanceof Subshell;
     }
 
     private static boolean shouldRunNext(

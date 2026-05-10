@@ -38,10 +38,6 @@ final class LexerOperators {
             result = LexerOperators.singleCharOp(reader, TokenType.LPAREN, pos);
         } else if (chr == ')') {
             result = LexerOperators.singleCharOp(reader, TokenType.RPAREN, pos);
-        } else if (chr == '{') {
-            result = LexerOperators.singleCharOp(reader, TokenType.LBRACE, pos);
-        } else if (chr == '}') {
-            result = LexerOperators.singleCharOp(reader, TokenType.RBRACE, pos);
         } else {
             result = null;
         }

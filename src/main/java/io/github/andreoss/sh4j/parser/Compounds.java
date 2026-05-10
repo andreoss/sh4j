@@ -97,7 +97,7 @@ final class Compounds {
         if (this.cursor.check(TokenType.WORD) && "in".equals(this.cursor.token().text())) {
             this.cursor.consume();
             words = new ArrayList<>(0);
-            while (this.cursor.check(TokenType.WORD) && !this.cursor.isReservedWord("do")) {
+            while (this.cursor.checkText() && !this.cursor.isReservedWord("do")) {
                 words.add(this.cursor.token().text());
                 this.cursor.consume();
             }
@@ -137,7 +137,7 @@ final class Compounds {
     CaseNode parseCaseCommand() {
         this.cursor.consume();
         final String word;
-        word = this.cursor.expect(TokenType.WORD).text();
+        word = this.cursor.expectText().text();
         this.cursor.expectWord("in");
         this.cursor.skipNewlines();
         final List<CaseItem> items = new ArrayList<>(0);
@@ -146,10 +146,10 @@ final class Compounds {
                 this.cursor.consume();
             }
             final List<String> patterns = new ArrayList<>(0);
-            patterns.add(this.cursor.expect(TokenType.WORD).text());
+            patterns.add(this.cursor.expectText().text());
             while (this.cursor.check(TokenType.PIPE)) {
                 this.cursor.consume();
-                patterns.add(this.cursor.expect(TokenType.WORD).text());
+                patterns.add(this.cursor.expectText().text());
             }
             this.cursor.expect(TokenType.RPAREN);
             this.cursor.skipNewlines();

@@ -151,6 +151,40 @@ final class Cursor {
     }
 
     /**
+     * Tells whether the current token is a word, braces included: a
+     * brace is a reserved word only where a command name can appear.
+     *
+     * @return True on a word or a brace
+     */
+    boolean checkText() {
+        return this.check(TokenType.WORD) || this.isBrace();
+    }
+
+    /**
+     * Tells whether the current token is an opening or closing brace.
+     *
+     * @return True on a brace
+     */
+    boolean isBrace() {
+        return this.check(TokenType.LBRACE) || this.check(TokenType.RBRACE);
+    }
+
+    /**
+     * Consumes the current token, which must be a word or a brace.
+     *
+     * @return The consumed token
+     */
+    Token expectText() {
+        final Token result;
+        if (this.isBrace()) {
+            result = this.consume();
+        } else {
+            result = this.expect(TokenType.WORD);
+        }
+        return result;
+    }
+
+    /**
      * Consumes any newline tokens.
      */
     void skipNewlines() {

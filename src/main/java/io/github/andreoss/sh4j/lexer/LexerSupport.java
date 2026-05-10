@@ -85,6 +85,6 @@ final class LexerSupport {
     }
 
     private static boolean isGroupingChar(final int chr) {
-        return chr == '(' || chr == ')' || chr == '{' || chr == '}';
+        return chr == '(' || chr == ')';
     }
 }

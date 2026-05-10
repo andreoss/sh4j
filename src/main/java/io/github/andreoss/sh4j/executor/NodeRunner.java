@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.parser.Grouping;
 import io.github.andreoss.sh4j.parser.Node;
+import io.github.andreoss.sh4j.parser.RedirectedNode;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import io.github.andreoss.sh4j.parser.Subshell;
 
@@ -48,6 +49,10 @@ final class NodeRunner {
             code = this.subshell(sub);
         } else if (node instanceof Grouping group) {
             code = this.shell.execute(group.getList());
+        } else if (node instanceof RedirectedNode red) {
+            code = new Redirected(this.shell).run(
+                red.getRedirections(), () -> this.run(red.getBody())
+            );
         } else {
             code = this.compound.run(node);
         }

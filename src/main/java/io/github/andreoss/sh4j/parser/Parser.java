@@ -28,6 +28,9 @@ public final class Parser {
     /** Simple command parser. */
     private final Commands commands;
 
+    /** Redirection parser for compound commands. */
+    private final Redirects redirects;
+
     /**
      * Creates a parser over the given lexer.
      *
@@ -41,6 +44,7 @@ public final class Parser {
         this.cursor = cursor;
         this.compounds = new Compounds(this, cursor);
         this.commands = new Commands(cursor);
+        this.redirects = new Redirects(cursor);
     }
 
     /**
@@ -51,7 +55,9 @@ public final class Parser {
     public ListNode parse() {
         this.cursor.init();
         this.cursor.skipNewlines();
-        return this.parseList(TokenType.END_OF_FILE);
+        final ListNode list = this.parseList(TokenType.END_OF_FILE);
+        this.cursor.expect(TokenType.END_OF_FILE);
+        return list;
     }
 
     /**
@@ -139,7 +145,7 @@ public final class Parser {
         } else {
             result = this.commands.parseSimpleCommand();
         }
-        return result;
+        return this.redirects.around(result);
     }
 
     private Node parseWordStage(final Set<String> reserved) {

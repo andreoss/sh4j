@@ -38,7 +38,9 @@ final class Commands {
     SimpleCommand parseSimpleCommand() {
         final SimpleCommand parts = new SimpleCommand("");
         int fdnum = -1;
-        while (this.startsSimpleCommand()) {
+        boolean head = true;
+        while (this.startsSimpleCommand() || !head && this.cursor.isBrace()) {
+            head = false;
             if (this.cursor.check(TokenType.ASSIGNMENT_WORD)) {
                 Commands.assignment(parts, this.cursor.token().text());
                 this.cursor.consume();
