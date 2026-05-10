@@ -185,7 +185,7 @@ public final class Parser {
             this.cursor.consume();
             this.cursor.skipNewlines();
             list.getSeparators().set(list.getPipelines().size() - 1, sep);
-            done = this.cursor.isReservedWord(reserved);
+            done = this.cursor.isReservedWord(reserved) || this.cursor.check(TokenType.DSEMI);
         } else {
             done = true;
         }

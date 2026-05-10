@@ -152,14 +152,17 @@ final class Compounds {
                 patterns.add(this.cursor.expect(TokenType.WORD).text());
             }
             this.cursor.expect(TokenType.RPAREN);
+            this.cursor.skipNewlines();
             final ListNode body;
             if (this.cursor.check(TokenType.DSEMI)) {
                 body = new ListNode();
             } else {
-                body = this.parser.parseList(TokenType.DSEMI);
+                body = this.parser.parseListUntilReserved("esac");
             }
-            this.cursor.expect(TokenType.DSEMI);
-            this.cursor.skipNewlines();
+            if (this.cursor.check(TokenType.DSEMI)) {
+                this.cursor.consume();
+                this.cursor.skipNewlines();
+            }
             items.add(new CaseItem(patterns, body));
         }
         this.cursor.expectWord("esac");
