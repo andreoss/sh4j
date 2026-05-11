@@ -38,26 +38,27 @@ public final class WordExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
-        String current = TildeExpander.expandTilde(arg, env);
-        current = normaliseBackticks(current);
-        final StringBuilder expanded = new StringBuilder();
-        final ExpansionContext context = new ExpansionContext(env, ctx, expanded);
-        final QuoteState quotes = new QuoteState();
-        int idx = 0;
-        while (idx < current.length()) {
-            final char chr = current.charAt(idx);
-            if (Quotes.literal(quotes, chr)) {
-                expanded.append(chr);
-                idx = idx + 1;
-            } else if (chr == '\\' && idx + 1 < current.length()) {
-                expanded.append(chr).append(current.charAt(idx + 1));
-                idx = idx + 2;
-            } else {
-                context.quote(quotes.doubled());
-                idx = idx + VariableExpander.appendOneExpansion(current, idx, context);
-            }
-        }
-        return expanded.toString();
+        return WordExpander.expand(arg, new ExpansionContext(env, ctx, new StringBuilder()));
+    }
+
+    /**
+     * Word expansion of a word that is field split and quote removed
+     * afterwards: the word of an unquoted {@code ${p:-word}} keeps its
+     * quotes, so its quoted parts are neither split nor globbed.
+     *
+     * @param arg The source word
+     * @param env Environment view for lookups
+     * @param ctx Callbacks into the executor
+     * @return The expanded text, still carrying the quotes of the word
+     */
+    static String expandFieldsImpl(
+        final String arg,
+        final Map<String, String> env,
+        final BuiltinContext ctx
+    ) {
+        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        context.splitting(true);
+        return WordExpander.expand(arg, context);
     }
 
     /**
@@ -211,5 +212,27 @@ public final class WordExpander {
         final BuiltinContext ctx
     ) {
         return BraceExpander.expandBracedImpl(inner, env, ctx);
+    }
+
+    private static String expand(final String arg, final ExpansionContext context) {
+        String current = TildeExpander.expandTilde(arg, context.env());
+        current = normaliseBackticks(current);
+        final StringBuilder expanded = context.expanded();
+        final QuoteState quotes = new QuoteState();
+        int idx = 0;
+        while (idx < current.length()) {
+            final char chr = current.charAt(idx);
+            if (Quotes.literal(quotes, chr)) {
+                expanded.append(chr);
+                idx = idx + 1;
+            } else if (chr == '\\' && idx + 1 < current.length()) {
+                expanded.append(chr).append(current.charAt(idx + 1));
+                idx = idx + 2;
+            } else {
+                context.quote(quotes.doubled());
+                idx = idx + VariableExpander.appendOneExpansion(current, idx, context);
+            }
+        }
+        return expanded.toString();
     }
 }

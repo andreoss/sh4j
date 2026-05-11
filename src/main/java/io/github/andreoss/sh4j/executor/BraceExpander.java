@@ -282,7 +282,7 @@ final class BraceExpander {
     ) {
         final String result;
         if (varvalue == null || varvalue.isEmpty()) {
-            result = BraceExpander.word(word, context);
+            result = BraceExpander.alternative(word, context);
         } else {
             result = varvalue;
         }
@@ -296,7 +296,7 @@ final class BraceExpander {
     ) {
         final String result;
         if (varvalue == null) {
-            result = BraceExpander.word(word, context);
+            result = BraceExpander.alternative(word, context);
         } else {
             result = varvalue;
         }
@@ -355,7 +355,7 @@ final class BraceExpander {
         if (varvalue == null || varvalue.isEmpty()) {
             result = "";
         } else {
-            result = BraceExpander.word(word, context);
+            result = BraceExpander.alternative(word, context);
         }
         return result;
     }
@@ -369,7 +369,7 @@ final class BraceExpander {
         if (varvalue == null) {
             result = "";
         } else {
-            result = BraceExpander.word(word, context);
+            result = BraceExpander.alternative(word, context);
         }
         return result;
     }
@@ -487,6 +487,17 @@ final class BraceExpander {
             result = varvalue;
         } else {
             result = varvalue.substring(0, varvalue.length() - match);
+        }
+        return result;
+    }
+
+    private static String alternative(final String word, final ExpansionContext context) {
+        final String result;
+        if (context.splitting() && !context.quoted()) {
+            result = WordExpander.expandFieldsImpl(word, context.env(), context.ctx());
+            context.verbatim(true);
+        } else {
+            result = BraceExpander.word(word, context);
         }
         return result;
     }

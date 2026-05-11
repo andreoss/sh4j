@@ -27,6 +27,12 @@ final class ExpansionContext {
     /** Whether the current expansion sits inside double quotes. */
     private boolean dquote;
 
+    /** Whether the expanded text is field split and quote removed later. */
+    private boolean split;
+
+    /** Whether the last braced expansion kept the quotes of its word. */
+    private boolean kept;
+
     /**
      * Creates an expansion context.
      *
@@ -43,6 +49,8 @@ final class ExpansionContext {
         this.ctx = ctx;
         this.expanded = expanded;
         this.dquote = false;
+        this.split = false;
+        this.kept = false;
     }
 
     /**
@@ -88,5 +96,42 @@ final class ExpansionContext {
      */
     void quote(final boolean inside) {
         this.dquote = inside;
+    }
+
+    /**
+     * Tells whether the expanded text is field split and quote removed later.
+     *
+     * @return True when the caller splits the text into fields
+     */
+    boolean splitting() {
+        return this.split;
+    }
+
+    /**
+     * Records whether the expanded text is field split and quote removed later.
+     *
+     * @param fields True when the caller splits the text into fields
+     */
+    void splitting(final boolean fields) {
+        this.split = fields;
+    }
+
+    /**
+     * Tells whether the last braced expansion kept the quotes of its word,
+     * so its text must not be escaped again.
+     *
+     * @return True when the text keeps its quotes
+     */
+    boolean verbatim() {
+        return this.kept;
+    }
+
+    /**
+     * Records whether the last braced expansion kept the quotes of its word.
+     *
+     * @param raw True when the text keeps its quotes
+     */
+    void verbatim(final boolean raw) {
+        this.kept = raw;
     }
 }

@@ -76,7 +76,7 @@ final class Fields {
         final String arg, final Map<String, String> env, final UnaryOperator<String> removal
     ) {
         final List<String> fields = new ArrayList<>(0);
-        final String expanded = this.shell.expandVariables(arg, env);
+        final String expanded = WordExpander.expandFieldsImpl(arg, env, this.shell);
         if (WordExpander.isQuoted(arg)) {
             fields.add(removal.apply(expanded));
         } else {

@@ -128,6 +128,7 @@ final class VariableExpander {
         final int consumed;
         final int close = new Nesting(arg).brace(idx + 2, context.quoted()) - 1;
         if (close > idx + 2) {
+            context.verbatim(false);
             final String replacement = BraceExpander.expandBracedImpl(
                 arg.substring(idx + 2, close), context
             );
@@ -136,7 +137,7 @@ final class VariableExpander {
                 consumed = 1;
             } else {
                 context.expanded().append(
-                    VariableExpander.escape(context, replacement)
+                    VariableExpander.braced(context, replacement)
                 );
                 consumed = close - idx + 1;
             }
@@ -145,6 +146,16 @@ final class VariableExpander {
             consumed = 1;
         }
         return consumed;
+    }
+
+    private static String braced(final ExpansionContext context, final String value) {
+        final String result;
+        if (context.verbatim()) {
+            result = value;
+        } else {
+            result = VariableExpander.escape(context, value);
+        }
+        return result;
     }
 
     private static String escape(final ExpansionContext context, final String value) {
