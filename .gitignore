@@ -17,4 +17,4 @@
 
 # Native-image generated reflection config (empty placeholder; native-image
 # plugin removed in Step 18, restore here if reintroduced)
-src/main/resources/META-INF/native-image/sh4j/sh4j/reflect-config.json
+src/main/resources/META-INF/native-image/io.github.andreoss/sh4j/reflect-config.json
