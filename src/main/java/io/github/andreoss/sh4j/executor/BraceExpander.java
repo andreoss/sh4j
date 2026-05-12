@@ -127,19 +127,19 @@ final class BraceExpander {
         } else if (erred != null) {
             result = erred;
         } else {
-            result = BraceExpander.patternOrEmpty(rest, varvalue);
+            result = BraceExpander.patternOrEmpty(rest, varvalue, context);
         }
         return result;
     }
 
     private static String patternOrEmpty(
-        final String rest, final String varvalue
+        final String rest, final String varvalue, final ExpansionContext context
     ) {
         final String result;
         if (varvalue == null) {
             result = "";
         } else {
-            result = BraceExpander.applyPatternOps(rest, varvalue);
+            result = PatternRemoval.apply(rest, varvalue, context);
         }
         return result;
     }
@@ -242,32 +242,6 @@ final class BraceExpander {
         } else if (rest.startsWith("?")) {
             result = BraceExpander.errorOnNull(
                 varvalue, varname, rest.substring(1), ctx
-            );
-        } else {
-            result = null;
-        }
-        return result;
-    }
-
-    private static String applyPatternOps(
-        final String rest, final String varvalue
-    ) {
-        final String result;
-        if (rest.startsWith("##")) {
-            result = BraceExpander.stripLongestPrefix(
-                varvalue, rest.substring(2)
-            );
-        } else if (rest.startsWith("#")) {
-            result = BraceExpander.stripShortestPrefix(
-                varvalue, rest.substring(1)
-            );
-        } else if (rest.startsWith("%%")) {
-            result = BraceExpander.stripLongestSuffix(
-                varvalue, rest.substring(2)
-            );
-        } else if (rest.startsWith("%")) {
-            result = BraceExpander.stripShortestSuffix(
-                varvalue, rest.substring(1)
             );
         } else {
             result = null;
@@ -412,83 +386,6 @@ final class BraceExpander {
             BraceExpander.reportMissing(ctx, varname, word, "parameter not set");
         }
         return varvalue;
-    }
-
-    private static String stripLongestPrefix(
-        final String varvalue, final String pattern
-    ) {
-        int longest = -1;
-        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
-            if (GlobExpander.globMatches(pattern, varvalue.substring(0, idx))) {
-                longest = idx;
-            }
-        }
-        final String result;
-        if (longest < 0) {
-            result = varvalue;
-        } else {
-            result = varvalue.substring(longest);
-        }
-        return result;
-    }
-
-    private static String stripShortestPrefix(
-        final String varvalue, final String pattern
-    ) {
-        int match = -1;
-        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
-            if (match < 0
-                && GlobExpander.globMatches(pattern, varvalue.substring(0, idx))) {
-                match = idx;
-            }
-        }
-        final String result;
-        if (match < 0) {
-            result = varvalue;
-        } else {
-            result = varvalue.substring(match);
-        }
-        return result;
-    }
-
-    private static String stripLongestSuffix(
-        final String varvalue, final String pattern
-    ) {
-        int longest = -1;
-        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
-            if (GlobExpander.globMatches(
-                pattern, varvalue.substring(varvalue.length() - idx)
-            )) {
-                longest = idx;
-            }
-        }
-        final String result;
-        if (longest < 0) {
-            result = varvalue;
-        } else {
-            result = varvalue.substring(0, varvalue.length() - longest);
-        }
-        return result;
-    }
-
-    private static String stripShortestSuffix(
-        final String varvalue, final String pattern
-    ) {
-        int match = -1;
-        for (int idx = 0; idx <= varvalue.length(); idx = idx + 1) {
-            if (match < 0 && GlobExpander.globMatches(
-                pattern, varvalue.substring(varvalue.length() - idx)
-            )) {
-                match = idx;
-            }
-        }
-        final String result;
-        if (match < 0) {
-            result = varvalue;
-        } else {
-            result = varvalue.substring(0, varvalue.length() - match);
-        }
-        return result;
     }
 
     private static String alternative(final String word, final ExpansionContext context) {
