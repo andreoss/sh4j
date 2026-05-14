@@ -40,10 +40,10 @@ final class InterpreterCoverageTest {
     }
 
     @Test
-    void arithmeticBinaryOperatorAtEndOfInputEvaluatesToZero() {
+    void arithmeticBinaryOperatorAtEndOfInputIsError() {
         MatcherAssert.assertThat(
-            Sh4j.INSTANCE.out("echo $((1 *))").trim(),
-            CoreMatchers.equalTo("0")
+            Sh4j.INSTANCE.out("echo $((1 *))"),
+            CoreMatchers.equalTo("")
         );
     }
 

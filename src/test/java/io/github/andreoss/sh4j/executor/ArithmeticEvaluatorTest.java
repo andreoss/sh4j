@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -262,18 +263,18 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void divByZeroIsZero() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("5 / 0", new HashMap<>()),
-            CoreMatchers.equalTo("0")
+    void divByZeroIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("5 / 0", new HashMap<>())
         );
     }
 
     @Test
-    void modByZeroIsZero() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("5 % 0", new HashMap<>()),
-            CoreMatchers.equalTo("0")
+    void modByZeroIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("5 % 0", new HashMap<>())
         );
     }
 
@@ -294,10 +295,10 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void unmatchedParenStillEvalsInner() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("(1+2", new HashMap<>()),
-            CoreMatchers.equalTo("3")
+    void unmatchedParenIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("(1+2", new HashMap<>())
         );
     }
 
@@ -454,10 +455,10 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void ternaryWithoutColon() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1?5", new HashMap<>()),
-            CoreMatchers.equalTo("5")
+    void ternaryWithoutColonIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("1?5", new HashMap<>())
         );
     }
 
@@ -470,10 +471,10 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void unbalancedParenAndTrailingWhitespace() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("(2+3", new HashMap<>()),
-            CoreMatchers.equalTo("5")
+    void unbalancedParenIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("(2+3", new HashMap<>())
         );
     }
 
@@ -546,34 +547,34 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void readNumberBoundaryFormsSuffix() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("123abc", new HashMap<>()),
-            CoreMatchers.equalTo("123")
+    void numberWithLetterSuffixIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("123abc", new HashMap<>())
         );
     }
 
     @Test
-    void trailingPlusOperator() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1+", new HashMap<>()),
-            CoreMatchers.equalTo("1")
+    void trailingPlusOperatorIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("1+", new HashMap<>())
         );
     }
 
     @Test
-    void trailingMultiplyOperator() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1*", new HashMap<>()),
-            CoreMatchers.equalTo("0")
+    void trailingMultiplyOperatorIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("1*", new HashMap<>())
         );
     }
 
     @Test
-    void trailingLessThanOperator() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1<", new HashMap<>()),
-            CoreMatchers.equalTo("0")
+    void trailingLessThanOperatorIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("1<", new HashMap<>())
         );
     }
 
@@ -642,10 +643,10 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void whitespaceBeforeEndOfInputEndsTheList() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("1 +  ", new HashMap<>()),
-            CoreMatchers.equalTo("1")
+    void trailingOperatorBeforeWhitespaceIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("1 +  ", new HashMap<>())
         );
     }
 
@@ -658,10 +659,10 @@ final class ArithmeticEvaluatorTest {
     }
 
     @Test
-    void nonDecimalDigitStopsNumberParsing() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("0z12", new HashMap<>()),
-            CoreMatchers.equalTo("0")
+    void nonDecimalDigitIsError() {
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("0z12", new HashMap<>())
         );
     }
 }

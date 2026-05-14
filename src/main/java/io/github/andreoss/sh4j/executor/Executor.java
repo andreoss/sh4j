@@ -221,9 +221,20 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String evalArithmetic(final String expr, final Map<String, String> env) {
-        return this.arith.evaluate(
-            expr, new ArithmeticScope(env, this.environmentMap())
-        );
+        String result = "";
+        boolean fatal = false;
+        try {
+            result = this.arith.evaluate(
+                expr, new ArithmeticScope(env, this.environmentMap())
+            );
+        } catch (final ArithmeticException ex) {
+            this.err.println(String.format("sh: %s: %s", expr.trim(), ex.getMessage()));
+            fatal = true;
+        }
+        if (fatal) {
+            throw new ExitSignal(1);
+        }
+        return result;
     }
 
     @Override

@@ -45,22 +45,28 @@ final class ExecutorArithmeticTernaryTest {
     void arithmeticAssignDivByZeroFirst() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("0", new Executor().expandVariables("$((x /= 0))", env));
+        Assertions.assertThrows(
+            ExitSignal.class,
+            () -> new Executor().expandVariables("$((x /= 0))", env)
+        );
     }
 
     @Test
     void arithmeticAssignDivByZeroSecond() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        new Executor().expandVariables("$((x /= 0))", env);
-        Assertions.assertEquals("0", env.get("x"));
+        new Executor().expandVariables("$((0 ? (x /= 0) : 1))", env);
+        Assertions.assertEquals("10", env.get("x"));
     }
 
     @Test
     void arithmeticAssignModByZero() {
         final Map<String, String> env = new HashMap<>();
         env.put("x", "10");
-        Assertions.assertEquals("0", new Executor().expandVariables("$((x %= 0))", env));
+        Assertions.assertThrows(
+            ExitSignal.class,
+            () -> new Executor().expandVariables("$((x %= 0))", env)
+        );
     }
 
     @Test

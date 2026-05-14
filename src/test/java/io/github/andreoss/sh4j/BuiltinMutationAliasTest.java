@@ -176,7 +176,7 @@ final class BuiltinMutationAliasTest {
             )
         );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
-        Assertions.assertEquals(String.format("1%n"), Sh4j.INSTANCE.out("echo $((1+))"));
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("echo $((1+))"));
     }
 
     @Test
@@ -190,7 +190,7 @@ final class BuiltinMutationAliasTest {
         );
         Sh4j.INSTANCE.out("echo $((unknownvar+1))");
         Sh4j.INSTANCE.out("echo $((1+))");
-        Assertions.assertEquals(String.format("0%n"), Sh4j.INSTANCE.out("echo $((x=))"));
+        Assertions.assertEquals("", Sh4j.INSTANCE.out("echo $((x=))"));
     }
 
     @Test

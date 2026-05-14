@@ -114,16 +114,16 @@ final class PosixArithmeticTest {
     @Test
     void selfReferenceDoesNotHang() {
         Assertions.assertEquals(
-            String.format("1%ndone%n"),
+            "",
             Sh4j.INSTANCE.out("x=x; echo \"$((x+1))\"; echo done")
         );
     }
 
     @Test
-    void postIncrementDoesNotCrash() {
+    void postIncrementIsErrorWithoutCrash() {
         Assertions.assertEquals(
-            String.format("1%n"),
-            Sh4j.INSTANCE.out("x=1; echo \"$((x++))\"")
+            "",
+            Sh4j.INSTANCE.out("x=1; echo \"$((x++))\"; echo after")
         );
     }
 }

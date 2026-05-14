@@ -60,10 +60,23 @@ public final class ArithmeticEvaluator {
         final String result;
         try {
             result = String.valueOf(
-                this.parseArithmetic(new ArithmeticCursor(expr.trim()))
+                this.whole(new ArithmeticCursor(expr))
             );
         } finally {
             this.scope = prev;
+        }
+        return result;
+    }
+
+    private int whole(final ArithmeticCursor cursor) {
+        cursor.skipWhitespace();
+        int result = 0;
+        if (!cursor.eof()) {
+            result = this.parseArithmetic(cursor);
+            cursor.skipWhitespace();
+            if (!cursor.eof()) {
+                throw ArithmeticEvaluator.unexpected(cursor, cursor.pos());
+            }
         }
         return result;
     }
@@ -83,9 +96,13 @@ public final class ArithmeticEvaluator {
             result = this.parseTernary(cursor);
         } else {
             cursor.pos(match.after());
+            final int cur = this.readEnvInt(match.name());
+            final int rhs = this.parseAssignment(cursor);
+            if (ArithmeticEvaluator.isDivisionOp(match.oper())) {
+                this.divisor(rhs);
+            }
             final int value = ArithmeticEvaluator.applyAssignmentOp(
-                match.oper(), this.readEnvInt(match.name()),
-                this.parseAssignment(cursor)
+                match.oper(), cur, rhs
             );
             if (!this.mute) {
                 this.scope.assign(match.name(), value);
@@ -195,6 +212,10 @@ public final class ArithmeticEvaluator {
         return result;
     }
 
+    private static boolean isDivisionOp(final String oper) {
+        return "/".equals(oper) || "%".equals(oper);
+    }
+
     private static boolean isAdditiveOp(final String oper) {
         return "+".equals(oper) || "-".equals(oper);
     }
@@ -247,6 +268,13 @@ public final class ArithmeticEvaluator {
         return result;
     }
 
+    private int divisor(final int rhs) {
+        if (rhs == 0 && !this.mute) {
+            throw new ArithmeticException("division by zero");
+        }
+        return rhs;
+    }
+
     private static int safeDivide(final int cur, final int rhs) {
         final int result;
         if (rhs == 0) {
@@ -279,14 +307,15 @@ public final class ArithmeticEvaluator {
     }
 
     private int nested(final String value) {
-        int result = 0;
-        if (!value.isEmpty() && this.depth < 64) {
-            this.depth = this.depth + 1;
-            try {
-                result = this.parseArithmetic(new ArithmeticCursor(value));
-            } finally {
-                this.depth = this.depth - 1;
-            }
+        if (this.depth >= 64) {
+            throw new ArithmeticException("expression recursion level exceeded");
+        }
+        this.depth = this.depth + 1;
+        final int result;
+        try {
+            result = this.whole(new ArithmeticCursor(value));
+        } finally {
+            this.depth = this.depth - 1;
         }
         return result;
     }
@@ -304,9 +333,7 @@ public final class ArithmeticEvaluator {
             final int truthy = this.parseAssignment(cursor);
             this.mute = muted;
             cursor.skipWhitespace();
-            if (cursor.currentIs(':')) {
-                cursor.advance();
-            }
+            ArithmeticEvaluator.expect(cursor, ':');
             if (cond != 0) {
                 this.mute = true;
             }
@@ -503,12 +530,12 @@ public final class ArithmeticEvaluator {
                 } else if (chr == '/') {
                     cursor.advance();
                     value = ArithmeticEvaluator.safeDivide(
-                        value, this.parseFactor(cursor)
+                        value, this.divisor(this.parseFactor(cursor))
                     );
                 } else if (chr == '%') {
                     cursor.advance();
                     value = ArithmeticEvaluator.safeModulo(
-                        value, this.parseFactor(cursor)
+                        value, this.divisor(this.parseFactor(cursor))
                     );
                 } else {
                     done = true;
@@ -520,13 +547,10 @@ public final class ArithmeticEvaluator {
 
     private int parseFactor(final ArithmeticCursor cursor) {
         cursor.skipWhitespace();
-        final int result;
         if (cursor.eof()) {
-            result = 0;
-        } else {
-            result = this.parseFactorToken(cursor);
+            throw new ArithmeticException("syntax error: operand expected");
         }
-        return result;
+        return this.parseFactorToken(cursor);
     }
 
     private int parseFactorToken(final ArithmeticCursor cursor) {
@@ -557,9 +581,7 @@ public final class ArithmeticEvaluator {
         cursor.advance();
         final int result = this.parseArithmetic(cursor);
         cursor.skipWhitespace();
-        if (cursor.currentIs(')')) {
-            cursor.advance();
-        }
+        ArithmeticEvaluator.expect(cursor, ')');
         return result;
     }
 
@@ -594,7 +616,7 @@ public final class ArithmeticEvaluator {
             cursor.advance();
         }
         if (cursor.pos() == start) {
-            cursor.advance();
+            throw ArithmeticEvaluator.unexpected(cursor, start);
         }
         return num;
     }
@@ -631,6 +653,23 @@ public final class ArithmeticEvaluator {
             digit = -1;
         }
         return digit;
+    }
+
+    private static void expect(final ArithmeticCursor cursor, final char chr) {
+        if (!cursor.currentIs(chr)) {
+            throw new ArithmeticException(
+                String.format("syntax error: \"%s\" expected", chr)
+            );
+        }
+        cursor.advance();
+    }
+
+    private static ArithmeticException unexpected(
+        final ArithmeticCursor cursor, final int start
+    ) {
+        return new ArithmeticException(
+            String.format("syntax error: unexpected \"%s\"", cursor.text().substring(start))
+        );
     }
 
     private static boolean matchOp(
