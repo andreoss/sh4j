@@ -62,6 +62,28 @@ public final class WordExpander {
     }
 
     /**
+     * Word expansion of a word that is field split and quote removed
+     * afterwards, with every unquoted literal character of the word marked
+     * by {@link FieldSplitter#MARK}: field splitting applies only to the
+     * results of expansions (POSIX 2.6.5).
+     *
+     * @param arg The source word
+     * @param env Environment view for lookups
+     * @param ctx Callbacks into the executor
+     * @return The expanded text, still carrying the quotes of the word
+     */
+    static String expandMarkedImpl(
+        final String arg,
+        final Map<String, String> env,
+        final BuiltinContext ctx
+    ) {
+        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        context.splitting(true);
+        context.marking(true);
+        return WordExpander.expand(arg, context);
+    }
+
+    /**
      * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
      * Delegates to {@link TildeExpander}.
      *
@@ -102,7 +124,7 @@ public final class WordExpander {
             final StringBuilder out = new StringBuilder(value.length() + 4);
             for (int idx = 0; idx < value.length(); idx = idx + 1) {
                 final char chr = value.charAt(idx);
-                if (chr == '\\' || chr == '\'' || chr == '"') {
+                if (chr == '\\' || chr == '\'' || chr == '"' || chr == FieldSplitter.MARK) {
                     out.append('\\');
                 }
                 out.append(chr);

@@ -18,6 +18,12 @@ import java.util.List;
  */
 final class FieldSplitter {
 
+    /**
+     * Marks the next character as literal text of the word, which never
+     * delimits a field; quote removal drops the mark.
+     */
+    static final char MARK = '';
+
     /** The text to split. */
     private final String value;
 
@@ -83,7 +89,7 @@ final class FieldSplitter {
         int pos = start;
         while (pos < this.value.length() && !this.delimits(quotes, pos)) {
             final char chr = this.value.charAt(pos);
-            if (!Quotes.literal(quotes, chr) && chr == '\\') {
+            if (!Quotes.literal(quotes, chr) && (chr == '\\' || chr == FieldSplitter.MARK)) {
                 pos = pos + 1;
             }
             pos = pos + 1;

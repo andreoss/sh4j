@@ -24,7 +24,7 @@ final class VariableExpander {
         final char chr = arg.charAt(idx);
         final int consumed;
         if (chr != '$' || idx + 1 >= arg.length()) {
-            context.expanded().append(chr);
+            VariableExpander.literal(context, chr);
             consumed = 1;
         } else {
             final char next = arg.charAt(idx + 1);
@@ -146,6 +146,13 @@ final class VariableExpander {
             consumed = 1;
         }
         return consumed;
+    }
+
+    private static void literal(final ExpansionContext context, final char chr) {
+        if (context.marking() && !context.quoted()) {
+            context.expanded().append(FieldSplitter.MARK);
+        }
+        context.expanded().append(chr);
     }
 
     private static String braced(final ExpansionContext context, final String value) {

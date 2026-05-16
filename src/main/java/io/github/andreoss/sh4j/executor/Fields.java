@@ -76,14 +76,10 @@ final class Fields {
         final String arg, final Map<String, String> env, final UnaryOperator<String> removal
     ) {
         final List<String> fields = new ArrayList<>(0);
-        final String expanded = WordExpander.expandFieldsImpl(arg, env, this.shell);
-        if (WordExpander.isQuoted(arg)) {
-            fields.add(removal.apply(expanded));
-        } else {
-            final String ifsvalue = env.getOrDefault("IFS", Variables.DEFAULT_IFS);
-            for (final String field : WordExpander.splitFields(expanded, ifsvalue)) {
-                fields.add(removal.apply(field));
-            }
+        final String expanded = WordExpander.expandMarkedImpl(arg, env, this.shell);
+        final String ifsvalue = env.getOrDefault("IFS", Variables.DEFAULT_IFS);
+        for (final String field : WordExpander.splitFields(expanded, ifsvalue)) {
+            fields.add(removal.apply(field));
         }
         return fields;
     }

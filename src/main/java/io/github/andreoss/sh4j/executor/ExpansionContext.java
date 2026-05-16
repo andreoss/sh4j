@@ -33,6 +33,9 @@ final class ExpansionContext {
     /** Whether the last braced expansion kept the quotes of its word. */
     private boolean kept;
 
+    /** Whether unquoted literal characters of the word are marked. */
+    private boolean mark;
+
     /**
      * Creates an expansion context.
      *
@@ -51,6 +54,7 @@ final class ExpansionContext {
         this.dquote = false;
         this.split = false;
         this.kept = false;
+        this.mark = false;
     }
 
     /**
@@ -133,5 +137,24 @@ final class ExpansionContext {
      */
     void verbatim(final boolean raw) {
         this.kept = raw;
+    }
+
+    /**
+     * Tells whether unquoted literal characters of the word are marked, so
+     * that field splitting never delimits at them.
+     *
+     * @return True when literal characters are marked
+     */
+    boolean marking() {
+        return this.mark;
+    }
+
+    /**
+     * Records whether unquoted literal characters of the word are marked.
+     *
+     * @param literal True when literal characters are marked
+     */
+    void marking(final boolean literal) {
+        this.mark = literal;
     }
 }

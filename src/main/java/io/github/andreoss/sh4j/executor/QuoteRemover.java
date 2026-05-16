@@ -62,7 +62,7 @@ final class QuoteRemover {
                 this.literal(result, word.charAt(idx + 1));
                 idx = idx + 2;
             } else {
-                result.append(chr);
+                QuoteRemover.unquoted(result, chr);
                 idx = idx + 1;
             }
         }
@@ -104,6 +104,12 @@ final class QuoteRemover {
             next = idx + 1;
         }
         return next;
+    }
+
+    private static void unquoted(final StringBuilder result, final char chr) {
+        if (chr != FieldSplitter.MARK) {
+            result.append(chr);
+        }
     }
 
     private static boolean isEscaped(final String word, final int idx) {
