@@ -41,12 +41,15 @@ final class ExternalCommand {
      *
      * @param name The command name
      * @param env The environment holding {@code PATH}
+     * @param cwd The shell working directory for relative names
      * @return The executable path, or null when not found
      */
-    static String resolve(final String name, final Map<String, String> env) {
+    static String resolve(
+        final String name, final Map<String, String> env, final File cwd
+    ) {
         final String result;
         if (name.contains("/")) {
-            if (new File(name).isFile()) {
+            if (ExternalCommand.within(cwd, name).isFile()) {
                 result = name;
             } else {
                 result = null;
@@ -56,7 +59,7 @@ final class ExternalCommand {
             if (path == null || path.isEmpty()) {
                 result = null;
             } else {
-                result = ExternalCommand.search(path, name);
+                result = ExternalCommand.search(path, name, cwd);
             }
         }
         return result;
@@ -71,7 +74,9 @@ final class ExternalCommand {
      * @return The exit status of the process
      */
     int run(final SimpleCommand cmd, final String name, final Map<String, String> cenv) {
-        final String resolved = ExternalCommand.resolve(name, cenv);
+        final String resolved = ExternalCommand.resolve(
+            name, cenv, this.shell.currentDirectory()
+        );
         final int code;
         if (resolved == null) {
             code = ExternalCommand.NOT_FOUND;
@@ -224,13 +229,15 @@ final class ExternalCommand {
         return code;
     }
 
-    private static String search(final String path, final String name) {
+    private static String search(
+        final String path, final String name, final File cwd
+    ) {
         String found = null;
         final String[] dirs = path.split(":", -1);
         for (final String dir : dirs) {
             final File file;
             if (dir.isEmpty()) {
-                file = new File(name);
+                file = new File(cwd, name);
             } else {
                 file = new File(dir, name);
             }
@@ -240,5 +247,13 @@ final class ExternalCommand {
             }
         }
         return found;
+    }
+
+    private static File within(final File cwd, final String name) {
+        File file = new File(name);
+        if (!file.isAbsolute()) {
+            file = new File(cwd, name);
+        }
+        return file;
     }
 }

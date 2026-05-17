@@ -306,7 +306,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public String resolveCommand(final String name) {
-        return ExternalCommand.resolve(name, this.vars.table());
+        return ExternalCommand.resolve(name, this.vars.table(), this.cwd);
     }
 
     @Override

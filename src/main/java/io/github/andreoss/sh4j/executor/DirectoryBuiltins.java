@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -23,7 +22,7 @@ final class DirectoryBuiltins {
     }
 
     /**
-     * Implementation of {@code cd [target]}.
+     * Implementation of {@code cd [-L|-P] [--] [target]}.
      *
      * @param self The context
      * @param args The arguments
@@ -35,31 +34,7 @@ final class DirectoryBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        final Map<String, String> environment = self.environmentMap();
-        String target;
-        int code = 0;
-        if (args.isEmpty()) {
-            target = environment.get("HOME");
-            if (target == null) {
-                code = 1;
-            }
-        } else {
-            target = self.expandVariables(args.get(0), env);
-            if ("-".equals(target)) {
-                target = environment.get("OLDPWD");
-                code = DirectoryBuiltins.reportOldPwd(self, target);
-            }
-        }
-        if (code == 0) {
-            final File dir = new File(target);
-            if (dir.isDirectory()) {
-                code = applyChdir(environment, dir);
-                self.setCurrentDirectory(new File(environment.getOrDefault("PWD", ".")));
-            } else {
-                code = 1;
-            }
-        }
-        return code;
+        return new ChangeDirectory(self, env).run(args);
     }
 
     /**
@@ -150,34 +125,6 @@ final class DirectoryBuiltins {
             } catch (final NumberFormatException ex) {
                 code = 1;
             }
-        }
-        return code;
-    }
-
-    private static int applyChdir(final Map<String, String> environment, final File dir) {
-        String abs;
-        try {
-            abs = dir.getCanonicalPath();
-        } catch (final IOException ex) {
-            abs = dir.getAbsolutePath();
-        }
-        final String oldpwd = environment.get("PWD");
-        if (oldpwd != null) {
-            environment.put("OLDPWD", oldpwd);
-        }
-        environment.put("PWD", abs);
-        return 0;
-    }
-
-    private static int reportOldPwd(
-        final BuiltinIo outlet, final String old
-    ) {
-        final int code;
-        if (old == null) {
-            code = 1;
-        } else {
-            outlet.outStream().println(old);
-            code = 0;
         }
         return code;
     }
