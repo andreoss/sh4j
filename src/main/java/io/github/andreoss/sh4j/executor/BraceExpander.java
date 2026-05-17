@@ -86,8 +86,18 @@ final class BraceExpander {
             final String varname = inner.substring(0, nameend);
             result = BraceExpander.applyOps(
                 inner.substring(nameend),
-                context.ctx().lookupVariable(varname, context.env()), varname, context
+                BraceExpander.value(varname, context), varname, context
             );
+        }
+        return result;
+    }
+
+    private static String value(final String varname, final ExpansionContext context) {
+        final String result;
+        if ("@".equals(varname) && context.listing()) {
+            result = Breaks.joined(context.ctx());
+        } else {
+            result = context.ctx().lookupVariable(varname, context.env());
         }
         return result;
     }
@@ -393,6 +403,12 @@ final class BraceExpander {
         if (context.splitting() && !context.quoted()) {
             result = WordExpander.expandFieldsImpl(word, context.env(), context.ctx());
             context.verbatim(true);
+        } else if (context.splitting()) {
+            result = QuoteRemover.removeQuotes(
+                WordExpander.expandNestedImpl(
+                    String.join("", "\"", word, "\""), context.env(), context.ctx()
+                )
+            );
         } else {
             result = BraceExpander.word(word, context);
         }

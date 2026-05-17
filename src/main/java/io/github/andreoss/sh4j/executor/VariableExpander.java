@@ -28,7 +28,7 @@ final class VariableExpander {
             consumed = 1;
         } else {
             final char next = arg.charAt(idx + 1);
-            final String special = context.ctx().getSpecialParam(next);
+            final String special = VariableExpander.special(context, next);
             if (special != null) {
                 context.expanded().append(
                     VariableExpander.escape(context, special)
@@ -146,6 +146,16 @@ final class VariableExpander {
             consumed = 1;
         }
         return consumed;
+    }
+
+    private static String special(final ExpansionContext context, final char name) {
+        final String result;
+        if (name == '@' && context.listing()) {
+            result = Breaks.joined(context.ctx());
+        } else {
+            result = context.ctx().getSpecialParam(name);
+        }
+        return result;
     }
 
     private static void literal(final ExpansionContext context, final char chr) {

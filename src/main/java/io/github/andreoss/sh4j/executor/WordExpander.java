@@ -84,6 +84,27 @@ public final class WordExpander {
     }
 
     /**
+     * Word expansion of the double-quoted word of a double-quoted braced
+     * expansion whose text is field split later: each {@code $@} of the
+     * word joins the positional parameters by {@link FieldSplitter#BREAK}.
+     *
+     * @param arg The source word, in double quotes
+     * @param env Environment view for lookups
+     * @param ctx Callbacks into the executor
+     * @return The expanded text, still carrying the quotes of the word
+     */
+    static String expandNestedImpl(
+        final String arg,
+        final Map<String, String> env,
+        final BuiltinContext ctx
+    ) {
+        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        context.splitting(true);
+        context.nested(true);
+        return WordExpander.expand(arg, context);
+    }
+
+    /**
      * Tilde-expansion (POSIX 2.6.1): {@code ~}, {@code ~+}.
      * Delegates to {@link TildeExpander}.
      *

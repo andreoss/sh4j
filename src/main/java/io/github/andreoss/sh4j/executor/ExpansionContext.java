@@ -36,6 +36,9 @@ final class ExpansionContext {
     /** Whether unquoted literal characters of the word are marked. */
     private boolean mark;
 
+    /** Whether the word sits inside a double-quoted braced expansion. */
+    private boolean inner;
+
     /**
      * Creates an expansion context.
      *
@@ -55,6 +58,7 @@ final class ExpansionContext {
         this.split = false;
         this.kept = false;
         this.mark = false;
+        this.inner = false;
     }
 
     /**
@@ -156,5 +160,25 @@ final class ExpansionContext {
      */
     void marking(final boolean literal) {
         this.mark = literal;
+    }
+
+    /**
+     * Records whether the word sits inside a double-quoted braced
+     * expansion, so that a {@code $@} in it counts as double-quoted.
+     *
+     * @param within True inside a double-quoted braced expansion
+     */
+    void nested(final boolean within) {
+        this.inner = within;
+    }
+
+    /**
+     * Tells whether a {@code $@} expands to one field per positional
+     * parameter, joined by {@link FieldSplitter#BREAK}.
+     *
+     * @return True when the text is split later and {@code $@} is quoted
+     */
+    boolean listing() {
+        return this.split && (this.dquote || this.inner);
     }
 }
