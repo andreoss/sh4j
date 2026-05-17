@@ -43,4 +43,14 @@ final class Quotes {
         }
         return result;
     }
+
+    /**
+     * Quotes a text so that word expansion yields it unchanged as one field.
+     *
+     * @param text The text
+     * @return A single-quoted word
+     */
+    static String word(final String text) {
+        return String.format("'%s'", text.replace("'", "'\\''"));
+    }
 }

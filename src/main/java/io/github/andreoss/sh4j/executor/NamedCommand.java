@@ -78,7 +78,7 @@ final class NamedCommand {
     ) {
         final SimpleCommand command = new SimpleCommand(name);
         for (final String arg : args) {
-            command.addArgument(arg);
+            command.addArgument(Quotes.word(arg));
         }
         return this.run(new CommandCall(command, name, new HashMap<>(env), true));
     }
@@ -125,24 +125,29 @@ final class NamedCommand {
         if (NamedCommand.SPECIAL.contains(call.name())) {
             this.apply(cmd.getAssignments(), call.env());
         }
-        final Integer result = this.special(call);
         final int code;
-        if (result == null) {
-            code = new ExternalCommand(this.shell).run(cmd, call.name(), call.env());
+        if (this.shell.isBuiltinName(call.name())) {
+            code = this.special(call);
         } else {
-            code = result;
+            code = new ExternalCommand(this.shell).run(cmd, call.name(), call.env());
         }
         return code;
     }
 
-    private Integer special(final CommandCall call) {
+    private int special(final CommandCall call) {
         final SimpleCommand cmd = call.cmd();
-        Integer result;
+        int result;
         boolean fatal = false;
         try {
             result = this.shell.builtin(
                 call.name(),
-                new Invocation(cmd.getArguments(), call.env(), cmd.getAssignments())
+                new Invocation(
+                    new BuiltinWords(this.shell).expand(
+                        call.name(), cmd.getArguments(), call.env()
+                    ),
+                    call.env(),
+                    cmd.getAssignments()
+                )
             );
         } catch (final SpecialError ex) {
             result = ex.getCode();

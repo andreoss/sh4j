@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,19 +30,16 @@ final class AliasBuiltins {
      */
     static int doAlias(final BuiltinContext self, final Invocation call) {
         final List<String> args = call.arguments();
-        final List<String> assigns = call.assignments();
         final Map<String, String> aliases = self.aliases();
         int code = 0;
-        if (args.isEmpty() && assigns.isEmpty()) {
+        if (args.isEmpty()) {
             for (final Map.Entry<String, String> entry : aliases.entrySet()) {
                 self.outStream().println(
                     String.format("%s='%s'", entry.getKey(), entry.getValue())
                 );
             }
         } else {
-            final List<String> all = new ArrayList<>(args);
-            all.addAll(assigns);
-            for (final String arg : all) {
+            for (final String arg : args) {
                 if (!AliasBuiltins.applyAliasArg(self, aliases, arg)) {
                     code = 1;
                 }
@@ -95,11 +91,7 @@ final class AliasBuiltins {
         boolean result = true;
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
-            String value = arg.substring(eqidx + 1);
-            if (AliasBuiltins.isQuoteWrapped(value)) {
-                value = value.substring(1, value.length() - 1);
-            }
-            aliases.put(arg.substring(0, eqidx), value);
+            aliases.put(arg.substring(0, eqidx), arg.substring(eqidx + 1));
         } else if (aliases.containsKey(arg)) {
             self.outStream().println(
                 String.format("%s='%s'", arg, aliases.get(arg))
@@ -108,12 +100,5 @@ final class AliasBuiltins {
             result = false;
         }
         return result;
-    }
-
-    private static boolean isQuoteWrapped(final String text) {
-        final int edge = text.length() - 1;
-        return edge >= 1
-            && (text.charAt(0) == '\'' || text.charAt(0) == '"')
-            && text.charAt(edge) == text.charAt(0);
     }
 }

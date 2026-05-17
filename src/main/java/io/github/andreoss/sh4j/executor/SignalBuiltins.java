@@ -44,7 +44,7 @@ final class SignalBuiltins {
             self.outStream().println("HUP INT QUIT KILL TERM");
             code = 0;
         } else {
-            code = SignalBuiltins.killAll(self, args, env);
+            code = SignalBuiltins.killAll(args);
         }
         return code;
     }
@@ -69,8 +69,7 @@ final class SignalBuiltins {
         if (args.isEmpty()) {
             self.waitForBackgroundJobs();
         } else {
-            for (final String arg : args) {
-                final String expanded = self.expandVariables(arg, env);
+            for (final String expanded : args) {
                 try {
                     code = self.jobManager().waitForPid(Long.parseLong(expanded));
                 } catch (final NumberFormatException ex) {
@@ -81,11 +80,7 @@ final class SignalBuiltins {
         return code;
     }
 
-    private static int killAll(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
+    private static int killAll(final List<String> args) {
         final int first = SignalBuiltins.firstPid(args);
         final boolean forcibly = SignalBuiltins.forcible(args, first);
         int code = 0;
@@ -94,9 +89,7 @@ final class SignalBuiltins {
         }
         int idx = first;
         while (idx < args.size() && code == 0) {
-            code = SignalBuiltins.signalOne(
-                self.expandVariables(args.get(idx), env), forcibly
-            );
+            code = SignalBuiltins.signalOne(args.get(idx), forcibly);
             idx += 1;
         }
         return code;

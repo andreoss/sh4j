@@ -84,8 +84,7 @@ final class VariableBuiltins {
             final int eqidx = arg.indexOf('=');
             if (eqidx >= 0) {
                 final String name = arg.substring(0, eqidx);
-                final String expanded = self.expandVariables(arg.substring(eqidx + 1), env);
-                environment.put(name, WordExpander.removeQuotes(expanded));
+                environment.put(name, arg.substring(eqidx + 1));
                 self.markExported(name);
             } else {
                 environment.putIfAbsent(arg, "");
@@ -105,7 +104,6 @@ final class VariableBuiltins {
      */
     static int doReadonly(final BuiltinContext self, final Invocation call) {
         final List<String> all = new ArrayList<>(call.arguments());
-        all.addAll(call.assignments());
         if (!all.isEmpty() && "-p".equals(all.get(0))) {
             all.remove(0);
         }
@@ -113,7 +111,7 @@ final class VariableBuiltins {
             VariableBuiltins.printReadonly(self);
         } else {
             for (final String arg : all) {
-                VariableBuiltins.markReadonly(self, arg, call.env());
+                VariableBuiltins.markReadonly(self, arg);
             }
         }
         return 0;
@@ -136,7 +134,7 @@ final class VariableBuiltins {
         int code = 0;
         if (!args.isEmpty()) {
             try {
-                shifts = Integer.parseInt(self.expandVariables(args.get(0), env));
+                shifts = Integer.parseInt(args.get(0));
             } catch (final NumberFormatException ex) {
                 code = 1;
             }
@@ -165,18 +163,11 @@ final class VariableBuiltins {
         }
     }
 
-    private static void markReadonly(
-        final BuiltinContext self, final String arg, final Map<String, String> env
-    ) {
+    private static void markReadonly(final BuiltinContext self, final String arg) {
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
             final String name = arg.substring(0, eqidx);
-            self.environmentMap().put(
-                name,
-                WordExpander.removeQuotes(
-                    self.expandVariables(arg.substring(eqidx + 1), env)
-                )
-            );
+            self.environmentMap().put(name, arg.substring(eqidx + 1));
             self.markReadonly(name);
         } else {
             self.markReadonly(arg);

@@ -34,7 +34,7 @@ final class DirectoryBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        return new ChangeDirectory(self, env).run(args);
+        return new ChangeDirectory(self).run(args);
     }
 
     /**
@@ -119,7 +119,7 @@ final class DirectoryBuiltins {
                     "SH4J_UMASK",
                     String.format(
                         "%04o",
-                        Integer.parseInt(self.expandVariables(args.get(idx), env), 8)
+                        Integer.parseInt(args.get(idx), 8)
                     )
                 );
             } catch (final NumberFormatException ex) {

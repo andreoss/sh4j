@@ -115,7 +115,7 @@ final class PosixRegressionExecCommandTest {
     void exitTrapSeesTheStatusTheShellExitsWithFirst() {
         Assertions.assertEquals(
             7,
-            Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7").exitCode()
+            Sh4j.INSTANCE.runFull("trap 'echo st=$?' EXIT; exit 7").exitCode()
         );
     }
 
@@ -123,7 +123,7 @@ final class PosixRegressionExecCommandTest {
     void exitTrapSeesTheStatusTheShellExitsWithSecond() {
         Assertions.assertEquals(
             String.format("st=7%n"),
-            Sh4j.INSTANCE.runFull("trap \"echo st=$?\" EXIT; exit 7").stdout()
+            Sh4j.INSTANCE.runFull("trap 'echo st=$?' EXIT; exit 7").stdout()
         );
     }
 

@@ -65,7 +65,7 @@ final class SetCommand {
     /**
      * Applies the options and positional parameters.
      *
-     * @param env Environment for expanding the parameters
+     * @param env The environment
      * @return The exit code: 0
      */
     int run(final Map<String, String> env) {
@@ -74,11 +74,9 @@ final class SetCommand {
         }
         this.self.setShellFlags(this.flags);
         if (this.sawdash || this.idx < this.args.size()) {
-            final List<String> params = new ArrayList<>(0);
-            for (int aidx = this.idx; aidx < this.args.size(); aidx = aidx + 1) {
-                params.addAll(this.self.expandArguments(this.args.get(aidx), env));
-            }
-            this.self.setPositionalParams(params);
+            this.self.setPositionalParams(
+                new ArrayList<>(this.args.subList(this.idx, this.args.size()))
+            );
         }
         return 0;
     }

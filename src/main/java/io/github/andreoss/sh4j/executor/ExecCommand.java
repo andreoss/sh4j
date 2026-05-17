@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -66,10 +67,14 @@ final class ExecCommand {
         if (new Noclobber(this.shell).refuses(cmd.getRedirections())) {
             throw new ExitSignal(1);
         }
-        if (cmd.getArguments().isEmpty()) {
+        final List<String> words = new ArrayList<>(0);
+        for (final String arg : cmd.getArguments()) {
+            words.addAll(this.shell.expandArguments(arg, cenv));
+        }
+        if (words.isEmpty()) {
             this.bind(cmd.getRedirections());
         } else {
-            this.replace(cmd, cenv);
+            this.replace(words, cmd, cenv);
         }
         return 0;
     }
@@ -87,12 +92,13 @@ final class ExecCommand {
         }
     }
 
-    private void replace(final SimpleCommand cmd, final Map<String, String> cenv) {
-        final List<String> args = cmd.getArguments();
-        final String name = this.shell.expandVariables(args.get(0), cenv);
+    private void replace(
+        final List<String> words, final SimpleCommand cmd, final Map<String, String> cenv
+    ) {
+        final String name = words.get(0);
         final SimpleCommand external = new SimpleCommand(name);
-        for (int idx = 1; idx < args.size(); idx = idx + 1) {
-            external.addArgument(args.get(idx));
+        for (final String word : words.subList(1, words.size())) {
+            external.addArgument(Quotes.word(word));
         }
         for (final Redirection redir : cmd.getRedirections()) {
             external.addRedirection(redir);

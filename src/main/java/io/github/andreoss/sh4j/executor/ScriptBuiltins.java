@@ -43,14 +43,7 @@ final class ScriptBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        final StringBuilder buf = new StringBuilder();
-        for (final String arg : args) {
-            if (buf.length() > 0) {
-                buf.append(' ');
-            }
-            buf.append(WordExpander.removeQuotes(self.expandVariables(arg, env)));
-        }
-        final String input = buf.toString();
+        final String input = String.join(" ", args);
         final int code;
         if (input.isEmpty()) {
             code = 0;
@@ -91,7 +84,7 @@ final class ScriptBuiltins {
             }
             code = 0;
         } else {
-            final String action = WordExpander.removeQuotes(args.get(0));
+            final String action = args.get(0);
             for (int idx = 1; idx < args.size(); idx = idx + 1) {
                 self.setTrap(
                     args.get(idx).toUpperCase(Locale.ROOT), action
@@ -136,9 +129,7 @@ final class ScriptBuiltins {
         if (args.isEmpty()) {
             code = 1;
         } else {
-            final String path = WordExpander.removeQuotes(
-                self.expandVariables(args.get(0), env)
-            );
+            final String path = args.get(0);
             final Optional<String> source = ScriptBuiltins.readSource(self, path);
             if (!source.isPresent()) {
                 self.errStream().println(String.format("sh: %s: cannot open", path));

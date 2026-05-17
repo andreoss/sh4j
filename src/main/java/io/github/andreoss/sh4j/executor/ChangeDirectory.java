@@ -25,19 +25,12 @@ final class ChangeDirectory {
     private final BuiltinContext shell;
 
     /**
-     * The environment for word expansion.
-     */
-    private final Map<String, String> env;
-
-    /**
      * Ctor.
      *
      * @param shell The built-in context
-     * @param env The environment for word expansion
      */
-    ChangeDirectory(final BuiltinContext shell, final Map<String, String> env) {
+    ChangeDirectory(final BuiltinContext shell) {
         this.shell = shell;
-        this.env = env;
     }
 
     /**
@@ -57,7 +50,7 @@ final class ChangeDirectory {
                 code = 1;
             }
         } else {
-            target = this.shell.expandVariables(args.get(idx), this.env);
+            target = args.get(idx);
             if ("-".equals(target)) {
                 target = environment.get("OLDPWD");
                 code = ChangeDirectory.reportOldPwd(this.shell, target);

@@ -38,16 +38,7 @@ final class CommandBuiltins {
             newline = false;
             start = 1;
         }
-        boolean firstfield = true;
-        for (int idx = start; idx < args.size(); idx = idx + 1) {
-            for (final String field : self.expandArguments(args.get(idx), env)) {
-                if (!firstfield) {
-                    self.outStream().print(" ");
-                }
-                self.outStream().print(field);
-                firstfield = false;
-            }
-        }
+        self.outStream().print(String.join(" ", args.subList(start, args.size())));
         if (newline) {
             self.outStream().println();
         }
@@ -70,7 +61,7 @@ final class CommandBuiltins {
         int code = 0;
         if (!args.isEmpty()) {
             try {
-                code = Integer.parseInt(self.expandVariables(args.get(0), env));
+                code = Integer.parseInt(args.get(0));
             } catch (final NumberFormatException ex) {
                 code = 1;
             }
@@ -92,8 +83,7 @@ final class CommandBuiltins {
         final Map<String, String> env
     ) {
         int code = 0;
-        for (final String arg : args) {
-            final String expanded = self.expandVariables(arg, env);
+        for (final String expanded : args) {
             if (self.functionsMap().containsKey(expanded)) {
                 self.outStream().println(String.format("%s is a function", expanded));
             } else if (self.isBuiltinName(expanded)) {
@@ -138,7 +128,7 @@ final class CommandBuiltins {
                 code = 0;
             }
         } else {
-            final String name = self.expandVariables(args.get(idx), env);
+            final String name = args.get(idx);
             if (locate || verbose) {
                 code = describeCommand(self, name, verbose);
             } else {
@@ -156,11 +146,10 @@ final class CommandBuiltins {
         final Map<String, String> env
     ) {
         int code = 0;
-        for (final String arg : args) {
-            if ("-r".equals(arg)) {
+        for (final String name : args) {
+            if ("-r".equals(name)) {
                 continue;
             }
-            final String name = self.expandVariables(arg, env);
             if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
                 code = 127;
             }
