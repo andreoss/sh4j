@@ -136,7 +136,9 @@ final class InputSwap {
         if (redir.isHereDocQuoted()) {
             body = content;
         } else {
-            body = this.shell.expandVariables(content, this.shell.environmentMap());
+            body = new HereText(content).expanded(
+                text -> this.shell.expandVariables(text, this.shell.environmentMap())
+            );
         }
         return body;
     }

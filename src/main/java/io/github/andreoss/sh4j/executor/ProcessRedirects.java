@@ -93,7 +93,7 @@ final class ProcessRedirects {
     ) {
         String content = redir.getHereDocContent();
         if (content != null && !redir.isHereDocQuoted()) {
-            content = expander.apply(content);
+            content = new HereText(content).expanded(expander);
         }
         final File src = RedirectionHandler.heredocFile(content);
         if (src != null && redir.getFd() == 0) {

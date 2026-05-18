@@ -73,7 +73,7 @@ public final class Nesting {
      * @return Index just after the construct, or the text length when it
      *  is not terminated
      */
-    int skip(final int pos, final boolean quoted) {
+    public int skip(final int pos, final boolean quoted) {
         final char chr = this.text.charAt(pos);
         final int result;
         if (chr == '\\') {
