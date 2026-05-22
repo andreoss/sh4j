@@ -113,7 +113,7 @@ final class ExecutorMutationAliasTest {
     }
 
     @Test
-    void builtinInputFromMissingFileFallsBackToStdin() {
+    void builtinInputFromMissingFileDoesNotReadStdin() {
         MatcherAssert.assertThat(
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(
@@ -121,7 +121,7 @@ final class ExecutorMutationAliasTest {
                 ),
                 "read x < /nonexistent/input; echo \"$x\""
             ).stdout(),
-            CoreMatchers.equalTo(String.format("fallback%n"))
+            CoreMatchers.equalTo(String.format("%n"))
         );
     }
 

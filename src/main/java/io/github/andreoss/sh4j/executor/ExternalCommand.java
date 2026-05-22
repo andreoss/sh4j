@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.parser.SimpleCommand;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -159,7 +160,7 @@ final class ExternalCommand {
             this.shell.outStream().flush();
             this.shell.errStream().flush();
         } catch (final IOException ex) {
-            code = ExternalCommand.exitCode(ex);
+            code = this.failure(ex);
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
             code = 1;
@@ -216,6 +217,18 @@ final class ExternalCommand {
         try (InputStream stream = process.getInputStream()) {
             stream.transferTo(this.shell.outStream().bytes());
         }
+    }
+
+    private int failure(final IOException exc) {
+        final Throwable cause = exc.getCause();
+        final int code;
+        if (cause instanceof FileNotFoundException) {
+            this.shell.errStream().println(String.format("sh: %s", cause.getMessage()));
+            code = 1;
+        } else {
+            code = ExternalCommand.exitCode(exc);
+        }
+        return code;
     }
 
     private static int exitCode(final IOException exc) {

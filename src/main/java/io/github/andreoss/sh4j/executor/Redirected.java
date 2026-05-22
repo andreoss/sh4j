@@ -21,13 +21,27 @@ final class Redirected {
     /** The shell whose streams are redirected. */
     private final Executor shell;
 
+    /** True when a redirection error exits the shell (special built-in). */
+    private final boolean fatal;
+
     /**
      * Ctor.
      *
      * @param shell The shell whose streams are redirected
      */
     Redirected(final Executor shell) {
+        this(shell, false);
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param shell The shell whose streams are redirected
+     * @param fatal True when a redirection error exits the shell
+     */
+    Redirected(final Executor shell, final boolean fatal) {
         this.shell = shell;
+        this.fatal = fatal;
     }
 
     /**
@@ -40,7 +54,7 @@ final class Redirected {
     int run(final List<Redirection> redirs, final IntSupplier action) {
         final int code;
         if (new Noclobber(this.shell).refuses(redirs)) {
-            code = 1;
+            code = this.failure();
         } else {
             code = this.swapped(redirs, action);
         }
@@ -51,9 +65,11 @@ final class Redirected {
         final RedirectionHandler.StreamSwap swap = OutputSwap.apply(this.shell, redirs);
         final InputSwap input = new InputSwap(this.shell);
         final Optional<InputStream> kept = input.install(redirs);
-        int code = 1;
+        final int code;
         try {
-            if (!swap.failed()) {
+            if (swap.failed() || input.failed()) {
+                code = this.failure();
+            } else {
                 code = action.getAsInt();
             }
         } finally {
@@ -61,5 +77,12 @@ final class Redirected {
             OutputSwap.restore(this.shell, swap);
         }
         return code;
+    }
+
+    private int failure() {
+        if (this.fatal) {
+            throw new ExitSignal(1);
+        }
+        return 1;
     }
 }

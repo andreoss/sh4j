@@ -25,6 +25,9 @@ final class InputSwap {
     /** The shell whose stdin is swapped. */
     private final Executor shell;
 
+    /** True when an input redirection target could not be opened. */
+    private boolean broken;
+
     /**
      * Ctor.
      *
@@ -32,6 +35,7 @@ final class InputSwap {
      */
     InputSwap(final Executor shell) {
         this.shell = shell;
+        this.broken = false;
     }
 
     /**
@@ -55,6 +59,16 @@ final class InputSwap {
     }
 
     /**
+     * Reports on stderr an input redirection target that cannot be opened.
+     *
+     * @param shell The shell whose stderr receives the message
+     * @param target The target file
+     */
+    static void complain(final Executor shell, final File target) {
+        shell.errStream().println(String.format("sh: %s: cannot open", target.getPath()));
+    }
+
+    /**
      * Closes a stdin left behind by a swap unless it is the process stdin.
      *
      * @param kept The stdin that was live before the swap
@@ -75,6 +89,15 @@ final class InputSwap {
             replacement = this.next(redir, replacement);
         }
         return replacement.map(this::swap);
+    }
+
+    /**
+     * Tells whether an input redirection of {@link #install(List)} failed.
+     *
+     * @return True when a target could not be opened
+     */
+    boolean failed() {
+        return this.broken;
     }
 
     /**
@@ -111,7 +134,7 @@ final class InputSwap {
         } else if (type == RedirectionType.DUP_INPUT) {
             result = this.borrowed(redir, current);
         } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
-            result = InputSwap.open(InputSwap.target(this.shell, redir));
+            result = this.opened(InputSwap.target(this.shell, redir), current);
         }
         return result;
     }
@@ -163,12 +186,16 @@ final class InputSwap {
         return result;
     }
 
-    private static Optional<InputStream> open(final File target) {
+    private Optional<InputStream> opened(
+        final File target, final Optional<InputStream> current
+    ) {
         Optional<InputStream> result;
         try {
             result = Optional.of(Files.newInputStream(target.toPath()));
         } catch (final IOException ex) {
-            result = Optional.empty();
+            InputSwap.complain(this.shell, target);
+            this.broken = true;
+            result = current;
         }
         return result;
     }

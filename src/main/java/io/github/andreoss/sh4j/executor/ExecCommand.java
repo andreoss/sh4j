@@ -81,8 +81,9 @@ final class ExecCommand {
 
     private void bind(final List<Redirection> redirs) {
         final RedirectionHandler.StreamSwap swap = OutputSwap.apply(this.shell, redirs);
-        InputSwap.discard(new InputSwap(this.shell).install(redirs));
-        boolean bound = !swap.failed();
+        final InputSwap input = new InputSwap(this.shell);
+        InputSwap.discard(input.install(redirs));
+        boolean bound = !swap.failed() && !input.failed();
         for (final Redirection redir : redirs) {
             final boolean attached = this.attach(redir);
             bound = bound && attached;
@@ -142,6 +143,7 @@ final class ExecCommand {
                 Map.of(redir.getFd(), Files.newInputStream(target.toPath()))
             );
         } catch (final IOException ex) {
+            InputSwap.complain(this.shell, target);
             attached = false;
         }
         return attached;
