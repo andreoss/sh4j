@@ -532,9 +532,9 @@ final class ArithmeticEvaluatorTest {
 
     @Test
     void readNumberBoundaryFormsOctalEight() {
-        MatcherAssert.assertThat(
-            new ArithmeticEvaluator().evalArithmetic("08", new HashMap<>()),
-            CoreMatchers.equalTo("8")
+        Assertions.assertThrows(
+            ArithmeticException.class,
+            () -> new ArithmeticEvaluator().evalArithmetic("08", new HashMap<>())
         );
     }
 

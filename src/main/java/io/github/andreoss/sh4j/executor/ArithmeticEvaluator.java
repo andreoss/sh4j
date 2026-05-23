@@ -296,14 +296,7 @@ public final class ArithmeticEvaluator {
     }
 
     private int readEnvInt(final String name) {
-        final String value = this.scope.value(name).trim();
-        int result;
-        try {
-            result = Integer.parseInt(value);
-        } catch (final NumberFormatException ignored) {
-            result = this.nested(value);
-        }
-        return result;
+        return this.nested(this.scope.value(name));
     }
 
     private int nested(final String value) {
@@ -572,7 +565,7 @@ public final class ArithmeticEvaluator {
         } else if (Character.isLetter(chr) || chr == '_') {
             result = this.readIdentifier(cursor);
         } else {
-            result = ArithmeticEvaluator.readNumber(cursor);
+            result = new ArithmeticNumber(cursor).value();
         }
         return result;
     }
@@ -601,58 +594,6 @@ public final class ArithmeticEvaluator {
         final String name = cursor.text().substring(cursor.pos(), end);
         cursor.pos(end);
         return this.readEnvInt(name);
-    }
-
-    private static int readNumber(final ArithmeticCursor cursor) {
-        final int start = cursor.pos();
-        final int base = ArithmeticEvaluator.numberBase(cursor);
-        int num = 0;
-        while (!cursor.eof()) {
-            final int digit = ArithmeticEvaluator.digitAt(cursor, base);
-            if (digit < 0 || digit >= base) {
-                break;
-            }
-            num = num * base + digit;
-            cursor.advance();
-        }
-        if (cursor.pos() == start) {
-            throw ArithmeticEvaluator.unexpected(cursor, start);
-        }
-        return num;
-    }
-
-    private static int numberBase(final ArithmeticCursor cursor) {
-        int base = 10;
-        if (cursor.hasPrefix("0x") || cursor.hasPrefix("0X")) {
-            base = 16;
-            cursor.advance(2);
-        } else if (cursor.hasPrefix("0") && ArithmeticEvaluator.isOctalDigit(cursor, 1)) {
-            base = 8;
-            cursor.advance();
-        }
-        return base;
-    }
-
-    private static boolean isOctalDigit(final ArithmeticCursor cursor, final int offset) {
-        final char chr = cursor.charAt(offset);
-        return chr >= '0' && chr <= '7';
-    }
-
-    private static int digitAt(
-        final ArithmeticCursor cursor, final int base
-    ) {
-        final char chr = cursor.charAt(0);
-        final int digit;
-        if (chr >= '0' && chr <= '9') {
-            digit = chr - '0';
-        } else if (base == 16 && chr >= 'a' && chr <= 'f') {
-            digit = chr - 'a' + 10;
-        } else if (base == 16 && chr >= 'A' && chr <= 'F') {
-            digit = chr - 'A' + 10;
-        } else {
-            digit = -1;
-        }
-        return digit;
     }
 
     private static void expect(final ArithmeticCursor cursor, final char chr) {
