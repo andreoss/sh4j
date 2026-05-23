@@ -72,12 +72,15 @@ final class BuiltinRedirects {
         final RedirectionState state,
         final Redirection redir
     ) {
+        final String target = state.expand(redir.getTarget());
         BuiltinRedirects.assign(
             state,
-            BuiltinRedirects.openForWrite(
-                state.expand(redir.getTarget()),
-                redir.getType() == RedirectionType.APPEND,
-                state.base()
+            BuiltinRedirects.reported(
+                state,
+                BuiltinRedirects.openForWrite(
+                    target, redir.getType() == RedirectionType.APPEND, state.base()
+                ),
+                String.format("sh: %s: cannot create", target)
             ),
             redir.getFd()
         );
@@ -118,7 +121,11 @@ final class BuiltinRedirects {
     ) {
         BuiltinRedirects.assign(
             state,
-            BuiltinRedirects.descriptor(state.descriptors(), target),
+            BuiltinRedirects.reported(
+                state,
+                BuiltinRedirects.descriptor(state.descriptors(), target),
+                String.format("sh: %s: bad file descriptor", target)
+            ),
             desc
         );
     }
@@ -134,6 +141,16 @@ final class BuiltinRedirects {
         } else if (desc == 2) {
             state.replaceErr(stream.get());
         }
+    }
+
+    private static Optional<PrintSink> reported(
+        final RedirectionState state,
+        final Optional<PrintSink> stream, final String message
+    ) {
+        if (stream.isEmpty()) {
+            state.complain(message);
+        }
+        return stream;
     }
 
     private static Optional<PrintSink> descriptor(

@@ -83,6 +83,7 @@ final class Redirected {
         if (this.fatal) {
             throw new ExitSignal(1);
         }
+        this.shell.errexit().check(this.shell.shellFlags(), 1);
         return 1;
     }
 }

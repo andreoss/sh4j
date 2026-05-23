@@ -131,6 +131,15 @@ final class RedirectionState {
     }
 
     /**
+     * Reports a failed redirection on the live stderr.
+     *
+     * @param message The message
+     */
+    void complain(final String message) {
+        this.err.println(message);
+    }
+
+    /**
      * Returns the immutable swap record.
      *
      * @return The swap record
