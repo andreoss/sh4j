@@ -16,6 +16,14 @@ final class TildeExpander {
     private TildeExpander() {
     }
 
+    /**
+     * Expands a leading tilde-prefix. The result is treated as if quoted:
+     * it is neither field split nor taken as a pattern.
+     *
+     * @param arg The word to expand
+     * @param env Environment view (HOME, PWD)
+     * @return The word with the leading tilde-prefix resolved
+     */
     static String expandTilde(final String arg, final Map<String, String> env) {
         final String result;
         if (arg.isEmpty() || arg.charAt(0) != '~') {
@@ -32,13 +40,27 @@ final class TildeExpander {
                 rest = "";
             }
             if ("~".equals(tildepart)) {
-                result = env.getOrDefault("HOME", "/root") + rest;
+                result = TildeExpander.quoted(env.getOrDefault("HOME", "/root")) + rest;
             } else if ("~+".equals(tildepart)) {
-                result = env.getOrDefault("PWD", System.getProperty("user.dir")) + rest;
+                result = TildeExpander.quoted(
+                    env.getOrDefault("PWD", System.getProperty("user.dir"))
+                ) + rest;
             } else {
                 result = arg;
             }
         }
         return result;
+    }
+
+    private static String quoted(final String value) {
+        final StringBuilder out = new StringBuilder(value.length());
+        for (int idx = 0; idx < value.length(); idx = idx + 1) {
+            final char chr = value.charAt(idx);
+            if (!Character.isLetterOrDigit(chr) && "/._-".indexOf(chr) < 0) {
+                out.append('\\');
+            }
+            out.append(chr);
+        }
+        return out.toString();
     }
 }
