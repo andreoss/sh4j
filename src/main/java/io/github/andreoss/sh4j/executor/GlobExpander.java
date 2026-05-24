@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j.executor;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,24 +22,7 @@ final class GlobExpander {
     }
 
     static List<String> globFiles(final String pattern, final File cwd) {
-        final int slash = pattern.lastIndexOf('/');
-        final String prefix;
-        final String segment;
-        if (slash < 0) {
-            prefix = "";
-            segment = pattern;
-        } else {
-            prefix = new GlobPattern(pattern.substring(0, slash)).literal();
-            segment = pattern.substring(slash + 1);
-        }
-        final String[] files = GlobExpander.resolveGlobDir(prefix, cwd).list();
-        final List<String> result;
-        if (files == null) {
-            result = new ArrayList<>(0);
-        } else {
-            result = GlobExpander.collectMatches(files, prefix, segment);
-        }
-        return result;
+        return new GlobWalk(Arrays.asList(pattern.split("/", -1)), cwd).matches();
     }
 
     /**
@@ -91,38 +75,5 @@ final class GlobExpander {
 
     static boolean containsGlobChars(final String str) {
         return new GlobPattern(GlobPattern.plain(str)).special();
-    }
-
-    private static File resolveGlobDir(final String prefix, final File cwd) {
-        final File result;
-        if (prefix.isEmpty()) {
-            result = cwd;
-        } else if (prefix.startsWith("/")) {
-            result = new File(prefix);
-        } else {
-            result = new File(cwd, prefix);
-        }
-        return result;
-    }
-
-    private static List<String> collectMatches(
-        final String[] files, final String prefix, final String segment
-    ) {
-        final GlobPattern glob = new GlobPattern(segment);
-        final boolean dotpattern = segment.startsWith(".");
-        final List<String> matches = new ArrayList<>(0);
-        for (final String name : files) {
-            if (name.startsWith(".") && !dotpattern) {
-                continue;
-            }
-            if (glob.matches(name)) {
-                if (prefix.isEmpty()) {
-                    matches.add(name);
-                } else {
-                    matches.add(String.format("%s/%s", prefix, name));
-                }
-            }
-        }
-        return matches;
     }
 }
