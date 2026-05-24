@@ -46,30 +46,6 @@ final class CommandBuiltins {
     }
 
     /**
-     * Implementation of {@code exit [STATUS]}.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code (0 on success)
-     */
-    static int doExit(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        int code = 0;
-        if (!args.isEmpty()) {
-            try {
-                code = Integer.parseInt(args.get(0));
-            } catch (final NumberFormatException ex) {
-                code = 1;
-            }
-        }
-        throw new ExitSignal(code);
-    }
-
-    /**
      * Implementation of {@code type NAME ...}.
      *
      * @param self The context

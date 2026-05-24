@@ -130,27 +130,14 @@ final class VariableBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        int shifts = 1;
-        int code = 0;
-        if (!args.isEmpty()) {
-            try {
-                shifts = Integer.parseInt(args.get(0));
-            } catch (final NumberFormatException ex) {
-                code = 1;
-            }
+        final int shifts = new Operand(self, "shift").value(args, 1);
+        final List<String> pos = self.positionalParamsList();
+        if (shifts > pos.size() - 1) {
+            self.errStream().println("sh: shift: can't shift that many");
+            throw new SpecialError(2);
         }
-        if (code == 0 && shifts < 0) {
-            code = 1;
-        }
-        if (code == 0 && shifts > 0) {
-            final List<String> pos = self.positionalParamsList();
-            if (shifts > pos.size() - 1) {
-                code = 1;
-            } else {
-                pos.subList(1, 1 + shifts).clear();
-            }
-        }
-        return code;
+        pos.subList(1, 1 + shifts).clear();
+        return 0;
     }
 
     private static void printReadonly(final BuiltinContext self) {

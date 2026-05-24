@@ -169,14 +169,14 @@ final class BuiltinMutationReadonlyTest {
     @Test
     void shiftBoundaryFormsSecond() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("shift -1"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("shift -1"));
     }
 
     @Test
     void shiftBoundaryFormsThird() {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Sh4j.INSTANCE.run("shift -1");
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("shift nope"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("shift nope"));
     }
 
     @Test
@@ -185,8 +185,8 @@ final class BuiltinMutationReadonlyTest {
         Sh4j.INSTANCE.run("shift -1");
         Sh4j.INSTANCE.run("shift nope");
         Assertions.assertEquals(
-            String.format("2 rc=1%n"),
-            Sh4j.INSTANCE.out("set -- a b; shift 99; echo \"$# rc=$?\"")
+            String.format("2 rc=2%n"),
+            Sh4j.INSTANCE.out("set -- a b; command shift 99; echo \"$# rc=$?\"")
         );
     }
 
@@ -195,7 +195,7 @@ final class BuiltinMutationReadonlyTest {
         Sh4j.INSTANCE.out("set -- a b; shift 0; echo $1");
         Sh4j.INSTANCE.run("shift -1");
         Sh4j.INSTANCE.run("shift nope");
-        Sh4j.INSTANCE.out("set -- a b; shift 99; echo \"$# rc=$?\"");
+        Sh4j.INSTANCE.out("set -- a b; command shift 99; echo \"$# rc=$?\"");
         Assertions.assertEquals(
             String.format("c%n"),
             Sh4j.INSTANCE.out("set -- a b c; shift 2; echo $1")

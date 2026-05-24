@@ -440,7 +440,7 @@ final class BuiltinMutationAliasTest {
 
     @Test
     void dispatcherUncoveredBranchesFirst() {
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("f() { return abc; }; f"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("f() { return abc; }; f"));
     }
 
     @Test

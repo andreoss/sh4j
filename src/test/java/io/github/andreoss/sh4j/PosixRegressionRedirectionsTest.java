@@ -115,8 +115,8 @@ final class PosixRegressionRedirectionsTest {
     @Test
     void shiftBeyondCountAndQuotedCasePatternsFirst() {
         Assertions.assertEquals(
-            String.format("rc=1%n"),
-            Sh4j.INSTANCE.out("set -- a; shift 5; echo \"rc=$?\"")
+            String.format("rc=2%n"),
+            Sh4j.INSTANCE.out("set -- a; command shift 5; echo \"rc=$?\"")
         );
     }
 

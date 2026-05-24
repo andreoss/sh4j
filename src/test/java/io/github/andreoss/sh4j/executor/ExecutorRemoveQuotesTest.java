@@ -129,7 +129,7 @@ final class ExecutorRemoveQuotesTest {
     @Test
     void shiftLargerThanPositionalCount() {
         Assertions.assertEquals(
-            1,
+            2,
             new Executor(
                 new HashMap<>(),
                 Arrays.asList(ExecutorRemoveQuotesTest.SCRIPT_KEY, "a", "b")
@@ -184,13 +184,13 @@ final class ExecutorRemoveQuotesTest {
     }
 
     @Test
-    void shiftNonNumericReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("shift abc")));
+    void shiftNonNumericReturnsTwo() {
+        Assertions.assertEquals(2, new Executor().execute(this.parse("shift abc")));
     }
 
     @Test
-    void shiftNegativeReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("shift -1")));
+    void shiftNegativeReturnsTwo() {
+        Assertions.assertEquals(2, new Executor().execute(this.parse("shift -1")));
     }
 
     @Test

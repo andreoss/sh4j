@@ -8,6 +8,7 @@ import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Built-ins that read input lines and parse options.
@@ -15,6 +16,9 @@ import java.util.Map;
  * @since 1.0
  */
 final class ReadBuiltins {
+
+    /** Pattern of a valid variable name. */
+    private static final Pattern NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
     @GeneratedDefensive
     private ReadBuiltins() {
@@ -29,7 +33,8 @@ final class ReadBuiltins {
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for variable lookup
-     * @return The exit code: 0 on success, 1 when EOF came before a newline
+     * @return The exit code: 0 on success, 1 when EOF came before a newline,
+     *  2 for an invalid variable name
      */
     static int doRead(
         final BuiltinContext self,
@@ -44,7 +49,8 @@ final class ReadBuiltins {
             names = args;
         }
         final String input = self.readInputLine();
-        final int code;
+        final int valid = ReadBuiltins.valid(names);
+        int code;
         if (input == null) {
             code = 1;
         } else if (names.isEmpty()) {
@@ -60,10 +66,16 @@ final class ReadBuiltins {
                 ).split(),
                 names.size(), ifs.charAt(0)
             );
-            for (int vdx = 0; vdx < names.size(); vdx = vdx + 1) {
+            for (int vdx = 0; vdx < valid; vdx = vdx + 1) {
                 self.environmentMap().put(names.get(vdx), values.get(vdx));
             }
             code = ReadBuiltins.status(input);
+        }
+        if (valid < names.size()) {
+            self.errStream().println(
+                String.format("sh: read: %s: bad variable name", names.get(valid))
+            );
+            code = 2;
         }
         return code;
     }
@@ -106,6 +118,14 @@ final class ReadBuiltins {
             code = 0;
         }
         return code;
+    }
+
+    private static int valid(final List<String> names) {
+        int count = 0;
+        while (count < names.size() && ReadBuiltins.NAME.matcher(names.get(count)).matches()) {
+            count = count + 1;
+        }
+        return count;
     }
 
     private static boolean ended(final String input) {

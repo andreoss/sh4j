@@ -200,7 +200,7 @@ final class ExecutorExecuteBuiltinTest {
 
     @Test
     void executeExitWithNonNumericArg() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("exit xyz")));
+        Assertions.assertEquals(2, new Executor().execute(this.parse("exit xyz")));
     }
 
     @Test

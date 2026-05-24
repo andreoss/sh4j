@@ -56,16 +56,7 @@ final class BuiltinRegistry {
         registry.put(
             "return",
             (self, call) -> {
-                final List<String> args = call.arguments();
-                int code = 0;
-                if (!args.isEmpty()) {
-                    try {
-                        code = Integer.parseInt(args.get(0));
-                    } catch (final NumberFormatException ignored) {
-                        code = 0;
-                    }
-                }
-                throw new ReturnSignal(code);
+                throw new ReturnSignal(new Operand(self, "return").status(call.arguments()));
             }
         );
     }
@@ -163,11 +154,9 @@ final class BuiltinRegistry {
         );
         registry.put(
             "exit",
-            (self, call) -> CommandBuiltins.doExit(
-                self,
-                call.arguments(),
-                call.env()
-            )
+            (self, call) -> {
+                throw new ExitSignal(new Operand(self, "exit").status(call.arguments()));
+            }
         );
         registry.put(
             "type",
