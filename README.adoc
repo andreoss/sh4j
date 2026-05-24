@@ -1,6 +1,6 @@
 = sh4j
 
-A POSIX `sh` command-language interpreter in pure Java 17, buildable as a
+A POSIX `sh` command-language interpreter in pure Java 21, buildable as a
 GraalVM native image.
 
 == Build
