@@ -47,7 +47,10 @@ final class InputSwap {
      */
     static File target(final BuiltinContext shell, final Redirection redir) {
         final File raw = new File(
-            shell.expandVariables(redir.getTarget(), shell.environmentMap())
+            RedirectWord.expand(
+                text -> shell.expandVariables(text, shell.environmentMap()),
+                redir.getTarget()
+            )
         );
         final File result;
         if (raw.isAbsolute()) {
@@ -172,8 +175,9 @@ final class InputSwap {
         final Optional<InputStream> bound = Optional.ofNullable(
             this.shell.descriptors().inputs().get(
                 InputSwap.descriptor(
-                    this.shell.expandVariables(
-                        redir.getTarget(), this.shell.environmentMap()
+                    RedirectWord.expand(
+                        text -> this.shell.expandVariables(text, this.shell.environmentMap()),
+                        redir.getTarget()
                     )
                 )
             )

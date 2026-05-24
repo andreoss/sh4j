@@ -58,7 +58,7 @@ final class RedirectionState {
      * @return Expanded target
      */
     String expand(final String target) {
-        return this.context.expander().apply(target);
+        return RedirectWord.expand(this.context.expander(), target);
     }
 
     /**

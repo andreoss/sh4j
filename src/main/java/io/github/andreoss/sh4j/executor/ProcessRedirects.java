@@ -54,7 +54,8 @@ final class ProcessRedirects {
             ProcessRedirects.applyFileRedirect(
                 builder, redir,
                 RedirectionHandler.resolve(
-                    context.expander().apply(redir.getTarget()), context.base()
+                    RedirectWord.expand(context.expander(), redir.getTarget()),
+                    context.base()
                 )
             );
         }
