@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -48,28 +47,22 @@ final class ReadBuiltins {
         } else {
             names = args;
         }
-        final String input = self.readInputLine();
+        final ReadText input = ReadText.read(self, raw);
         final int valid = ReadBuiltins.valid(names);
         int code;
         if (input == null) {
             code = 1;
         } else if (names.isEmpty()) {
-            self.environmentMap().put(
-                "REPLY", ReadBuiltins.unescape(ReadBuiltins.chomp(input), raw)
-            );
-            code = ReadBuiltins.status(input);
+            self.environmentMap().put("REPLY", input.text());
+            code = input.status();
         } else {
-            final String ifs = env.getOrDefault("IFS", String.format(" \t%n"));
-            final List<String> values = ReadBuiltins.values(
-                new ReadSplitter(
-                    ReadBuiltins.unescape(ReadBuiltins.chomp(input), raw), ifs
-                ).split(),
-                names.size(), ifs.charAt(0)
-            );
+            final List<String> values = new ReadSplitter(
+                input, env.getOrDefault("IFS", String.format(" \t%n"))
+            ).split(names.size());
             for (int vdx = 0; vdx < valid; vdx = vdx + 1) {
                 self.environmentMap().put(names.get(vdx), values.get(vdx));
             }
-            code = ReadBuiltins.status(input);
+            code = input.status();
         }
         if (valid < names.size()) {
             self.errStream().println(
@@ -104,90 +97,11 @@ final class ReadBuiltins {
         return code;
     }
 
-    private static String chomp(final String input) {
-        String line = input;
-        if (ReadBuiltins.ended(input)) {
-            line = input.substring(0, input.length() - 1);
-        }
-        return line;
-    }
-
-    private static int status(final String input) {
-        int code = 1;
-        if (ReadBuiltins.ended(input)) {
-            code = 0;
-        }
-        return code;
-    }
-
     private static int valid(final List<String> names) {
         int count = 0;
         while (count < names.size() && ReadBuiltins.NAME.matcher(names.get(count)).matches()) {
             count = count + 1;
         }
         return count;
-    }
-
-    private static boolean ended(final String input) {
-        return input.charAt(input.length() - 1) == '\n';
-    }
-
-    private static String unescape(final String line, final boolean raw) {
-        final String result;
-        if (raw) {
-            result = line;
-        } else {
-            result = ReadBuiltins.processReadEscapes(line);
-        }
-        return result;
-    }
-
-    private static List<String> values(
-        final List<String> fields, final int count, final char firstifs
-    ) {
-        final List<String> out = new ArrayList<>(count);
-        for (int vdx = 0; vdx < count - 1; vdx = vdx + 1) {
-            if (vdx < fields.size()) {
-                out.add(fields.get(vdx));
-            } else {
-                out.add("");
-            }
-        }
-        out.add(ReadBuiltins.joinReadFields(fields, count - 1, firstifs));
-        return out;
-    }
-
-    private static String processReadEscapes(final String line) {
-        final StringBuilder out = new StringBuilder(line.length());
-        boolean escaped = false;
-        for (int idx = 0; idx < line.length(); idx = idx + 1) {
-            final char chr = line.charAt(idx);
-            if (escaped) {
-                out.append(chr);
-                escaped = false;
-            } else if (chr == '\\') {
-                escaped = true;
-            } else {
-                out.append(chr);
-            }
-        }
-        if (escaped) {
-            out.append('\\');
-        }
-        return out.toString();
-    }
-
-    private static String joinReadFields(
-        final List<String> fields, final int start,
-        final char firstifs
-    ) {
-        final StringBuilder out = new StringBuilder();
-        for (int idx = start; idx < fields.size(); idx = idx + 1) {
-            if (idx > start) {
-                out.append(firstifs);
-            }
-            out.append(fields.get(idx));
-        }
-        return out.toString();
     }
 }

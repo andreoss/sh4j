@@ -42,7 +42,7 @@ final class BuiltinMutationGetoptsTest {
             "set -- -a; getopts a o; echo \"$o $OPTIND\"; getopts a o; echo \"$o $OPTIND\""
         );
         Assertions.assertEquals(
-            String.format("[abc\\]%n"),
+            String.format("[abc]%n"),
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream("abc\\".getBytes(StandardCharsets.UTF_8)),
                 "read x; echo \"[$x]\""

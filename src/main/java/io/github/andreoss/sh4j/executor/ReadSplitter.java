@@ -8,96 +8,94 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Splits one input line of {@code read} into fields by IFS.
+ * Splits one input line of {@code read} into the values of its variables
+ * by IFS (POSIX read, 2.6.5 Field Splitting). Characters quoted by a
+ * backslash never delimit fields.
  *
  * @since 1.0
  */
 final class ReadSplitter {
 
     /** The line being split. */
-    private final String line;
+    private final ReadText line;
 
     /** The IFS characters. */
     private final String ifs;
-
-    /** Fields found so far. */
-    private final List<String> fields;
-
-    /** Index of the next character. */
-    private int pos;
-
-    /** Index where the field being built starts. */
-    private int start;
 
     /**
      * Ctor.
      *
      * @param line The line being split
-     * @param ifs The IFS characters, at least one
+     * @param ifs The IFS characters
      */
-    ReadSplitter(final String line, final String ifs) {
+    ReadSplitter(final ReadText line, final String ifs) {
         this.line = line;
         this.ifs = ifs;
-        this.fields = new ArrayList<>(0);
-        this.pos = 0;
-        this.start = 0;
     }
 
     /**
-     * Splits the line.
+     * Splits the line into values for the variables.
      *
-     * @return The fields in order
+     * @param count The number of variables, at least one
+     * @return The values in order, exactly {@code count} of them
      */
-    List<String> split() {
-        this.skipBlanks();
-        this.start = this.pos;
-        while (this.pos < this.line.length()) {
-            this.step(this.line.charAt(this.pos));
-            this.pos += 1;
+    List<String> split(final int count) {
+        final String text = this.line.text();
+        final List<String> values = new ArrayList<>(count);
+        int pos = 0;
+        while (pos < text.length() && this.blank(pos)) {
+            pos = pos + 1;
         }
-        if (!this.trailingBlank() || this.fields.isEmpty()) {
-            this.fields.add(this.line.substring(this.start));
+        while (values.size() < count - 1) {
+            final int end = this.field(pos);
+            values.add(text.substring(pos, end));
+            pos = this.delimiter(end);
         }
-        return this.fields;
+        values.add(this.last(pos));
+        return values;
     }
 
-    private static boolean blank(final char chr) {
-        return chr == ' ' || chr == '\t';
-    }
-
-    private void skipBlanks() {
-        while (this.pos < this.line.length()
-            && this.ifs.indexOf(this.line.charAt(this.pos)) >= 0
-            && ReadSplitter.blank(this.line.charAt(this.pos))) {
-            this.pos += 1;
+    private String last(final int pos) {
+        final String text = this.line.text();
+        int stop = text.length();
+        while (stop > pos && this.blank(stop - 1)) {
+            stop = stop - 1;
         }
-    }
-
-    private void step(final char chr) {
-        final char first = this.ifs.charAt(0);
-        if (chr == first && !ReadSplitter.blank(first)) {
-            this.cut();
-        } else if (this.ifs.indexOf(chr) >= 0) {
-            this.cut();
-            this.skipSeparators();
-            this.start = this.pos + 1;
+        final int first = this.field(pos);
+        if (this.delimiter(first) == text.length()) {
+            stop = first;
         }
+        return text.substring(pos, stop);
     }
 
-    private void cut() {
-        this.fields.add(this.line.substring(this.start, this.pos));
-        this.start = this.pos + 1;
-    }
-
-    private void skipSeparators() {
-        while (this.pos + 1 < this.line.length()
-            && this.ifs.indexOf(this.line.charAt(this.pos + 1)) >= 0) {
-            this.pos += 1;
+    private int field(final int pos) {
+        int end = pos;
+        while (end < this.line.text().length() && !this.separator(end)) {
+            end = end + 1;
         }
+        return end;
     }
 
-    private boolean trailingBlank() {
-        return this.start >= this.pos && this.pos > 0
-            && ReadSplitter.blank(this.line.charAt(this.pos - 1));
+    private int delimiter(final int pos) {
+        int end = pos;
+        if (end < this.line.text().length()) {
+            boolean spaces = this.blank(end);
+            end = end + 1;
+            while (end < this.line.text().length() && this.separator(end)
+                && (spaces || this.blank(end))) {
+                spaces = spaces && this.blank(end);
+                end = end + 1;
+            }
+        }
+        return end;
+    }
+
+    private boolean separator(final int pos) {
+        return !this.line.quoted(pos) && this.ifs.indexOf(this.line.text().charAt(pos)) >= 0;
+    }
+
+    private boolean blank(final int pos) {
+        return this.separator(pos)
+            && String.format(" \t%n").indexOf(this.line.text().charAt(pos)) >= 0;
     }
 }

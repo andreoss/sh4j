@@ -383,7 +383,7 @@ final class BuiltinMutationJobsTest {
             "read a b; echo \"a=$a b=$b\""
         );
         Assertions.assertEquals(
-            String.format("a=x b=:%n"),
+            String.format("a=x b=%n"),
             Sh4j.INSTANCE.runFull(
                 new ByteArrayInputStream(String.format("x::%n").getBytes(StandardCharsets.UTF_8)),
                 "IFS=:; read a b; echo \"a=$a b=$b\""
