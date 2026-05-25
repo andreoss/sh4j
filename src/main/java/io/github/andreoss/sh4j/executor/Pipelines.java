@@ -121,7 +121,7 @@ final class Pipelines {
                         final Executor bgexecutor = parent.subshell();
                         bgexecutor.setOutputStream(parent.outStream());
                         bgexecutor.setErrorStream(parent.errStream());
-                        return new Pipelines(bgexecutor).pipeline(pipeline);
+                        return bgexecutor.leave(new Pipelines(bgexecutor).pipeline(pipeline));
                     },
                     cmdtext
                 )

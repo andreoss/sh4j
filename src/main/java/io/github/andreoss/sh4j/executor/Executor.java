@@ -38,6 +38,9 @@ public final class Executor implements BuiltinContext {
     /** Trap actions keyed by signal name (EXIT is the only executed one). */
     private final Map<String, String> traps;
 
+    /** Whether this shell set its own EXIT trap or is the top shell. */
+    private boolean armed;
+
     /** Per-executor current working directory. */
     private File cwd;
 
@@ -140,6 +143,7 @@ public final class Executor implements BuiltinContext {
         this.errexit = new Errexit();
         this.compound = new Compound(this, this.errexit);
         this.traps = new HashMap<>();
+        this.armed = true;
         this.functions = new HashMap<>();
         this.params = new ArrayList<>(incoming);
         this.jobs = new JobManager();
@@ -202,6 +206,7 @@ public final class Executor implements BuiltinContext {
 
     @Override
     public void setTrap(final String signal, final String action) {
+        this.armed = this.armed || "EXIT".equals(signal);
         if (action == null) {
             this.traps.remove(signal);
         } else {
@@ -490,6 +495,7 @@ public final class Executor implements BuiltinContext {
         final Executor child = new Executor(this.exportedEnvironment());
         child.vars.inherit(this.vars);
         child.traps.putAll(this.traps);
+        child.armed = false;
         child.functions.putAll(this.functions);
         child.aliases.putAll(this.aliases);
         child.params.clear();
@@ -502,6 +508,19 @@ public final class Executor implements BuiltinContext {
         child.instream = this.instream;
         child.lastcode = this.lastcode;
         return child;
+    }
+
+    /**
+     * Ends this subshell environment, running the EXIT trap it set.
+     *
+     * @param status The exit status of the subshell
+     * @return The same exit status
+     */
+    int leave(final int status) {
+        if (this.armed) {
+            this.runExitTrap(status);
+        }
+        return status;
     }
 
     /**

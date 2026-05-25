@@ -76,6 +76,6 @@ final class NodeRunner {
         } catch (final ExitSignal ex) {
             code = ex.getCode();
         }
-        return code;
+        return child.leave(code);
     }
 }

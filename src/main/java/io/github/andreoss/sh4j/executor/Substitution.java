@@ -41,7 +41,7 @@ final class Substitution {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final Executor sub = this.shell.subshell();
         sub.setCaptureStream(baos);
-        this.shell.substitution(sub.execute(ast));
+        this.shell.substitution(sub.leave(sub.execute(ast)));
         return Substitution.chomp(baos.toString(StandardCharsets.UTF_8));
     }
 
