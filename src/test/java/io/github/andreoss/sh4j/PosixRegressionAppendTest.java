@@ -216,7 +216,7 @@ final class PosixRegressionAppendTest {
 
     @Test
     void dollarBangIsNotAnOsPid() {
-        Assertions.assertEquals(127, Sh4j.INSTANCE.runFull("sleep 0.1 & kill $!").exitCode());
+        Assertions.assertEquals(0, Sh4j.INSTANCE.runFull("sleep 0.1 & kill $!").exitCode());
     }
 
     @Test

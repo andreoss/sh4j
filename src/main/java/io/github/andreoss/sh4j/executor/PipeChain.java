@@ -82,6 +82,7 @@ final class PipeChain {
             }
             code = stages.get(count - 1).code();
         } catch (final InterruptedException ex) {
+            threads.forEach(Thread::interrupt);
             Thread.currentThread().interrupt();
             code = 1;
         }

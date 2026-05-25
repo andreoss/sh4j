@@ -435,7 +435,7 @@ final class BuiltinMutationAliasTest {
         Sh4j.INSTANCE.out(String.format("echo %s/sub/*.txt", dir));
         Sh4j.INSTANCE.out(String.format("cd %s; echo nodir/*.txt", dir));
         Sh4j.INSTANCE.out("echo []");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("sleep 0.1 & kill -9 $!"));
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("sleep 0.1 & kill -9 $!"));
     }
 
     @Test

@@ -7,7 +7,6 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Built-ins that signal and wait for processes.
@@ -22,10 +21,9 @@ final class SignalBuiltins {
 
     /**
      * Implementation of {@code kill [-s SIG | -SIG] PID... | -l}.
-     * POSIX 2.14. JDK constraint: ProcessHandle only supports TERM
-     * (destroy) and KILL (destroyForcibly); other signals are
-     * accepted at the command line but mapped to TERM (which is the
-     * POSIX default) and a soft warning is not emitted.
+     * Signals the shell's own background jobs by job id or pseudo pid,
+     * which stop and report 128 plus the signal number; other processes
+     * get TERM, or KILL for signal 9; an unknown name means TERM.
      *
      * @param self    Builtin context
      * @param args    Args after the command name
@@ -44,7 +42,7 @@ final class SignalBuiltins {
             self.outStream().println("HUP INT QUIT KILL TERM");
             code = 0;
         } else {
-            code = SignalBuiltins.killAll(args);
+            code = SignalBuiltins.killAll(self, args);
         }
         return code;
     }
@@ -80,16 +78,16 @@ final class SignalBuiltins {
         return code;
     }
 
-    private static int killAll(final List<String> args) {
+    private static int killAll(final BuiltinContext self, final List<String> args) {
         final int first = SignalBuiltins.firstPid(args);
-        final boolean forcibly = SignalBuiltins.forcible(args, first);
+        final Kill kill = new Kill(self, KillSignal.number(SignalBuiltins.spec(args, first)));
         int code = 0;
         if (first >= args.size()) {
             code = 1;
         }
         int idx = first;
         while (idx < args.size() && code == 0) {
-            code = SignalBuiltins.signalOne(args.get(idx), forcibly);
+            code = SignalBuiltins.signalOne(self, kill, args.get(idx));
             idx += 1;
         }
         return code;
@@ -107,7 +105,7 @@ final class SignalBuiltins {
         return idx;
     }
 
-    private static boolean forcible(final List<String> args, final int first) {
+    private static String spec(final List<String> args, final int first) {
         final String sig;
         if (first == 2) {
             sig = args.get(1);
@@ -116,42 +114,15 @@ final class SignalBuiltins {
         } else {
             sig = "";
         }
-        return "KILL".equals(sig) || "9".equals(sig);
+        return sig;
     }
 
-    private static int signalOne(final String pidstr, final boolean forcibly) {
-        int code;
-        try {
-            code = SignalBuiltins.signalPid(Long.parseLong(pidstr), forcibly);
-        } catch (final NumberFormatException ex) {
+    private static int signalOne(final BuiltinIo self, final Kill kill, final String target) {
+        int code = 0;
+        if (!kill.send(target)) {
+            self.errStream().println(String.format("sh: kill: %s: no such process", target));
             code = 127;
         }
         return code;
-    }
-
-    private static int signalPid(final long pid, final boolean forcibly) {
-        final Optional<ProcessHandle> handle;
-        if (JobManager.isJobPid(pid)) {
-            handle = Optional.empty();
-        } else {
-            handle = ProcessHandle.of(pid);
-        }
-        final int code;
-        if (handle.map(proc -> SignalBuiltins.deliver(proc, forcibly)).orElse(false)) {
-            code = 0;
-        } else {
-            code = 127;
-        }
-        return code;
-    }
-
-    private static boolean deliver(final ProcessHandle proc, final boolean forcibly) {
-        final boolean sent;
-        if (forcibly) {
-            sent = proc.destroyForcibly();
-        } else {
-            sent = proc.destroy();
-        }
-        return sent;
     }
 }

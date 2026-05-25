@@ -317,7 +317,7 @@ final class PosixRegressionExecCommandTest {
     void killListsAndRejectsJobPidsThird() {
         Sh4j.INSTANCE.out("kill -l");
         Sh4j.INSTANCE.run("kill notapid");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("sleep 0.1 & kill $!"));
+        Assertions.assertEquals(0, Sh4j.INSTANCE.run("sleep 0.1 & kill $!"));
     }
 
     @Test

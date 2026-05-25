@@ -24,6 +24,9 @@ public final class Job {
     /** Command text. */
     private final String command;
 
+    /** Signal delivery to the running job. */
+    private final JobControl control;
+
     /** Completion state. */
     private volatile JobManager.State state;
 
@@ -31,7 +34,7 @@ public final class Job {
     private volatile int exitcode;
 
     /** Completion future of the submitted task. */
-    private final CompletableFuture<Integer> source;
+    private CompletableFuture<Integer> source;
 
     /** Completion future that callers wait on. */
     private CompletableFuture<Integer> future;
@@ -41,14 +44,13 @@ public final class Job {
      *
      * @param id Job identifier
      * @param command Command text
-     * @param source Completion future of the submitted task
+     * @param control Signal delivery to the running job
      */
-    Job(final int id, final String command, final CompletableFuture<Integer> source) {
+    Job(final int id, final String command, final JobControl control) {
         this.id = id;
         this.pid = JobManager.JOB_PID_BASE + id;
         this.command = command;
-        this.source = source;
-        this.future = source;
+        this.control = control;
         this.state = JobManager.State.RUNNING;
         this.exitcode = -1;
     }
@@ -115,10 +117,23 @@ public final class Job {
     }
 
     /**
-     * Attaches the completion callback that records the final state.
+     * Delivers a signal to the job.
+     *
+     * @param sig Signal number, 0 to only probe the job
+     * @return True when the job has not ended yet
      */
-    void watch() {
-        this.future = this.source.whenComplete(
+    boolean signal(final int sig) {
+        return this.control.send(sig);
+    }
+
+    /**
+     * Attaches the completion callback that records the final state.
+     *
+     * @param src Completion future of the submitted task
+     */
+    void watch(final CompletableFuture<Integer> src) {
+        this.source = src;
+        this.future = src.whenComplete(
             (result, ex) -> {
                 if (ex instanceof CancellationException) {
                     this.state = JobManager.State.STOPPED;
@@ -128,7 +143,7 @@ public final class Job {
                     if (result != null) {
                         code = result;
                     }
-                    this.exitcode = code;
+                    this.exitcode = this.control.status(code);
                 }
             }
         );
@@ -142,14 +157,16 @@ public final class Job {
     int await() {
         int code;
         try {
-            code = this.future.get();
+            code = this.control.status(this.future.get());
             this.state = JobManager.State.DONE;
             this.exitcode = code;
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
             code = 1;
-        } catch (final CancellationException | ExecutionException ex) {
+        } catch (final CancellationException ex) {
             code = 1;
+        } catch (final ExecutionException ex) {
+            code = this.control.status(1);
         }
         return code;
     }

@@ -147,6 +147,7 @@ final class ExternalCommand {
         int code;
         try {
             final Process process = builder.start();
+            JobControl.track(process);
             final List<Thread> pumps = this.pumps(
                 process, error, ProcessBuilder.Redirect.PIPE.equals(input) && !console
             );

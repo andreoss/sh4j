@@ -81,17 +81,22 @@ final class JobManager {
      */
     int submit(final Supplier<Integer> task, final String command) {
         final int id = this.counter.getAndIncrement();
-        final Job job = new Job(
-            id, command,
+        final JobControl control = new JobControl();
+        final Job job = new Job(id, command, control);
+        job.watch(
             CompletableFuture.supplyAsync(
                 () -> {
                     Thread.currentThread().setName(String.format("sh-job-%d", id));
-                    return task.get();
+                    control.attach();
+                    try {
+                        return task.get();
+                    } finally {
+                        control.detach();
+                    }
                 },
                 this.pool
             )
         );
-        job.watch();
         this.lock.lock();
         try {
             this.jobs.put(id, job);

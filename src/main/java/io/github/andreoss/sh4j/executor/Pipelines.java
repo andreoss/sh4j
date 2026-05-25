@@ -74,6 +74,9 @@ final class Pipelines {
     }
 
     private void step(final Pipeline pipeline, final ListNode.Separator sep) {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new ExitSignal(1);
+        }
         final boolean noexec = this.shell.shellFlags().indexOf('n') >= 0;
         if (!noexec && sep == ListNode.Separator.AMP) {
             this.async(pipeline);
