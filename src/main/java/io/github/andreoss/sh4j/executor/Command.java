@@ -86,7 +86,9 @@ final class Command {
                     );
                     throw new ExitSignal(1);
                 }
-                final String rvalue = assignment.substring(eqpos + 1);
+                final String rvalue = AssignedTilde.expand(
+                    assignment.substring(eqpos + 1), tenv
+                );
                 final String expanded = this.shell.expandVariables(rvalue, tenv);
                 tenv.put(vname, WordExpander.removeQuotes(expanded));
             }

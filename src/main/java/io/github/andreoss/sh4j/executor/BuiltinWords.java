@@ -74,7 +74,9 @@ final class BuiltinWords {
             "=",
             word.substring(0, eqidx),
             WordExpander.removeQuotes(
-                this.shell.expandVariables(word.substring(eqidx + 1), env)
+                this.shell.expandVariables(
+                    AssignedTilde.expand(word.substring(eqidx + 1), env), env
+                )
             )
         );
     }
