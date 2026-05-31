@@ -169,8 +169,10 @@ final class NamedCommand {
         this.shell.setPositionalParams(fargs);
         int code;
         try {
-            code = new Redirected(this.shell).run(
-                func.getRedirections(), () -> this.shell.executeNode(func.getBody())
+            code = this.shell.scopes().frame(
+                () -> new Redirected(this.shell).run(
+                    func.getRedirections(), () -> this.shell.executeNode(func.getBody())
+                )
             );
         } catch (final ReturnSignal ex) {
             code = ex.getCode();

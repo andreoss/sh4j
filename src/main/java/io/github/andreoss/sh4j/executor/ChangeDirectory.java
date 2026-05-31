@@ -47,6 +47,7 @@ final class ChangeDirectory {
         if (idx >= args.size()) {
             target = environment.get("HOME");
             if (target == null) {
+                this.shell.errStream().println("sh: cd: HOME not set");
                 code = 1;
             }
         } else {
@@ -86,6 +87,8 @@ final class ChangeDirectory {
                 this.shell.outStream().println(abs);
             }
             code = 0;
+        } else {
+            this.shell.errStream().println(String.format("sh: cd: can't cd to %s", target));
         }
         return code;
     }
@@ -129,6 +132,7 @@ final class ChangeDirectory {
     private static int reportOldPwd(final BuiltinIo outlet, final String old) {
         final int code;
         if (old == null) {
+            outlet.errStream().println("sh: cd: OLDPWD not set");
             code = 1;
         } else {
             outlet.outStream().println(old);

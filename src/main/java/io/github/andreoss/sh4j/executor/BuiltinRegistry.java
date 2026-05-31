@@ -44,19 +44,29 @@ final class BuiltinRegistry {
         registry.put(
             "break",
             (self, call) -> {
-                throw new BreakSignal(BuiltinRegistry.parseLoopLevels(call.arguments()));
+                self.scopes().loop(
+                    new BreakSignal(BuiltinRegistry.parseLoopLevels(call.arguments())),
+                    "break", self
+                );
+                return 0;
             }
         );
         registry.put(
             "continue",
             (self, call) -> {
-                throw new ContinueSignal(BuiltinRegistry.parseLoopLevels(call.arguments()));
+                self.scopes().loop(
+                    new ContinueSignal(BuiltinRegistry.parseLoopLevels(call.arguments())),
+                    "continue", self
+                );
+                return 0;
             }
         );
         registry.put(
             "return",
             (self, call) -> {
-                throw new ReturnSignal(new Operand(self, "return").status(call.arguments()));
+                throw self.scopes().leave(
+                    new Operand(self, "return").status(call.arguments()), self
+                );
             }
         );
     }

@@ -67,6 +67,13 @@ interface BuiltinVariables {
     Map<String, FunctionNode> functionsMap();
 
     /**
+     * Returns the loops, functions and dot scripts being run.
+     *
+     * @return The live scopes
+     */
+    Scopes scopes();
+
+    /**
      * Returns the live alias table.
      *
      * @return The live alias table (name to replacement text)

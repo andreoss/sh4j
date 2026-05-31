@@ -78,6 +78,7 @@ final class AliasBuiltins {
                 if (aliases.containsKey(name)) {
                     aliases.remove(name);
                 } else {
+                    self.errStream().println(String.format("sh: unalias: %s not found", name));
                     code = 1;
                 }
             }
@@ -97,6 +98,7 @@ final class AliasBuiltins {
                 String.format("%s='%s'", arg, aliases.get(arg))
             );
         } else {
+            self.errStream().println(String.format("sh: alias: %s not found", arg));
             result = false;
         }
         return result;

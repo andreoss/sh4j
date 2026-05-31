@@ -123,6 +123,9 @@ final class DirectoryBuiltins {
                     )
                 );
             } catch (final NumberFormatException ex) {
+                self.errStream().println(
+                    String.format("sh: umask: Illegal number: %s", args.get(idx))
+                );
                 code = 1;
             }
         }

@@ -71,6 +71,9 @@ final class SignalBuiltins {
                 try {
                     code = self.jobManager().waitForPid(Long.parseLong(expanded));
                 } catch (final NumberFormatException ex) {
+                    self.errStream().println(
+                        String.format("sh: wait: %s: not a pid or job", expanded)
+                    );
                     code = 127;
                 }
             }

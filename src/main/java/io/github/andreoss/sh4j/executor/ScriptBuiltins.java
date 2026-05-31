@@ -7,6 +7,8 @@ package io.github.andreoss.sh4j.executor;
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import io.github.andreoss.sh4j.lexer.CharReader;
 import io.github.andreoss.sh4j.lexer.Lexer;
+import io.github.andreoss.sh4j.parser.ListNode;
+import io.github.andreoss.sh4j.parser.ParseException;
 import io.github.andreoss.sh4j.parser.Parser;
 import java.io.File;
 import java.io.IOException;
@@ -48,9 +50,7 @@ final class ScriptBuiltins {
         if (input.isEmpty()) {
             code = 0;
         } else {
-            code = self.execute(
-                new Parser(new Lexer(new CharReader(input))).parse()
-            );
+            code = self.execute(ScriptBuiltins.parse(self, input, "eval"));
         }
         return code;
     }
@@ -170,7 +170,7 @@ final class ScriptBuiltins {
         }
         final int code;
         try {
-            code = ScriptBuiltins.executeCatchingReturn(self, source);
+            code = ScriptBuiltins.executeCatchingReturn(self, source, args.get(0));
         } finally {
             self.positionalParamsList().clear();
             self.positionalParamsList().addAll(saved);
@@ -179,16 +179,28 @@ final class ScriptBuiltins {
     }
 
     private static int executeCatchingReturn(
-        final BuiltinContext self, final String source
+        final BuiltinContext self, final String source, final String path
     ) {
+        final ListNode list = ScriptBuiltins.parse(self, source, path);
         int code;
         try {
-            code = self.execute(
-                new Parser(new Lexer(new CharReader(source))).parse()
-            );
+            code = self.scopes().frame(() -> self.execute(list));
         } catch (final ReturnSignal ex) {
             code = ex.getCode();
         }
         return code;
+    }
+
+    private static ListNode parse(
+        final BuiltinIo self, final String source, final String label
+    ) {
+        try {
+            return new Parser(new Lexer(new CharReader(source))).parse();
+        } catch (final ParseException ex) {
+            self.errStream().println(
+                String.format("sh: %s: syntax error: %s", label, ex.getMessage())
+            );
+            throw new SpecialError(2, ex);
+        }
     }
 }

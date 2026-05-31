@@ -90,6 +90,7 @@ final class ReadBuiltins {
     ) {
         final int code;
         if (args.size() < 2) {
+            self.errStream().println("sh: getopts: Usage: getopts optstring var [arg...]");
             code = 1;
         } else {
             code = new Getopts(self, args).next();

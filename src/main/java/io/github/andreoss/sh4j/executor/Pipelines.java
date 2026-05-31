@@ -90,17 +90,11 @@ final class Pipelines {
         final boolean ignored = pipeline.isBang()
             || sep == ListNode.Separator.AND_IF
             || sep == ListNode.Separator.OR_IF;
-        try {
-            final int status = this.outcome(pipeline, ignored);
-            this.shell.status(status);
-            this.shell.history().add(Pipelines.text(pipeline));
-            if (!ignored && Pipelines.simple(pipeline)) {
-                this.shell.errexit().check(this.shell.shellFlags(), status);
-            }
-        } catch (final BreakSignal ex) {
-            this.shell.requireLoop(ex, "break");
-        } catch (final ContinueSignal ex) {
-            this.shell.requireLoop(ex, "continue");
+        final int status = this.outcome(pipeline, ignored);
+        this.shell.status(status);
+        this.shell.history().add(Pipelines.text(pipeline));
+        if (!ignored && Pipelines.simple(pipeline)) {
+            this.shell.errexit().check(this.shell.shellFlags(), status);
         }
     }
 

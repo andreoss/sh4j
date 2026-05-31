@@ -24,7 +24,17 @@ final class SpecialError extends RuntimeException {
      * @param code Exit status of the failed utility
      */
     SpecialError(final int code) {
-        super();
+        this(code, null);
+    }
+
+    /**
+     * Creates a special built-in error preserving the original cause.
+     *
+     * @param code Exit status of the failed utility
+     * @param cause The original exception
+     */
+    SpecialError(final int code, final Throwable cause) {
+        super(cause);
         this.code = code;
     }
 

@@ -67,6 +67,7 @@ final class CommandBuiltins {
             } else {
                 final String resolved = self.resolveCommand(expanded);
                 if (resolved == null) {
+                    self.errStream().println(String.format("sh: type: %s: not found", expanded));
                     code = 1;
                 } else {
                     self.outStream().println(String.format("%s is %s", expanded, resolved));
@@ -127,6 +128,7 @@ final class CommandBuiltins {
                 continue;
             }
             if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
+                self.errStream().println(String.format("sh: hash: %s: not found", name));
                 code = 127;
             }
         }
@@ -160,6 +162,7 @@ final class CommandBuiltins {
         } else {
             final String resolved = self.resolveCommand(name);
             if (resolved == null) {
+                CommandBuiltins.missing(self, name, verbose);
                 code = 1;
             } else if (verbose) {
                 self.outStream().println(String.format("%s is %s", name, resolved));
@@ -168,5 +171,13 @@ final class CommandBuiltins {
             }
         }
         return code;
+    }
+
+    private static void missing(
+        final BuiltinIo self, final String name, final boolean verbose
+    ) {
+        if (verbose) {
+            self.errStream().println(String.format("sh: command: %s: not found", name));
+        }
     }
 }

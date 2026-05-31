@@ -98,6 +98,9 @@ public final class Executor implements BuiltinContext {
     /** State of the errexit option. */
     private final Errexit errexit;
 
+    /** Loops, functions and dot scripts being run. */
+    private final Scopes scopes;
+
     /**
      * Builds an executor seeded with the current process environment.
      */
@@ -142,6 +145,7 @@ public final class Executor implements BuiltinContext {
         this.snapshot = new AliasSnapshot();
         this.errexit = new Errexit();
         this.compound = new Compound(this, this.errexit);
+        this.scopes = new Scopes(this.compound);
         this.traps = new HashMap<>();
         this.armed = true;
         this.functions = new HashMap<>();
@@ -254,10 +258,6 @@ public final class Executor implements BuiltinContext {
         } catch (final ExitSignal ex) {
             this.nested(ex);
             code = ex.getCode();
-        } catch (final ReturnSignal ex) {
-            this.nested(ex);
-            this.err.println("sh: return: not in a function");
-            code = ex.getCode();
         } catch (final BreakSignal | ContinueSignal ex) {
             this.nested(ex);
             code = 0;
@@ -327,6 +327,11 @@ public final class Executor implements BuiltinContext {
     @Override
     public Map<String, FunctionNode> functionsMap() {
         return this.functions;
+    }
+
+    @Override
+    public Scopes scopes() {
+        return this.scopes;
     }
 
     @Override
@@ -473,20 +478,6 @@ public final class Executor implements BuiltinContext {
     }
 
     /**
-     * Handles a {@code break} or {@code continue} that reached a list.
-     *
-     * @param signal The signal, rethrown inside a loop
-     * @param name The name of the built-in for the diagnostic
-     */
-    void requireLoop(final RuntimeException signal, final String name) {
-        if (this.compound.inLoop()) {
-            throw signal;
-        }
-        this.err.println(String.format("sh: %s: not in a loop", name));
-        this.lastcode = 0;
-    }
-
-    /**
      * Creates a subshell environment copied from this shell.
      *
      * @return A new executor sharing nothing mutable with this one
@@ -502,6 +493,7 @@ public final class Executor implements BuiltinContext {
         child.params.addAll(this.params);
         child.setShellFlags(this.flags);
         child.errexit.inherit(this.errexit);
+        child.scopes.inherit(this.scopes);
         child.cwd = this.cwd;
         child.out = this.out;
         child.err = this.err;
