@@ -102,9 +102,13 @@ final class NamedCommand {
     }
 
     private int redirected(final CommandCall call) {
+        final CommandCall expanded = new CommandCall(
+            new ExpandedRedirects(this.shell).of(call.cmd()),
+            call.name(), call.env(), call.bypass()
+        );
         return new Redirected(
             this.shell, !call.bypass() && NamedCommand.SPECIAL.contains(call.name())
-        ).run(call.cmd().getRedirections(), () -> this.dispatch(call));
+        ).run(expanded.cmd().getRedirections(), () -> this.dispatch(expanded));
     }
 
     private int dispatch(final CommandCall call) {

@@ -52,11 +52,12 @@ final class Redirected {
      * @return The exit status of the action, or 1 when a redirection fails
      */
     int run(final List<Redirection> redirs, final IntSupplier action) {
+        final List<Redirection> expanded = new ExpandedRedirects(this.shell).of(redirs);
         final int code;
-        if (new Noclobber(this.shell).refuses(redirs)) {
+        if (new Noclobber(this.shell).refuses(expanded)) {
             code = this.failure();
         } else {
-            code = this.swapped(redirs, action);
+            code = this.swapped(expanded, action);
         }
         return code;
     }

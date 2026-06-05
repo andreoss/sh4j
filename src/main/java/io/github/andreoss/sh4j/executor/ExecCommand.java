@@ -59,11 +59,12 @@ final class ExecCommand {
     /**
      * Runs {@code exec}.
      *
-     * @param cmd The {@code exec} command
+     * @param origin The {@code exec} command
      * @param cenv The command environment
      * @return Zero after binding descriptors
      */
-    int run(final SimpleCommand cmd, final Map<String, String> cenv) {
+    int run(final SimpleCommand origin, final Map<String, String> cenv) {
+        final SimpleCommand cmd = new ExpandedRedirects(this.shell).of(origin);
         if (new Noclobber(this.shell).refuses(cmd.getRedirections())) {
             throw new ExitSignal(1);
         }
