@@ -25,6 +25,12 @@ final class Scopes {
     /** Whether this shell is a subshell of a function or dot script. */
     private boolean nested;
 
+    /** Status the shell exits with while its EXIT trap runs, else -1. */
+    private int ending;
+
+    /** Status of the last {@code exit} that ended the shell. */
+    private int exited;
+
     /**
      * Ctor.
      *
@@ -32,6 +38,7 @@ final class Scopes {
      */
     Scopes(final Compound compound) {
         this.compound = compound;
+        this.ending = -1;
     }
 
     /**
@@ -85,6 +92,51 @@ final class Scopes {
             throw signal;
         }
         shell.errStream().println(String.format("sh: %s: not in a loop", name));
+    }
+
+    /**
+     * Enters the action of the {@code EXIT} trap; an {@code exit} in it sets
+     * the status the shell exits with (POSIX exit).
+     *
+     * @param status The status the shell exits with before the trap
+     */
+    void enter(final int status) {
+        this.ending = status;
+        this.exited = status;
+    }
+
+    /**
+     * Leaves the action of the {@code EXIT} trap.
+     *
+     * @return The status the shell exits with after the trap
+     */
+    int ended() {
+        this.ending = -1;
+        return this.exited;
+    }
+
+    /**
+     * Records the status of an {@code exit} that ended the shell.
+     *
+     * @param code The exit status
+     */
+    void exit(final int code) {
+        this.exited = code;
+    }
+
+    /**
+     * Returns the status of {@code exit} without an operand: inside the
+     * {@code EXIT} trap, the status the shell was exiting with.
+     *
+     * @param last The value of {@code $?}
+     * @return The exit status
+     */
+    int status(final int last) {
+        int result = last;
+        if (this.ending >= 0) {
+            result = this.ending;
+        }
+        return result;
     }
 
     /**

@@ -258,6 +258,7 @@ public final class Executor implements BuiltinContext {
         } catch (final ExitSignal ex) {
             this.nested(ex);
             code = ex.getCode();
+            this.scopes.exit(code);
         } catch (final BreakSignal | ContinueSignal ex) {
             this.nested(ex);
             code = 0;
@@ -379,10 +380,13 @@ public final class Executor implements BuiltinContext {
      * Runs and removes the EXIT trap with the status the shell exits with.
      *
      * @param status The shell exit status the trap observes as {@code $?}
+     * @return The shell exit status, set by an {@code exit} in the trap action
      */
-    public void runExitTrap(final int status) {
+    public int runExitTrap(final int status) {
         this.lastcode = status;
+        this.scopes.enter(status);
         ExitTrap.run(this, this.traps.remove("EXIT"));
+        return this.scopes.ended();
     }
 
     /**
@@ -506,13 +510,14 @@ public final class Executor implements BuiltinContext {
      * Ends this subshell environment, running the EXIT trap it set.
      *
      * @param status The exit status of the subshell
-     * @return The same exit status
+     * @return The exit status, set by an {@code exit} in the trap action
      */
     int leave(final int status) {
+        int code = status;
         if (this.armed) {
-            this.runExitTrap(status);
+            code = this.runExitTrap(status);
         }
-        return status;
+        return code;
     }
 
     /**

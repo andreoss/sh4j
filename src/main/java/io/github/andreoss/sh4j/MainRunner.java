@@ -63,7 +63,7 @@ final class MainRunner {
             MainRunner.err().println(String.format("sh: syntax error: %s", ex.getMessage()));
             code = 2;
         } finally {
-            executor.runExitTrap(code);
+            code = executor.runExitTrap(code);
         }
         return code;
     }

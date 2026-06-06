@@ -66,6 +66,6 @@ final class PipeStage implements Runnable {
         } catch (final ExitSignal ex) {
             this.code = ex.getCode();
         }
-        this.child.leave(this.code);
+        this.code = this.child.leave(this.code);
     }
 }

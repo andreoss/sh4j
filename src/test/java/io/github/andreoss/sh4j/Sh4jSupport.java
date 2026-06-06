@@ -67,8 +67,7 @@ public final class Sh4jSupport {
                 break;
             }
         }
-        executor.runExitTrap(code);
-        return code;
+        return executor.runExitTrap(code);
     }
 
     /**
@@ -213,9 +212,8 @@ public final class Sh4jSupport {
                 break;
             }
         }
-        executor.runExitTrap(code);
         return new Sh4j.Result(
-            code,
+            executor.runExitTrap(code),
             outbuffer.toString(StandardCharsets.UTF_8),
             errbuffer.toString(StandardCharsets.UTF_8)
         ).environment(new HashMap<>(executor.environmentMap()));

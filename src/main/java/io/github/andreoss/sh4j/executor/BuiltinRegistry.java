@@ -165,7 +165,12 @@ final class BuiltinRegistry {
         registry.put(
             "exit",
             (self, call) -> {
-                throw new ExitSignal(new Operand(self, "exit").status(call.arguments()));
+                throw new ExitSignal(
+                    new Operand(self, "exit").value(
+                        call.arguments(),
+                        self.scopes().status(Integer.parseInt(self.getSpecialParam('?')))
+                    )
+                );
             }
         );
         registry.put(
