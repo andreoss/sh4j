@@ -118,7 +118,9 @@ final class Pipelines {
                         final Executor bgexecutor = parent.subshell();
                         bgexecutor.setOutputStream(parent.outStream());
                         bgexecutor.setErrorStream(parent.errStream());
-                        return bgexecutor.leave(new Pipelines(bgexecutor).pipeline(pipeline));
+                        final ListNode job = new ListNode();
+                        job.addPipeline(pipeline, ListNode.Separator.NONE);
+                        return bgexecutor.leave(bgexecutor.execute(job));
                     },
                     cmdtext
                 )
