@@ -48,7 +48,7 @@ final class CoverageRegressionTest {
     void killReportsUnknownPidAsFailure() {
         MatcherAssert.assertThat(
             Integer.valueOf(Sh4j.INSTANCE.run("kill 999999999")),
-            CoreMatchers.equalTo(Integer.valueOf(127))
+            CoreMatchers.equalTo(Integer.valueOf(1))
         );
     }
 

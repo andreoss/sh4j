@@ -150,15 +150,17 @@ final class PosixKillJobTest {
     }
 
     @Test
-    void killStopsAtFirstUnknownPid() {
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill 999999 999998"));
+    void killFailsForEveryUnknownPid() {
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill 999999 999998"));
     }
 
     @Test
-    void killUnknownSignalNameDefaultsToTerm() {
+    void killUnknownSignalNameIsRejected() {
         Assertions.assertEquals(
-            String.format("143%n"),
-            Sh4j.INSTANCE.out("sleep 30 & kill -s FOO \"$!\"; wait \"$!\"; echo \"$?\"")
+            String.format("2%n"),
+            Sh4j.INSTANCE.out(
+                "sleep 30 & kill -s FOO \"$!\" 2>/dev/null; echo \"$?\"; kill \"$!\"; wait"
+            )
         );
     }
 

@@ -376,18 +376,18 @@ final class ExecutorGlobMatchesTest {
     }
 
     @Test
-    void killNoArgsReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("kill")));
+    void killNoArgsReturnsUsageStatus() {
+        Assertions.assertEquals(2, new Executor().execute(this.parse("kill")));
     }
 
     @Test
     void killUnknownPidReturnsError() {
-        Assertions.assertEquals(127, new Executor().execute(this.parse("kill 999999999")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("kill 999999999")));
     }
 
     @Test
     void killDashSWithNonNumericPidReturnsError() {
-        Assertions.assertEquals(127, new Executor().execute(this.parse("kill -s TERM notapid")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("kill -s TERM notapid")));
     }
 
     @Test

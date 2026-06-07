@@ -23,12 +23,15 @@ final class SignalBuiltins {
      * Implementation of {@code kill [-s SIG | -SIG] PID... | -l}.
      * Signals the shell's own background jobs by job id or pseudo pid,
      * which stop and report 128 plus the signal number; other processes
-     * get TERM, or KILL for signal 9; an unknown name means TERM.
+     * get TERM, or KILL for signal 9. Every operand is signalled even when
+     * an earlier one fails; an invalid signal or a missing operand signals
+     * nothing.
      *
      * @param self    Builtin context
      * @param args    Args after the command name
      * @param env     Environment for word expansion
-     * @return The exit code: 0 on success, 1 on usage error, 127 if any PID cannot be signalled
+     * @return The exit code: 0 on success, 1 if any operand cannot be signalled,
+     *  2 for an invalid signal or a missing operand
      */
     static int doKill(
         final BuiltinContext self,
@@ -37,7 +40,7 @@ final class SignalBuiltins {
     ) {
         final int code;
         if (args.isEmpty()) {
-            code = 1;
+            code = SignalBuiltins.usage(self);
         } else if ("-l".equals(args.get(0))) {
             self.outStream().println("HUP INT QUIT KILL TERM");
             code = 0;
@@ -83,17 +86,37 @@ final class SignalBuiltins {
 
     private static int killAll(final BuiltinContext self, final List<String> args) {
         final int first = SignalBuiltins.firstPid(args);
-        final Kill kill = new Kill(self, KillSignal.number(SignalBuiltins.spec(args, first)));
-        int code = 0;
+        final String spec = SignalBuiltins.spec(args, first);
+        final int signal = KillSignal.number(spec);
+        final int code;
         if (first >= args.size()) {
-            code = 1;
-        }
-        int idx = first;
-        while (idx < args.size() && code == 0) {
-            code = SignalBuiltins.signalOne(self, kill, args.get(idx));
-            idx += 1;
+            code = SignalBuiltins.usage(self);
+        } else if (signal < 0) {
+            self.errStream().println(
+                String.format("sh: kill: %s: invalid signal number or name", spec)
+            );
+            code = 2;
+        } else {
+            code = SignalBuiltins.signalAll(
+                self, new Kill(self, signal), args.subList(first, args.size())
+            );
         }
         return code;
+    }
+
+    private static int signalAll(
+        final BuiltinIo self, final Kill kill, final List<String> targets
+    ) {
+        int code = 0;
+        for (final String target : targets) {
+            code = Math.max(code, SignalBuiltins.signalOne(self, kill, target));
+        }
+        return code;
+    }
+
+    private static int usage(final BuiltinIo self) {
+        self.errStream().println("sh: kill: usage: kill [-s signal | -signal] pid... | kill -l");
+        return 2;
     }
 
     private static int firstPid(final List<String> args) {
@@ -112,7 +135,7 @@ final class SignalBuiltins {
         final String sig;
         if (first == 2) {
             sig = args.get(1);
-        } else if (first == 1) {
+        } else if (first == 1 && !"--".equals(args.get(0))) {
             sig = args.get(0).substring(1);
         } else {
             sig = "";
@@ -124,7 +147,7 @@ final class SignalBuiltins {
         int code = 0;
         if (!kill.send(target)) {
             self.errStream().println(String.format("sh: kill: %s: no such process", target));
-            code = 127;
+            code = 1;
         }
         return code;
     }

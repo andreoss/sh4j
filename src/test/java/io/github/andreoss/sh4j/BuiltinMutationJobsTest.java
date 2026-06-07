@@ -96,20 +96,20 @@ final class BuiltinMutationJobsTest {
 
     @Test
     void killOptionFormsFirst() {
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("kill"));
     }
 
     @Test
     void killOptionFormsSecond() {
         Sh4j.INSTANCE.run("kill");
-        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -s"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("kill -s"));
     }
 
     @Test
     void killOptionFormsThird() {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill notapid"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill notapid"));
     }
 
     @Test
@@ -117,7 +117,7 @@ final class BuiltinMutationJobsTest {
         Sh4j.INSTANCE.run("kill");
         Sh4j.INSTANCE.run("kill -s");
         Sh4j.INSTANCE.run("kill notapid");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -s TERM 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -s TERM 999999"));
     }
 
     @Test
@@ -126,7 +126,7 @@ final class BuiltinMutationJobsTest {
         Sh4j.INSTANCE.run("kill -s");
         Sh4j.INSTANCE.run("kill notapid");
         Sh4j.INSTANCE.run("kill -s TERM 999999");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -9 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -9 999999"));
     }
 
     @Test

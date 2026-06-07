@@ -273,7 +273,7 @@ final class PosixRegressionExecCommandTest {
     void hashWaitAndKillOptionFormsThird() {
         Sh4j.INSTANCE.run("hash echo");
         Sh4j.INSTANCE.run("sleep 0.1 & wait");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -s TERM 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -s TERM 999999"));
     }
 
     @Test
@@ -281,7 +281,7 @@ final class PosixRegressionExecCommandTest {
         Sh4j.INSTANCE.run("hash echo");
         Sh4j.INSTANCE.run("sleep 0.1 & wait");
         Sh4j.INSTANCE.run("kill -s TERM 999999");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -9 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -9 999999"));
     }
 
     @Test
@@ -310,7 +310,7 @@ final class PosixRegressionExecCommandTest {
     @Test
     void killListsAndRejectsJobPidsSecond() {
         Sh4j.INSTANCE.out("kill -l");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill notapid"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill notapid"));
     }
 
     @Test

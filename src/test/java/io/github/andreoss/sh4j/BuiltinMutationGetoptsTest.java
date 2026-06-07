@@ -352,7 +352,7 @@ final class BuiltinMutationGetoptsTest {
     void heredocTabStripAndJobLookupBranchesThird() {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Sh4j.INSTANCE.run("jobs 99");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -9 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -9 999999"));
     }
 
     @Test
@@ -360,7 +360,7 @@ final class BuiltinMutationGetoptsTest {
         Sh4j.INSTANCE.out(String.format("cat <<-EOF%n\ttabbed%n\tEOF"));
         Sh4j.INSTANCE.run("jobs 99");
         Sh4j.INSTANCE.run("kill -9 999999");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("kill -KILL 999999"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("kill -KILL 999999"));
     }
 
     @Test
