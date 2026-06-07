@@ -105,7 +105,12 @@ final class ExecCommand {
         for (final Redirection redir : cmd.getRedirections()) {
             external.addRedirection(redir);
         }
-        throw new ExitSignal(new ExternalCommand(this.shell).run(external, name, cenv));
+        throw new ExitSignal(
+            new Redirected(this.shell).run(
+                external.getRedirections(),
+                () -> new ExternalCommand(this.shell).run(external, name, cenv)
+            )
+        );
     }
 
     private boolean attach(final Redirection redir) {

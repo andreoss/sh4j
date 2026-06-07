@@ -80,7 +80,7 @@ final class ExternalCommand {
         );
         final int code;
         if (resolved == null) {
-            code = ExternalCommand.NOT_FOUND;
+            code = new Unrunnable(this.shell).missing(name);
         } else {
             final ProcessBuilder builder = this.builder(resolved, cmd, cenv);
             RedirectionHandler.setupRedirections(
@@ -161,7 +161,7 @@ final class ExternalCommand {
             this.shell.outStream().flush();
             this.shell.errStream().flush();
         } catch (final IOException ex) {
-            code = this.failure(ex);
+            code = this.failure(builder.command().get(0), ex);
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
             code = 1;
@@ -220,25 +220,14 @@ final class ExternalCommand {
         }
     }
 
-    private int failure(final IOException exc) {
+    private int failure(final String name, final IOException exc) {
         final Throwable cause = exc.getCause();
         final int code;
         if (cause instanceof FileNotFoundException) {
             this.shell.errStream().println(String.format("sh: %s", cause.getMessage()));
             code = 1;
         } else {
-            code = ExternalCommand.exitCode(exc);
-        }
-        return code;
-    }
-
-    private static int exitCode(final IOException exc) {
-        final String msg = exc.getMessage();
-        final int code;
-        if (msg != null && (msg.contains("error=2") || msg.contains("No such file"))) {
-            code = ExternalCommand.NOT_FOUND;
-        } else {
-            code = 126;
+            code = new Unrunnable(this.shell).failed(name, exc);
         }
         return code;
     }
