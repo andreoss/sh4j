@@ -223,18 +223,18 @@ final class ExecutorExpandVarTest {
     }
 
     @Test
-    void exportArgWithEqualsNonStandardNameFirst() throws Exception {
+    void exportArgWithEqualsNonStandardNameFails() throws Exception {
         Assertions.assertEquals(
-            0,
+            2,
             new Executor(new HashMap<>()).execute(this.parse("export 1foo=bar"))
         );
     }
 
     @Test
-    void exportArgWithEqualsNonStandardNameSecond() throws Exception {
+    void exportArgWithEqualsNonStandardNameIsNotSet() throws Exception {
         final Executor executor = new Executor(new HashMap<>());
         executor.execute(this.parse("export 1foo=bar"));
-        Assertions.assertEquals("bar", executor.getVariable("1foo"));
+        Assertions.assertNull(executor.getVariable("1foo"));
     }
 
     @Test

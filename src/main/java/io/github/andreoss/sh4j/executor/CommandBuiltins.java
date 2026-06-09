@@ -94,17 +94,13 @@ final class CommandBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
+        final Options opts = new Options(self, "command", "pvV");
         final int code;
-        final int idx = CommandBuiltins.firstOperand(args);
-        final boolean verbose = args.subList(0, idx).contains("-V");
-        final boolean locate = args.subList(0, idx).contains("-v");
-        if (idx >= args.size()) {
-            if (locate || verbose) {
-                code = 1;
-            } else {
-                code = 0;
-            }
-        } else {
+        final boolean valid = opts.read(args);
+        final int idx = opts.first();
+        final boolean verbose = opts.has('V');
+        final boolean locate = opts.has('v');
+        if (valid && idx < args.size()) {
             final String name = args.get(idx);
             if (locate || verbose) {
                 code = describeCommand(self, name, verbose);
@@ -113,6 +109,12 @@ final class CommandBuiltins {
                     name, args.subList(idx + 1, args.size()), env
                 );
             }
+        } else if (valid && (locate || verbose)) {
+            code = 1;
+        } else if (valid) {
+            code = 0;
+        } else {
+            code = 2;
         }
         return code;
     }
@@ -133,14 +135,6 @@ final class CommandBuiltins {
             }
         }
         return code;
-    }
-
-    private static int firstOperand(final List<String> args) {
-        int idx = 0;
-        while (idx < args.size() && args.get(idx).startsWith("-")) {
-            idx += 1;
-        }
-        return idx;
     }
 
     private static int describeCommand(

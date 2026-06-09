@@ -199,11 +199,7 @@ final class BuiltinRegistry {
         );
         registry.put(
             "trap",
-            (self, call) -> ScriptBuiltins.doTrap(
-                self,
-                call.arguments(),
-                call.env()
-            )
+            (self, call) -> new TrapBuiltin(self).run(call.arguments())
         );
         registry.put(
             "times",
@@ -241,11 +237,7 @@ final class BuiltinRegistry {
         );
         registry.put(
             "jobs",
-            (self, call) -> JobBuiltins.doJobs(
-                self,
-                call.arguments(),
-                call.env()
-            )
+            (self, call) -> new JobsBuiltin(self).run(call.arguments())
         );
         registry.put(
             "bg",

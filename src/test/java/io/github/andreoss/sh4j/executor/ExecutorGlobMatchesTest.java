@@ -313,22 +313,22 @@ final class ExecutorGlobMatchesTest {
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(new ByteArrayOutputStream(), StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
-        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs 99999")));
+        Assertions.assertEquals(2, executor.execute(this.parse("sleep 0 & jobs 99999")));
         stream.flush();
     }
 
     @Test
-    void jobsWithInvalidJobIdReturnsZeroFirst() {
+    void jobsWithInvalidJobIdReturnsTwo() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);
         executor.setOutputStream(stream);
-        Assertions.assertEquals(0, executor.execute(this.parse("sleep 0 & jobs notanumber")));
+        Assertions.assertEquals(2, executor.execute(this.parse("sleep 0 & jobs notanumber")));
         stream.flush();
     }
 
     @Test
-    void jobsWithInvalidJobIdReturnsZeroSecond() {
+    void jobsWithInvalidJobIdPrintsNothing() {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         final Executor executor = new Executor();
         final PrintSink stream = new PrintSink(bos, StandardCharsets.UTF_8);

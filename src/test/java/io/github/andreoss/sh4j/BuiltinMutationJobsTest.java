@@ -36,14 +36,14 @@ final class BuiltinMutationJobsTest {
     @Test
     void jobsWithExplicitAndMissingIdsSecond() {
         Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait");
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs 999"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("jobs 999"));
     }
 
     @Test
     void jobsWithExplicitAndMissingIdsThird() {
         Sh4j.INSTANCE.runFull("sleep 0.2 & jobs %1; wait");
         Sh4j.INSTANCE.run("jobs 999");
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("jobs notanumber"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("jobs notanumber"));
     }
 
     @Test

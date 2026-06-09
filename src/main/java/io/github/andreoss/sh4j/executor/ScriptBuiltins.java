@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,46 +50,6 @@ final class ScriptBuiltins {
             code = 0;
         } else {
             code = self.execute(ScriptBuiltins.parse(self, input, "eval"));
-        }
-        return code;
-    }
-
-    /**
-     * Implementation of {@code trap [action signal ...]}.
-     * Only the EXIT trap is executed by the executor; other signals are
-     * recorded but the JDK does not expose portable signal handlers.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code: 0
-     */
-    static int doTrap(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        final int code;
-        if (args.isEmpty()) {
-            for (final Map.Entry<String, String> entry : self.traps().entrySet()) {
-                self.outStream().println(
-                    String.format("trap -- '%s' %s", entry.getValue(), entry.getKey())
-                );
-            }
-            code = 0;
-        } else if ("-".equals(args.get(0))) {
-            for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                self.setTrap(args.get(idx).toUpperCase(Locale.ROOT), null);
-            }
-            code = 0;
-        } else {
-            final String action = args.get(0);
-            for (int idx = 1; idx < args.size(); idx = idx + 1) {
-                self.setTrap(
-                    args.get(idx).toUpperCase(Locale.ROOT), action
-                );
-            }
-            code = 0;
         }
         return code;
     }

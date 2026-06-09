@@ -45,36 +45,19 @@ final class DirectoryBuiltins {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @return The exit code: 0 on success, 1 on IO error
+     * @return The exit code: 0 on success, 1 on IO error, 2 on an illegal option
      */
     static int doPwd(
         final BuiltinContext self,
         final List<String> args,
         final Map<String, String> env
     ) {
-        boolean physical = false;
-        for (final String arg : args) {
-            if ("-P".equals(arg)) {
-                physical = true;
-            } else if ("-L".equals(arg)) {
-                physical = false;
-            }
-        }
-        final Map<String, String> environment = self.environmentMap();
-        final String logical = environment.getOrDefault(
-            "PWD", System.getProperty("user.dir", "/")
-        );
-        int code = 0;
-        if (physical) {
-            try {
-                self.outStream().println(
-                    Path.of(logical).toRealPath().toString()
-                );
-            } catch (final IOException ex) {
-                code = 1;
-            }
+        final Options opts = new Options(self, "pwd", "LP");
+        final int code;
+        if (opts.read(args)) {
+            code = DirectoryBuiltins.printDirectory(self, opts.after('P', 'L'));
         } else {
-            self.outStream().println(logical);
+            code = 2;
         }
         return code;
     }
@@ -170,5 +153,25 @@ final class DirectoryBuiltins {
             out.append('x');
         }
         return out.toString();
+    }
+
+    private static int printDirectory(final BuiltinContext self, final boolean physical) {
+        final Map<String, String> environment = self.environmentMap();
+        final String logical = environment.getOrDefault(
+            "PWD", System.getProperty("user.dir", "/")
+        );
+        int code = 0;
+        if (physical) {
+            try {
+                self.outStream().println(
+                    Path.of(logical).toRealPath().toString()
+                );
+            } catch (final IOException ex) {
+                code = 1;
+            }
+        } else {
+            self.outStream().println(logical);
+        }
+        return code;
     }
 }

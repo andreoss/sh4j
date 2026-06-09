@@ -22,34 +22,6 @@ final class JobBuiltins {
     }
 
     /**
-     * Implementation of {@code jobs [%n...]}.
-     * POSIX 2.14: without args, lists all background jobs with their
-     * state and command line.
-     *
-     * @param self The context
-     * @param args The arguments
-     * @param env The environment
-     * @return The exit code: 0
-     */
-    static int doJobs(
-        final BuiltinContext self,
-        final List<String> args,
-        final Map<String, String> env
-    ) {
-        for (final Job job : JobBuiltins.selectJobs(self.jobManager(), args)) {
-            final String state = switch (job.getState()) {
-                case RUNNING -> "Running";
-                case DONE -> "Done";
-                default -> "Stopped";
-            };
-            self.outStream().println(
-                String.format("[%d] %s %s", job.getId(), state, job.getCommand())
-            );
-        }
-        return 0;
-    }
-
-    /**
      * Implementation of {@code bg [%n...]}.
      * POSIX 2.14: resumes suspended jobs in the background. Without args,
      * operates on the most recent job. Prints a confirmation line.
@@ -116,30 +88,26 @@ final class JobBuiltins {
         return code;
     }
 
-    private static List<Job> selectJobs(
-        final JobManager mgr, final List<String> args
-    ) {
-        final List<Job> all;
-        if (args.isEmpty()) {
-            all = mgr.listJobs();
+    /**
+     * Parses a job id given as {@code %n} or {@code n}.
+     *
+     * @param arg Job operand
+     * @return The job id, or -1 when the operand is not a number
+     */
+    static int parseJobId(final String arg) {
+        final String digits;
+        if (arg.startsWith("%")) {
+            digits = arg.substring(1);
         } else {
-            all = new ArrayList<>(0);
-            for (final String arg : args) {
-                JobBuiltins.lookup(mgr, arg).ifPresent(all::add);
-            }
+            digits = arg;
         }
-        return all;
-    }
-
-    private static Optional<Job> lookup(final JobManager mgr, final String arg) {
-        final int id = JobBuiltins.parseJobId(arg);
-        final Optional<Job> job;
-        if (id > 0) {
-            job = Optional.ofNullable(mgr.getJob(id));
-        } else {
-            job = Optional.empty();
+        int parsed;
+        try {
+            parsed = Integer.parseInt(digits);
+        } catch (final NumberFormatException ex) {
+            parsed = -1;
         }
-        return job;
+        return parsed;
     }
 
     private static Optional<Integer> currentJob(
@@ -224,21 +192,5 @@ final class JobBuiltins {
             self.errStream().println(String.format("sh: fg: %d: no such job", id));
         }
         return job;
-    }
-
-    private static int parseJobId(final String arg) {
-        final String digits;
-        if (arg.startsWith("%")) {
-            digits = arg.substring(1);
-        } else {
-            digits = arg;
-        }
-        int parsed;
-        try {
-            parsed = Integer.parseInt(digits);
-        } catch (final NumberFormatException ex) {
-            parsed = -1;
-        }
-        return parsed;
     }
 }

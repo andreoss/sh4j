@@ -94,6 +94,6 @@ final class BuiltinMutationUmaskSymbolicTest {
     @Test
     void unsetOptionFormsFourth() {
         Sh4j.INSTANCE.run("f() { :; }; unset -f f");
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("X=1; unset -z X"));
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("X=1; unset -z X"));
     }
 }

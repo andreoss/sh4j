@@ -75,8 +75,8 @@ final class BuiltinMutationReadonlyTest {
     }
 
     @Test
-    void setUnknownOptionNameSucceeds() {
-        Assertions.assertEquals(0, Sh4j.INSTANCE.run("set -o unknown_option"));
+    void setUnknownOptionNameFails() {
+        Assertions.assertEquals(2, Sh4j.INSTANCE.run("set -o unknown_option"));
     }
 
     @Test

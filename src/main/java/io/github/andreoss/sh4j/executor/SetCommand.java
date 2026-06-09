@@ -85,38 +85,13 @@ final class SetCommand {
         return flag.length() >= 2 && (flag.charAt(0) == '-' || flag.charAt(0) == '+');
     }
 
-    private static char optionFlag(final String option) {
-        final char flag;
-        if ("errexit".equals(option)) {
-            flag = 'e';
-        } else if ("nounset".equals(option)) {
-            flag = 'u';
-        } else if ("noglob".equals(option)) {
-            flag = 'f';
-        } else if ("xtrace".equals(option)) {
-            flag = 'x';
-        } else if ("noexec".equals(option)) {
-            flag = 'n';
-        } else if ("verbose".equals(option)) {
-            flag = 'v';
-        } else if ("allexport".equals(option)) {
-            flag = 'a';
-        } else if ("noclobber".equals(option)) {
-            flag = 'C';
-        } else {
-            flag = 0;
-        }
-        return flag;
-    }
-
     private void step(final String flag) {
         if ("--".equals(flag)) {
             this.idx += 1;
             this.sawdash = true;
             this.done = true;
-        } else if (("-o".equals(flag) || "+o".equals(flag)) && this.idx + 1 < this.args.size()) {
-            this.named("-o".equals(flag), SetCommand.optionFlag(this.args.get(this.idx + 1)));
-            this.idx += 2;
+        } else if ("-o".equals(flag) || "+o".equals(flag)) {
+            this.option("-o".equals(flag));
         } else if (SetCommand.isShort(flag)) {
             this.letters(flag);
             this.idx += 1;
@@ -125,17 +100,35 @@ final class SetCommand {
         }
     }
 
-    private void named(final boolean enable, final char opt) {
-        if (opt != 0) {
+    private void option(final boolean enable) {
+        if (this.idx + 1 < this.args.size()) {
+            final String name = this.args.get(this.idx + 1);
+            final char opt = ShellOptions.letter(name);
+            if (opt == 0) {
+                this.illegal(String.format("o %s", name));
+            }
             this.toggle(enable, opt);
+            this.idx += 2;
+        } else {
+            new ShellOptions(this.flags).print(this.self.outStream(), enable);
+            this.idx += 1;
         }
     }
 
     private void letters(final String flag) {
         final boolean enable = flag.charAt(0) == '-';
         for (int fidx = 1; fidx < flag.length(); fidx = fidx + 1) {
-            this.toggle(enable, flag.charAt(fidx));
+            final char opt = flag.charAt(fidx);
+            if ("abCefhmnuvx".indexOf(opt) < 0) {
+                this.illegal(String.valueOf(opt));
+            }
+            this.toggle(enable, opt);
         }
+    }
+
+    private void illegal(final String option) {
+        this.self.errStream().println(String.format("sh: set: Illegal option -%s", option));
+        throw new SpecialError(2);
     }
 
     private void toggle(final boolean enable, final char opt) {

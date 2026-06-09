@@ -5,7 +5,6 @@
 package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,21 +32,15 @@ final class VariableBuiltins {
         final List<String> args,
         final Map<String, String> env
     ) {
-        boolean removefunc = false;
-        int idx = 0;
-        while (idx < args.size() && args.get(idx).startsWith("-")) {
-            if ("-f".equals(args.get(idx))) {
-                removefunc = true;
-            } else if (!"-v".equals(args.get(idx)) && !"--".equals(args.get(idx))) {
-                break;
-            }
-            idx = idx + 1;
-        }
+        final Options opts = new Options(self, "unset", "fv");
+        final int idx = opts.operands(args);
+        final boolean removefunc = opts.has('f');
+        final VariableName check = new VariableName(self, "unset");
         for (int aidx = idx; aidx < args.size(); aidx = aidx + 1) {
             final String name = args.get(aidx);
             if (removefunc) {
                 self.functionsMap().remove(name);
-            } else if (!self.unsetVariable(name)) {
+            } else if (!self.unsetVariable(check.valid(name))) {
                 self.errStream().println(String.format("sh: %s: readonly variable", name));
                 throw new ExitSignal(1);
             }
@@ -69,10 +62,10 @@ final class VariableBuiltins {
         final Map<String, String> env
     ) {
         final Map<String, String> environment = self.environmentMap();
-        final List<String> names = new ArrayList<>(args);
-        if (!names.isEmpty() && "-p".equals(names.get(0))) {
-            names.clear();
-        }
+        final List<String> names = args.subList(
+            new Options(self, "export", "p").operands(args), args.size()
+        );
+        final VariableName check = new VariableName(self, "export");
         if (names.isEmpty()) {
             for (final Map.Entry<String, String> entry : self.exportedEnvironment().entrySet()) {
                 self.outStream().println(
@@ -83,11 +76,11 @@ final class VariableBuiltins {
         for (final String arg : names) {
             final int eqidx = arg.indexOf('=');
             if (eqidx >= 0) {
-                final String name = arg.substring(0, eqidx);
+                final String name = check.valid(arg.substring(0, eqidx));
                 environment.put(name, arg.substring(eqidx + 1));
                 self.markExported(name);
             } else {
-                environment.putIfAbsent(arg, "");
+                environment.putIfAbsent(check.valid(arg), "");
                 self.markExported(arg);
             }
         }
@@ -103,15 +96,16 @@ final class VariableBuiltins {
      * @return The exit code: 0 on success, 1 on error
      */
     static int doReadonly(final BuiltinContext self, final Invocation call) {
-        final List<String> all = new ArrayList<>(call.arguments());
-        if (!all.isEmpty() && "-p".equals(all.get(0))) {
-            all.remove(0);
-        }
+        final List<String> args = call.arguments();
+        final List<String> all = args.subList(
+            new Options(self, "readonly", "p").operands(args), args.size()
+        );
         if (all.isEmpty()) {
             VariableBuiltins.printReadonly(self);
         } else {
+            final VariableName check = new VariableName(self, "readonly");
             for (final String arg : all) {
-                VariableBuiltins.markReadonly(self, arg);
+                VariableBuiltins.markReadonly(self, check, arg);
             }
         }
         return 0;
@@ -150,14 +144,16 @@ final class VariableBuiltins {
         }
     }
 
-    private static void markReadonly(final BuiltinContext self, final String arg) {
+    private static void markReadonly(
+        final BuiltinContext self, final VariableName check, final String arg
+    ) {
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
-            final String name = arg.substring(0, eqidx);
+            final String name = check.valid(arg.substring(0, eqidx));
             self.environmentMap().put(name, arg.substring(eqidx + 1));
             self.markReadonly(name);
         } else {
-            self.markReadonly(arg);
+            self.markReadonly(check.valid(arg));
         }
     }
 }
