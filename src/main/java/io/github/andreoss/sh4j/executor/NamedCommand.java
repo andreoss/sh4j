@@ -173,7 +173,7 @@ final class NamedCommand {
         this.shell.setPositionalParams(fargs);
         int code;
         try {
-            code = this.shell.scopes().frame(
+            code = this.shell.scopes().call(
                 () -> new Redirected(this.shell).run(
                     func.getRedirections(), () -> this.shell.executeNode(func.getBody())
                 )

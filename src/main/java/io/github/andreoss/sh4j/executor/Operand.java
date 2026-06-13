@@ -7,9 +7,10 @@ package io.github.andreoss.sh4j.executor;
 import java.util.List;
 
 /**
- * Numeric operand of {@code exit}, {@code return} and {@code shift}: a
- * malformed or negative operand is a special built-in utility error
- * (POSIX 2.8.1), reported as {@code Illegal number} with status 2.
+ * Numeric operand of {@code exit}, {@code return}, {@code shift},
+ * {@code break} and {@code continue}: a malformed or negative operand,
+ * or a zero loop count, is a special built-in utility error (POSIX 2.8.1),
+ * reported as {@code Illegal number} with status 2.
  *
  * @since 1.0
  */
@@ -59,6 +60,21 @@ final class Operand {
         return this.value(args, Integer.parseInt(this.shell.getSpecialParam('?')));
     }
 
+    /**
+     * Parses the loop count of {@code break} and {@code continue}: a
+     * positive operand, 1 without one.
+     *
+     * @param args Operands of the built-in
+     * @return The positive loop count
+     */
+    int count(final List<String> args) {
+        final int result = this.value(args, 1);
+        if (result == 0) {
+            throw this.illegal(args.get(0));
+        }
+        return result;
+    }
+
     private int parse(final String text) {
         int result;
         try {
@@ -67,11 +83,15 @@ final class Operand {
             result = -1;
         }
         if (result < 0) {
-            this.shell.errStream().println(
-                String.format("sh: %s: Illegal number: %s", this.name, text)
-            );
-            throw new SpecialError(2);
+            throw this.illegal(text);
         }
         return result;
+    }
+
+    private SpecialError illegal(final String text) {
+        this.shell.errStream().println(
+            String.format("sh: %s: Illegal number: %s", this.name, text)
+        );
+        return new SpecialError(2);
     }
 }

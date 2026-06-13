@@ -15,6 +15,7 @@ import io.github.andreoss.sh4j.parser.WhileNode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 /**
  * Runs compound commands: {@code if}, {@code for}, {@code while},
@@ -32,6 +33,9 @@ final class Compound {
 
     /** Nesting depth of active loop bodies. */
     private int loops;
+
+    /** Loop depth at which the running function body started. */
+    private int floor;
 
     /**
      * Ctor.
@@ -67,12 +71,37 @@ final class Compound {
     }
 
     /**
-     * Tells whether a loop body is running.
+     * Returns the number of loops lexically enclosing the running command.
      *
-     * @return True inside a loop body
+     * @return The loop depth, 0 outside any loop
      */
-    boolean inLoop() {
-        return this.loops > 0;
+    int depth() {
+        return this.loops - this.floor;
+    }
+
+    /**
+     * Runs a function body, which no loop of its caller encloses.
+     *
+     * @param body The function body
+     * @return The exit status of the body
+     */
+    int isolated(final IntSupplier body) {
+        final int shift = this.depth();
+        this.floor = this.floor + shift;
+        try {
+            return body.getAsInt();
+        } finally {
+            this.floor = this.floor - shift;
+        }
+    }
+
+    /**
+     * Copies the loop depth of the parent shell into this subshell.
+     *
+     * @param parent Runner of compound commands of the parent shell
+     */
+    void inherit(final Compound parent) {
+        this.loops = parent.depth();
     }
 
     private int branch(final IfNode node) {
@@ -89,14 +118,17 @@ final class Compound {
     }
 
     private int iterate(final ForNode node) {
-        this.loops = this.loops + 1;
         final Iterator<String> words = this.words(node).iterator();
         final LoopBody body = new LoopBody(this.shell, node.getBody());
-        while (body.running() && words.hasNext()) {
-            this.shell.environmentMap().put(node.getVariable(), words.next());
-            body.run();
+        this.loops = this.loops + 1;
+        try {
+            while (body.running() && words.hasNext()) {
+                this.shell.environmentMap().put(node.getVariable(), words.next());
+                body.run();
+            }
+        } finally {
+            this.loops = this.loops - 1;
         }
-        this.loops = this.loops - 1;
         return body.status();
     }
 
@@ -118,10 +150,13 @@ final class Compound {
     private int repeat(final WhileNode node) {
         this.loops = this.loops + 1;
         final LoopBody body = new LoopBody(this.shell, node.getBody());
-        while (body.running() && this.proceeds(node)) {
-            body.run();
+        try {
+            while (body.running() && this.proceeds(node)) {
+                body.run();
+            }
+        } finally {
+            this.loops = this.loops - 1;
         }
-        this.loops = this.loops - 1;
         return body.status();
     }
 

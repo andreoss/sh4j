@@ -80,18 +80,41 @@ final class Scopes {
     }
 
     /**
+     * Runs a function body as a frame that {@code return} leaves and that
+     * no loop of the caller encloses.
+     *
+     * @param body The function body
+     * @return The exit status of the body
+     */
+    int call(final IntSupplier body) {
+        return this.compound.isolated(() -> this.frame(body));
+    }
+
+    /**
+     * Returns the number of loops lexically enclosing the running command.
+     *
+     * @return The loop depth, 0 outside any loop
+     */
+    int loops() {
+        return this.compound.depth();
+    }
+
+    /**
      * Raises a {@code break} or {@code continue} signal inside a loop;
-     * outside one, reports the misuse on the current stderr instead.
+     * outside one it does nothing, reporting the misuse on the current
+     * stderr only at the top level of the shell.
      *
      * @param signal The loop control signal
      * @param name The built-in name
      * @param shell The shell whose current stderr receives the diagnostic
      */
     void loop(final RuntimeException signal, final String name, final BuiltinIo shell) {
-        if (this.compound.inLoop()) {
+        if (this.compound.depth() > 0) {
             throw signal;
         }
-        shell.errStream().println(String.format("sh: %s: not in a loop", name));
+        if (this.depth == 0 && !this.nested) {
+            shell.errStream().println(String.format("sh: %s: not in a loop", name));
+        }
     }
 
     /**
@@ -140,11 +163,13 @@ final class Scopes {
     }
 
     /**
-     * Records that a subshell runs inside the scopes of its parent shell.
+     * Records that a subshell runs inside the scopes of its parent shell,
+     * including the loops that enclose it.
      *
      * @param parent The parent shell's scopes
      */
     void inherit(final Scopes parent) {
         this.nested = parent.depth > 0 || parent.nested;
+        this.compound.inherit(parent.compound);
     }
 }

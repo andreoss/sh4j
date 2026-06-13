@@ -104,9 +104,9 @@ final class BuiltinMutationAliasTest {
     }
 
     @Test
-    void breakZeroUsesOneLevel() {
+    void breakZeroEndsShell() {
         Assertions.assertEquals(
-            String.format("1a%n2a%n"),
+            String.format("1a%n"),
             Sh4j.INSTANCE.out("for i in 1 2; do for j in a b; do echo $i$j; break 0; done; done")
         );
     }
@@ -447,7 +447,7 @@ final class BuiltinMutationAliasTest {
     void dispatcherUncoveredBranchesSecond() {
         Sh4j.INSTANCE.run("f() { return abc; }; f");
         Assertions.assertEquals(
-            String.format("1a%n2a%n"),
+            String.format("1a%n"),
             Sh4j.INSTANCE.out(
                 "for i in 1 2; do for j in a b; do echo $i$j; break abc; done; done"
             )

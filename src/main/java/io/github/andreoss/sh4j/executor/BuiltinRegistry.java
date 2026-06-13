@@ -6,7 +6,6 @@ package io.github.andreoss.sh4j.executor;
 
 import io.github.andreoss.sh4j.annotation.GeneratedDefensive;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,7 +44,7 @@ final class BuiltinRegistry {
             "break",
             (self, call) -> {
                 self.scopes().loop(
-                    new BreakSignal(BuiltinRegistry.parseLoopLevels(call.arguments())),
+                    new BreakSignal(BuiltinRegistry.levels(self, call, "break")),
                     "break", self
                 );
                 return 0;
@@ -55,7 +54,7 @@ final class BuiltinRegistry {
             "continue",
             (self, call) -> {
                 self.scopes().loop(
-                    new ContinueSignal(BuiltinRegistry.parseLoopLevels(call.arguments())),
+                    new ContinueSignal(BuiltinRegistry.levels(self, call, "continue")),
                     "continue", self
                 );
                 return 0;
@@ -283,18 +282,11 @@ final class BuiltinRegistry {
         );
     }
 
-    private static int parseLoopLevels(final List<String> args) {
-        int levels = 1;
-        if (!args.isEmpty()) {
-            try {
-                final int parsed = Integer.parseInt(args.get(0));
-                if (parsed > 0) {
-                    levels = parsed;
-                }
-            } catch (final NumberFormatException ignored) {
-                levels = 1;
-            }
-        }
-        return levels;
+    private static int levels(
+        final BuiltinContext self, final Invocation call, final String name
+    ) {
+        return Math.min(
+            new Operand(self, name).count(call.arguments()), self.scopes().loops()
+        );
     }
 }
