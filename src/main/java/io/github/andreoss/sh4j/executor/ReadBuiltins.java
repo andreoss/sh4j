@@ -81,7 +81,7 @@ final class ReadBuiltins {
      * @param self The context
      * @param args The arguments
      * @param env The environment
-     * @return The exit code: 0 if an option was found, 1 if all options processed
+     * @return The exit code: 0 on an option, 1 when options end, 2 on a usage error
      */
     static int doGetopts(
         final BuiltinContext self,
@@ -91,7 +91,7 @@ final class ReadBuiltins {
         final int code;
         if (args.size() < 2) {
             self.errStream().println("sh: getopts: Usage: getopts optstring var [arg...]");
-            code = 1;
+            code = 2;
         } else {
             code = new Getopts(self, args).next();
         }

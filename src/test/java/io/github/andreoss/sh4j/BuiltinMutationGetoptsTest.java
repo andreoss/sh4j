@@ -316,7 +316,7 @@ final class BuiltinMutationGetoptsTest {
     @Test
     void hashAndTypeFormsSecond() {
         Sh4j.INSTANCE.run("hash echo");
-        Assertions.assertEquals(127, Sh4j.INSTANCE.run("hash missing_command"));
+        Assertions.assertEquals(1, Sh4j.INSTANCE.run("hash missing_command"));
     }
 
     @Test

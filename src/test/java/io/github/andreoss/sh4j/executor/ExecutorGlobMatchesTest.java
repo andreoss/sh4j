@@ -53,7 +53,7 @@ final class ExecutorGlobMatchesTest {
     @Test
     void hashWithUnknownNameReturnsError() {
         Assertions.assertEquals(
-            127,
+            1,
             new Executor().execute(this.parse("hash sh4j_no_such_cmd_xyz"))
         );
     }

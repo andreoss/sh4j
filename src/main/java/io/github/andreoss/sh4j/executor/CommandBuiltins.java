@@ -131,7 +131,7 @@ final class CommandBuiltins {
             }
             if (!self.isBuiltinName(name) && self.resolveCommand(name) == null) {
                 self.errStream().println(String.format("sh: hash: %s: not found", name));
-                code = 127;
+                code = 1;
             }
         }
         return code;

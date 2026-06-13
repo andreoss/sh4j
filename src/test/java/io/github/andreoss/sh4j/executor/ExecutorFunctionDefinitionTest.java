@@ -165,8 +165,8 @@ final class ExecutorFunctionDefinitionTest {
     }
 
     @Test
-    void getoptsNoArgsReturnsOne() {
-        Assertions.assertEquals(1, new Executor().execute(this.parse("getopts")));
+    void getoptsNoArgsReturnsTwo() {
+        Assertions.assertEquals(2, new Executor().execute(this.parse("getopts")));
     }
 
     @Test
