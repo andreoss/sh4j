@@ -137,35 +137,38 @@ final class ExternalCommand {
     }
 
     private int launch(final ProcessBuilder builder) {
-        final ProcessBuilder.Redirect output = builder.redirectOutput();
-        final ProcessBuilder.Redirect error = builder.redirectError();
-        final ProcessBuilder.Redirect input = builder.redirectInput();
         final boolean console = System.in.equals(this.shell.inputStream());
-        if (ProcessBuilder.Redirect.PIPE.equals(input) && console) {
+        if (ProcessBuilder.Redirect.PIPE.equals(builder.redirectInput()) && console) {
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);
         }
         int code;
         try {
-            final Process process = builder.start();
-            JobControl.track(process);
-            final List<Thread> pumps = this.pumps(
-                process, error, ProcessBuilder.Redirect.PIPE.equals(input) && !console
-            );
-            if (ProcessBuilder.Redirect.PIPE.equals(output)) {
-                this.collect(process);
-            }
-            code = process.waitFor();
-            for (final Thread pump : pumps) {
-                pump.join();
-            }
-            this.shell.outStream().flush();
-            this.shell.errStream().flush();
+            code = this.watch(builder.start(), builder);
         } catch (final IOException ex) {
             code = this.failure(builder.command().get(0), ex);
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
             code = 1;
         }
+        return code;
+    }
+
+    private int watch(final Process process, final ProcessBuilder builder)
+        throws InterruptedException {
+        JobControl.track(process);
+        final List<Thread> pumps = this.pumps(
+            process, builder.redirectError(),
+            ProcessBuilder.Redirect.PIPE.equals(builder.redirectInput())
+        );
+        if (ProcessBuilder.Redirect.PIPE.equals(builder.redirectOutput())) {
+            this.collect(process);
+        }
+        final int code = process.waitFor();
+        for (final Thread pump : pumps) {
+            pump.join();
+        }
+        this.shell.outStream().flush();
+        this.shell.errStream().flush();
         return code;
     }
 
@@ -214,9 +217,11 @@ final class ExternalCommand {
         return thread;
     }
 
-    private void collect(final Process process) throws IOException {
+    private void collect(final Process process) {
         try (InputStream stream = process.getInputStream()) {
             stream.transferTo(this.shell.outStream().bytes());
+        } catch (final IOException ignored) {
+            process.destroy();
         }
     }
 

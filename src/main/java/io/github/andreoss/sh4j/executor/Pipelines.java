@@ -109,20 +109,11 @@ final class Pipelines {
     }
 
     private void async(final Pipeline pipeline) {
-        final String cmdtext = Pipelines.text(pipeline);
-        final Executor parent = this.shell;
         this.shell.background(
             Math.toIntExact(
-                JobManager.JOB_PID_BASE + parent.jobManager().submit(
-                    () -> {
-                        final Executor bgexecutor = parent.subshell();
-                        bgexecutor.setOutputStream(parent.outStream());
-                        bgexecutor.setErrorStream(parent.errStream());
-                        final ListNode job = new ListNode();
-                        job.addPipeline(pipeline, ListNode.Separator.NONE);
-                        return bgexecutor.leave(bgexecutor.execute(job));
-                    },
-                    cmdtext
+                JobManager.JOB_PID_BASE + this.shell.jobManager().submit(
+                    new BackgroundTask(this.shell.subshell(), pipeline),
+                    Pipelines.text(pipeline)
                 )
             )
         );
