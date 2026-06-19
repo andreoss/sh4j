@@ -81,17 +81,22 @@ final class ExecCommand {
     }
 
     private void bind(final List<Redirection> redirs) {
-        final RedirectionHandler.StreamSwap swap = OutputSwap.apply(this.shell, redirs);
-        final InputSwap input = new InputSwap(this.shell);
-        InputSwap.discard(input.install(redirs));
-        boolean bound = !swap.failed() && !input.failed();
+        boolean bound = true;
         for (final Redirection redir : redirs) {
-            final boolean attached = this.attach(redir);
+            final boolean attached = this.applied(redir);
             bound = bound && attached;
         }
         if (!bound) {
             throw new ExitSignal(1);
         }
+    }
+
+    private boolean applied(final Redirection redir) {
+        final List<Redirection> single = List.of(redir);
+        final RedirectionHandler.StreamSwap swap = OutputSwap.apply(this.shell, single);
+        final InputSwap input = new InputSwap(this.shell);
+        InputSwap.discard(input.install(single));
+        return this.attach(redir) && !swap.failed() && !input.failed();
     }
 
     private void replace(
@@ -134,6 +139,8 @@ final class ExecCommand {
         } else if (type == RedirectionType.DUP_OUTPUT
             && ExecCommand.CLOSE.equals(redir.getTarget())) {
             this.shell.descriptors().outputs().remove(redir.getFd());
+        } else if (type == RedirectionType.DUP_OUTPUT) {
+            this.duplicate(redir);
         }
         return attached;
     }
@@ -174,6 +181,25 @@ final class ExecCommand {
             desc,
             new PrintSink(ExecCommand.sink(target.toPath(), append), StandardCharsets.UTF_8)
         );
+    }
+
+    private void duplicate(final Redirection redir) {
+        final Optional<PrintSink> sink = this.bound(redir.getTarget());
+        if (redir.getFd() > 2 && sink.isPresent()) {
+            this.shell.descriptors().outputs().put(redir.getFd(), sink.get());
+        }
+    }
+
+    private Optional<PrintSink> bound(final String target) {
+        final Optional<PrintSink> result;
+        if (RedirectionHandler.STDOUT_FD.equals(target)) {
+            result = Optional.of(this.shell.outStream());
+        } else if (RedirectionHandler.STDERR_FD.equals(target)) {
+            result = Optional.of(this.shell.errStream());
+        } else {
+            result = BuiltinRedirects.descriptor(this.shell.descriptors().outputs(), target);
+        }
+        return result;
     }
 
     private boolean closeInput(final int desc) {

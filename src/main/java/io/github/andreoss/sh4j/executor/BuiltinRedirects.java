@@ -54,6 +54,27 @@ final class BuiltinRedirects {
         return state.swap();
     }
 
+    /**
+     * Finds the stream bound to a descriptor named by a target.
+     *
+     * @param descriptors The bound descriptors
+     * @param target The expanded target
+     * @return The bound stream, or empty when the target names none
+     */
+    static Optional<PrintSink> descriptor(
+        final Map<Integer, PrintSink> descriptors, final String target
+    ) {
+        Optional<PrintSink> result;
+        try {
+            result = Optional.ofNullable(
+                descriptors.get(Integer.parseInt(target.trim()))
+            );
+        } catch (final NumberFormatException ex) {
+            result = Optional.empty();
+        }
+        return result;
+    }
+
     private static void applyRedirect(
         final RedirectionState state,
         final Redirection redir
@@ -94,10 +115,14 @@ final class BuiltinRedirects {
         final int desc = redir.getFd();
         if (RedirectionHandler.CLOSE.equals(target)) {
             BuiltinRedirects.applyClose(state, desc);
-        } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
-            state.dupErrToOut();
-        } else if (RedirectionHandler.STDERR_FD.equals(target) && desc == 1) {
-            state.dupOutToErr();
+        } else if (RedirectionHandler.STDOUT_FD.equals(target)) {
+            if (desc == 2) {
+                state.dupErrToOut();
+            }
+        } else if (RedirectionHandler.STDERR_FD.equals(target)) {
+            if (desc == 1) {
+                state.dupOutToErr();
+            }
         } else {
             BuiltinRedirects.applyBound(state, target, desc);
         }
@@ -151,20 +176,6 @@ final class BuiltinRedirects {
             state.complain(message);
         }
         return stream;
-    }
-
-    private static Optional<PrintSink> descriptor(
-        final Map<Integer, PrintSink> descriptors, final String target
-    ) {
-        Optional<PrintSink> result;
-        try {
-            result = Optional.ofNullable(
-                descriptors.get(Integer.parseInt(target.trim()))
-            );
-        } catch (final NumberFormatException ex) {
-            result = Optional.empty();
-        }
-        return result;
     }
 
     private static Optional<PrintSink> openForWrite(
