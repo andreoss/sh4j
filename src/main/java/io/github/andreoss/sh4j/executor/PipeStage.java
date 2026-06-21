@@ -4,7 +4,9 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import io.github.andreoss.sh4j.parser.ListNode;
 import io.github.andreoss.sh4j.parser.Node;
+import io.github.andreoss.sh4j.parser.Pipeline;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -61,11 +63,10 @@ final class PipeStage implements Runnable {
     }
 
     private void execute() {
-        try {
-            this.code = this.child.executeNode(this.node);
-        } catch (final ExitSignal ex) {
-            this.code = ex.getCode();
-        }
-        this.code = this.child.leave(this.code);
+        final Pipeline single = new Pipeline(false);
+        single.addCommand(this.node);
+        final ListNode job = new ListNode();
+        job.addPipeline(single, ListNode.Separator.NONE);
+        this.code = this.child.leave(this.child.execute(job));
     }
 }
