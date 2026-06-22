@@ -4,13 +4,16 @@
  */
 package io.github.andreoss.sh4j.executor;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * One {@code trap [action condition ...]} call (POSIX 2.14 trap): a
  * condition that names no signal is reported as {@code bad trap}, ends the
- * call and gives status 1.
+ * call and gives status 1. The listing orders the conditions by signal
+ * number with {@code EXIT} first and quotes each action for re-input.
  *
  * @since 1.0
  */
@@ -40,9 +43,14 @@ final class TrapBuiltin {
         );
         final int code;
         if (ops.isEmpty()) {
-            for (final Map.Entry<String, String> entry : this.self.traps().entrySet()) {
+            final List<Map.Entry<String, String>> entries =
+                new ArrayList<>(this.self.traps().entrySet());
+            entries.sort(Comparator.comparingInt(entry -> KillSignal.number(entry.getKey())));
+            for (final Map.Entry<String, String> entry : entries) {
                 this.self.outStream().println(
-                    String.format("trap -- '%s' %s", entry.getValue(), entry.getKey())
+                    String.format(
+                        "trap -- %s %s", Quotes.word(entry.getValue()), entry.getKey()
+                    )
                 );
             }
             code = 0;
