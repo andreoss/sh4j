@@ -40,9 +40,8 @@ final class VariableBuiltins {
             final String name = args.get(aidx);
             if (removefunc) {
                 self.functionsMap().remove(name);
-            } else if (!self.unsetVariable(check.valid(name))) {
-                self.errStream().println(String.format("sh: %s: readonly variable", name));
-                throw new ExitSignal(1);
+            } else {
+                self.unsetVariable(new WritableName(self).writable(check.valid(name)));
             }
         }
         return 0;
@@ -76,7 +75,9 @@ final class VariableBuiltins {
         for (final String arg : names) {
             final int eqidx = arg.indexOf('=');
             if (eqidx >= 0) {
-                final String name = check.valid(arg.substring(0, eqidx));
+                final String name = new WritableName(self).writable(
+                    check.valid(arg.substring(0, eqidx))
+                );
                 environment.put(name, arg.substring(eqidx + 1));
                 self.markExported(name);
             } else {
@@ -149,7 +150,9 @@ final class VariableBuiltins {
     ) {
         final int eqidx = arg.indexOf('=');
         if (eqidx >= 0) {
-            final String name = check.valid(arg.substring(0, eqidx));
+            final String name = new WritableName(self).writable(
+                check.valid(arg.substring(0, eqidx))
+            );
             self.environmentMap().put(name, arg.substring(eqidx + 1));
             self.markReadonly(name);
         } else {
