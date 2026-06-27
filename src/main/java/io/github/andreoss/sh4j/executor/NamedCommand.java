@@ -102,6 +102,9 @@ final class NamedCommand {
     }
 
     private int redirected(final CommandCall call) {
+        if (this.function(call)) {
+            this.shell.environmentMap().putAll(call.env());
+        }
         final CommandCall expanded = new CommandCall(
             new ExpandedRedirects(this.shell).of(call.cmd()),
             call.name(), call.env(), call.bypass()
@@ -112,16 +115,18 @@ final class NamedCommand {
     }
 
     private int dispatch(final CommandCall call) {
-        final Map<String, FunctionNode> functions = this.shell.functionsMap();
         final int code;
-        if (!call.bypass() && functions.containsKey(call.name())
-            && !NamedCommand.SPECIAL.contains(call.name())) {
-            this.shell.environmentMap().putAll(call.env());
-            code = this.invoke(functions.get(call.name()), call);
+        if (this.function(call)) {
+            code = this.invoke(this.shell.functionsMap().get(call.name()), call);
         } else {
             code = this.builtin(call);
         }
         return code;
+    }
+
+    private boolean function(final CommandCall call) {
+        return !call.bypass() && this.shell.functionsMap().containsKey(call.name())
+            && !NamedCommand.SPECIAL.contains(call.name());
     }
 
     private int builtin(final CommandCall call) {
