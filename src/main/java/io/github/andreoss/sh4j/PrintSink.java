@@ -6,6 +6,7 @@ package io.github.andreoss.sh4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
@@ -65,7 +66,7 @@ public final class PrintSink {
             );
             this.target.flush();
         } catch (final IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -74,7 +75,7 @@ public final class PrintSink {
         try {
             this.target.flush();
         } catch (final IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

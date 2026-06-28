@@ -86,6 +86,9 @@ final class BuiltinRedirects {
             BuiltinRedirects.applyOutput(state, redir);
         } else if (type == RedirectionType.DUP_OUTPUT) {
             BuiltinRedirects.applyDup(state, redir);
+        } else if (type == RedirectionType.DUP_INPUT
+            && RedirectionHandler.CLOSE.equals(redir.getTarget())) {
+            BuiltinRedirects.applyClose(state, redir.getFd());
         }
     }
 
@@ -131,13 +134,11 @@ final class BuiltinRedirects {
     private static void applyClose(
         final RedirectionState state, final int desc
     ) {
-        BuiltinRedirects.assign(
-            state,
-            BuiltinRedirects.openForWrite(
-                RedirectionHandler.DEV_NULL, false, state.base()
-            ),
-            desc
-        );
+        if (desc == 1) {
+            state.replaceOut(Closed.output());
+        } else if (desc == 2) {
+            state.replaceErr(Closed.error());
+        }
     }
 
     private static void applyBound(

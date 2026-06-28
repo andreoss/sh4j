@@ -286,7 +286,7 @@ final class ExecutorExpandVarTest {
 
     @Test
     void externalCloseStdin() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("cat <&-")));
     }
 
     @Test

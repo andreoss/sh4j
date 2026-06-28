@@ -137,6 +137,7 @@ final class ExternalCommand {
     }
 
     private int launch(final ProcessBuilder builder) {
+        Closed.attach(builder, this.shell);
         final boolean console = System.in.equals(this.shell.inputStream());
         if (ProcessBuilder.Redirect.PIPE.equals(builder.redirectInput()) && console) {
             builder.redirectInput(ProcessBuilder.Redirect.INHERIT);

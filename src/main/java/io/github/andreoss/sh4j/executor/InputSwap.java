@@ -134,6 +134,8 @@ final class InputSwap {
         Optional<InputStream> result = current;
         if (type == RedirectionType.HERE_DOC || type == RedirectionType.HERE_DOC_DASH) {
             result = this.heredoc(redir, current);
+        } else if (InputSwap.closes(redir)) {
+            result = Optional.of(Closed.input());
         } else if (type == RedirectionType.DUP_INPUT) {
             result = this.borrowed(redir, current);
         } else if (type == RedirectionType.INPUT && redir.getFd() == 0) {
@@ -202,6 +204,13 @@ final class InputSwap {
             result = current;
         }
         return result;
+    }
+
+    private static boolean closes(final Redirection redir) {
+        final RedirectionType type = redir.getType();
+        return redir.getFd() == 0
+            && RedirectionHandler.CLOSE.equals(redir.getTarget())
+            && (type == RedirectionType.DUP_INPUT || type == RedirectionType.DUP_OUTPUT);
     }
 
     private static int descriptor(final String text) {

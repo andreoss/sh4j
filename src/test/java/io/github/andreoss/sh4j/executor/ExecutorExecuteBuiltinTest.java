@@ -95,7 +95,7 @@ final class ExecutorExecuteBuiltinTest {
 
     @Test
     void executeBuiltinCloseStdout() {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("echo hello >&-")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("echo hello >&-")));
     }
 
     @Test
@@ -180,12 +180,12 @@ final class ExecutorExecuteBuiltinTest {
 
     @Test
     void executeCloseStdin() throws Exception {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("cat <&-")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("cat <&-")));
     }
 
     @Test
     void executeCloseStdout() throws Exception {
-        Assertions.assertEquals(0, new Executor().execute(this.parse("echo test >&-")));
+        Assertions.assertEquals(1, new Executor().execute(this.parse("echo test >&-")));
     }
 
     @Test

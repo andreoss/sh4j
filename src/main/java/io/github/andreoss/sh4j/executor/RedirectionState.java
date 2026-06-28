@@ -107,20 +107,22 @@ final class RedirectionState {
      * Makes stderr point at stdout.
      */
     void dupErrToOut() {
-        if (this.savederr == null) {
-            this.savederr = this.err;
+        if (Closed.closed(this.out)) {
+            this.refuse(RedirectionHandler.STDOUT_FD);
+        } else {
+            this.replaceErr(this.out);
         }
-        this.err = this.out;
     }
 
     /**
      * Makes stdout point at stderr.
      */
     void dupOutToErr() {
-        if (this.savedout == null) {
-            this.savedout = this.out;
+        if (Closed.closed(this.err)) {
+            this.refuse(RedirectionHandler.STDERR_FD);
+        } else {
+            this.replaceOut(this.err);
         }
-        this.out = this.err;
     }
 
     /**
@@ -148,5 +150,10 @@ final class RedirectionState {
         return new RedirectionHandler.StreamSwap(
             this.out, this.err, this.savedout, this.savederr, this.failed
         );
+    }
+
+    private void refuse(final String target) {
+        this.complain(String.format("sh: %s: bad file descriptor", target));
+        this.fail();
     }
 }

@@ -9,6 +9,7 @@ import io.github.andreoss.sh4j.lexer.Lexer;
 import io.github.andreoss.sh4j.parser.FunctionNode;
 import io.github.andreoss.sh4j.parser.Parser;
 import io.github.andreoss.sh4j.parser.SimpleCommand;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -144,9 +145,23 @@ final class NamedCommand {
     }
 
     private int special(final CommandCall call) {
-        final SimpleCommand cmd = call.cmd();
         int result;
         boolean fatal = false;
+        try {
+            result = this.written(call);
+        } catch (final SpecialError ex) {
+            result = ex.getCode();
+            fatal = !call.bypass();
+        }
+        if (fatal) {
+            throw new ExitSignal(result);
+        }
+        return result;
+    }
+
+    private int written(final CommandCall call) {
+        final SimpleCommand cmd = call.cmd();
+        int result;
         try {
             result = this.shell.builtin(
                 call.name(),
@@ -158,12 +173,9 @@ final class NamedCommand {
                     cmd.getAssignments()
                 )
             );
-        } catch (final SpecialError ex) {
-            result = ex.getCode();
-            fatal = !call.bypass();
-        }
-        if (fatal) {
-            throw new ExitSignal(result);
+        } catch (final UncheckedIOException ex) {
+            this.shell.errStream().println(String.format("sh: %s: I/O error", call.name()));
+            result = 1;
         }
         return result;
     }

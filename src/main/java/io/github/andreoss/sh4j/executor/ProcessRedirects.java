@@ -66,7 +66,7 @@ final class ProcessRedirects {
     ) {
         if (RedirectionHandler.CLOSE.equals(redir.getTarget())
             && redir.getFd() == 0) {
-            builder.redirectInput(new File(RedirectionHandler.DEV_NULL));
+            builder.redirectInput(Closed.SOURCE);
         }
     }
 
@@ -77,9 +77,9 @@ final class ProcessRedirects {
         final String target = redir.getTarget();
         if (RedirectionHandler.CLOSE.equals(target)) {
             if (desc == 1) {
-                builder.redirectOutput(new File(RedirectionHandler.DEV_NULL));
+                builder.redirectOutput(Closed.SINK);
             } else if (desc == 2) {
-                builder.redirectError(new File(RedirectionHandler.DEV_NULL));
+                builder.redirectError(Closed.SINK);
             }
         } else if (RedirectionHandler.STDOUT_FD.equals(target) && desc == 2) {
             builder.redirectError(builder.redirectOutput());

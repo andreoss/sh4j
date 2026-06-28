@@ -7,6 +7,7 @@ package io.github.andreoss.sh4j;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -31,7 +32,7 @@ final class PrintSinkTest {
     void reportsFailedWrite() throws IOException {
         try (OutputStream broken = new PrintSinkTest.Broken()) {
             Assertions.assertThrows(
-                IllegalStateException.class,
+                UncheckedIOException.class,
                 () -> new PrintSink(broken, StandardCharsets.UTF_8).print("x")
             );
         }
@@ -41,7 +42,7 @@ final class PrintSinkTest {
     void reportsFailedFlush() throws IOException {
         try (OutputStream broken = new PrintSinkTest.Broken()) {
             Assertions.assertThrows(
-                IllegalStateException.class,
+                UncheckedIOException.class,
                 () -> new PrintSink(broken, StandardCharsets.UTF_8).flush()
             );
         }

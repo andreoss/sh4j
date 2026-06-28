@@ -35,9 +35,6 @@ public final class RedirectionHandler {
     /** Sentinel target value indicating fd 2. */
     static final String STDERR_FD = "2";
 
-    /** Path that acts as a black-hole sink for the close-fd duplicate. */
-    static final String DEV_NULL = "/dev/null";
-
     @GeneratedDefensive
     private RedirectionHandler() {
     }
