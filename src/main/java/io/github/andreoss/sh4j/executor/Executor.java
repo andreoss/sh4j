@@ -503,6 +503,7 @@ public final class Executor implements BuiltinContext {
         child.err = this.err;
         child.instream = this.instream;
         child.lastcode = this.lastcode;
+        child.fds.inherit(this.fds);
         return child;
     }
 

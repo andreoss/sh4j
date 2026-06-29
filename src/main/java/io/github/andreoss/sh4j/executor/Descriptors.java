@@ -59,6 +59,18 @@ final class Descriptors {
     }
 
     /**
+     * Copies the descriptors of a parent shell into this subshell.
+     *
+     * @param parent The descriptors of the parent shell
+     */
+    void inherit(final Descriptors parent) {
+        this.outputs.putAll(parent.outputs);
+        parent.inputs.forEach(
+            (desc, stream) -> this.inputs.putAll(Map.of(desc, SharedInput.make(stream)))
+        );
+    }
+
+    /**
      * Returns the input streams bound to descriptors.
      *
      * @return The live map from descriptor to input stream
