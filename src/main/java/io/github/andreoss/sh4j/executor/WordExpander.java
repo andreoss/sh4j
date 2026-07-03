@@ -38,7 +38,7 @@ public final class WordExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
-        return WordExpander.expand(arg, new ExpansionContext(env, ctx, new StringBuilder()));
+        return WordExpander.expand(arg, new ExpansionContext(env, ctx, new Expanded()));
     }
 
     /**
@@ -56,7 +56,7 @@ public final class WordExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
-        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        final ExpansionContext context = new ExpansionContext(env, ctx, new Expanded());
         context.splitting(true);
         return WordExpander.expand(arg, context);
     }
@@ -77,7 +77,7 @@ public final class WordExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
-        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        final ExpansionContext context = new ExpansionContext(env, ctx, new Expanded());
         context.splitting(true);
         context.marking(true);
         return WordExpander.expand(arg, context);
@@ -98,7 +98,7 @@ public final class WordExpander {
         final Map<String, String> env,
         final BuiltinContext ctx
     ) {
-        final ExpansionContext context = new ExpansionContext(env, ctx, new StringBuilder());
+        final ExpansionContext context = new ExpansionContext(env, ctx, new Expanded());
         context.splitting(true);
         context.nested(true);
         return WordExpander.expand(arg, context);
@@ -260,7 +260,7 @@ public final class WordExpander {
     private static String expand(final String arg, final ExpansionContext context) {
         String current = TildeExpander.expandTilde(arg, context.env());
         current = normaliseBackticks(current);
-        final StringBuilder expanded = context.expanded();
+        final Expanded expanded = context.expanded();
         final QuoteState quotes = new QuoteState();
         int idx = 0;
         while (idx < current.length()) {

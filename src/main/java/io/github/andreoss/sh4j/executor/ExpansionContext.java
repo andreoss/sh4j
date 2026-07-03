@@ -12,7 +12,6 @@ import java.util.Map;
  *
  * @since 1.0
  */
-@SuppressWarnings("PMD.AvoidStringBufferField")
 final class ExpansionContext {
 
     /** Environment variable bindings. */
@@ -22,7 +21,7 @@ final class ExpansionContext {
     private final BuiltinContext ctx;
 
     /** Accumulator for expanded output. */
-    private final StringBuilder expanded;
+    private final Expanded expanded;
 
     /** Whether the current expansion sits inside double quotes. */
     private boolean dquote;
@@ -49,7 +48,7 @@ final class ExpansionContext {
     ExpansionContext(
         final Map<String, String> env,
         final BuiltinContext ctx,
-        final StringBuilder expanded
+        final Expanded expanded
     ) {
         this.env = env;
         this.ctx = ctx;
@@ -84,7 +83,7 @@ final class ExpansionContext {
      *
      * @return Output accumulator
      */
-    StringBuilder expanded() {
+    Expanded expanded() {
         return this.expanded;
     }
 

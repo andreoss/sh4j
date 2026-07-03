@@ -11,7 +11,6 @@ import java.util.Map;
  *
  * @since 1.0
  */
-@SuppressWarnings("PMD.GodClass")
 final class BraceExpander {
 
     private BraceExpander() {
@@ -23,7 +22,7 @@ final class BraceExpander {
         final BuiltinContext ctx
     ) {
         return BraceExpander.expandBracedImpl(
-            inner, new ExpansionContext(env, ctx, new StringBuilder())
+            inner, new ExpansionContext(env, ctx, new Expanded())
         );
     }
 
@@ -126,12 +125,9 @@ final class BraceExpander {
         final ExpansionContext context
     ) {
         final String result;
-        final String defaulted = BraceExpander.applyDefaultOps(
-            rest, varvalue, varname, context
-        );
-        final String erred = BraceExpander.applyErrorOps(
-            rest, varvalue, varname, context.ctx()
-        );
+        final Parameter parameter = new Parameter(varname, varvalue);
+        final String defaulted = BraceDefaults.apply(rest, parameter, context);
+        final String erred = BraceErrors.apply(rest, parameter, context.ctx());
         if (defaulted != null) {
             result = defaulted;
         } else if (erred != null) {
@@ -200,236 +196,4 @@ final class BraceExpander {
     private static boolean isSpecialParamChar(final char chr) {
         return "?-$!*@".indexOf(chr) >= 0;
     }
-
-    private static String applyDefaultOps(
-        final String rest,
-        final String varvalue,
-        final String varname,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (rest.startsWith(":-")) {
-            result = BraceExpander.defaultOnEmpty(
-                varvalue, rest.substring(2), context
-            );
-        } else if (rest.startsWith("-")) {
-            result = BraceExpander.defaultOnNull(
-                varvalue, rest.substring(1), context
-            );
-        } else if (rest.startsWith(":=")) {
-            result = BraceExpander.assignOnEmpty(
-                varvalue, varname, rest.substring(2), context
-            );
-        } else if (rest.startsWith("=")) {
-            result = BraceExpander.assignOnNull(
-                varvalue, varname, rest.substring(1), context
-            );
-        } else if (rest.startsWith(":+")) {
-            result = BraceExpander.altOnNonEmpty(
-                varvalue, rest.substring(2), context
-            );
-        } else if (rest.startsWith("+")) {
-            result = BraceExpander.altOnNonNull(
-                varvalue, rest.substring(1), context
-            );
-        } else {
-            result = null;
-        }
-        return result;
-    }
-
-    private static String applyErrorOps(
-        final String rest,
-        final String varvalue,
-        final String varname,
-        final BuiltinContext ctx
-    ) {
-        final String result;
-        if (rest.startsWith(":?")) {
-            result = BraceExpander.errorOnEmpty(
-                varvalue, varname, rest.substring(2), ctx
-            );
-        } else if (rest.startsWith("?")) {
-            result = BraceExpander.errorOnNull(
-                varvalue, varname, rest.substring(1), ctx
-            );
-        } else {
-            result = null;
-        }
-        return result;
-    }
-
-    private static String defaultOnEmpty(
-        final String varvalue,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null || varvalue.isEmpty()) {
-            result = BraceExpander.alternative(word, context);
-        } else {
-            result = varvalue;
-        }
-        return result;
-    }
-
-    private static String defaultOnNull(
-        final String varvalue,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null) {
-            result = BraceExpander.alternative(word, context);
-        } else {
-            result = varvalue;
-        }
-        return result;
-    }
-
-    private static String assignOnEmpty(
-        final String varvalue,
-        final String varname,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null || varvalue.isEmpty()) {
-            result = BraceExpander.assign(varname, word, context);
-        } else {
-            result = varvalue;
-        }
-        return result;
-    }
-
-    private static String assignOnNull(
-        final String varvalue,
-        final String varname,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null) {
-            result = BraceExpander.assign(varname, word, context);
-        } else {
-            result = varvalue;
-        }
-        return result;
-    }
-
-    private static String assign(
-        final String varname,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String expanded = BraceExpander.word(word, context);
-        if (BraceExpander.isAssignableName(varname)) {
-            context.env().put(varname, expanded);
-            context.ctx().environmentMap().put(varname, expanded);
-        }
-        return expanded;
-    }
-
-    private static String altOnNonEmpty(
-        final String varvalue,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null || varvalue.isEmpty()) {
-            result = "";
-        } else {
-            result = BraceExpander.alternative(word, context);
-        }
-        return result;
-    }
-
-    private static String altOnNonNull(
-        final String varvalue,
-        final String word,
-        final ExpansionContext context
-    ) {
-        final String result;
-        if (varvalue == null) {
-            result = "";
-        } else {
-            result = BraceExpander.alternative(word, context);
-        }
-        return result;
-    }
-
-    private static String errorOnEmpty(
-        final String varvalue,
-        final String varname,
-        final String word,
-        final BuiltinContext ctx
-    ) {
-        if (varvalue == null || varvalue.isEmpty()) {
-            BraceExpander.reportMissing(
-                ctx, varname, word, "parameter null or not set"
-            );
-        }
-        return varvalue;
-    }
-
-    private static void reportMissing(
-        final BuiltinContext ctx, final String varname,
-        final String word, final String fallback
-    ) {
-        final String msg;
-        if (word.isEmpty()) {
-            msg = fallback;
-        } else {
-            msg = word;
-        }
-        ctx.errStream().println(String.format("$%s: %s", varname, msg));
-        throw new ExitSignal(1);
-    }
-
-    private static String errorOnNull(
-        final String varvalue,
-        final String varname,
-        final String word,
-        final BuiltinContext ctx
-    ) {
-        if (varvalue == null) {
-            BraceExpander.reportMissing(ctx, varname, word, "parameter not set");
-        }
-        return varvalue;
-    }
-
-    private static String alternative(final String word, final ExpansionContext context) {
-        final String result;
-        if (context.splitting() && !context.quoted()) {
-            result = WordExpander.expandFieldsImpl(word, context.env(), context.ctx());
-            context.verbatim(true);
-        } else if (context.splitting()) {
-            result = QuoteRemover.removeQuotes(
-                WordExpander.expandNestedImpl(
-                    String.join("", "\"", word, "\""), context.env(), context.ctx()
-                )
-            );
-        } else {
-            result = BraceExpander.word(word, context);
-        }
-        return result;
-    }
-
-    private static String word(final String word, final ExpansionContext context) {
-        final String text;
-        if (context.quoted()) {
-            text = String.join("", "\"", word, "\"");
-        } else {
-            text = word;
-        }
-        return QuoteRemover.removeQuotes(
-            context.ctx().expandVariables(text, context.env())
-        );
-    }
-
-    private static boolean isAssignableName(final String varname) {
-        return varname.chars()
-            .allMatch(chr -> Character.isLetterOrDigit(chr) || chr == '_');
-    }
 }
-
