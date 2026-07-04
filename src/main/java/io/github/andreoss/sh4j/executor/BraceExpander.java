@@ -5,6 +5,7 @@
 package io.github.andreoss.sh4j.executor;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Handles brace expansion (POSIX 2.6.2): ${...} parameter expansion.
@@ -12,6 +13,12 @@ import java.util.Map;
  * @since 1.0
  */
 final class BraceExpander {
+
+    /** Operators whose expansion the {@code -u} option does not apply to. */
+    private static final Pattern SPARED = Pattern.compile(":?[-=+?]");
+
+    /** First character of a variable name, as opposed to a parameter. */
+    private static final Pattern VARIABLE = Pattern.compile("[\\p{L}_]");
 
     private BraceExpander() {
     }
@@ -83,18 +90,23 @@ final class BraceExpander {
             result = null;
         } else {
             final String varname = inner.substring(0, nameend);
+            final String rest = inner.substring(nameend);
             result = BraceExpander.applyOps(
-                inner.substring(nameend),
-                BraceExpander.value(varname, context), varname, context
+                rest, BraceExpander.value(varname, rest, context), varname, context
             );
         }
         return result;
     }
 
-    private static String value(final String varname, final ExpansionContext context) {
+    private static String value(
+        final String varname, final String rest, final ExpansionContext context
+    ) {
         final String result;
         if ("@".equals(varname) && context.listing()) {
             result = Breaks.joined(context.ctx());
+        } else if (BraceExpander.SPARED.matcher(rest).lookingAt()
+            && BraceExpander.VARIABLE.matcher(varname).lookingAt()) {
+            result = context.env().get(varname);
         } else {
             result = context.ctx().lookupVariable(varname, context.env());
         }
