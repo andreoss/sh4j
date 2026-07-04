@@ -176,8 +176,9 @@ final class ExpansionContext {
      * parameter, joined by {@link FieldSplitter#BREAK}.
      *
      * @return True when the text is split later and {@code $@} is quoted
+     *  or IFS is set to the empty string
      */
     boolean listing() {
-        return this.split && (this.dquote || this.inner);
+        return this.split && (this.dquote || this.inner || "".equals(this.env.get("IFS")));
     }
 }

@@ -43,7 +43,7 @@ final class Breaks {
     }
 
     /**
-     * Closes the double quotes around each break, so that every break
+     * Closes the double quotes around each double-quoted break, so that every break
      * sits outside quotes and the quoting of the parameters stays intact.
      *
      * @return The text with each double-quoted break as {@code "BREAK"}
@@ -59,7 +59,7 @@ final class Breaks {
             } else if (chr == '\\') {
                 out.append(this.value, pos, Math.min(pos + 2, this.value.length()));
                 pos = pos + 1;
-            } else if (chr == FieldSplitter.BREAK) {
+            } else if (chr == FieldSplitter.BREAK && quotes.doubled()) {
                 out.append('"').append(chr).append('"');
             } else {
                 out.append(chr);
