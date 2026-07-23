@@ -154,6 +154,10 @@ final class BuiltinRegistry {
             )
         );
         registry.put(
+            "printf",
+            (self, call) -> new Printf(self, call.arguments()).run()
+        );
+        registry.put(
             "eval",
             (self, call) -> ScriptBuiltins.doEval(
                 self,
