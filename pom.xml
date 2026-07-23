@@ -6,7 +6,7 @@
 
     <groupId>io.github.andreoss</groupId>
     <artifactId>sh4j</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.7</version>
     <packaging>jar</packaging>
     <name>sh4j - POSIX shell in Java</name>
     <description>A POSIX sh command-language interpreter in pure Java</description>
