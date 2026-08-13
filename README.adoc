@@ -3,6 +3,19 @@
 A POSIX `sh` command-language interpreter in pure Java 21, buildable as a
 GraalVM native image.
 
+== Install
+
+link:https://central.sonatype.com/artifact/io.github.andreoss/sh4j[io.github.andreoss:sh4j] is on Maven Central.
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.github.andreoss</groupId>
+  <artifactId>sh4j</artifactId>
+  <version>1.0.7</version>
+</dependency>
+----
+
 == Build
 
 [source,sh]
@@ -36,3 +49,7 @@ Native image, with a GraalVM JDK:
 mvn package -Pnative-image
 ./target/sh4j -c 'echo hello'
 ----
+
+== Licence
+
+Copyright (c) 2024-2026. LGPL-3.0-or-later, see link:LICENSE.txt[] and link:COPYING[].
